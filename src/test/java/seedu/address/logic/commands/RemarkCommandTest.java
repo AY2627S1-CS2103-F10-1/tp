@@ -1,7 +1,7 @@
 package seedu.address.logic.commands;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
@@ -22,7 +22,7 @@ public class RemarkCommandTest {
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
 
     @Test
-    public void execute_validIndex_addsRemark() throws Exception {
+    public void execute_validIndex_addsRemark() {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         RemarkCommand command = new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Likes coffee"));
         Person edited = new Person(original.getName(), original.getPhone(), original.getEmail(), original.getAddress(),
@@ -35,7 +35,7 @@ public class RemarkCommandTest {
     }
 
     @Test
-    public void execute_validIndex_emptyRemark_removesRemark() throws Exception {
+    public void execute_validIndex_emptyRemark() {
         Person original = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
         RemarkCommand command = new RemarkCommand(INDEX_FIRST_PERSON, new Remark(""));
         Person edited = new Person(original.getName(), original.getPhone(), original.getEmail(), original.getAddress(),
@@ -57,10 +57,10 @@ public class RemarkCommandTest {
     @Test
     public void equals() {
         RemarkCommand first = new RemarkCommand(INDEX_FIRST_PERSON, new Remark("x"));
-        assertTrue(first.equals(first));
-        assertTrue(first.equals(new RemarkCommand(INDEX_FIRST_PERSON, new Remark("x"))));
-        assertFalse(first.equals(new RemarkCommand(INDEX_SECOND_PERSON, new Remark("x"))));
-        assertFalse(first.equals(new RemarkCommand(INDEX_FIRST_PERSON, new Remark("y"))));
-        assertFalse(first.equals(null));
+        assertEquals(first, first);
+        assertEquals(new RemarkCommand(INDEX_FIRST_PERSON, new Remark("x")), first);
+        assertNotEquals(new RemarkCommand(INDEX_SECOND_PERSON, new Remark("x")), first);
+        assertNotEquals(new RemarkCommand(INDEX_FIRST_PERSON, new Remark("y")), first);
+        assertNotEquals(null, first);
     }
 }

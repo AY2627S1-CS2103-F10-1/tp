@@ -15,12 +15,14 @@ public class RemarkCommandParserTest {
 
     @Test
     public void parse_validArgs_returnsRemarkCommand() {
-        assertParseSuccess(parser, "1 r/Likes coffee", new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Likes coffee")));
+        assertParseSuccess(parser, "1 r/Likes coffee",
+                new RemarkCommand(INDEX_FIRST_PERSON, new Remark("Likes coffee")));
         assertParseSuccess(parser, "1", new RemarkCommand(INDEX_FIRST_PERSON, new Remark("")));
     }
 
     @Test
     public void parse_invalidIndex_throwsParseException() {
-        assertParseFailure(parser, "a r/test", String.format(MESSAGE_INVALID_COMMAND_FORMAT, RemarkCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "a r/test",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, RemarkCommand.MESSAGE_USAGE));
     }
 }

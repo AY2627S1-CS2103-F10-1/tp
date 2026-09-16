@@ -2,16 +2,15 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import javafx.application.Platform;
-
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonCardTest {
     @BeforeAll
-    public static void initialiseJavaFx() throws InterruptedException {
+    public static void initialiseJavaFx() {
         try {
             Platform.startup(() -> { });
         } catch (IllegalStateException e) {
