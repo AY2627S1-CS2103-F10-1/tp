@@ -1,0 +1,55 @@
+#!/bin/sh
+# Checks the commit subject against the se-edu git conventions.
+# Enable with: git config core.hooksPath .githooks
+
+msg_file="$1"
+subject=$(grep -v '^#' "$msg_file" | sed -n '1p')
+
+case "$subject" in
+    Merge\ *|Revert\ *|fixup!\ *|squash!\ *)
+        exit 0
+        ;;
+esac
+
+error=0
+fail() {
+    echo "[commit-msg] ERROR: $1"
+    error=1
+}
+
+length=$(printf '%s' "$subject" | wc -m | tr -d ' ')
+[ -z "$subject" ] && fail "Subject line is empty."
+[ "$length" -gt 72 ] && fail "Subject is $length chars (hard limit 72, aim for 50)."
+[ "$length" -gt 50 ] && [ "$length" -le 72 ] && echo "[commit-msg] WARN: Subject is $length chars (aim for 50)."
+
+case "$subject" in
+    *.) fail "Subject must not end with a period." ;;
+esac
+
+# Text after an optional "scope: " prefix must start with a capital letter.
+text=$(printf '%s' "$subject" | sed -E 's/^[^:]{1,30}:[[:space:]]+//')
+first=$(printf '%s' "$text" | cut -c1)
+case "$first" in
+    [A-Z]) ;;
+    *) fail "Subject (after any 'scope: ' prefix) must start with a capital letter." ;;
+esac
+
+first_word=$(printf '%s' "$text" | awk '{print $1}')
+case "$first_word" in
+    *ed|*ing|Adds|Fixes|Updates|Removes|Changes)
+        echo "[commit-msg] WARN: '$first_word' may not be imperative mood (e.g. use 'Add', not 'Added'/'Adding'/'Adds')."
+        ;;
+esac
+
+second_line=$(grep -v '^#' "$msg_file" | sed -n '2p')
+[ -n "$second_line" ] && fail "Separate the subject from the body with a blank line."
+
+if grep -v '^#' "$msg_file" | tail -n +3 | grep -v 'https\?://' | awk 'length > 72 { found = 1 } END { exit !found }'; then
+    echo "[commit-msg] WARN: Wrap the body at 72 characters."
+fi
+
+if [ "$error" -ne 0 ]; then
+    echo "See .agents/skills/git-conventions/SKILL.md"
+    exit 1
+fi
+exit 0
