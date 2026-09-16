@@ -100,6 +100,7 @@ public class RemarkCommandTest {
         assertTrue(firstCommand.equals(new RemarkCommand(INDEX_FIRST_PERSON, firstRemark)));
         assertFalse(firstCommand.equals(1));
         assertFalse(firstCommand.equals(null));
+        assertFalse(firstCommand.equals(new RemarkCommand(INDEX_FIRST_PERSON, secondRemark)));
         assertFalse(firstCommand.equals(secondCommand));
     }
 }

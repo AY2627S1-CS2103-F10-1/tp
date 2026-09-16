@@ -102,4 +102,11 @@ public class PersonTest {
                 + ALICE.getRemark() + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
     }
+
+    @Test
+    public void hashCode_sameValues_returnsSameHashCode() {
+        Person aliceCopy = new PersonBuilder(ALICE).build();
+
+        assertEquals(ALICE.hashCode(), aliceCopy.hashCode());
+    }
 }
