@@ -14,9 +14,9 @@ Source: [se-education.org git conventions](https://se-education.org/guides/conve
 * Use the **imperative mood**: `Add README.md`, not `Added README.md` or `Adding README.md`. Test: "If applied, this commit will _\<subject\>_."
 * **Capitalise** the first letter.
 * **No trailing period.**
-* Optional scope/category prefix before a colon, e.g. `Person class: Add email field`, `bug fix: Add space after name`, `chore: Update release date`. The text after the prefix still follows the rules above.
+* Start every subject with a mandatory category prefix followed by a colon and space. Use `feat`, `fix`, `refactor`, `doc`, `test`, `version`, `dbg`, `hack` (avoid), `WIP`, or `chore`; for example, `feat: Add email field` or `chore: Update release date`. The text after the prefix still follows the rules above.
 
-Team tag vocabulary (optional prefix, from issue #1 discussion): `feat`, `fix`, `refactor`, `doc`, `test`, `version`, `dbg`, `hack` (avoid), `WIP`, `chore`.
+Team tag vocabulary (mandatory prefix, from issue #1 discussion): `feat`, `fix`, `refactor`, `doc`, `test`, `version`, `dbg`, `hack` (avoid), `WIP`, `chore`.
 
 ## Commit message body
 
@@ -30,7 +30,7 @@ Team tag vocabulary (optional prefix, from issue #1 discussion): `feat`, `fix`, 
     1. What is being done — imperative mood, often starting with "Let's …".
     1. Why it is done that way.
     1. Any other relevant info (links, issue refs such as `Fixes #12`).
-* Trivial commits may omit the body.
+* The body is optional. When present, follow the rules above.
 
 ### Example
 

@@ -5,12 +5,6 @@
 msg_file="$1"
 subject=$(grep -v '^#' "$msg_file" | sed -n '1p')
 
-case "$subject" in
-    Merge\ *|Revert\ *|fixup!\ *|squash!\ *)
-        exit 0
-        ;;
-esac
-
 error=0
 fail() {
     echo "[commit-msg] ERROR: $1"
@@ -26,12 +20,18 @@ case "$subject" in
     *.) fail "Subject must not end with a period." ;;
 esac
 
-# Text after an optional "scope: " prefix must start with a capital letter.
+# Every subject needs a recognised category prefix.
+case "$subject" in
+    feat:\ *|fix:\ *|refactor:\ *|doc:\ *|test:\ *|version:\ *|dbg:\ *|hack:\ *|WIP:\ *|chore:\ *) ;;
+    *) fail "Subject must begin with a category prefix (e.g. 'feat:' or 'chore:')." ;;
+esac
+
+# Text after the mandatory category prefix must start with a capital letter.
 text=$(printf '%s' "$subject" | sed -E 's/^[^:]{1,30}:[[:space:]]+//')
 first=$(printf '%s' "$text" | cut -c1)
 case "$first" in
     [A-Z]) ;;
-    *) fail "Subject (after any 'scope: ' prefix) must start with a capital letter." ;;
+    *) fail "Subject text after the category prefix must start with a capital letter." ;;
 esac
 
 first_word=$(printf '%s' "$text" | awk '{print $1}')

@@ -46,7 +46,7 @@ Detailed, step-by-step instructions live in `.agents/skills/`. Load the relevant
 
 Key rules at a glance:
 
-* **Commits:** imperative subject, capitalised, no trailing period, ≤ 50 chars (hard limit 72), blank line, body wrapped at 72 explaining WHAT and WHY.
+* **Commits:** mandatory category prefix (`feat`, `fix`, `refactor`, `doc`, `test`, `version`, `dbg`, `hack`, `WIP`, or `chore`); imperative, capitalised subject with no trailing period, ≤ 50 chars (hard limit 72); the body is optional but, when present, starts after a blank line and wraps at 72 chars explaining WHAT and WHY.
 * **Branches:** kebab-case; `issueNumber-keywords-from-title` for issue work (e.g. `1-set-up-agents-md-and-skills`).
 * **Java:** [se-edu Java coding standard](https://se-education.org/guides/conventions/java/index.html) — 4-space indent, 120-char hard limit, K&R braces, no wildcard imports, braces on every `if`/loop, Javadoc on public classes/methods.
 * **Markdown:** [se-edu Markdown standard](https://se-education.org/guides/conventions/markdown.html) — `*` bullets, `_italics_`, `1.` for every ordered item, blank line before lists/code blocks, no hard wrapping.
