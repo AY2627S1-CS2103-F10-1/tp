@@ -21,10 +21,9 @@ src/test/data/sandbox/
 .DS_Store
 docs/_site/
 
-# AI Agents
-AGENTS.md
-CLAUDE.md
-/.claude/
+# AI Agents (AGENTS.md, CLAUDE.md, .agents/skills and .claude/skills are shared and committed)
+/.claude/*
+!/.claude/skills
 /.codex/
 
 # Temp files

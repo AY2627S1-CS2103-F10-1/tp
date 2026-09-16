@@ -1,0 +1,36 @@
+#!/bin/sh
+# Team pre-commit hook. Enable with: git config core.hooksPath .githooks
+
+repo_root=$(git rev-parse --show-toplevel) || exit 1
+cd "$repo_root" || exit 1
+
+echo "[pre-commit] Scanning staged changes for secrets..."
+secret_pattern='(AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|sk-[A-Za-z0-9_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(password|passwd|secret|api[_-]?key|token)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"'[:space:]]{8,})'
+if git diff --cached -U0 --no-color | grep '^+' | grep -v '^+++' | grep -Eiq "$secret_pattern"; then
+    echo "[pre-commit] ERROR: possible secret detected in staged changes:"
+    git diff --cached -U0 --no-color | grep '^+' | grep -v '^+++' | grep -Ein "$secret_pattern"
+    echo "Remove it (and rotate it if it was ever pushed) before committing."
+    exit 1
+fi
+
+if git diff --cached --name-only | grep -Eq '(^|/)(\.env(\..*)?|id_rsa|id_ed25519|.*\.pem|.*\.p12|.*\.jks)$'; then
+    echo "[pre-commit] ERROR: staged file looks like a secret or key file:"
+    git diff --cached --name-only | grep -E '(^|/)(\.env(\..*)?|id_rsa|id_ed25519|.*\.pem|.*\.p12|.*\.jks)$'
+    exit 1
+fi
+
+echo "[pre-commit] Running repository text checks..."
+./.github/run-checks.sh || exit 1
+
+if [ "${SKIP_GRADLE:-0}" = "1" ]; then
+    echo "[pre-commit] SKIP_GRADLE=1 set; skipping Checkstyle and tests."
+    exit 0
+fi
+
+echo "[pre-commit] Running Checkstyle and tests..."
+./gradlew --quiet checkstyleMain checkstyleTest test || {
+    echo "[pre-commit] ERROR: Checkstyle or tests failed. See build/reports/."
+    exit 1
+}
+
+echo "[pre-commit] All checks passed."
