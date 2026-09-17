@@ -25,7 +25,7 @@ public class RemarkCommandParserTest {
     }
 
     @Test
-    public void parse_indexOnly_emptyRemark_success() {
+    public void parseIndexOnly_emptyRemark_success() {
         Index targetIndex = INDEX_FIRST_PERSON;
         String userInput = targetIndex.getOneBased() + " " + PREFIX_REMARK;
         RemarkCommand expectedCommand = new RemarkCommand(targetIndex, new Remark(""));
