@@ -21,14 +21,14 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 * Role: Project Advisor
 
-### Darren
+### Darren Ong Yan En
 
 <img src="images/darrenori.png" width="200px">
 
 [[github](https://github.com/darrenori)]
 
-* Role: Developer
-* Responsibilities: Documentation
+* Role: Testing + Integration + Security
+* Responsibilities: Ensure testing is completed on time; maintain repository versions and integrate team changes; review code and dependencies for security risks.
 
 ### Johnny Doe
 
