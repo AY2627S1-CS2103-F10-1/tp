@@ -1,6 +1,12 @@
 # tP Feature Workflow Procedure
 
-## Before starting
+## Propose the work and get confirmation
+
+Before inspecting GitHub issues, PRs, milestones, fork branches, or the team wiki, describe the likely issue title(s), branch name(s), and work to be done based on the user's request and any local context needed to identify the deliverable. Mark names and counts as provisional when GitHub evidence could change them. Ask the user to confirm this proposal once. Do not treat the request to implement a feature as confirmation of the proposal.
+
+After confirmation, continue through the investigation and work below without repeating the same approval request. If later evidence requires a materially broader scope or more GitHub objects than the confirmed proposal, explain the change and confirm that expanded plan before creating them.
+
+## After confirmation
 
 1. Read the current repository `AGENTS.md` and applicable project skills. Check `git status`, the current branch, remotes, and existing local work. Do not overwrite, discard, or silently switch away from unrelated work.
 1. Read the current Team GitHub Workflow in the team wiki and follow its current instructions.
@@ -11,7 +17,7 @@
 
 Break the concrete feature into independently mergeable issues sized for one person to complete in a few hours. Keep work breadth-first so every merge leaves a working, improved product. Create issues for feature work, not routine Git steps such as pushing. Split shared work into single-owner tasks and represent their relationship with GitHub sub-issues when available.
 
-Before workflow investigation or mutation, tell the user the planned issue titles and branch names, or explain what remains uncertain, then wait for explicit confirmation. If investigation later changes the planned task boundaries or object count, update the user and get confirmation of the revised plan before creating or changing GitHub objects.
+Use the confirmed proposal and the GitHub evidence to settle task boundaries and object count. Reuse a suitable existing issue when found, and tell the user about routine refinements as work proceeds.
 
 Infer routine metadata from current evidence:
 
