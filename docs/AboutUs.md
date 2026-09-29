@@ -29,14 +29,14 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 * Role: Integration
 * Responsibilities: Version the code, maintain the code repository, and integrate various parts of the software into a whole.
 
-### Johnny Doe
+### Francis Masaoy
 
-<img src="images/johndoe.png" width="200px">
+<img src="images/francisralph.png" width="200px">
 
-[[github](http://github.com/johndoe)] [[portfolio](team/johndoe.md)]
+[[github](https://github.com/FrancisRalph)]
 
-* Role: Developer
-* Responsibilities: Data
+* Role: Code quality
+* Responsibilities: Looks after code quality, ensures adherence to coding standards, etc.
 
 ### Jean Doe
 
