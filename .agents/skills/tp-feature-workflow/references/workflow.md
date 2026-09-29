@@ -11,7 +11,7 @@
 
 Break the concrete feature into independently mergeable issues sized for one person to complete in a few hours. Keep work breadth-first so every merge leaves a working, improved product. Create issues for feature work, not routine Git steps such as pushing. Split shared work into single-owner tasks and represent their relationship with GitHub sub-issues when available.
 
-Before the first GitHub mutation, send a concise notice describing the planned issue titles and branch names. If investigation shows different task boundaries or object counts than expected, update the user before creating them. The notice does not require a reply when the user has asked to start or implement the concrete feature.
+Before workflow investigation or mutation, tell the user the planned issue titles and branch names, or explain what remains uncertain, then wait for explicit confirmation. If investigation later changes the planned task boundaries or object count, update the user and get confirmation of the revised plan before creating or changing GitHub objects.
 
 Infer routine metadata from current evidence:
 
