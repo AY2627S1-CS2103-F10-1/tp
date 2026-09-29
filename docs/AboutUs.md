@@ -27,8 +27,8 @@ You can reach us at the email `seer[at]comp.nus.edu.sg`
 
 [[github](https://github.com/darrenori)]
 
-* Role: Testing + Integration + Security
-* Responsibilities: Ensure testing is completed on time; maintain repository versions and integrate team changes; review code and dependencies for security risks.
+* Role: Integration
+* Responsibilities: Version the code, maintain the code repository, and integrate various parts of the software into a whole.
 
 ### Johnny Doe
 
