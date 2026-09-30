@@ -39,6 +39,7 @@ Detailed, step-by-step instructions live in `.agents/skills/`. Load the relevant
 |-------|----------|
 | `git-conventions` | Writing commit messages, naming branches, preparing PRs |
 | `java-coding-standard` | Writing or reviewing any Java code |
+| `code-quality` | Writing, changing, or reviewing non-trivial Java production or test code, including pre-merge reviews |
 | `writing-tests` | Adding, changing or reviewing tests |
 | `markdown-conventions` | Editing any `.md` file (docs, README, skills) |
 | `secure-coding` | Handling input, files, dependencies, secrets, logging, or anything security-relevant |
