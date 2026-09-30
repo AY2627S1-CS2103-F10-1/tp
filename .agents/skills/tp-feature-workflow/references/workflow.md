@@ -1,40 +1,36 @@
 # tP Feature Workflow Procedure
 
-## Propose the work and get confirmation
+## Investigate
 
-Read the current Team GitHub Workflow in the team wiki first. Use it with the user's request and any local context needed to identify the deliverable to describe the likely issue title(s), branch name(s), and work to be done. Do not inspect live GitHub issues, PRs, milestones, or fork branches before the user confirms this proposal. Mark names and counts as provisional when later evidence could change them. Ask the user to confirm the proposal once. Do not treat the request to implement a feature as confirmation of the proposal.
-
-After confirmation, continue through the work below without repeating the same approval request. If later evidence requires a materially broader scope or more GitHub objects than the confirmed proposal, explain the change and confirm that expanded plan before creating them.
-
-## After confirmation
+Treat the user's requested deliverable as one issue. Read the current Team GitHub Workflow in the team wiki and inspect the relevant repository and GitHub state needed to plan that issue, its branch, and the requested work. These read-only steps do not need approval.
 
 1. Read the current repository `AGENTS.md` and applicable project skills. Check `git status`, the current branch, remotes, and existing local work. Do not overwrite, discard, or silently switch away from unrelated work.
 1. Verify the current authenticated GitHub identity and access using the available authenticated GitHub CLI or tool. Never copy credentials from another machine or from this reference.
 
 ## Plan and announce the work
 
-Break the concrete feature into independently mergeable issues sized for one person to complete in a few hours. Keep work breadth-first so every merge leaves a working, improved product. Create issues for feature work, not routine Git steps such as pushing. Split shared work into single-owner tasks and represent their relationship with GitHub sub-issues when available.
+Plan the user's requested deliverable as one issue and one branch. Do not split it into multiple issues or create issues for routine Git steps such as pushing.
 
-Use the confirmed proposal and subsequent evidence to settle task boundaries and object count. Tell the user about routine refinements as work proceeds.
+Settle the issue title, branch name, work scope, owner, labels, and milestone from the available evidence. Announce this concrete plan and ask for one explicit confirmation before creating or changing workflow objects. A request to implement the feature does not replace confirmation of the plan. After confirmation, carry out the approved plan without another approval gate. If the plan cannot be carried out within its approved scope, stop and explain what changed.
 
 Infer routine metadata from current evidence:
 
-* Assign each issue to one responsible member. If the user says to assign it to them, use the verified current GitHub login.
+* Assign the issue to one responsible member. If the user says to assign it to them, use the verified current GitHub login.
 * Choose available `type.*` and `priority.*` labels from the task meaning and current team examples; omit labels that do not help.
 * Use the clearly active iteration milestone. Do not create a milestone or change a milestone deadline for a feature request.
 * Ask one concise, bundled question only when task boundaries, owner, or milestone cannot be responsibly inferred and the uncertainty materially affects the work. Do not ask for fields already established by repository or team evidence.
 
-## Create issue(s) and fork branch(es)
+## Create the issue and fork branch
 
-Create each issue in `AY2627S1-CS2103-F10-1/tp` with a descriptive title and brief, non-redundant body. Apply the inferred owner, useful labels, and active milestone. Issues are encouraged rather than mandatory for PRs generally, but this feature-start workflow uses an issue to track each planned task.
+Create the issue in `AY2627S1-CS2103-F10-1/tp` with a descriptive title and brief, non-redundant body. Apply the inferred owner, useful labels, and active milestone. Issues are encouraged rather than mandatory for PRs generally, but this feature-start workflow uses one issue to track the requested deliverable.
 
-For each issue, create a separate local branch in the fork checkout named `<issue-number>-<short-kebab-task-name>`, based on the latest team `master`. Confirm that `origin` is the user’s fork and `upstream` is the team repository. Follow the currently published team workflow if the team has moved from the early fork-based workflow to a centralized workflow. Preserve uncommitted work and existing branches; if the deliverable already has uncommitted changes on `master`, carry them onto the task branch without discarding them. If the checkout is dirty or based on an unexpected branch, find a safe way to create the new branch without disturbing unrelated work. Publish the branch to the fork after making a meaningful commit.
+Create one local branch in the fork checkout named `<issue-number>-<short-kebab-task-name>`, based on the latest team `master`. Confirm that `origin` is the user’s fork and `upstream` is the team repository. Follow the currently published team workflow if the team has moved from the early fork-based workflow to a centralized workflow. Preserve uncommitted work and existing branches; if the deliverable already has uncommitted changes on `master`, carry them onto the task branch without discarding them. If the checkout is dirty or based on an unexpected branch, find a safe way to create the new branch without disturbing unrelated work. Publish the branch to the fork after making a meaningful commit.
 
 ## Implement and prepare the PR
 
 Continue with implementation when the user requested implementation. Otherwise, stop after issue and branch setup and report what is ready. Follow the repository’s ordinary coding, testing, documentation, and pre-commit instructions; this skill does not replace them.
 
-When implementation is complete, use the team’s commit conventions, run the applicable repository checks, and push the task branch to the user’s fork. Open a PR against the team repository’s `master` when there is a meaningful change. Match the issue title, include `Fixes #<issue-number>` when applicable, assign the PR to the iteration milestone, and request `@developers` as reviewer. Use a draft PR if the work is not ready. Keep each task on its own branch and PR. Do not merge.
+When implementation is complete, use the team’s commit conventions, run the applicable repository checks, and push the task branch to the user’s fork. Open one PR against the team repository’s `master` when there is a meaningful change. Match the issue title, include `Fixes #<issue-number>` when applicable, assign the PR to the iteration milestone, and request `@developers` as reviewer. Use a draft PR if the work is not ready. Do not merge.
 
 ## Report
 
