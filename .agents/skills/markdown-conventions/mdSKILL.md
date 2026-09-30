@@ -39,7 +39,8 @@ This is _italic_ and **bold**.
 
 ## Repo specifics
 
-* `docs/` is a Jekyll site; keep front matter and existing `{% include %}`/liquid tags intact.
+* `docs/` is a MarkBind site. Keep YAML front matter (`layout`, `title`, `pageNav`), MarkBind components (such as `<box>` and `<puml>`), Nunjucks variables (`{{ ... }}`), and `_markbind/` layouts and shared content intact. See the [MarkBind syntax overview](https://markbind.org/userGuide/markBindSyntaxOverview.html) and [page structure guide](https://markbind.org/userGuide/tweakingThePageStructure.html) when editing these features.
+* Resolve links and images relative to the source file. Use `{{ baseUrl }}` for site-root links in reusable `_markbind/` content; MarkBind converts links to `.md` pages into `.html` links when building the site. See [intra-site links](https://markbind.org/userGuide/formattingContents.html#intra-site-links).
 * Put diagrams' source (PlantUML `.puml`) in `docs/diagrams/` and generated images in `docs/images/`.
 * No trailing whitespace; end files with a single newline (checked by `.github/run-checks.sh`).
 * Never paste secrets, real personal data, or internal URLs into docs or screenshots.
