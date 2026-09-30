@@ -37,6 +37,7 @@ Detailed, step-by-step instructions live in `.agents/skills/`. Load the relevant
 
 | Skill | Use when |
 |-------|----------|
+| `tp-feature-workflow` | Starting or publishing a concrete tP feature, fix, enhancement, or project task; follows the team issue, branch, and PR workflow. |
 | `git-conventions` | Writing commit messages, naming branches, preparing PRs |
 | `java-coding-standard` | Writing or reviewing any Java code |
 | `writing-tests` | Adding, changing or reviewing tests |
