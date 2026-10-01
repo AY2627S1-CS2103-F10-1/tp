@@ -4,17 +4,17 @@
 
 # HRvest
 
-**HRvest** is a desktop application that helps hiring managers at fast-paced startups keep track of job candidates through the hiring pipeline. It is optimised for keyboard-first users: every action is available as a short, scriptable command, so an experienced user can move faster than a mouse-driven applicant tracking system.
+HRvest is a desktop address book for hiring managers at startups who track candidates through the hiring pipeline. Every action is a short typed command, so an experienced user can work faster than they would in a mouse-driven applicant tracking system.
 
 ## What HRvest does
 
-* Stores candidate contact details, applied role, current pipeline status, notes, and tags in a single local address book.
-* Supports commands to add, edit, delete, list, find, filter by status, add notes, update status, view a candidate's details, clear all records, exit, and open help.
-* Persists data locally in a human-readable JSON file next to the jar; no cloud account, no database, no internet connection required.
+* Stores each candidate's contact details, applied role, current pipeline status, notes, and tags in one local address book.
+* Supports commands to add, edit, delete, list, find, filter by status, add notes, update status, view a candidate, clear all records, exit, and open help.
+* Saves data to a JSON file next to the jar. No cloud account, database, or network connection.
 
 ## Target user
 
-A hiring manager at a tech startup who manages 10-50 full-time applicants at a time for 1-3 open roles, prefers typing over clicking, and finds enterprise applicant tracking systems too slow and click-heavy for day-to-day pipeline updates.
+A hiring manager at a tech startup who manages 10 to 50 candidates at a time for 1 to 3 open roles, prefers typing over clicking, and finds most enterprise applicant tracking systems too slow for day-to-day pipeline updates.
 
 ## Getting started
 
@@ -24,4 +24,4 @@ For end-user command reference and feature details, see the [HRvest User Guide](
 
 ## Acknowledgements
 
-This project is based on the [AddressBook-Level3 project](https://github.com/se-edu/addressbook-level3) created by the [SE-EDU initiative](https://se-education.org). The upstream codebase provides the model, logic, and storage scaffolding on which HRvest is built.
+HRvest is based on the [AddressBook-Level3 project](https://github.com/se-edu/addressbook-level3) by the [SE-EDU initiative](https://se-education.org). The AB3 codebase gives us the model, logic, and storage layers that HRvest extends.
