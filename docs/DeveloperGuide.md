@@ -270,7 +270,7 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* is an HR manager at a tech startup hiring for one to three full-time roles at a time
+* is a hiring manager at a tech startup hiring for one to three full-time roles at a time
 * tracks roughly 10 to 50 candidates at a time, including their contact details and progress through hiring
 * needs to find and update candidate records more easily than in a spreadsheet
 * can type quickly and prefers keyboard commands to mouse-driven forms
@@ -329,17 +329,15 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 1. HRVest should be usable by a single user without requiring a shared account or a team-operated remote server for ordinary candidate management.
 1. Core candidate-management commands should work without an internet connection.
 1. The primary workflows for adding, finding, viewing, and updating candidate records should be completable using typed commands without mouse interaction.
-1. HRVest should remain responsive when managing the expected 10 to 50 candidates across one to three open roles.
-1. The GUI should remain readable and usable on common laptop displays.
+1. Listing, searching, filtering, and updating 50 candidate records across three open roles should each complete within two seconds.
+1. The GUI should work well at 1920×1080 resolution with 100% or 125% display scaling, and remain usable at 1280×720 resolution with 150% display scaling.
 
 ### Glossary
 
 * **Candidate**: A person being considered for an open role.
-* **Interviewee**: A candidate taking part in an interview.
 * **Open role**: A position for which the startup is currently recruiting.
-* **Application**: A candidate's consideration for a particular open role, including the current status and relevant hiring details.
-* **Candidate status**: The current state of an application, such as shortlisted, interviewing, offered, or rejected.
-* **Hiring stage**: A step in the recruitment process, such as phone screening, interview, or offer.
+* **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
+* **Candidate status**: A label showing where an application stands in the hiring process, such as shortlisted, interviewing, offered, or rejected.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRVest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
 
