@@ -327,10 +327,12 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 1. HRVest should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or other application-specific software beyond a single JAR file.
 1. HRVest should be usable by a single user without requiring a shared account or a team-operated remote server for ordinary candidate management.
+1. Candidate records should be stored locally in a human-editable text file, without a database management system.
 1. Core candidate-management commands should work without an internet connection.
 1. The primary workflows for adding, finding, viewing, and updating candidate records should be completable using typed commands without mouse interaction.
 1. Listing, searching, filtering, and updating 50 candidate records across three open roles should each complete within two seconds.
 1. The GUI should work well at 1920×1080 resolution with 100% or 125% display scaling, and remain usable at 1280×720 resolution with 150% display scaling.
+1. A successful change to a candidate record should persist after a normal restart, while an invalid command should leave stored candidate records unchanged.
 
 ### Glossary
 
