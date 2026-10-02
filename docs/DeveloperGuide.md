@@ -296,18 +296,44 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `HRvest` and the **Actor** is the `user`, a hiring manager, unless specified otherwise)
 
-**Use case: Delete a person**
+**Use case: UC01 - Add a candidate**
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. User requests to add a candidate, giving the candidate's name, contact details, and the role applied for.
+1. HRvest adds the candidate and shows the added candidate.
 
-    Use case ends.
+   Use case ends.
+
+**Extensions**
+
+* 1a. Some required details are missing or invalid.
+
+    * 1a1. HRvest shows an error message describing the problem.
+    * 1a2. User requests to add the candidate again with corrected details.
+
+      Steps 1a1-1a2 are repeated until the details are valid.
+
+      Use case resumes at step 2.
+
+* 1b. The candidate already exists in HRvest.
+
+    * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC02 - Update a candidate's status**
+
+**MSS**
+
+1. User requests to list candidates.
+1. HRvest shows a list of candidates.
+1. User requests to change the status of a specific candidate in the list to a new status.
+1. HRvest updates the candidate's status and shows the updated candidate.
+
+   Use case ends.
 
 **Extensions**
 
@@ -315,9 +341,85 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
   Use case ends.
 
-* 3a. The given index is invalid.
+* 3a. The specified candidate is not in the list.
 
-    * 3a1. AddressBook shows an error message.
+    * 3a1. HRvest shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. The new status is not a valid candidate status.
+
+    * 3b1. HRvest shows an error message listing the valid candidate statuses.
+
+      Use case resumes at step 2.
+
+* 3c. The candidate already has the new status.
+
+    * 3c1. HRvest informs the user that the status is unchanged.
+
+      Use case ends.
+
+**Use case: UC03 - Edit a candidate's details**
+
+**MSS**
+
+1. User requests to list candidates.
+1. HRvest shows a list of candidates.
+1. User requests to change some details of a specific candidate in the list.
+1. HRvest updates the candidate's details and shows the updated candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The specified candidate is not in the list.
+
+    * 3a1. HRvest shows an error message.
+
+      Use case resumes at step 2.
+
+* 3b. No details to change are given.
+
+    * 3b1. HRvest shows an error message.
+
+      Use case resumes at step 2.
+
+* 3c. Some of the new details are invalid.
+
+    * 3c1. HRvest shows an error message describing the problem.
+
+      Use case resumes at step 2.
+
+* 3d. The changes would make the candidate a duplicate of another candidate in HRvest.
+
+    * 3d1. HRvest shows an error message.
+
+      Use case resumes at step 2.
+
+**Use case: UC04 - Delete a candidate**
+
+**MSS**
+
+1. User requests to list candidates.
+1. HRvest shows a list of candidates.
+1. User requests to delete a specific candidate in the list.
+1. HRvest deletes the candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. The list is empty.
+
+  Use case ends.
+
+* 3a. The specified candidate is not in the list.
+
+    * 3a1. HRvest shows an error message.
 
       Use case resumes at step 2.
 
