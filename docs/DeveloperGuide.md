@@ -298,130 +298,153 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 (For all use cases below, the **System** is `HRvest` and the **Actor** is the `user`, a hiring manager, unless specified otherwise)
 
+The use cases below use these terms:
+
+* **Candidate details**: a candidate's name, phone number, email address and role, which are required, and address and tags, which are optional.
+* **Candidate status**: one of Shortlisted, Interviewing, Offered or Rejected. A newly added candidate is Shortlisted, and a candidate's status can change from any status to any other.
+* **Duplicate candidate**: a candidate with the same name and the same role as another candidate in HRvest. A person who applies for two roles can be added once for each role.
+
 **Use case: UC01 - Add a candidate**
 
 **MSS**
 
-1. User requests to add a candidate, giving the candidate's name, contact details, and the role applied for.
-1. HRvest adds the candidate and shows the added candidate.
+1. User requests to add a candidate, giving the candidate's details.
+1. HRvest adds the candidate with the status Shortlisted and shows the added candidate.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. Some required details are missing or invalid.
+* 1a. A required detail is missing, or a given detail is invalid.
 
     * 1a1. HRvest shows an error message describing the problem.
-    * 1a2. User requests to add the candidate again with corrected details.
 
-      Steps 1a1-1a2 are repeated until the details are valid.
+      Use case ends.
 
-      Use case resumes at step 2.
-
-* 1b. The candidate already exists in HRvest.
+* 1b. The new candidate would be a duplicate candidate.
 
     * 1b1. HRvest shows an error message.
 
       Use case ends.
 
-**Use case: UC02 - Update a candidate's status**
+**Use case: UC02 - List candidates**
 
 **MSS**
 
 1. User requests to list candidates.
-1. HRvest shows a list of candidates.
-1. User requests to change the status of a specific candidate in the list to a new status.
+1. HRvest shows a list of all candidates.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. HRvest has no candidates.
+
+    * 1a1. HRvest informs the user that there are no candidates.
+
+      Use case ends.
+
+**Use case: UC03 - Update a candidate's status**
+
+**MSS**
+
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to change the status of a specific candidate in the list to a new candidate status.
 1. HRvest updates the candidate's status and shows the updated candidate.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. The list is empty.
 
   Use case ends.
 
-* 3a. The specified candidate is not in the list.
+* 2a. The specified candidate is not in the list.
 
-    * 3a1. HRvest shows an error message.
-
-      Use case resumes at step 2.
-
-* 3b. The new status is not a valid candidate status.
-
-    * 3b1. HRvest shows an error message listing the valid candidate statuses.
-
-      Use case resumes at step 2.
-
-* 3c. The candidate already has the new status.
-
-    * 3c1. HRvest informs the user that the status is unchanged.
+    * 2a1. HRvest shows an error message.
 
       Use case ends.
 
-**Use case: UC03 - Edit a candidate's details**
+* 2b. The new status is not a valid candidate status.
+
+    * 2b1. HRvest shows an error message listing the valid candidate statuses.
+
+      Use case ends.
+
+* 2c. The candidate already has the new status.
+
+    * 2c1. HRvest informs the user that the status is unchanged.
+
+      Use case ends.
+
+**Use case: UC04 - Edit a candidate's details**
 
 **MSS**
 
-1. User requests to list candidates.
-1. HRvest shows a list of candidates.
-1. User requests to change some details of a specific candidate in the list.
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to change one or more of the candidate details of a specific candidate in the list. The candidate status is changed through UC03 instead.
 1. HRvest updates the candidate's details and shows the updated candidate.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. The list is empty.
 
   Use case ends.
 
-* 3a. The specified candidate is not in the list.
+* 2a. The specified candidate is not in the list.
 
-    * 3a1. HRvest shows an error message.
+    * 2a1. HRvest shows an error message.
 
-      Use case resumes at step 2.
+      Use case ends.
 
-* 3b. No details to change are given.
+* 2b. No details to change are given.
 
-    * 3b1. HRvest shows an error message.
+    * 2b1. HRvest shows an error message.
 
-      Use case resumes at step 2.
+      Use case ends.
 
-* 3c. Some of the new details are invalid.
+* 2c. A new detail is invalid.
 
-    * 3c1. HRvest shows an error message describing the problem.
+    * 2c1. HRvest shows an error message describing the problem.
 
-      Use case resumes at step 2.
+      Use case ends.
 
-* 3d. The changes would make the candidate a duplicate of another candidate in HRvest.
+* 2d. The changes would make the candidate a duplicate candidate.
 
-    * 3d1. HRvest shows an error message.
+    * 2d1. HRvest shows an error message.
 
-      Use case resumes at step 2.
+      Use case ends.
 
-**Use case: UC04 - Delete a candidate**
+* 2e. The new details are the same as the candidate's current details.
+
+    * 2e1. HRvest informs the user that the details are unchanged.
+
+      Use case ends.
+
+**Use case: UC05 - Delete a candidate**
 
 **MSS**
 
-1. User requests to list candidates.
-1. HRvest shows a list of candidates.
+1. User performs <u>List candidates (UC02)</u>.
 1. User requests to delete a specific candidate in the list.
-1. HRvest deletes the candidate.
+1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
 
    Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. The list is empty.
 
   Use case ends.
 
-* 3a. The specified candidate is not in the list.
+* 2a. The specified candidate is not in the list.
 
-    * 3a1. HRvest shows an error message.
+    * 2a1. HRvest shows an error message.
 
-      Use case resumes at step 2.
+      Use case ends.
 
 *{More to be added}*
 
