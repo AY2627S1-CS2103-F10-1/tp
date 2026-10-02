@@ -298,11 +298,7 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 (For all use cases below, the **System** is `HRvest` and the **Actor** is the `user`, a hiring manager, unless specified otherwise)
 
-The use cases below use these terms:
-
-* **Candidate details**: a candidate's name, phone number, email address and role, which are required, and address and tags, which are optional.
-* **Candidate status**: one of Shortlisted, Interviewing, Offered or Rejected. A newly added candidate is Shortlisted, and a candidate's status can change from any status to any other.
-* **Duplicate candidate**: a candidate with the same name and the same role as another candidate in HRvest. A person who applies for two roles can be added once for each role.
+The terms candidate details, candidate status, duplicate candidate and note are defined in the [Glossary](#glossary).
 
 **Use case: UC01 - Add a candidate**
 
@@ -383,7 +379,7 @@ The use cases below use these terms:
 **MSS**
 
 1. User performs <u>List candidates (UC02)</u>.
-1. User requests to change one or more of the candidate details of a specific candidate in the list. The candidate status is changed through UC03 instead.
+1. User requests to change one or more of the candidate details of a specific candidate in the list.
 1. HRvest updates the candidate's details and shows the updated candidate.
 
    Use case ends.
@@ -418,7 +414,7 @@ The use cases below use these terms:
 
       Use case ends.
 
-* 2e. The new details are the same as the candidate's current details.
+* 2e. All the given details are the same as the candidate's current details.
 
     * 2e1. HRvest informs the user that the details are unchanged.
 
@@ -458,7 +454,11 @@ The use cases below use these terms:
 
 ### Glossary
 
+* **Candidate details**: A candidate's name, phone number, email address and role, which are required, and address and tags, which are optional. The candidate status and notes are not candidate details: the status is changed through UC03, and notes are kept separately.
+* **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected. A newly added candidate is Shortlisted, and a candidate's status can change from any status to any other.
+* **Duplicate candidate**: A candidate with the same email address and the same role as another candidate in HRvest. Email addresses are compared ignoring case, and roles are compared ignoring case and extra spaces. Two people with the same name can apply for the same role, and one person can be added once for each role they apply for.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
+* **Note**: A dated remark about a candidate, such as interview feedback. A candidate's notes are deleted together with the candidate.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
