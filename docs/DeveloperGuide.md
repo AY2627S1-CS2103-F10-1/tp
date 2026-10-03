@@ -281,18 +281,48 @@ _{Explain here how the data archiving feature will be implemented}_
 
 ### User stories
 
-Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
+Priorities: High (must have) `* * *`, Medium (nice to have) `* *`, Low (unlikely to have) `*`.
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+Target user: a hiring manager at a tech startup, managing 10-50 candidates across 1-3 open roles, keyboard-first.
 
-*{More to be added}*
+#### Must-have (MVP, `* * *`)
+
+| Priority | As a …           | I want to …                                          | So that I can…                                                     |
+|----------|-------------------|-------------------------------------------------------|---------------------------------------------------------------------|
+| `* * *`  | new user          | launch HRvest and see usage instructions on screen    | start using the app without reading external docs                   |
+| `* * *`  | new user          | add a new candidate with contact details              | begin tracking them from first contact                              |
+| `* * *`  | new user          | search for a candidate by name                        | pull up their details faster than scrolling through my spreadsheet  |
+| `* * *`  | new user          | edit a candidate's contact details                    | fix typos or update their info without re-adding them               |
+| `* * *`  | user              | delete a candidate from the list                      | remove duds and withdrawals without cluttering my view              |
+| `* * *`  | user              | list every candidate currently in the app             | see my full pipeline at a glance                                    |
+| `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
+| `* * *`  | user              | update a candidate's status after an interview        | keep the pipeline accurate as candidates move through stages        |
+| `* * *`  | user              | view a candidate's full details including all notes   | prepare for the next conversation with them                         |
+| `* * *`  | user              | see a confirmation when an action succeeds            | trust that the command actually did what I asked                    |
+
+#### Nice-to-have (`* *`)
+
+| Priority | As a …           | I want to …                                                      | So that I can…                                                       |
+|----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
+| `* *`    | familiar user     | find a candidate by a partial keyword of their name               | pull up someone whose full name I do not remember                     |
+| `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a running history of every touchpoint with that candidate        |
+| `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
+| `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
+| `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
+| `* *`    | expert user       | import a batch of shortlisted applicants from an external source  | avoid retyping candidates sourced from LinkedIn, Indeed, or email     |
+| `* *`    | expert user       | mark certain follow-up tasks as done                              | keep track of what I have completed versus what I still need to do   |
+| `* *`    | expert user       | batch-update statuses after a mass interview day                  | avoid updating candidates one by one after large hiring events        |
+
+#### Low-priority (`*`)
+
+| Priority | As a …           | I want to …                                              | So that I can…                                                       |
+|----------|-------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
+| `*`      | expert user       | view analytics on the hiring funnel                       | report hiring performance to stakeholders                             |
+| `*`      | expert user       | set custom follow-up reminders on specific candidates     | avoid letting any candidate fall through the cracks                   |
+| `*`      | expert user       | export candidate data as a report                         | share hiring metrics with people outside the app                      |
+| `*`      | expert user       | integrate HRvest with job boards such as LinkedIn/Indeed  | pull new applicants in automatically                                  |
+
+*See [the full brainstormed list in the project notes](https://docs.google.com/spreadsheets/d/1N5Ji0Wl8ai_IVu94vVavK0b_f5AiQSDjcHCVw-pA5EM/edit) for stories we considered and dropped.*
 
 ### Use cases
 
