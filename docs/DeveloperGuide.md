@@ -4,7 +4,7 @@
   pageNav: 3
 ---
 
-# AB-3 Developer Guide
+# HRvest Developer Guide
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -281,45 +281,196 @@ _{Explain here how the data archiving feature will be implemented}_
 
 ### User stories
 
-Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unlikely to have) - `*`
+Priorities: High (must have) `* * *`, Medium (nice to have) `* *`, Low (unlikely to have) `*`.
 
-| Priority | As a …                                    | I want to …                 | So that I can…                                                        |
-|----------|--------------------------------------------|------------------------------|------------------------------------------------------------------------|
-| `* * *`  | new user                                   | see usage instructions       | refer to instructions when I forget how to use the App                 |
-| `* * *`  | user                                       | add a new person             |                                                                        |
-| `* * *`  | user                                       | delete a person              | remove entries that I no longer need                                   |
-| `* * *`  | user                                       | find a person by name        | locate details of persons without having to go through the entire list |
-| `* *`    | user                                       | hide private contact details | minimize chance of someone else seeing them by accident                |
-| `*`      | user with many persons in the address book | sort persons by name         | locate a person easily                                                 |
+Target user: a hiring manager at a tech startup, managing 10-50 candidates across 1-3 open roles, keyboard-first.
 
-*{More to be added}*
+#### Must-have (MVP, `* * *`)
+
+| Priority | As a …           | I want to …                                          | So that I can…                                                     |
+|----------|-------------------|-------------------------------------------------------|---------------------------------------------------------------------|
+| `* * *`  | new user          | launch HRvest and see usage instructions on screen    | start using the app without reading external docs                   |
+| `* * *`  | new user          | add a new candidate with contact details              | begin tracking them from first contact                              |
+| `* * *`  | new user          | search for a candidate by name                        | pull up their details faster than scrolling through my spreadsheet  |
+| `* * *`  | new user          | edit a candidate's contact details                    | fix typos or update their info without re-adding them               |
+| `* * *`  | user              | delete a candidate from the list                      | remove duds and withdrawals without cluttering my view              |
+| `* * *`  | user              | list every candidate currently in the app             | see my full pipeline at a glance                                    |
+| `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
+| `* * *`  | user              | update a candidate's status after an interview        | keep the pipeline accurate as candidates move through stages        |
+| `* * *`  | user              | view a candidate's full details including all notes   | prepare for the next conversation with them                         |
+| `* * *`  | user              | see a confirmation when an action succeeds            | trust that the command actually did what I asked                    |
+
+#### Nice-to-have (`* *`)
+
+| Priority | As a …           | I want to …                                                      | So that I can…                                                       |
+|----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
+| `* *`    | familiar user     | find a candidate by a partial keyword of their name               | pull up someone whose full name I do not remember                     |
+| `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a running history of every touchpoint with that candidate        |
+| `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
+| `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
+| `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
+| `* *`    | expert user       | import a batch of shortlisted applicants from an external source  | avoid retyping candidates sourced from LinkedIn, Indeed, or email     |
+| `* *`    | expert user       | mark certain follow-up tasks as done                              | keep track of what I have completed versus what I still need to do   |
+| `* *`    | expert user       | batch-update statuses after a mass interview day                  | avoid updating candidates one by one after large hiring events        |
+
+#### Low-priority (`*`)
+
+| Priority | As a …           | I want to …                                              | So that I can…                                                       |
+|----------|-------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
+| `*`      | expert user       | view analytics on the hiring funnel                       | report hiring performance to stakeholders                             |
+| `*`      | expert user       | set custom follow-up reminders on specific candidates     | avoid letting any candidate fall through the cracks                   |
+| `*`      | expert user       | export candidate data as a report                         | share hiring metrics with people outside the app                      |
+| `*`      | expert user       | integrate HRvest with job boards such as LinkedIn/Indeed  | pull new applicants in automatically                                  |
+
+*See [the full brainstormed list in the project notes](https://docs.google.com/spreadsheets/d/1N5Ji0Wl8ai_IVu94vVavK0b_f5AiQSDjcHCVw-pA5EM/edit) for stories we considered and dropped.*
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `HRvest` and the **Actor** is the `user`, a hiring manager, unless specified otherwise)
 
-**Use case: Delete a person**
+The terms candidate details, candidate status, duplicate candidate and note are defined in the [Glossary](#glossary).
+
+**Use case: UC01 - Add a candidate**
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. User requests to add a candidate, giving the candidate's details.
+1. HRvest adds the candidate with the status Shortlisted and shows the added candidate.
 
-    Use case ends.
+   Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. A required detail is missing, or a given detail is invalid.
+
+    * 1a1. HRvest shows an error message describing the problem.
+
+      Use case ends.
+
+* 1b. The new candidate would be a duplicate candidate.
+
+    * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC02 - List candidates**
+
+**MSS**
+
+1. User requests to list candidates.
+1. HRvest shows a list of all candidates.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. HRvest has no candidates.
+
+    * 1a1. HRvest informs the user that there are no candidates.
+
+      Use case ends.
+
+**Use case: UC03 - Update a candidate's status**
+
+**MSS**
+
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to change the status of a specific candidate in the list to a new candidate status.
+1. HRvest updates the candidate's status and shows the updated candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The list is empty.
 
   Use case ends.
 
-* 3a. The given index is invalid.
+* 2a. The specified candidate is not in the list.
 
-    * 3a1. AddressBook shows an error message.
+    * 2a1. HRvest shows an error message.
 
-      Use case resumes at step 2.
+      Use case ends.
+
+* 2b. The new status is not a valid candidate status.
+
+    * 2b1. HRvest shows an error message listing the valid candidate statuses.
+
+      Use case ends.
+
+* 2c. The candidate already has the new status.
+
+    * 2c1. HRvest informs the user that the status is unchanged.
+
+      Use case ends.
+
+**Use case: UC04 - Edit a candidate's details**
+
+**MSS**
+
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to change one or more of the candidate details of a specific candidate in the list.
+1. HRvest updates the candidate's details and shows the updated candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The list is empty.
+
+  Use case ends.
+
+* 2a. The specified candidate is not in the list.
+
+    * 2a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 2b. No details to change are given.
+
+    * 2b1. HRvest shows an error message.
+
+      Use case ends.
+
+* 2c. A new detail is invalid.
+
+    * 2c1. HRvest shows an error message describing the problem.
+
+      Use case ends.
+
+* 2d. The changes would make the candidate a duplicate candidate.
+
+    * 2d1. HRvest shows an error message.
+
+      Use case ends.
+
+* 2e. All the given details are the same as the candidate's current details.
+
+    * 2e1. HRvest informs the user that the details are unchanged.
+
+      Use case ends.
+
+**Use case: UC05 - Delete a candidate**
+
+**MSS**
+
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to delete a specific candidate in the list.
+1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The list is empty.
+
+  Use case ends.
+
+* 2a. The specified candidate is not in the list.
+
+    * 2a1. HRvest shows an error message.
+
+      Use case ends.
 
 *{More to be added}*
 
@@ -339,9 +490,14 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 * **Candidate**: A person being considered for an open role.
 * **Open role**: A position for which the startup is currently recruiting.
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
-* **Candidate status**: A label showing where an application stands in the hiring process, such as shortlisted, interviewing, offered, or rejected.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRVest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
+* **Candidate details**: A candidate's name, phone number, email address and role, which are required, and address and tags, which are optional. The candidate status and notes are not candidate details: the status is changed through UC03, and notes are kept separately.
+* **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected. A newly added candidate is Shortlisted, and a candidate's status can change from any status to any other.
+* **Duplicate candidate**: A candidate with the same email address and the same role as another candidate in HRvest. Email addresses are compared ignoring case, and roles are compared ignoring case and extra spaces. Two people with the same name can apply for the same role, and one person can be added once for each role they apply for.
+* **Mainstream OS**: Windows, Linux, Unix, or macOS
+* **Note**: A dated remark about a candidate, such as interview feedback. A candidate's notes are deleted together with the candidate.
+* **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
 
