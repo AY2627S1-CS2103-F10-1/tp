@@ -472,6 +472,100 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
+**Use case: UC06 - Find a candidate by name**
+
+**MSS**
+
+1. User requests to find candidates whose names contain a keyword.
+1. HRvest shows a list of matching candidates.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. No keyword is given.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 2a. No candidate matches the keyword.
+
+    * 2a1. HRvest informs the user that no candidates match.
+
+      Use case ends.
+
+**Use case: UC07 - Filter candidates by status**
+
+**MSS**
+
+1. User requests to filter candidates by candidate status.
+1. HRvest shows candidates with the specified status.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The specified status is not a valid candidate status.
+
+    * 1a1. HRvest shows an error message listing the valid candidate statuses.
+
+      Use case ends.
+
+* 2a. No candidates match the specified status.
+
+    * 2a1. HRvest informs the user that no candidates match.
+
+      Use case ends.
+
+**Use case: UC08 - View a candidate's full details**
+
+**Preconditions**
+
+User knows which candidate profile to view.
+
+**MSS**
+
+1. User requests to view the full details of a candidate profile.
+1. HRvest shows the candidate's full details, including all notes.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The specified candidate is not found.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC09 - Add a note to a candidate**
+
+**Preconditions**
+
+User knows which candidate to add a note to.
+
+**MSS**
+
+1. User requests to add a note to a specific candidate.
+1. HRvest adds the note without overwriting earlier notes and shows the updated candidate profile.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The specified candidate is not found.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1b. The note is empty.
+
+    * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
 *{More to be added}*
 
 ### Non-Functional Requirements
