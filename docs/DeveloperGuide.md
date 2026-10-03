@@ -283,8 +283,6 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) `* * *`, Medium (nice to have) `* *`, Low (unlikely to have) `*`.
 
-Target user: a hiring manager at a tech startup, managing 10-50 candidates across 1-3 open roles, keyboard-first.
-
 #### Must-have (MVP, `* * *`)
 
 | Priority | As a …           | I want to …                                          | So that I can…                                                     |
@@ -293,7 +291,7 @@ Target user: a hiring manager at a tech startup, managing 10-50 candidates acros
 | `* * *`  | new user          | add a new candidate with contact details              | begin tracking them from first contact                              |
 | `* * *`  | new user          | search for a candidate by name                        | pull up their details faster than scrolling through my spreadsheet  |
 | `* * *`  | new user          | edit a candidate's contact details                    | fix typos or update their info without re-adding them               |
-| `* * *`  | user              | delete a candidate from the list                      | remove duds and withdrawals without cluttering my view              |
+| `* * *`  | user              | delete a candidate from the list                      | keep my list focused on candidates still under consideration        |
 | `* * *`  | user              | list every candidate currently in the app             | see my full pipeline at a glance                                    |
 | `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
 | `* * *`  | user              | update a candidate's status after an interview        | keep the pipeline accurate as candidates move through stages        |
