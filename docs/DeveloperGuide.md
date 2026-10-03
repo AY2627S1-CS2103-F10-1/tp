@@ -290,22 +290,22 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | Priority | As a …           | I want to …                                          | So that I can…                                                     |
 |----------|-------------------|-------------------------------------------------------|---------------------------------------------------------------------|
 | `* * *`  | new user          | launch HRvest and see usage instructions on screen    | start using the app without reading external docs                   |
-| `* * *`  | new user          | add a new candidate with contact details              | begin tracking them from first contact                              |
-| `* * *`  | new user          | search for a candidate by name                        | pull up their details faster than scrolling through my spreadsheet  |
-| `* * *`  | new user          | edit a candidate's contact details                    | fix typos or update their info without re-adding them               |
+| `* * *`  | new user          | add a new candidate with contact details              | keep a record of every candidate I am considering                   |
+| `* * *`  | new user          | search for a candidate by name                        | view their details without scrolling through the whole list         |
+| `* * *`  | new user          | edit a candidate's contact details                    | correct mistakes or outdated details without re-adding them         |
 | `* * *`  | user              | delete a candidate from the list                      | keep my list focused on candidates still under consideration        |
-| `* * *`  | user              | list every candidate currently in the app             | see my full pipeline at a glance                                    |
+| `* * *`  | user              | list every candidate currently in the app             | see every candidate in my pipeline in one view                      |
 | `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
 | `* * *`  | user              | update a candidate's status after an interview        | keep the pipeline accurate as candidates move through stages        |
 | `* * *`  | user              | view a candidate's full details including all notes   | prepare for the next conversation with them                         |
-| `* * *`  | user              | see a confirmation when an action succeeds            | trust that the command actually did what I asked                    |
+| `* * *`  | user              | see a confirmation when an action succeeds            | confirm that the command did what I intended                        |
 
 #### Nice-to-have (`* *`)
 
 | Priority | As a …           | I want to …                                                      | So that I can…                                                       |
 |----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
-| `* *`    | familiar user     | find a candidate by a partial keyword of their name               | pull up someone whose full name I do not remember                     |
-| `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a running history of every touchpoint with that candidate        |
+| `* *`    | familiar user     | find a candidate by a partial keyword of their name               | find a candidate whose full name I do not remember                    |
+| `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a complete history of my interactions with that candidate        |
 | `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
 | `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
@@ -318,9 +318,9 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | Priority | As a …           | I want to …                                              | So that I can…                                                       |
 |----------|-------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
 | `*`      | expert user       | view analytics on the hiring funnel                       | report hiring performance to stakeholders                             |
-| `*`      | expert user       | set custom follow-up reminders on specific candidates     | avoid letting any candidate fall through the cracks                   |
+| `*`      | expert user       | set custom follow-up reminders on specific candidates     | follow up with every candidate on time                                |
 | `*`      | expert user       | export candidate data as a report                         | share hiring metrics with people outside the app                      |
-| `*`      | expert user       | integrate HRvest with job boards such as LinkedIn/Indeed  | pull new applicants in automatically                                  |
+| `*`      | expert user       | integrate HRvest with job boards such as LinkedIn/Indeed  | add new applicants to HRvest automatically                            |
 
 *See [the full brainstormed list in the project notes](https://docs.google.com/spreadsheets/d/1N5Ji0Wl8ai_IVu94vVavK0b_f5AiQSDjcHCVw-pA5EM/edit) for stories we considered and dropped.*
 
