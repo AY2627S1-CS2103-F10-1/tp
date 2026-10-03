@@ -6,7 +6,7 @@
 
 # HRvest User Guide
 
-HRvest is a **desktop address book for hiring managers at startups who track candidates through the hiring pipeline, optimized for use through a Command Line Interface (CLI)** while retaining the benefits of a Graphical User Interface (GUI). If you type quickly, HRvest can help you manage candidates faster than a mouse-driven applicant tracking system.
+HRvest is a **desktop address book that helps hiring managers at startups track candidates through the hiring pipeline with less administrative work**. While it has a GUI (Graphical User Interface), most interactions are short typed commands in a CLI (Command Line Interface), so if you type fast, you can work faster than in a mouse-driven applicant tracking system.
 
 <!-- * Table of Contents -->
 <page-nav-print />
