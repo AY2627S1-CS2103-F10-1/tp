@@ -283,6 +283,8 @@ _{Explain here how the data archiving feature will be implemented}_
 
 Priorities: High (must have) `* * *`, Medium (nice to have) `* *`, Low (unlikely to have) `*`.
 
+Target user: a hiring manager at a tech startup who hires for one to three full-time roles at a time, tracks roughly 10 to 50 candidates, and prefers keyboard commands to mouse-driven forms.
+
 #### Must-have (MVP, `* * *`)
 
 | Priority | As a …           | I want to …                                          | So that I can…                                                     |
