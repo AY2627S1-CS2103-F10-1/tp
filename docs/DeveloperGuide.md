@@ -296,30 +296,151 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Use cases
 
-(For all use cases below, the **System** is the `AddressBook` and the **Actor** is the `user`, unless specified otherwise)
+(For all use cases below, the **System** is `HRvest` and the **Actor** is the `user`, a hiring manager, unless specified otherwise)
 
-**Use case: Delete a person**
+The terms candidate details, candidate status, duplicate candidate and note are defined in the [Glossary](#glossary).
+
+**Use case: UC01 - Add a candidate**
 
 **MSS**
 
-1.  User requests to list persons
-2.  AddressBook shows a list of persons
-3.  User requests to delete a specific person in the list
-4.  AddressBook deletes the person
+1. User requests to add a candidate, giving the candidate's details.
+1. HRvest adds the candidate with the status Shortlisted and shows the added candidate.
 
-    Use case ends.
+   Use case ends.
 
 **Extensions**
 
-* 2a. The list is empty.
+* 1a. A required detail is missing, or a given detail is invalid.
+
+    * 1a1. HRvest shows an error message describing the problem.
+
+      Use case ends.
+
+* 1b. The new candidate would be a duplicate candidate.
+
+    * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC02 - List candidates**
+
+**MSS**
+
+1. User requests to list candidates.
+1. HRvest shows a list of all candidates.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. HRvest has no candidates.
+
+    * 1a1. HRvest informs the user that there are no candidates.
+
+      Use case ends.
+
+**Use case: UC03 - Update a candidate's status**
+
+**MSS**
+
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to change the status of a specific candidate in the list to a new candidate status.
+1. HRvest updates the candidate's status and shows the updated candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The list is empty.
 
   Use case ends.
 
-* 3a. The given index is invalid.
+* 2a. The specified candidate is not in the list.
 
-    * 3a1. AddressBook shows an error message.
+    * 2a1. HRvest shows an error message.
 
-      Use case resumes at step 2.
+      Use case ends.
+
+* 2b. The new status is not a valid candidate status.
+
+    * 2b1. HRvest shows an error message listing the valid candidate statuses.
+
+      Use case ends.
+
+* 2c. The candidate already has the new status.
+
+    * 2c1. HRvest informs the user that the status is unchanged.
+
+      Use case ends.
+
+**Use case: UC04 - Edit a candidate's details**
+
+**MSS**
+
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to change one or more of the candidate details of a specific candidate in the list.
+1. HRvest updates the candidate's details and shows the updated candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The list is empty.
+
+  Use case ends.
+
+* 2a. The specified candidate is not in the list.
+
+    * 2a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 2b. No details to change are given.
+
+    * 2b1. HRvest shows an error message.
+
+      Use case ends.
+
+* 2c. A new detail is invalid.
+
+    * 2c1. HRvest shows an error message describing the problem.
+
+      Use case ends.
+
+* 2d. The changes would make the candidate a duplicate candidate.
+
+    * 2d1. HRvest shows an error message.
+
+      Use case ends.
+
+* 2e. All the given details are the same as the candidate's current details.
+
+    * 2e1. HRvest informs the user that the details are unchanged.
+
+      Use case ends.
+
+**Use case: UC05 - Delete a candidate**
+
+**MSS**
+
+1. User performs <u>List candidates (UC02)</u>.
+1. User requests to delete a specific candidate in the list.
+1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The list is empty.
+
+  Use case ends.
+
+* 2a. The specified candidate is not in the list.
+
+    * 2a1. HRvest shows an error message.
+
+      Use case ends.
 
 *{More to be added}*
 
@@ -333,7 +454,11 @@ Priorities: High (must have) - `* * *`, Medium (nice to have) - `* *`, Low (unli
 
 ### Glossary
 
+* **Candidate details**: A candidate's name, phone number, email address and role, which are required, and address and tags, which are optional. The candidate status and notes are not candidate details: the status is changed through UC03, and notes are kept separately.
+* **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected. A newly added candidate is Shortlisted, and a candidate's status can change from any status to any other.
+* **Duplicate candidate**: A candidate with the same email address and the same role as another candidate in HRvest. Email addresses are compared ignoring case, and roles are compared ignoring case and extra spaces. Two people with the same name can apply for the same role, and one person can be added once for each role they apply for.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
+* **Note**: A dated remark about a candidate, such as interview feedback. A candidate's notes are deleted together with the candidate.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
