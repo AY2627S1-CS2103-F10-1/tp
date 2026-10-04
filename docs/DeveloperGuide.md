@@ -520,10 +520,6 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **Use case: UC08 - View a candidate's full details**
 
-**Preconditions**
-
-User knows which candidate profile to view.
-
 **MSS**
 
 1. User requests to view the full details of a candidate profile.
@@ -540,10 +536,6 @@ User knows which candidate profile to view.
       Use case ends.
 
 **Use case: UC09 - Add a note to a candidate**
-
-**Preconditions**
-
-User knows which candidate to add a note to.
 
 **MSS**
 
