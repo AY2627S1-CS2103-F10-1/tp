@@ -270,13 +270,13 @@ _{Explain here how the data archiving feature will be implemented}_
 
 **Target user profile**:
 
-* has a need to manage a significant number of contacts
-* prefers desktop apps over other types of applications
-* can type fast
-* prefers typing to mouse interactions
-* is reasonably comfortable using CLI apps
+* is a hiring manager at a tech startup hiring for one to three full-time roles at a time
+* tracks roughly 10 to 50 candidates at a time, including their contact details and progress through hiring
+* needs to find and update candidate records more easily than in a spreadsheet
+* can type quickly and prefers keyboard commands to mouse-driven forms
+* uses the app individually on a desktop or laptop computer
 
-**Value proposition**: Manage contacts faster than with a typical mouse-driven GUI application.
+**Value proposition**: HRVest helps a startup hiring manager fill full-time roles faster by tracking candidates and hiring progress with keyboard-first commands, reducing spreadsheet work and making follow-ups easier to spot.
 
 
 ### User stories
@@ -476,19 +476,27 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 ### Non-Functional Requirements
 
-1.  Should work on any _mainstream OS_ as long as it has Java `25` or above installed.
-2.  Should be able to hold up to 1000 persons without noticeable sluggishness in performance for typical usage.
-3.  A user with above average typing speed for regular English text (i.e. not code, not system admin commands) should be able to accomplish most of the tasks faster using commands than using the mouse.
-
-*{More to be added}*
+1. HRVest should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or other application-specific software beyond a single JAR file.
+1. HRVest should be usable by a single user without requiring a shared account or a team-operated remote server for ordinary candidate management.
+1. Candidate records should be stored locally in a human-editable text file, without a database management system.
+1. Core candidate-management commands should work without an internet connection.
+1. The primary workflows for adding, finding, viewing, and updating candidate records should be completable using typed commands without mouse interaction.
+1. Listing, searching, filtering, and updating 50 candidate records across three open roles should each complete within two seconds.
+1. The GUI should work well at 1920×1080 resolution with 100% or 125% display scaling, and remain usable at 1280×720 resolution with 150% display scaling.
+1. A successful change to a candidate record should persist after a normal restart, while an invalid command should leave stored candidate records unchanged.
 
 ### Glossary
 
-* **Candidate details**: A candidate's name, phone number, email address and role, which are required, and address and tags, which are optional. The candidate status and notes are not candidate details: the status is changed through UC03, and notes are kept separately.
-* **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected. A newly added candidate is Shortlisted, and a candidate's status can change from any status to any other.
-* **Duplicate candidate**: A candidate with the same email address and the same role as another candidate in HRvest. Email addresses are compared ignoring case, and roles are compared ignoring case and extra spaces. Two people with the same name can apply for the same role, and one person can be added once for each role they apply for.
+* **Candidate**: A person being considered for an open role.
+* **Open role**: A position for which the startup is currently recruiting.
+* **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
+* **Candidate profile**: The candidate's contact information and hiring details shown together in HRVest.
+* **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
+* **Candidate details**: A candidate's name, phone number, email address, role, address and tags.
+* **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected.
+* **Duplicate candidate**: A candidate with the same email address and role as another candidate in HRvest.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Note**: A dated remark about a candidate, such as interview feedback. A candidate's notes are deleted together with the candidate.
+* **Note**: A dated remark about a candidate, such as interview feedback.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
