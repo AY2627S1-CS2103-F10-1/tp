@@ -558,6 +558,69 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
+**Use case: UC10 - Import a batch of candidates**
+
+**MSS**
+
+1. User requests to import candidates from a file of shortlisted applicants.
+1. HRvest adds each candidate in the file and shows the number of candidates imported.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The file cannot be found or read.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1b. The file is not in the expected format.
+
+    * 1b1. HRvest shows an error message describing the expected format.
+
+      Use case ends.
+
+* 1c. Some candidates in the file have a missing or invalid detail.
+
+    * 1c1. HRvest skips those candidates and shows the problem with each.
+
+      Use case resumes at step 2.
+
+* 1d. Some candidates in the file would be duplicate candidates.
+
+    * 1d1. HRvest skips those candidates, leaving the existing candidates unchanged, and shows which were skipped.
+
+      Use case resumes at step 2.
+
+**Use case: UC11 - Track responses to offers**
+
+**MSS**
+
+1. User performs <u>Filter candidates by status (UC07)</u> with the status Offered, to see which offers are awaiting a response.
+1. User performs <u>Update a candidate's status (UC03)</u> for a candidate who has responded to an offer.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. No candidates have the status Offered.
+
+  Use case ends.
+
+* 1b. No candidate has responded to an offer yet.
+
+  Use case ends.
+
+**Use case: UC12 - View usage instructions**
+
+**MSS**
+
+1. User requests help.
+1. HRvest shows where to find the usage instructions.
+
+   Use case ends.
+
 *{More to be added}*
 
 ### Non-Functional Requirements
