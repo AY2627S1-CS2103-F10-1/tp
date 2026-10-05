@@ -1,6 +1,6 @@
 ---
 name: git-conventions
-description: Team git conventions for commit messages, branch names and PRs, based on the se-edu git guide. Use whenever writing a commit message, creating a branch, or preparing a pull request.
+description: Team git conventions for commit messages, branch names, and pull requests (opening, reviewing, merging), based on the se-edu git guide and course Appendix E. Use whenever writing a commit message, creating a branch, or preparing, reviewing, or merging a pull request.
 ---
 
 # git-conventions
