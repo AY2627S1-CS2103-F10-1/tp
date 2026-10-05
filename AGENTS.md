@@ -46,6 +46,7 @@ Detailed, step-by-step instructions live in `.agents/skills/<name>/SKILL.md`, wh
 | `markdown-conventions` | Editing any `.md` file (docs, README, skills) |
 | `secure-coding` | Handling input, files, dependencies, secrets, logging, or anything security-relevant |
 | `pre-commit-checks` | Verifying work before a commit / PR |
+| `tp-iteration-release` | Wrapping up an iteration milestone and publishing its release (JAR, release notes, tag) |
 
 Key rules at a glance:
 
@@ -69,7 +70,9 @@ See the `secure-coding` skill for details.
 ## Things agents must not do
 
 * Commit or push unless asked; never `git push --force` to `master`.
-* Edit `config/checkstyle/*.xml`, `.github/workflows/*`, or `build.gradle` dependency versions without being asked.
+* Edit `config/checkstyle/*.xml`, `.github/workflows/*`, or `build.gradle` dependency versions without being asked, or make drastic changes to `build.gradle` at all.
+* Use the `javax.web` library (or a WebView) just to show the user guide as a web page.
+* Merge PRs, push tags, publish releases, or close milestones without explicit approval for that specific action.
 * Delete or `@Disabled` failing tests to get a green build.
 * Commit generated files (`build/`, `data/`, `preferences.json`, logs, `docs/_site/`).
 * Change `copyright.txt`, `LICENSE`, or AB3 attribution.
