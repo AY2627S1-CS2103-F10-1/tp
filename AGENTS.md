@@ -41,6 +41,7 @@ Detailed, step-by-step instructions live in `.agents/skills/<name>/SKILL.md`, wh
 | `git-conventions` | Writing commit messages, naming branches, preparing PRs |
 | `java-coding-standard` | Writing or reviewing any Java code |
 | `code-quality` | Writing, changing, or reviewing non-trivial Java production or test code, including pre-merge reviews |
+| `pe-bug-prevention` | Designing, implementing, or reviewing user-facing commands, parsing, validation, error messages, duplicate detection, search, or the UG that describes them |
 | `writing-tests` | Adding, changing or reviewing tests |
 | `markdown-conventions` | Editing any `.md` file (docs, README, skills) |
 | `secure-coding` | Handling input, files, dependencies, secrets, logging, or anything security-relevant |
