@@ -4,8 +4,12 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -96,11 +100,32 @@ public class JsonAddressBookStorage {
         Files.createDirectories(parent);
         Path temporaryFile = Files.createTempFile(parent, "addressbook-", ".tmp");
         try {
+            copyExistingAcl(destination, temporaryFile);
             JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), temporaryFile);
             Files.move(temporaryFile, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } finally {
             Files.deleteIfExists(temporaryFile);
         }
+    }
+
+    /**
+     * Copies the existing destination's ACL to the temporary file before candidate data is written.
+     * Leaves the default ACL unchanged when the destination is absent or ACLs are unsupported.
+     *
+     * @throws IOException if reading or applying the ACL fails.
+     */
+    private static void copyExistingAcl(Path destination, Path temporaryFile) throws IOException {
+        AclFileAttributeView aclView = Files.getFileAttributeView(destination, AclFileAttributeView.class);
+        if (aclView == null) {
+            return;
+        }
+        List<AclEntry> acl;
+        try {
+            acl = aclView.getAcl();
+        } catch (NoSuchFileException e) {
+            return;
+        }
+        Files.setAttribute(temporaryFile, "acl:acl", acl);
     }
 
 }

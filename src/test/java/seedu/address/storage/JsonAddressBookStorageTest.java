@@ -13,9 +13,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -125,6 +132,30 @@ public class JsonAddressBookStorageTest {
         try (var files = Files.list(destination.getParent())) {
             assertEquals(List.of(destination), files.toList());
         }
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    public void saveAddressBook_existingRestrictedAcl_preservesAcl() throws Exception {
+        Path destination = testFolder.resolve("candidates.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        AddressBook addressBook = getTypicalAddressBook();
+        storage.saveAddressBook(addressBook);
+        AclFileAttributeView aclView = Files.getFileAttributeView(destination, AclFileAttributeView.class);
+        AclEntry ownerAccess = AclEntry.newBuilder()
+                .setType(AclEntryType.ALLOW)
+                .setPrincipal(aclView.getOwner())
+                .setPermissions(EnumSet.allOf(AclEntryPermission.class))
+                .build();
+        List<AclEntry> restrictiveAcl = List.of(ownerAccess);
+        aclView.setAcl(restrictiveAcl);
+        assertEquals(restrictiveAcl, aclView.getAcl());
+        addressBook.addPerson(HOON);
+
+        storage.saveAddressBook(addressBook);
+
+        assertEquals(restrictiveAcl, aclView.getAcl());
+        assertEquals(addressBook, storage.readAddressBook().orElseThrow());
     }
 
     @Test
