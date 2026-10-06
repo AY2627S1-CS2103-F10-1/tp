@@ -9,8 +9,10 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -106,5 +108,43 @@ public class JsonAddressBookStorageTest {
     @Test
     public void saveAddressBook_nullFilePath_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> saveAddressBook(new AddressBook(), null));
+    }
+
+    @Test
+    public void saveAddressBook_existingFile_replacesDataAndRemovesTemporaryFile() throws Exception {
+        Path destination = testFolder.resolve("nested").resolve("candidates.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        AddressBook addressBook = getTypicalAddressBook();
+        storage.saveAddressBook(addressBook);
+        addressBook.addPerson(HOON);
+
+        storage.saveAddressBook(addressBook);
+
+        assertEquals(addressBook, storage.readAddressBook().orElseThrow());
+        try (var files = Files.list(destination.getParent())) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
+
+    @Test
+    public void saveAddressBook_destinationIsDirectory_keepsExistingDataAndRemovesTemporaryFile() throws Exception {
+        Path destination = Files.createDirectory(testFolder.resolve("candidates.json"));
+        Path existing = destination.resolve("existing.json");
+        Files.writeString(existing, "Existing data");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+
+        assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
+
+        assertEquals("Existing data", Files.readString(existing));
+        try (var files = Files.list(testFolder)) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
+
+    @Test
+    public void saveAddressBook_destinationIsFilesystemRoot_throwsIoException() {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.getRoot());
+        assertThrows(IOException.class, "The address book file path must refer to a file, not a filesystem root.", () ->
+                storage.saveAddressBook(getTypicalAddressBook()));
     }
 }
