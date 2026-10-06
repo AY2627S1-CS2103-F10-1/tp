@@ -3,14 +3,15 @@ package seedu.address.storage;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
-import seedu.address.commons.util.FileUtil;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 
@@ -75,6 +76,7 @@ public class JsonAddressBookStorage {
 
     /**
      * Similar to {@link #saveAddressBook(ReadOnlyAddressBook)}.
+     * Writes a temporary file before atomically replacing the destination to preserve data on failed writes.
      *
      * @param filePath location of the data. Cannot be null.
      */
@@ -82,8 +84,19 @@ public class JsonAddressBookStorage {
         requireNonNull(addressBook);
         requireNonNull(filePath);
 
-        FileUtil.createIfMissing(filePath);
-        JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), filePath);
+        Path destination = filePath.toAbsolutePath();
+        Path parent = destination.getParent();
+        if (parent == null) {
+            throw new IOException("The address book file path must refer to a file, not a filesystem root.");
+        }
+        Files.createDirectories(parent);
+        Path temporaryFile = Files.createTempFile(parent, "addressbook-", ".tmp");
+        try {
+            JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), temporaryFile);
+            Files.move(temporaryFile, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temporaryFile);
+        }
     }
 
 }
