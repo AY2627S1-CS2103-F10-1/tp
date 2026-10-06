@@ -170,6 +170,7 @@ Each candidate has one optional note for interview feedback or follow-up context
 * Notes participate in full equality and hashing, while `Person#isSamePerson()` and duplicate detection retain their existing behavior. Note text is omitted from `Person#toString()`.
 * `EditCommand` preserves the existing note when changing contact details or tags.
 * `JsonAdaptedPerson` persists notes as strings. Missing or `null` notes represent no note and allow older files to load. Blank or overlong notes produce a data-loading error.
+* `NoteCommand` provides the command API for replacing a displayed candidate's note and resetting the filter. It preserves contact details and tags, reports out-of-range indexes, and treats identical notes as successful updates. This increment does not register a CLI command; parsing and persistence coordination follow separately. `NoteCommandTest` covers first and last indexes, filtered and empty lists, overwrites, identical notes, and value semantics.
 
 Automated tests cover blank and overlong notes, Unicode length boundaries, trimming and preserved contents, equality and identity, contact edits retaining notes, JSON round-trips, invalid stored notes, and files saved by earlier versions.
 
