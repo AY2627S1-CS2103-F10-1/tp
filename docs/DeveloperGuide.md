@@ -276,7 +276,7 @@ _{Explain here how the data archiving feature will be implemented}_
 * can type quickly and prefers keyboard commands to mouse-driven forms
 * uses the app individually on a desktop or laptop computer
 
-**Value proposition**: HRVest helps a startup hiring manager fill full-time roles faster by tracking candidates and hiring progress with keyboard-first commands, reducing spreadsheet work and making follow-ups easier to spot.
+**Value proposition**: HRvest helps a startup hiring manager fill full-time roles faster by tracking candidates and hiring progress with keyboard-first commands, reducing spreadsheet work and making follow-ups easier to spot.
 
 
 ### User stories
@@ -562,8 +562,8 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 ### Non-Functional Requirements
 
-1. HRVest should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or other application-specific software beyond a single JAR file.
-1. HRVest should be usable by a single user without requiring a shared account or a team-operated remote server for ordinary candidate management.
+1. HRvest should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or other application-specific software beyond a single JAR file.
+1. HRvest should be usable by a single user without requiring a shared account or a team-operated remote server for ordinary candidate management.
 1. Candidate records should be stored locally in a human-editable text file, without a database management system.
 1. Core candidate-management commands should work without an internet connection.
 1. The primary workflows for adding, finding, viewing, and updating candidate records should be completable using typed commands without mouse interaction.
@@ -576,7 +576,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Candidate**: A person being considered for an open role.
 * **Open role**: A position for which the startup is currently recruiting.
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
-* **Candidate profile**: The candidate's contact information and hiring details shown together in HRVest.
+* **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
 * **Candidate details**: A candidate's name, phone number, email address, role, address and tags.
 * **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected.

@@ -19,9 +19,9 @@ Editing milestones, moving issues, pushing tags, creating releases, and closing 
 1. **Reconcile the milestone with the product.** List its issues and PRs (`gh issue list --milestone <version> --state all` and `gh pr list --state all --search "milestone:<version>"`). Every PR merged in this iteration, and the issue it closed, must be in the milestone. Move unfinished issues and PRs to the next milestone; do not delete or close them to make the iteration look complete.
 1. **Confirm that `master` is green.** The latest CI run on team `master` must pass, and `./gradlew clean check` must pass locally. Do not release from a failing build.
 1. **Bump the version.** Update `VERSION` in `src/main/java/seedu/address/MainApp.java` to the iteration version through an ordinary PR (for example, `version: Update version to v1.3`), and wait for it to be merged.
-1. **Build the JAR.** Run `./gradlew clean shadowJar` on an up-to-date checkout of team `master`; the output is `build/libs/HRVest.jar`. Avoid drastic changes to `build.gradle` while doing so.
+1. **Build the JAR.** Run `./gradlew clean shadowJar` on an up-to-date checkout of team `master`; the output is `build/libs/HRvest.jar`. Avoid drastic changes to `build.gradle` while doing so.
 1. **Smoke-test the JAR**, not just the IDE run:
-    1. Copy the JAR into a new, empty folder and run `java -jar HRVest.jar` with Java 25, the version stated in `AGENTS.md`.
+    1. Copy the JAR into a new, empty folder and run `java -jar HRvest.jar` with Java 25, the version stated in `AGENTS.md`.
     1. Confirm that the app starts with sample data and creates its data and preference files beside the JAR.
     1. Run every command described in the UG at least once, including one invalid input per new command.
     1. Exit, relaunch, and confirm that data persisted.
@@ -31,7 +31,7 @@ Editing milestones, moving issues, pushing tags, creating releases, and closing 
 1. **Tag and create a draft release** on the exact commit the JAR was built from:
 
     ```shell
-    gh release create v1.3 build/libs/HRVest.jar --repo AY2627S1-CS2103-F10-1/tp --target <commit-sha> --title "v1.3" --notes-file <notes-file> --draft
+    gh release create v1.3 build/libs/HRvest.jar --repo AY2627S1-CS2103-F10-1/tp --target <commit-sha> --title "v1.3" --notes-file <notes-file> --draft
     ```
 
     Add the screenshots in the GitHub release editor, have a teammate review the draft, then publish it.
@@ -46,7 +46,7 @@ Write fairly detailed notes for a reader who has not seen the product:
 * Give each feature a heading, one sentence on what it does for the target user, and an example command.
 * Include screenshots or a screen recording of the product in action.
 * List known limitations and features that are not yet complete, honestly.
-* Link to the User Guide, and state how to run the JAR (`java -jar HRVest.jar`, with the required Java version).
+* Link to the User Guide, and state how to run the JAR (`java -jar HRvest.jar`, with the required Java version).
 
 ## Don't
 
