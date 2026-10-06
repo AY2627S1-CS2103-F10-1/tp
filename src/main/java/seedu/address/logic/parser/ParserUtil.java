@@ -12,6 +12,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Note;
 import seedu.address.model.person.Phone;
 import seedu.address.model.tag.Tag;
 
@@ -33,6 +34,20 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses a note, trimming its surrounding whitespace and preserving its internal contents.
+     *
+     * @throws ParseException If the note is blank or exceeds the length limit.
+     */
+    public static Note parseNote(String note) throws ParseException {
+        requireNonNull(note);
+        try {
+            return new Note(note);
+        } catch (IllegalArgumentException e) {
+            throw new ParseException(e.getMessage(), e);
+        }
     }
 
     /**
