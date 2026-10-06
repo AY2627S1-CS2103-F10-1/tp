@@ -159,6 +159,18 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Candidate note support
+
+Each candidate has one optional note for interview feedback or follow-up context. This increment provides the model and persistence support; the note command and card indicator are implemented separately.
+
+* `Note` is an immutable value object. It strips surrounding whitespace, rejects blank text, and limits the result to 500 Unicode code points. It preserves internal spacing, capitalization, punctuation, and line breaks.
+* `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. The separate planned `expand` command can read this API.
+* Notes participate in full equality and hashing, while `Person#isSamePerson()` and duplicate detection retain their existing behavior. Note text is omitted from `Person#toString()`.
+* `EditCommand` preserves the existing note when changing contact details or tags.
+* `JsonAdaptedPerson` persists notes as strings. Missing or `null` notes represent no note and allow older files to load. Blank or overlong notes produce a data-loading error.
+
+Automated tests cover blank and overlong notes, Unicode length boundaries, trimming and preserved contents, equality and identity, contact edits retaining notes, JSON round-trips, invalid stored notes, and files saved by earlier versions.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -582,7 +594,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected.
 * **Duplicate candidate**: A candidate with the same email address and role as another candidate in HRvest.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Note**: A dated remark about a candidate, such as interview feedback.
+* **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
