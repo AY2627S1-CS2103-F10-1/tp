@@ -160,6 +160,8 @@ Format: `exit`
 
 AddressBook automatically saves data after every command. You do not need to save manually.
 
+Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement.
+
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
