@@ -140,6 +140,27 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
+    public void saveAddressBook_withoutPermissionViews_replacesDataAndRemovesTemporaryFile() throws Exception {
+        try (var fileSystem = FileSystems.newFileSystem(testFolder.resolve("defaults.zip"),
+                Map.of("create", "true", "enablePosixFileAttributes", "false"))) {
+            assertFalse(fileSystem.supportedFileAttributeViews().contains("acl"));
+            assertFalse(fileSystem.supportedFileAttributeViews().contains("posix"));
+            Path destination = fileSystem.getPath("/candidates.json");
+            JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+            AddressBook addressBook = getTypicalAddressBook();
+            storage.saveAddressBook(addressBook);
+            addressBook.addPerson(HOON);
+
+            storage.saveAddressBook(addressBook);
+
+            assertEquals(addressBook, storage.readAddressBook().orElseThrow());
+            try (var files = Files.list(destination.getParent())) {
+                assertEquals(List.of(destination), files.toList());
+            }
+        }
+    }
+
+    @Test
     public void saveAddressBook_existingPosixPermissions_preservesPermissions() throws Exception {
         if (Files.getFileAttributeView(testFolder, PosixFileAttributeView.class) != null) {
             assertPosixPermissionsPreserved(testFolder);
