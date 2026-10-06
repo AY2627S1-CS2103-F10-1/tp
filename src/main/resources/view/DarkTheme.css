@@ -1,3 +1,9 @@
+.note_icon {
+    -fx-fill: transparent;
+    -fx-stroke: #f5d47b;
+    -fx-stroke-width: 1.5;
+}
+
 .background {
     -fx-background-color: derive(#1d1d1d, 20%);
     background-color: #383838; /* Used in the default.html file */
