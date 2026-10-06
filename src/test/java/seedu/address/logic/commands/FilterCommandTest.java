@@ -21,7 +21,7 @@ public class FilterCommandTest {
     @Test
     public void execute_filterByStatus_success() {
         Status status = Status.APPLIED;
-        String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 0, status.getDisplayName());
+        String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 7, status.getDisplayName());
         FilterCommand command = new FilterCommand(status);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
         expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(status));

@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -106,14 +107,15 @@ class JsonAdaptedPerson {
         }
         final Address modelAddress = new Address(address);
 
-        if (status == null) {
-            throw new IllegalValueException(String.format(MISSING_FIELD_MESSAGE_FORMAT, Status.class.getSimpleName()));
-        }
         final Status modelStatus;
-        try {
-            modelStatus = Status.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalValueException("Invalid status: " + status);
+        if (status == null || status.isBlank()) {
+            modelStatus = Status.APPLIED;
+        } else {
+            try {
+                modelStatus = Status.valueOf(status.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalValueException("Invalid status: " + status);
+            }
         }
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
