@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -101,6 +103,7 @@ public class JsonAddressBookStorage {
         Path temporaryFile = Files.createTempFile(parent, "addressbook-", ".tmp");
         try {
             copyExistingAcl(destination, temporaryFile);
+            copyExistingPosixPermissions(destination, temporaryFile);
             JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), temporaryFile);
             Files.move(temporaryFile, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } finally {
@@ -126,6 +129,26 @@ public class JsonAddressBookStorage {
             return;
         }
         Files.setAttribute(temporaryFile, "acl:acl", acl);
+    }
+
+    /**
+     * Copies existing POSIX permissions to the temporary file before candidate data is written.
+     * Leaves the default permissions unchanged when the destination is absent or POSIX attributes are unsupported.
+     *
+     * @throws IOException if reading or applying the permissions fails.
+     */
+    private static void copyExistingPosixPermissions(Path destination, Path temporaryFile) throws IOException {
+        PosixFileAttributeView posixView = Files.getFileAttributeView(destination, PosixFileAttributeView.class);
+        if (posixView == null) {
+            return;
+        }
+        PosixFileAttributes attributes;
+        try {
+            attributes = posixView.readAttributes();
+        } catch (NoSuchFileException e) {
+            return;
+        }
+        Files.setPosixFilePermissions(temporaryFile, attributes.permissions());
     }
 
 }

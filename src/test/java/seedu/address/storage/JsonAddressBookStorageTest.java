@@ -3,6 +3,7 @@ package seedu.address.storage;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
@@ -10,6 +11,7 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,8 +19,11 @@ import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclEntryPermission;
 import java.nio.file.attribute.AclEntryType;
 import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -130,6 +135,62 @@ public class JsonAddressBookStorageTest {
 
         assertEquals(addressBook, storage.readAddressBook().orElseThrow());
         try (var files = Files.list(destination.getParent())) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
+
+    @Test
+    public void saveAddressBook_existingPosixPermissions_preservesPermissions() throws Exception {
+        if (Files.getFileAttributeView(testFolder, PosixFileAttributeView.class) != null) {
+            assertPosixPermissionsPreserved(testFolder);
+            return;
+        }
+        // Exercise POSIX attributes on Windows using the JDK's POSIX-enabled ZIP filesystem.
+        try (var fileSystem = FileSystems.newFileSystem(testFolder.resolve("posix.zip"),
+                Map.of("create", "true", "enablePosixFileAttributes", "true"))) {
+            assertPosixPermissionsPreserved(fileSystem.getPath("/"));
+        }
+    }
+
+    /**
+     * Asserts that saving preserves POSIX permissions and removes the temporary file.
+     */
+    private void assertPosixPermissionsPreserved(Path folder) throws Exception {
+        Path destination = folder.resolve("candidates.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        AddressBook addressBook = getTypicalAddressBook();
+        storage.saveAddressBook(addressBook);
+        var permissions = PosixFilePermissions.fromString("rw-r--r--");
+        Files.setPosixFilePermissions(destination, permissions);
+        addressBook.addPerson(HOON);
+
+        storage.saveAddressBook(addressBook);
+
+        assertEquals(permissions, Files.getPosixFilePermissions(destination));
+        assertEquals(addressBook, storage.readAddressBook().orElseThrow());
+        try (var files = Files.list(folder)) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
+
+    @Test
+    @EnabledOnOs({OS.LINUX, OS.MAC})
+    public void saveAddressBook_readOnlyPosixFile_keepsExistingDataAndRemovesTemporaryFile() throws Exception {
+        Path destination = testFolder.resolve("candidates.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        AddressBook addressBook = getTypicalAddressBook();
+        storage.saveAddressBook(addressBook);
+        String existingData = Files.readString(destination);
+        var permissions = PosixFilePermissions.fromString("r--r--r--");
+        Files.setPosixFilePermissions(destination, permissions);
+        assumeFalse(Files.isWritable(destination), "The process must be denied write access to the read-only file.");
+        addressBook.addPerson(HOON);
+
+        assertThrows(IOException.class, () -> storage.saveAddressBook(addressBook));
+
+        assertEquals(existingData, Files.readString(destination));
+        assertEquals(permissions, Files.getPosixFilePermissions(destination));
+        try (var files = Files.list(testFolder)) {
             assertEquals(List.of(destination), files.toList());
         }
     }
