@@ -170,7 +170,7 @@ The `note INDEX no/NOTE_TEXT` command replaces a candidate's single optional not
 * `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. Notes participate in full equality and hashing, but do not affect `Person#isSamePerson()` or duplicate detection. `EditCommand` preserves the note when editing contact details or tags.
 * `NoteCommand` updates the displayed candidate using `Model#setPerson()`. `LogicManager` executes notes against a temporary model containing the same displayed candidates, saves that model through the existing `Storage` API, then updates the live model. Validation and save failures leave the live data and its original filter unchanged. Other commands retain their existing save behavior.
 * `JsonAdaptedPerson` stores the note as a string. Missing or `null` notes represent no note, allowing files saved by earlier versions to load. Supplied notes are validated when converting to the model; blank or overlong text causes a data-loading error.
-* `PersonCard` shows a small document icon with the accessible description `Candidate has a note` and tooltip `Note available`. Cards without a note reserve no space for the icon. The card never shows the note text. The separate planned `expand` command can read the note via `getNote()`; that command is not implemented here.
+* `PersonCard` shows a small pinned sticky note icon with the accessible description `Candidate has a note` and tooltip `Note available`. Cards without a note reserve no space for the icon. The card never shows the note text. The separate planned `expand` command can read the note via `getNote()`; that command is not implemented here.
 
 Each candidate has one note to keep the MVP simple. Overwriting discards earlier text; there is no note history, undo, append, or clear command. Identical text still succeeds normally. Logging omits command arguments and note contents.
 
@@ -648,7 +648,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Prerequisites: Use `list` with at least two candidates. Record the names at indexes 1 and 2.
 1. Run `note 2 no/Strong on system design, weak on SQL`.<br>
-   Expected: The success message contains candidate 2's name and the note. Only that candidate gains a document icon. Hovering over it shows `Note available`; no note text appears on the card.
+   Expected: The success message contains candidate 2's name and the note. Only that candidate gains a pinned sticky note icon. Hovering over it shows `Note available`; no note text appears on the card.
 1. Run `note 2 no/Passed round 2, schedule final interview`, then repeat it.<br>
    Expected: Both commands succeed with the normal message; only the replacement note is stored.
 1. Use `find` with a word from candidate 2's name. Run `note 1 no/Follow up next week`.<br>

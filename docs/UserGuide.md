@@ -123,7 +123,7 @@ Format: `note INDEX no/NOTE_TEXT`
 * `NOTE_TEXT` is required, must be non-blank, and can contain at most **500 characters after trimming**. Leading and trailing whitespace is removed; internal spacing, capitalization, punctuation, and line breaks are preserved.
 * The `note` command word and `no/` prefix are case-insensitive. Use `no/` once; whitespace followed by this prefix starts another note value and is rejected as a repeated prefix. Other prefix-like text, such as `n/`, remains part of the note.
 * On success, HRvest saves the note immediately, resets the list to show all candidates, and displays `Updated note for <NAME>: <NOTE_TEXT>`.
-* A document icon beside the candidate's name indicates a note exists. Its tooltip reads `Note available`; the card does not display the note text. Viewing full notes using the planned `expand` command is a separate feature.
+* A pinned sticky note icon beside the candidate's name indicates a note exists. Its tooltip reads `Note available`; the card does not display the note text. Viewing full notes using the planned `expand` command is a separate feature.
 * Entering the same note again still succeeds normally. Editing contact details or tags keeps the note. Notes do not affect duplicate detection.
 * Invalid input leaves the existing note, displayed list, and saved data unchanged. If saving fails, HRvest shows a storage error and keeps the existing note and displayed list.
 
