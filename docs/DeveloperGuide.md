@@ -161,19 +161,20 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Candidate note support
+### Candidate notes
 
-Each candidate has one optional note for interview feedback or follow-up context. This increment provides the model and persistence support; the note command and card indicator are implemented separately.
+The `note INDEX no/NOTE_TEXT` command replaces a candidate's single optional note. The index refers to the displayed list. A successful command resets the filter to show all candidates and returns `Updated note for <NAME>: <NOTE_TEXT>`.
 
+* The command word and `no/` prefix are case-insensitive. `NoteCommandParser` normalizes reserved prefixes after whitespace, requires an index and the prefix, rejects repeated prefixes, and delegates index and note validation to `ParserUtil`. Text containing other prefixes remains part of the note.
 * `Note` is an immutable value object. It strips surrounding whitespace, rejects blank text, and limits the result to 500 Unicode code points. It preserves internal spacing, capitalization, punctuation, and line breaks.
-* `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. The separate planned `expand` command can read this API.
-* `PersonCard` shows a pinned sticky note icon for candidates with a note. The icon has the accessible description `Candidate has a note` and tooltip `Note available`; it is invisible and unmanaged when no note exists. Note text is kept off the card, and the icon retains its space when a long name is truncated.
-* Notes participate in full equality and hashing, while `Person#isSamePerson()` and duplicate detection retain their existing behavior. Note text is omitted from `Person#toString()`.
-* `EditCommand` preserves the existing note when changing contact details or tags.
-* `JsonAdaptedPerson` persists notes as strings. Missing or `null` notes represent no note and allow older files to load. Blank or overlong notes produce a data-loading error.
-* `NoteCommand` provides the command API for replacing a displayed candidate's note and resetting the filter. It preserves contact details and tags, reports out-of-range indexes, and treats identical notes as successful updates. This increment does not register a CLI command; parsing and persistence coordination follow separately. `NoteCommandTest` covers first and last indexes, filtered and empty lists, overwrites, identical notes, and value semantics.
+* `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. Notes participate in full equality and hashing, but do not affect `Person#isSamePerson()` or duplicate detection. `EditCommand` preserves the note when editing contact details or tags.
+* `NoteCommand` updates the displayed candidate using `Model#setPerson()`. `LogicManager` executes notes against a temporary model containing the same displayed candidates, saves that model through the existing `Storage` API, then updates the live model. Validation and save failures leave the live data and its original filter unchanged. Other commands retain their existing save behavior.
+* `JsonAdaptedPerson` stores the note as a string. Missing or `null` notes represent no note, allowing files saved by earlier versions to load. Supplied notes are validated when converting to the model; blank or overlong text causes a data-loading error.
+* `PersonCard` shows a small pinned sticky note icon with the accessible description `Candidate has a note` and tooltip `Note available`. Cards without a note reserve no space for the icon. The card never shows the note text. The separate planned `expand` command can read the note via `getNote()`; that command is not implemented here.
 
-Automated tests cover blank and overlong notes, Unicode length boundaries, trimming and preserved contents, equality and identity, contact edits retaining notes, JSON round-trips, invalid stored notes, and files saved by earlier versions.
+Each candidate has one note to keep the MVP simple. Overwriting discards earlier text; there is no note history, undo, append, or clear command. Identical text still succeeds normally. Logging omits command arguments and note contents.
+
+Automated tests cover model validation and Unicode length boundaries, parser errors and duplicate prefixes, updates to filtered lists, overwrites and identical notes, contact edits preserving notes, JSON validation and backward compatibility, immediate persistence and reloads, and rejected storage writes. See `NoteTest`, `NoteCommandParserTest`, `NoteCommandTest`, and `NoteIntegrationTest`, together with the existing person, edit, parser, and storage tests.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -472,7 +473,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to delete a specific candidate in the list.
-1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
+1. HRvest deletes the candidate, together with the candidate's note, and shows the deleted candidate.
 
    Use case ends.
 
@@ -539,7 +540,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to view the full details of a candidate profile.
-1. HRvest shows the candidate's full details, including all notes.
+1. HRvest shows the candidate's full details, including the note, if present.
 
    Use case ends.
 
@@ -556,7 +557,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to add a note to a specific candidate.
-1. HRvest adds the note without overwriting earlier notes and shows the updated candidate profile.
+1. HRvest replaces the candidate's single note, saves it, shows a note icon on the candidate card, and confirms the update. The displayed list resets to all candidates.
 
    Use case ends.
 
@@ -568,9 +569,21 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-* 1b. The note is empty.
+* 1b. The note is blank or exceeds 500 characters after trimming.
 
     * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1c. The request is malformed or contains more than one note value.
+
+    * 1c1. HRvest shows an error message without changing the candidate or saved data.
+
+      Use case ends.
+
+* 2a. The note cannot be saved.
+
+    * 2a1. HRvest shows the storage error and retains the existing note and displayed list.
 
       Use case ends.
 
@@ -630,6 +643,22 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
+
+### Adding or replacing a candidate's note
+
+1. Prerequisites: Use `list` with at least two candidates. Record the names at indexes 1 and 2.
+1. Run `note 2 no/Strong on system design, weak on SQL`.<br>
+   Expected: The success message contains candidate 2's name and the note. Only that candidate gains a pinned sticky note icon. Hovering over it shows `Note available`; no note text appears on the card.
+1. Run `note 2 no/Passed round 2, schedule final interview`, then repeat it.<br>
+   Expected: Both commands succeed with the normal message; only the replacement note is stored.
+1. Use `find` with a word from candidate 2's name. Run `note 1 no/Follow up next week`.<br>
+   Expected: The first displayed search result receives the note and the list resets to all candidates.
+1. Run `note 1 no/ ` and `note 1 no/first no/second`.<br>
+   Expected: The blank-note and repeated-prefix errors appear; no note or displayed list changes.
+1. Edit the noted candidate's phone number using `edit INDEX p/12345678`, then restart HRvest.<br>
+   Expected: The phone edit is saved and the note icon remains. The saved JSON contains the latest note in that candidate's `note` field.
+1. Resize the window while a candidate has a long name and a note.<br>
+   Expected: The note icon remains visible even if the name is truncated.
 
 ### Deleting a person
 
