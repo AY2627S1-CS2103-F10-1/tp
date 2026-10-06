@@ -77,6 +77,7 @@ public class JsonAddressBookStorage {
     /**
      * Similar to {@link #saveAddressBook(ReadOnlyAddressBook)}.
      * Writes a temporary file before atomically replacing the destination to preserve data on failed writes.
+     * Resolves symbolic links to existing targets before saving; dangling links cause an {@link IOException}.
      *
      * @param filePath location of the data. Cannot be null.
      */
@@ -85,6 +86,9 @@ public class JsonAddressBookStorage {
         requireNonNull(filePath);
 
         Path destination = filePath.toAbsolutePath();
+        if (Files.isSymbolicLink(destination)) {
+            destination = destination.toRealPath();
+        }
         Path parent = destination.getParent();
         if (parent == null) {
             throw new IOException("The address book file path must refer to a file, not a filesystem root.");

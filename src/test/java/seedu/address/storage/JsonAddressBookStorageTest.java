@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.HOON;
@@ -136,6 +137,47 @@ public class JsonAddressBookStorageTest {
         assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
 
         assertEquals("Existing data", Files.readString(existing));
+        try (var files = Files.list(testFolder)) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
+
+    @Test
+    public void saveAddressBook_relativeSymbolicLinkChain_updatesTargetAndKeepsLinks() throws Exception {
+        Path target = testFolder.resolve("data").resolve("candidates.json");
+        JsonAddressBookStorage targetStorage = new JsonAddressBookStorage(target);
+        AddressBook addressBook = getTypicalAddressBook();
+        targetStorage.saveAddressBook(addressBook);
+        Path relativeTarget = testFolder.relativize(target);
+        Path intermediateLink = Files.createSymbolicLink(testFolder.resolve("relative-link.json"), relativeTarget);
+        Path destination = Files.createSymbolicLink(testFolder.resolve("candidates.json"),
+                intermediateLink.getFileName());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+
+        addressBook.addPerson(HOON);
+        storage.saveAddressBook(addressBook);
+
+        assertTrue(Files.isSymbolicLink(destination));
+        assertEquals(intermediateLink.getFileName(), Files.readSymbolicLink(destination));
+        assertEquals(relativeTarget, Files.readSymbolicLink(intermediateLink));
+        assertEquals(addressBook, targetStorage.readAddressBook().orElseThrow());
+        assertEquals(addressBook, storage.readAddressBook().orElseThrow());
+        try (var files = Files.list(target.getParent())) {
+            assertEquals(List.of(target), files.toList());
+        }
+    }
+
+    @Test
+    public void saveAddressBook_danglingSymbolicLink_throwsIoExceptionAndKeepsLink() throws Exception {
+        Path target = testFolder.resolve("missing").resolve("candidates.json");
+        Path relativeTarget = testFolder.relativize(target);
+        Path destination = Files.createSymbolicLink(testFolder.resolve("candidates.json"), relativeTarget);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+
+        assertThrows(IOException.class, () -> storage.saveAddressBook(getTypicalAddressBook()));
+
+        assertEquals(relativeTarget, Files.readSymbolicLink(destination));
+        assertFalse(Files.exists(target.getParent()));
         try (var files = Files.list(testFolder)) {
             assertEquals(List.of(destination), files.toList());
         }
