@@ -33,7 +33,7 @@ Before declaring a task complete, an agent must:
 
 ## Conventions (summary)
 
-Detailed, step-by-step instructions live in `.agents/skills/<name>/SKILL.md`, which Codex discovers directly. Claude Code discovers them through matching `.claude/skills/<name>/SKILL.md` entry points that point to the shared file; when adding or renaming a skill, add or update its entry point with the same `name` and `description`. Load the relevant skill before doing that kind of work.
+Detailed, step-by-step instructions live in `.agents/skills/<name>/SKILL.md`, which Codex discovers directly. `.claude/skills` is a symlink to that folder so Claude Code discovers the same files; on Windows, run `git config core.symlinks true` with Developer Mode on before checking out. Load the relevant skill before doing that kind of work.
 
 | Skill | Use when |
 |-------|----------|
