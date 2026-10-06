@@ -168,6 +168,8 @@ AddressBook data is saved automatically as a JSON file `[JAR file location]/data
 
 Each candidate record can include an optional `note` field containing a string. A note must be non-blank and contain at most 500 characters after trimming surrounding whitespace. Internal spacing, case, and punctuation are preserved. Omit the field or use `null` for a candidate without a note; an empty string is invalid. Existing data files without notes remain supported.
 
+A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`; the card does not display the note text. The planned `expand` command will show full notes separately.
+
 <box type="warning" seamless>
 
 **Caution:**

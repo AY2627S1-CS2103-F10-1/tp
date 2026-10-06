@@ -167,6 +167,7 @@ Each candidate has one optional note for interview feedback or follow-up context
 
 * `Note` is an immutable value object. It strips surrounding whitespace, rejects blank text, and limits the result to 500 Unicode code points. It preserves internal spacing, capitalization, punctuation, and line breaks.
 * `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. The separate planned `expand` command can read this API.
+* `PersonCard` shows a pinned sticky note icon for candidates with a note. The icon has the accessible description `Candidate has a note` and tooltip `Note available`; it is invisible and unmanaged when no note exists. Note text is kept off the card, and the icon retains its space when a long name is truncated.
 * Notes participate in full equality and hashing, while `Person#isSamePerson()` and duplicate detection retain their existing behavior. Note text is omitted from `Person#toString()`.
 * `EditCommand` preserves the existing note when changing contact details or tags.
 * `JsonAdaptedPerson` persists notes as strings. Missing or `null` notes represent no note and allow older files to load. Blank or overlong notes produce a data-loading error.
