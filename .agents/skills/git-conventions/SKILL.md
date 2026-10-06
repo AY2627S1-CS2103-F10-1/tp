@@ -1,6 +1,6 @@
 ---
 name: git-conventions
-description: Team git conventions for commit messages, branch names and PRs, based on the se-edu git guide. Use whenever writing a commit message, creating a branch, or preparing a pull request.
+description: Team git conventions for commit messages, branch names, and pull requests (opening, reviewing, merging), based on the se-edu git guide and course Appendix E. Use whenever writing a commit message, creating a branch, or preparing, reviewing, or merging a pull request.
 ---
 
 # Git conventions
@@ -65,6 +65,18 @@ common behaviours are not composable.
 * Never commit secrets, generated files (`build/`, `data/`, logs) or IDE files.
 * Review `git diff --staged` before every commit.
 * Don't use `--no-verify` to skip hooks.
+
+## Pull requests
+
+Source: [Appendix E: GitHub project management](https://nus-cs2103-ay2627-s1.github.io/website/admin/appendixE-gitHub.html).
+
+* Open each PR from its own branch of your fork, never from `master`. Prefer several small PRs over one large PR.
+* Make the PR title the same as its issue's title, include `Fixes #<issue>`, and assign the PR to the iteration milestone. Use a draft PR for work in progress.
+* Review teammates' PRs seriously: leave comments at specific lines of the diff, not only an overall comment, and approve (`LGTM`) only after reading the change.
+* Don't merge a PR whose CI is failing, unless the failure is confirmed to be safe to ignore.
+* Merge with a merge commit; don't rebase or squash, because that changes commit timestamps that progress tracking relies on.
+* Don't delete a PR's branch after merging; the course's scripts check that branching was used.
+* After a merge, sync your fork (`git pull upstream master`, then `git push origin master`) and merge `master` into your unmerged branches.
 
 ## Agent rules
 

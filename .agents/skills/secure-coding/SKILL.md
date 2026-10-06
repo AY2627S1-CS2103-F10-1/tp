@@ -18,7 +18,7 @@ The app is an offline JavaFX desktop app, so the main risks are: leaked secrets 
 ## 2. Input validation (parser and model)
 
 * Treat every command string as untrusted. Validate in `*CommandParser` and model value-class constructors (`isValid*` + `checkArgument`), as AB3 does.
-* Use **allow-list** regexes anchored with `^…$`; avoid catastrophic backtracking patterns such as `(a+)+`, and cap input lengths.
+* Use **allow-list** regexes anchored with `^…$`; avoid catastrophic backtracking patterns such as `(a+)+`, and cap input lengths at generous limits. Allow-lists must still accept legitimate real-world values; see `pe-bug-prevention` before rejecting an input.
 * Parse numbers defensively (`StringUtil.isNonZeroUnsignedInteger`), handle overflow, and range-check indexes.
 * Never build shell commands, file paths, SQL, or HTML from raw user input.
 * Show user-friendly error messages; don't expose stack traces in the UI.
