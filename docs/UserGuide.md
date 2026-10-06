@@ -130,6 +130,20 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
+### Filtering candidates by status: `filter`
+
+Filters candidates by their hiring status.
+
+Format: `filter s/STATUS`
+
+* Displays all candidates with the specified status.
+* Valid statuses: `APPLIED`, `INTERVIEWING`, `OFFERED`, `REJECTED`, `HIRED`.
+* The status is case-insensitive.
+
+Examples:
+* `filter s/INTERVIEWING` displays all candidates currently in the interviewing stage.
+* `filter s/OFFERED` displays all candidates who have been made offers.
+
 ### Deleting a person: `delete`
 
 Deletes the specified person from the address book.
@@ -199,6 +213,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Filter** | `filter s/STATUS`<br> e.g., `filter s/INTERVIEWING`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Help**   | `help`
