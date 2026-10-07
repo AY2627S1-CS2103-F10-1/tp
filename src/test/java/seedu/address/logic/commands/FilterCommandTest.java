@@ -65,6 +65,13 @@ public class FilterCommandTest {
     }
 
     @Test
+    public void hashCode_equalCommands_sameHash() {
+        FilterCommand c1 = new FilterCommand(Status.APPLIED);
+        FilterCommand c2 = new FilterCommand(Status.APPLIED);
+        assertEquals(c1.hashCode(), c2.hashCode());
+    }
+
+    @Test
     public void toStringMethod() {
         FilterCommand filterCommand = new FilterCommand(Status.APPLIED);
         StatusContainsKeywordPredicate predicate = new StatusContainsKeywordPredicate(Status.APPLIED);
