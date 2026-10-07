@@ -164,8 +164,6 @@ AddressBook automatically saves data after every command. You do not need to sav
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
 
-Each candidate record can include an optional `note` field containing a string. A note must be non-blank and contain at most 500 characters after trimming surrounding whitespace. Internal spacing, case, and punctuation are preserved. Omit the field or use `null` for a candidate without a note; an empty string is invalid. Existing data files without notes remain supported.
-
 <box type="warning" seamless>
 
 **Caution:**
