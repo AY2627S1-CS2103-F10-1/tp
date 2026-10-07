@@ -33,7 +33,8 @@ public class AddCommandParser implements Parser<AddCommand> {
      */
     public AddCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG);
+                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_STATUS,
+                        PREFIX_TAG);
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL)
                 || !argMultimap.getPreamble().isEmpty()) {
@@ -49,7 +50,7 @@ public class AddCommandParser implements Parser<AddCommand> {
         Status status = Status.APPLIED;
         if (argMultimap.getValue(PREFIX_STATUS).isPresent()) {
             try {
-                status = Status.valueOf(argMultimap.getValue(PREFIX_STATUS).get().toUpperCase());
+                status = Status.fromString(argMultimap.getValue(PREFIX_STATUS).get());
             } catch (IllegalArgumentException e) {
                 throw new ParseException(
                         "Invalid status. Valid statuses: APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED");

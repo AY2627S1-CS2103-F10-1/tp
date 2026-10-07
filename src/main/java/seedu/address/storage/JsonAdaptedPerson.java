@@ -3,7 +3,6 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -112,7 +111,7 @@ class JsonAdaptedPerson {
             modelStatus = Status.APPLIED;
         } else {
             try {
-                modelStatus = Status.valueOf(status.toUpperCase(Locale.ROOT));
+                modelStatus = Status.fromString(status);
             } catch (IllegalArgumentException e) {
                 throw new IllegalValueException("Invalid status: " + status);
             }

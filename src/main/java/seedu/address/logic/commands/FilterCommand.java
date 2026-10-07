@@ -25,6 +25,11 @@ public class FilterCommand extends Command {
 
     private final StatusContainsKeywordPredicate predicate;
 
+    /**
+     * Constructs a FilterCommand to filter candidates by the specified status.
+     *
+     * @param status the status to filter by
+     */
     public FilterCommand(Status status) {
         this.predicate = new StatusContainsKeywordPredicate(status);
     }

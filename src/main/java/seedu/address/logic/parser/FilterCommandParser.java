@@ -20,15 +20,16 @@ public class FilterCommandParser implements Parser<FilterCommand> {
     public FilterCommand parse(String args) throws ParseException {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STATUS);
 
-        if (!argMultimap.getValue(PREFIX_STATUS).isPresent()) {
+        if (!argMultimap.getValue(PREFIX_STATUS).isPresent() || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FilterCommand.MESSAGE_USAGE));
         }
 
-        String statusString = argMultimap.getValue(PREFIX_STATUS).get().toUpperCase();
+        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STATUS);
+
         Status status;
         try {
-            status = Status.valueOf(statusString);
+            status = Status.fromString(argMultimap.getValue(PREFIX_STATUS).get());
         } catch (IllegalArgumentException e) {
             throw new ParseException("Invalid status. Valid statuses: APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED");
         }
