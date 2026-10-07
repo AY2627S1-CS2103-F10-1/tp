@@ -16,6 +16,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Status;
 
 public class JsonAdaptedPersonTest {
     private static final String INVALID_NAME = "R@chel";
@@ -110,6 +111,43 @@ public class JsonAdaptedPersonTest {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_STATUS, invalidTags);
         assertThrows(IllegalValueException.class, person::toModelType);
+    }
+
+    @Test
+    public void toModelType_nullStatus_defaultsToApplied() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, null, VALID_TAGS);
+        assertEquals(Status.APPLIED, person.toModelType().getStatus());
+    }
+
+    @Test
+    public void toModelType_blankStatus_defaultsToApplied() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, "   ", VALID_TAGS);
+        assertEquals(Status.APPLIED, person.toModelType().getStatus());
+    }
+
+    @Test
+    public void toModelType_invalidStatus_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, "UNKNOWN_STATUS", VALID_TAGS);
+        assertThrows(IllegalValueException.class, "Invalid status: UNKNOWN_STATUS", person::toModelType);
+    }
+
+    @Test
+    public void toModelType_lowercaseStatus_returnsPerson() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, "hired", VALID_TAGS);
+        assertEquals(Status.HIRED, person.toModelType().getStatus());
+    }
+
+    @Test
+    public void toModelType_statusRoundTrip_preservesStatus() throws Exception {
+        for (Status status : Status.values()) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    VALID_ADDRESS, status.toString(), VALID_TAGS);
+            assertEquals(status, person.toModelType().getStatus());
+        }
     }
 
 }
