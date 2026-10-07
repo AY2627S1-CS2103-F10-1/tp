@@ -84,8 +84,6 @@ The `UI` component,
 
 ### Logic component
 
-The `status INDEX s/STATUS` command parses a displayed-list index and a `Status` enum value, then replaces the selected immutable `Person` through `Model.setPerson` and resets the filtered list. `LogicManager` saves the updated address book after successful execution. The `Status` enum owns the valid-status message so parsing and JSON validation use the same list. `JsonAdaptedPerson` stores the status as text and assigns `Applied` when loading older records without that field; invalid stored values are rejected. `PersonCard` displays the status from the model.
-
 **API** : [`Logic.java`](https://github.com/se-edu/addressbook-level3/tree/master/src/main/java/seedu/address/logic/Logic.java)
 
 Here's a (partial) class diagram of the `Logic` component:
@@ -160,6 +158,14 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Candidate status updates
+
+`StatusCommandParser` parses `status INDEX s/STATUS` into a displayed-list index and a `Status` enum value. The enum provides both the accepted values and their shared validation message.
+
+`StatusCommand` creates a new `Person` with the selected candidate's existing details and the requested status, then replaces the candidate through `Model.setPerson` and resets the filtered list. `LogicManager` saves the updated address book after the command succeeds.
+
+`JsonAdaptedPerson` stores the status as text. Older records without a status load as `Applied`, while invalid stored statuses are rejected. `PersonCard` displays the status held by the model.
 
 ### \[Proposed\] Undo/redo feature
 
