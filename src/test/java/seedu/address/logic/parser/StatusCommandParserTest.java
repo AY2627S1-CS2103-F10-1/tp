@@ -23,11 +23,26 @@ public class StatusCommandParserTest {
     public void parse_missingPrefix_throwsParseException() {
         assertParseFailure(parser, "1 Interviewing",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, "1", String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
     }
 
     @Test
     public void parse_nonIntegerIndex_throwsParseException() {
         assertParseFailure(parser, "abc s/Applied",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_nonPositiveIndex_throwsParseException() {
+        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE);
+
+        assertParseFailure(parser, "0 s/Applied", expectedMessage);
+        assertParseFailure(parser, "-1 s/Applied", expectedMessage);
+    }
+
+    @Test
+    public void parse_indexOverflow_throwsParseException() {
+        assertParseFailure(parser, "99999999999 s/Applied",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
     }
 

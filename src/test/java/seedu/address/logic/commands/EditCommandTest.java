@@ -25,6 +25,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -68,6 +69,18 @@ public class EditCommandTest {
         expectedModel.setPerson(lastPerson, editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_candidateWithUpdatedStatus_preservesStatus() throws Exception {
+        new StatusCommand(INDEX_FIRST_PERSON, Status.SHORTLISTED).execute(model);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        editCommand.execute(model);
+
+        assertEquals(Status.SHORTLISTED, model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased())
+                .getStatus());
     }
 
     @Test

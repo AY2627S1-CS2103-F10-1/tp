@@ -48,8 +48,37 @@ public class StatusCommandTest {
     }
 
     @Test
+    public void execute_lastIndex_updatesLastCandidate() {
+        Index lastIndex = Index.fromOneBased(model.getFilteredPersonList().size());
+        Person candidate = model.getFilteredPersonList().get(lastIndex.getZeroBased());
+        StatusCommand command = new StatusCommand(lastIndex, Status.OFFERED);
+
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        Person updated = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
+                candidate.getAddress(), candidate.getTags(), Status.OFFERED);
+        expectedModel.setPerson(candidate, updated);
+        String expectedMessage = String.format(StatusCommand.MESSAGE_SUCCESS,
+                candidate.getName(), candidate.getStatus(), Status.OFFERED);
+
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_invalidIndexFilteredList_throwsCommandExceptionWithoutChange() {
+        showPersonAtIndex(model, INDEX_FIRST_PERSON);
+        StatusCommand command = new StatusCommand(INDEX_SECOND_PERSON, Status.OFFERED);
+
+        assertCommandFailure(command, model, StatusCommand.MESSAGE_INVALID_INDEX);
+    }
+
+    @Test
     public void constructor_nullStatus_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new StatusCommand(INDEX_FIRST_PERSON, null));
+    }
+
+    @Test
+    public void constructor_nullIndex_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new StatusCommand(null, Status.APPLIED));
     }
 
     @Test
@@ -59,5 +88,16 @@ public class StatusCommandTest {
         assertTrue(first.equals(same));
         assertEquals(first.hashCode(), same.hashCode());
         assertFalse(first.equals(new StatusCommand(INDEX_SECOND_PERSON, Status.REJECTED)));
+        assertFalse(first.equals(new StatusCommand(INDEX_FIRST_PERSON, Status.OFFERED)));
+        assertFalse(first.equals(null));
+    }
+
+    @Test
+    public void toStringMethod_validCommand_returnsIndexAndStatus() {
+        StatusCommand command = new StatusCommand(INDEX_FIRST_PERSON, Status.REJECTED);
+        String expected = StatusCommand.class.getCanonicalName() + "{index=" + INDEX_FIRST_PERSON
+                + ", status=Rejected}";
+
+        assertEquals(expected, command.toString());
     }
 }
