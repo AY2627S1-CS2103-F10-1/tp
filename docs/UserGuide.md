@@ -144,18 +144,18 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in the address book.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
-### Viewing a candidate's full record: `expand` (planned)
+### Viewing a candidate's full record: `expand`
 
-`expand` is planned and is **not available in the current release**. It will show one candidate's full record, including the complete note, so you can review it before a follow-up action.
+Shows one candidate's full record, including the complete note, so you can review it before a follow-up action.
 
 Format: `expand INDEX`
 
 * `INDEX` is required and refers to the 1-based number shown in the currently displayed candidate list. It must be a positive integer within that list.
-* On success, the list will show only the selected candidate, with the note displayed in full rather than truncated. The command will report `Expanding candidate: <NAME>.` Candidates without a note will have a clear empty-note indication.
-* Run `list` to show all candidates again. After the planned `filter` command is available, you can also run it to show a filtered list.
-* An invalid or missing index, an index outside the displayed list, or an empty displayed list will produce a specific error and leave the view unchanged.
+* On success, the list shows only the selected candidate, with the note displayed in full rather than truncated. The command reports `Expanding candidate: <NAME>.` Candidates without a note have a clear empty-note indication.
+* Run `list` to show all candidates again, or run `filter` to show a filtered list.
+* An invalid or missing index, an index outside the displayed list, or an empty displayed list produces a specific error and leaves the view unchanged.
 
-Examples (after `expand` and `filter` are implemented):
+Examples:
 
 * `expand 1` shows the first candidate in the displayed list.
 * `filter s/Interviewing` followed by `expand 2` shows the second candidate in the filtered list.
