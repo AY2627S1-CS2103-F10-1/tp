@@ -1,5 +1,8 @@
 package seedu.address.model.person;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * Represents a candidate's status in the hiring pipeline.
  */
@@ -9,6 +12,11 @@ public enum Status {
     OFFERED("Offered"),
     REJECTED("Rejected"),
     HIRED("Hired");
+
+    /** Comma-separated list of all status enum names, built once from {@link #values()}. */
+    public static final String VALID_STATUSES_MESSAGE = Arrays.stream(values())
+            .map(Enum::name)
+            .collect(Collectors.joining(", "));
 
     private final String displayName;
 

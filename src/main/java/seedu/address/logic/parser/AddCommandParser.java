@@ -52,8 +52,7 @@ public class AddCommandParser implements Parser<AddCommand> {
             try {
                 status = Status.fromString(argMultimap.getValue(PREFIX_STATUS).get());
             } catch (IllegalArgumentException e) {
-                throw new ParseException(
-                        "Invalid status. Valid statuses: APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED");
+                throw new ParseException("Invalid status. Valid statuses: " + Status.VALID_STATUSES_MESSAGE);
             }
         }
         Set<Tag> tagList = ParserUtil.parseTags(argMultimap.getAllValues(PREFIX_TAG));

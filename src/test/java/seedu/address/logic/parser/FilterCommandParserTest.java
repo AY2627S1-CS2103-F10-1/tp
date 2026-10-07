@@ -12,7 +12,7 @@ import seedu.address.model.person.Status;
 public class FilterCommandParserTest {
 
     private static final String INVALID_STATUS_MESSAGE =
-            "Invalid status. Valid statuses: APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED";
+            "Invalid status. Valid statuses: " + Status.VALID_STATUSES_MESSAGE;
 
     private FilterCommandParser parser = new FilterCommandParser();
 

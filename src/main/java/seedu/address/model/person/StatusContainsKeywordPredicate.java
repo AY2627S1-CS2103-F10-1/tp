@@ -1,5 +1,7 @@
 package seedu.address.model.person;
 
+import static java.util.Objects.requireNonNull;
+
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -17,6 +19,7 @@ public class StatusContainsKeywordPredicate implements Predicate<Person> {
      * @param status the status to filter by
      */
     public StatusContainsKeywordPredicate(Status status) {
+        requireNonNull(status);
         this.status = status;
     }
 

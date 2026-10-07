@@ -31,7 +31,7 @@ public class FilterCommandParser implements Parser<FilterCommand> {
         try {
             status = Status.fromString(argMultimap.getValue(PREFIX_STATUS).get());
         } catch (IllegalArgumentException e) {
-            throw new ParseException("Invalid status. Valid statuses: APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED");
+            throw new ParseException("Invalid status. Valid statuses: " + Status.VALID_STATUSES_MESSAGE);
         }
 
         return new FilterCommand(status);

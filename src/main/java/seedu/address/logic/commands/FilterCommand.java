@@ -18,7 +18,7 @@ public class FilterCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Filters candidates by status. "
             + "Parameters: "
             + PREFIX_STATUS + "STATUS\n"
-            + "Valid statuses: APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED\n"
+            + "Valid statuses: " + Status.VALID_STATUSES_MESSAGE + "\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "INTERVIEWING";
 
     public static final String MESSAGE_SUCCESS = "Filtered %1$d candidate(s) with status: %2$s";

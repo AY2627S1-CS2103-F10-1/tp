@@ -214,7 +214,7 @@ public class AddCommandParserTest {
     public void parse_invalidStatus_failure() {
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + " s/UNKNOWN" + TAG_DESC_FRIEND,
-                "Invalid status. Valid statuses: APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED");
+                "Invalid status. Valid statuses: " + Status.VALID_STATUSES_MESSAGE);
     }
 
     @Test

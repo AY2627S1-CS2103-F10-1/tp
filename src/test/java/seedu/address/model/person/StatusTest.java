@@ -55,4 +55,9 @@ public class StatusTest {
         assertEquals("Applied", Status.APPLIED.toString());
         assertEquals("Hired", Status.HIRED.toString());
     }
+
+    @Test
+    public void validStatusesMessage_listsAllEnumNames() {
+        assertEquals("APPLIED, INTERVIEWING, OFFERED, REJECTED, HIRED", Status.VALID_STATUSES_MESSAGE);
+    }
 }
