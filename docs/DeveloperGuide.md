@@ -149,7 +149,9 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
-`JsonAddressBookStorage` writes UTF-8 JSON to a temporary file in the destination directory, then atomically replaces the saved file after writing completes. Failed writes leave the previous saved file intact, and temporary files are removed. Filesystems that cannot perform atomic replacement reject the save instead of attempting a potentially partial overwrite. A filesystem root is rejected as a destination with an `IOException`.
+`JsonAddressBookStorage` writes UTF-8 JSON to a temporary file in the destination directory, then atomically replaces the saved file after writing completes. Symbolic-link destinations are resolved to their existing targets before creating the temporary file and replacing the target, preserving the links. Dangling links cause an `IOException` without changing the links or creating files. On filesystems supporting `AclFileAttributeView`, the existing destination's ACL is applied to the temporary file before writing JSON. POSIX permissions are also copied before writing on filesystems supporting `PosixFileAttributeView`. New destinations retain default ACLs and POSIX permissions. ACL or POSIX permission errors, including `AccessDeniedException`, abort the save and trigger temporary-file cleanup. The existing file's access restrictions are not replaced with default permissions when access is denied; `LogicManager` reports the permission error. Failed writes leave the previous saved file intact. Filesystems that cannot perform atomic replacement reject the save instead of attempting a potentially partial overwrite. A filesystem root is rejected as a destination with an `IOException`.
+
+Temporary files use unique names of the form `HRvest-<random>.tmp`, so a later save does not reuse or overwrite an existing temporary file. The `finally` block attempts to remove the current save's temporary file when execution unwinds normally, including after an `IOException` or an unchecked exception. A forced JVM termination or power loss can prevent this cleanup and leave an orphaned temporary file. Subsequent saves ignore these files. After closing all HRvest instances, leftover `HRvest-*.tmp` files can be removed manually; keep the configured JSON data file and any symbolic-link target.
 
 ### Common classes
 
@@ -161,18 +163,9 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Candidate note support
+### Candidate note indicator
 
-Each candidate has one optional note for interview feedback or follow-up context. This increment provides the model and persistence support; the note command and card indicator are implemented separately.
-
-* `Note` is an immutable value object. It strips surrounding whitespace, rejects blank text, and limits the result to 500 Unicode code points. It preserves internal spacing, capitalization, punctuation, and line breaks.
-* `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. The separate planned `expand` command can read this API.
-* `PersonCard` shows a pinned sticky note icon for candidates with a note. The icon has the accessible description `Candidate has a note` and tooltip `Note available`; it is invisible and unmanaged when no note exists. Note text is kept off the card, and the icon retains its space when a long name is truncated.
-* Notes participate in full equality and hashing, while `Person#isSamePerson()` and duplicate detection retain their existing behavior. Note text is omitted from `Person#toString()`.
-* `EditCommand` preserves the existing note when changing contact details or tags.
-* `JsonAdaptedPerson` persists notes as strings. Missing or `null` notes represent no note and allow older files to load. Blank or overlong notes produce a data-loading error.
-
-Automated tests cover blank and overlong notes, Unicode length boundaries, trimming and preserved contents, equality and identity, contact edits retaining notes, JSON round-trips, invalid stored notes, and files saved by earlier versions.
+`PersonCard` shows a pinned sticky note icon beside the candidate's name when `Person#hasNote()` is true. The icon has the accessible description `Candidate has a note` and tooltip `Note available`. It is invisible and unmanaged when no note exists, so it leaves no extra space. Its minimum width preserves the icon when a long name is truncated. The card does not display note text.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -646,6 +639,13 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
+
+### Candidate note indicator
+
+1. Prerequisites: Close HRvest and back up the saved JSON file. In a test copy, give one candidate a non-blank `note` string, leave another candidate without a note, and give the candidate with a note a long name.
+1. Launch HRvest using the test data file. Expected: Only the candidate with a note has a sticky note icon beside the name; no note text appears on either card.
+1. Hover over the icon. Expected: The tooltip reads `Note available`.
+1. Narrow the window until the long name is truncated. Expected: The sticky note icon remains visible, and the candidate's status still appears below the contact details.
 
 ### Saving data
 

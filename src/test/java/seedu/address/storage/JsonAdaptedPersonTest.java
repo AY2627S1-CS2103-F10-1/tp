@@ -18,6 +18,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Status;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
@@ -42,9 +43,34 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_missingStatus_defaultsToApplied() throws Exception {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_TAGS);
+        assertEquals(Status.APPLIED, person.toModelType().getStatus());
+    }
+
+    @Test
+    public void toModelType_invalidStatus_throwsIllegalValueException() {
+        JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_TAGS, "Hired", null);
+        assertThrows(IllegalValueException.class, Status.MESSAGE_CONSTRAINTS, person::toModelType);
+    }
+
+    @Test
     public void toModelType_validNote_preservesContents() throws Exception {
         Person candidate = new PersonBuilder(BENSON).withNote("Round 2: [C++], SQL; \u4e2d\u6587").build();
         assertEquals(candidate, new JsonAdaptedPerson(candidate).toModelType());
+    }
+
+    @Test
+    public void toModelType_statusAndNote_preservesBoth() throws Exception {
+        JsonAdaptedPerson candidate = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_TAGS, "Shortlisted", "Interview feedback");
+
+        Person restored = candidate.toModelType();
+
+        assertEquals(Status.SHORTLISTED, restored.getStatus());
+        assertEquals(new Note("Interview feedback"), restored.getNote().orElseThrow());
     }
 
     @Test
