@@ -168,6 +168,7 @@ Shows the specified person's full record, including their full note.
 
 Format: `expand INDEX`
 
+* The command word is case-insensitive.
 * Shows the person at the specified `INDEX`.
 * The index refers to the index number shown in the displayed person list.
 * The index **must be a positive integer** 1, 2, 3, ... within the displayed list.

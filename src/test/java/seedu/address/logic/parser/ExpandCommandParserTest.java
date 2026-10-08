@@ -41,6 +41,8 @@ public class ExpandCommandParserTest {
 
     @Test
     public void parseCommand_expand_dispatchesToExpandParser() throws Exception {
-        assertEquals(new ExpandCommand(Index.fromOneBased(1)), new AddressBookParser().parseCommand("expand 1"));
+        for (String command : new String[] {"expand 1", "EXPAND 1", "eXpAnD 1"}) {
+            assertEquals(new ExpandCommand(Index.fromOneBased(1)), new AddressBookParser().parseCommand(command));
+        }
     }
 }
