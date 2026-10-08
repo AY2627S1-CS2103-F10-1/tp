@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -28,6 +29,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -68,6 +70,31 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_statusCommand_savesUpdatedStatus() throws Exception {
+        Person candidate = new PersonBuilder().build();
+        model.addPerson(candidate);
+        String expectedMessage = String.format("Updated status of %s: Applied -> Offered", candidate.getName());
+
+        CommandResult result = logic.execute("status 1 s/oFfErEd");
+
+        assertEquals(expectedMessage, result.getFeedbackToUser());
+        assertEquals(Status.OFFERED, model.getFilteredPersonList().get(0).getStatus());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(Status.OFFERED, saved.readAddressBook().get().getPersonList().get(0).getStatus());
+    }
+
+    @Test
+    public void execute_invalidStatus_doesNotChangeOrSaveData() throws Exception {
+        model.addPerson(new PersonBuilder().build());
+
+        assertParseException("status 1 s/Hired", Status.MESSAGE_CONSTRAINTS);
+
+        assertEquals(Status.APPLIED, model.getFilteredPersonList().get(0).getStatus());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertFalse(saved.readAddressBook().isPresent());
     }
 
     @Test
