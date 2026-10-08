@@ -66,6 +66,7 @@ public interface Model {
 
     /**
      * Shows only the given displayed person in expanded view.
+     *
      * @throws IllegalArgumentException if the person is not in the displayed list.
      */
     void expandPerson(Person person);
