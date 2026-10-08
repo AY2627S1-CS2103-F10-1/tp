@@ -162,6 +162,22 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in HRvest.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
+### Viewing a person's full record: `expand`
+
+Shows the specified person's full record, including their full note.
+
+Format: `expand INDEX`
+
+* Shows the person at the specified `INDEX`.
+* The index refers to the index number shown in the displayed person list.
+* The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
+* The list shows only the selected person at index `1`, with their full note. If the person has no note, it shows `No note recorded.` Run `list` to show all persons again.
+
+Examples:
+
+* `list` followed by `expand 1` shows the 1st person in the address book.
+* `filter s/Interviewing` followed by `expand 2` shows the 2nd person in the results of the `filter` command.
+
 ### Clearing all entries: `clear`
 
 Clears all entries from HRvest.

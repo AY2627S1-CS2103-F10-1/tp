@@ -14,7 +14,10 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Person;
 import seedu.address.testutil.AddressBookBuilder;
+import seedu.address.testutil.PersonBuilder;
+import seedu.address.testutil.TypicalPersons;
 
 public class ModelManagerTest {
 
@@ -108,5 +111,93 @@ public class ModelManagerTest {
         UserPrefs differentUserPrefs = new UserPrefs();
         differentUserPrefs.setGuiSettings(new GuiSettings(1, 2, 3, 4));
         assertFalse(modelManager.equals(new ModelManager(addressBook, differentUserPrefs)));
+    }
+
+    @Test
+    public void expandPerson_personOutsideDisplayedList_preservesView() {
+        ModelManager model = createModelWithTypicalPersons();
+        Person selected = model.getFilteredPersonList().getFirst();
+        Person other = model.getFilteredPersonList().get(1);
+        model.expandPerson(selected);
+
+        assertThrows(IllegalArgumentException.class, () -> model.expandPerson(other));
+
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(selected, model.getFilteredPersonList().getFirst());
+    }
+
+    @Test
+    public void updateFilteredPersonList_singlePersonList_resetsExpandedView() {
+        ModelManager model = createModelWithTypicalPersons();
+        Person selected = model.getFilteredPersonList().getFirst();
+        model.expandPerson(selected);
+
+        model.updateFilteredPersonList(selected::equals);
+
+        assertFalse(model.isExpandedViewProperty().get());
+        assertEquals(1, model.getFilteredPersonList().size());
+    }
+
+    @Test
+    public void updateFilteredPersonList_showAll_restoresAllPersons() {
+        ModelManager model = createModelWithTypicalPersons();
+        int size = model.getFilteredPersonList().size();
+        model.expandPerson(model.getFilteredPersonList().getFirst());
+
+        model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+
+        assertFalse(model.isExpandedViewProperty().get());
+        assertEquals(size, model.getFilteredPersonList().size());
+    }
+
+    @Test
+    public void deletePerson_expandedPerson_resetsExpandedView() {
+        ModelManager model = createModelWithTypicalPersons();
+        Person selected = model.getFilteredPersonList().getFirst();
+        model.expandPerson(selected);
+
+        model.deletePerson(selected);
+
+        assertFalse(model.isExpandedViewProperty().get());
+        assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void setPerson_expandedPerson_resetsExpandedView() {
+        ModelManager model = createModelWithTypicalPersons();
+        Person selected = model.getFilteredPersonList().getFirst();
+        model.expandPerson(selected);
+
+        model.setPerson(selected, new PersonBuilder(selected).withPhone("91234567").build());
+
+        assertFalse(model.isExpandedViewProperty().get());
+    }
+
+    @Test
+    public void setAddressBook_clearData_resetsExpandedView() {
+        ModelManager model = createModelWithTypicalPersons();
+        model.expandPerson(model.getFilteredPersonList().getFirst());
+
+        model.setAddressBook(new AddressBook());
+
+        assertFalse(model.isExpandedViewProperty().get());
+    }
+
+    @Test
+    public void equals_differentExpandedView_returnsFalse() {
+        ModelManager collapsedModel = createModelWithTypicalPersons();
+        ModelManager expandedModel = createModelWithTypicalPersons();
+        Person selected = expandedModel.getFilteredPersonList().getFirst();
+        collapsedModel.updateFilteredPersonList(selected::equals);
+        expandedModel.expandPerson(selected);
+
+        assertEquals(collapsedModel.getFilteredPersonList(), expandedModel.getFilteredPersonList());
+        assertFalse(collapsedModel.isExpandedViewProperty().get());
+        assertTrue(expandedModel.isExpandedViewProperty().get());
+        assertFalse(collapsedModel.equals(expandedModel));
+    }
+
+    private ModelManager createModelWithTypicalPersons() {
+        return new ModelManager(TypicalPersons.getTypicalAddressBook(), new UserPrefs());
     }
 }
