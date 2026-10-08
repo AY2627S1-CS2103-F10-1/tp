@@ -163,12 +163,6 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Candidate note command API
-
-`NoteCommand` replaces the single note of a candidate identified by the displayed index and resets the list filter after success. It preserves the candidate's contact details, tags, and recruitment status. Out-of-range indexes leave the data and filter unchanged; replacing a note with identical text succeeds normally.
-
-This increment provides the command API only. CLI parsing and persistence coordination follow separately. `NoteCommandTest` covers first and last indexes, filtered and empty lists, overwrites, identical notes, status preservation, and value semantics.
-
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
