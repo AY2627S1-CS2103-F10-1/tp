@@ -146,6 +146,24 @@ Examples:
 **Overwriting loses the previous note.** Include earlier information in the replacement if you want to keep it. The MVP has no note history or undo, and does not support clearing a note.
 </box>
 
+### Updating a candidate's recruitment status: `status`
+
+Updates the candidate at the given index in the currently displayed list.
+
+Format: `status INDEX s/STATUS`
+
+* `INDEX` is a positive, 1-based index in the displayed list.
+* Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
+* New candidates start with `Applied`. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking.
+* After an update, the full candidate list is shown. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
+* A missing `s/` or non-integer index gives `Invalid command format!`; an index outside the displayed list gives `The candidate index provided is invalid.`
+* An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
+
+Examples:
+
+* `status 3 s/Interviewing`
+* `status 1 s/Accepted`
+
 ### Locating persons by name: `find`
 
 Finds persons whose names contain any of the given keywords.
@@ -193,13 +211,15 @@ Format: `exit`
 
 AddressBook automatically saves data after every command. You do not need to save manually.
 
-Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement.
+Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement. On filesystems that support file ACLs (access control lists) or POSIX permissions, saving preserves those settings on the existing data file; a failure to read or apply them causes the save to fail. If the data file is a symbolic link, saving updates its existing target and keeps the link. Saving fails if the link's target does not exist, leaving the link unchanged.
+
+The Windows account running HRvest must have permission to write in the data folder and access the existing data file. If those permissions are insufficient, HRvest reports a save error and keeps the existing access restrictions.
+
+A crash or power loss can leave temporary files named `HRvest-<random>.tmp` beside the data file. After closing all HRvest instances, you can delete these leftover `.tmp` files. Keep the saved JSON data file (normally `data/addressbook.json`) and any symbolic-link target; these are not temporary files.
 
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
-
-Each candidate record can include an optional `note` field containing a string. A note must be non-blank and contain at most 500 characters after trimming surrounding whitespace. Internal spacing, case, and punctuation are preserved. Omit the field or use `null` for a candidate without a note; an empty string is invalid. Existing data files without notes remain supported.
 
 <box type="warning" seamless>
 
@@ -239,4 +259,5 @@ Action     | Format, Examples
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Note**   | `note INDEX no/NOTE_TEXT`<br> e.g., `note 2 no/Passed round 2, schedule final interview`
+**Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
 **Help**   | `help`
