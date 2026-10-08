@@ -11,6 +11,7 @@ import static seedu.address.testutil.TypicalPersons.IDA;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -271,6 +272,42 @@ public class JsonAddressBookStorageTest {
 
         assertEquals(restrictiveAcl, aclView.getAcl());
         assertEquals(addressBook, storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    public void saveAddressBook_readOnlyAcl_keepsDataAndPermissionsAndRemovesTemporaryFile() throws Exception {
+        Path destination = testFolder.resolve("candidates.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        AddressBook addressBook = getTypicalAddressBook();
+        storage.saveAddressBook(addressBook);
+        String existingData = Files.readString(destination);
+        AclFileAttributeView aclView = Files.getFileAttributeView(destination, AclFileAttributeView.class);
+        List<AclEntry> originalAcl = aclView.getAcl();
+        var permissions = EnumSet.allOf(AclEntryPermission.class);
+        permissions.remove(AclEntryPermission.WRITE_DATA);
+        permissions.remove(AclEntryPermission.APPEND_DATA);
+        AclEntry readOnlyAccess = AclEntry.newBuilder()
+                .setType(AclEntryType.ALLOW)
+                .setPrincipal(aclView.getOwner())
+                .setPermissions(permissions)
+                .build();
+        List<AclEntry> readOnlyAcl = List.of(readOnlyAccess);
+        aclView.setAcl(readOnlyAcl);
+        try {
+            assertFalse(Files.isWritable(destination));
+            addressBook.addPerson(HOON);
+
+            assertThrows(AccessDeniedException.class, () -> storage.saveAddressBook(addressBook));
+
+            assertEquals(existingData, Files.readString(destination));
+            assertEquals(readOnlyAcl, aclView.getAcl());
+            try (var files = Files.list(testFolder)) {
+                assertEquals(List.of(destination), files.toList());
+            }
+        } finally {
+            aclView.setAcl(originalAcl);
+        }
     }
 
     @Test
