@@ -25,6 +25,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -34,6 +35,20 @@ import seedu.address.testutil.PersonBuilder;
 public class EditCommandTest {
 
     private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_candidateWithNote_preservesNote() {
+        Person original = model.getFilteredPersonList().getFirst();
+        Person notedPerson = new PersonBuilder(original).withNote("Passed round 2").build();
+        model.setPerson(original, notedPerson);
+        Person editedPerson = new PersonBuilder(notedPerson).withPhone(VALID_PHONE_BOB).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        expectedModel.setPerson(notedPerson, editedPerson);
+
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+    }
 
     @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
@@ -68,6 +83,18 @@ public class EditCommandTest {
         expectedModel.setPerson(lastPerson, editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_candidateWithUpdatedStatus_preservesStatus() throws Exception {
+        new StatusCommand(INDEX_FIRST_PERSON, Status.SHORTLISTED).execute(model);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        editCommand.execute(model);
+
+        assertEquals(Status.SHORTLISTED, model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased())
+                .getStatus());
     }
 
     @Test

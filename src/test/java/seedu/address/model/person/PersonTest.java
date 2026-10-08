@@ -19,6 +19,34 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void getNote_newPerson_returnsEmptyNote() {
+        assertTrue(ALICE.getNote().isEmpty());
+        assertFalse(ALICE.hasNote());
+    }
+
+    @Test
+    public void equals_differentNotes_changesEqualityButNotIdentity() {
+        Person notedAlice = new PersonBuilder(ALICE).withNote("Interview feedback").build();
+        Person copy = new PersonBuilder(notedAlice).build();
+
+        assertTrue(notedAlice.hasNote());
+        assertEquals(new Note("Interview feedback"), notedAlice.getNote().orElseThrow());
+        assertTrue(ALICE.isSamePerson(notedAlice));
+        assertTrue(notedAlice.isSamePerson(ALICE));
+        assertFalse(ALICE.equals(notedAlice));
+        assertFalse(notedAlice.equals(new PersonBuilder(ALICE).withNote("Other feedback").build()));
+        assertEquals(notedAlice, copy);
+        assertEquals(notedAlice.hashCode(), copy.hashCode());
+        assertFalse(notedAlice.toString().contains("Interview feedback"));
+    }
+
+    @Test
+    public void constructor_nullNote_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(),
+                ALICE.getAddress(), ALICE.getTags(), Status.APPLIED, null));
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));
@@ -88,12 +116,25 @@ public class PersonTest {
         // different tags -> returns false
         editedAlice = new PersonBuilder(ALICE).withTags(VALID_TAG_HUSBAND).build();
         assertFalse(ALICE.equals(editedAlice));
+
+        // different status -> returns false
+        editedAlice = new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(),
+                ALICE.getAddress(), ALICE.getTags(), Status.OFFERED);
+        assertFalse(ALICE.equals(editedAlice));
     }
 
     @Test
     public void toStringMethod() {
         String expected = Person.class.getCanonicalName() + "{name=" + ALICE.getName() + ", phone=" + ALICE.getPhone()
-                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", tags=" + ALICE.getTags() + "}";
+                + ", email=" + ALICE.getEmail() + ", address=" + ALICE.getAddress() + ", status="
+                + ALICE.getStatus() + ", tags=" + ALICE.getTags() + "}";
         assertEquals(expected, ALICE.toString());
+    }
+
+    @Test
+    public void hashCode_equalPersons_returnsEqualHashCode() {
+        Person aliceCopy = new PersonBuilder(ALICE).build();
+
+        assertEquals(ALICE.hashCode(), aliceCopy.hashCode());
     }
 }

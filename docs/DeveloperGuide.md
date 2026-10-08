@@ -149,6 +149,10 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+`JsonAddressBookStorage` writes UTF-8 JSON to a temporary file in the destination directory, then atomically replaces the saved file after writing completes. Symbolic-link destinations are resolved to their existing targets before creating the temporary file and replacing the target, preserving the links. Dangling links cause an `IOException` without changing the links or creating files. On filesystems supporting `AclFileAttributeView`, the existing destination's ACL is applied to the temporary file before writing JSON. POSIX permissions are also copied before writing on filesystems supporting `PosixFileAttributeView`. New destinations retain default ACLs and POSIX permissions. ACL or POSIX permission errors, including `AccessDeniedException`, abort the save and trigger temporary-file cleanup. The existing file's access restrictions are not replaced with default permissions when access is denied; `LogicManager` reports the permission error. Failed writes leave the previous saved file intact. Filesystems that cannot perform atomic replacement reject the save instead of attempting a potentially partial overwrite. A filesystem root is rejected as a destination with an `IOException`.
+
+Temporary files use unique names of the form `HRvest-<random>.tmp`, so a later save does not reuse or overwrite an existing temporary file. The `finally` block attempts to remove the current save's temporary file when execution unwinds normally, including after an `IOException` or an unchecked exception. A forced JVM termination or power loss can prevent this cleanup and leave an orphaned temporary file. Subsequent saves ignore these files. After closing all HRvest instances, leftover `HRvest-*.tmp` files can be removed manually; keep the configured JSON data file and any symbolic-link target.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
@@ -582,7 +586,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected.
 * **Duplicate candidate**: A candidate with the same email address and role as another candidate in HRvest.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Note**: A dated remark about a candidate, such as interview feedback.
+* **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
