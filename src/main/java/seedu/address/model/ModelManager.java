@@ -1,11 +1,15 @@
 package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import seedu.address.commons.core.GuiSettings;
@@ -21,6 +25,7 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
+    private final ReadOnlyBooleanWrapper expandedView = new ReadOnlyBooleanWrapper(false);
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -33,6 +38,7 @@ public class ModelManager implements Model {
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
+        filteredPersons.addListener((ListChangeListener<Person>) change -> expandedView.set(false));
     }
 
     public ModelManager() {
@@ -105,8 +111,22 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public ReadOnlyBooleanProperty expandedViewProperty() {
+        return expandedView.getReadOnlyProperty();
+    }
+
+    @Override
+    public void expandPerson(Person person) {
+        requireNonNull(person);
+        checkArgument(filteredPersons.contains(person), "Person must be in the displayed list.");
+        updateFilteredPersonList(person::equals);
+        expandedView.set(true);
+    }
+
+    @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
+        expandedView.set(false);
         filteredPersons.setPredicate(predicate);
     }
 
@@ -123,7 +143,8 @@ public class ModelManager implements Model {
 
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
-                && filteredPersons.equals(otherModelManager.filteredPersons);
+                && filteredPersons.equals(otherModelManager.filteredPersons)
+                && expandedView.get() == otherModelManager.expandedView.get();
     }
 
 }

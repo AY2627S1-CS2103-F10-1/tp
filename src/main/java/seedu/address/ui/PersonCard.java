@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
 
@@ -41,12 +42,19 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label status;
     @FXML
+    private Label note;
+    @FXML
     private FlowPane tags;
 
     /**
      * Creates a {@code PersonCard} with the given {@code Person} and index to display.
      */
     public PersonCard(Person person, int displayedIndex) {
+        this(person, displayedIndex, false);
+    }
+
+    /** Creates a card with complete details and note text when expanded. */
+    public PersonCard(Person person, int displayedIndex, boolean expanded) {
         super(FXML);
         this.person = person;
         id.setText(displayedIndex + ". ");
@@ -55,8 +63,25 @@ public class PersonCard extends UiPart<Region> {
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);
         status.setText(person.getStatus().toString());
+        configureExpandedView(expanded);
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
     }
+
+    /** Configures note visibility and wrapping for the expanded record. */
+    private void configureExpandedView(boolean expanded) {
+        note.setVisible(expanded);
+        note.setManaged(expanded);
+        if (expanded) {
+            note.setText(person.getNote().map(value -> "Note: " + value.value).orElse("No note recorded."));
+            for (Label field : new Label[] {name, phone, address, email, status, note}) {
+                field.setWrapText(true);
+                field.setMinWidth(0);
+                field.setMaxWidth(Double.MAX_VALUE);
+            }
+            HBox.setHgrow(name, Priority.ALWAYS);
+        }
+    }
+
 }

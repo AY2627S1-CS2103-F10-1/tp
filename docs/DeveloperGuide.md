@@ -159,6 +159,12 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Expand command
+
+`ExpandCommandParser` parses a positive displayed index, and `ExpandCommand` validates it against `Model#getFilteredPersonList()` before calling `Model#expandPerson()`. Expansion filters the list to the selected `Person` and sets a transient, read-only `expandedViewProperty` exposed through `Logic`. `PersonListPanel` observes this property and refreshes its cards, which show wrapped fields and the complete optional note in expanded view. Updating the filter or changing the displayed records resets this view state. The selected person is displayed at index `1`; later indexed commands use this displayed index.
+
+Expansion changes neither candidate records nor stored data. `LogicManager` skips saving specifically for `ExpandCommand`, allowing the command to work without write access. Validation errors preserve both the current filter and expansion state. Expansion state is not serialized, so restarting the app returns to the normal view.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation

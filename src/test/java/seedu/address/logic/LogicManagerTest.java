@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
@@ -13,6 +14,7 @@ import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -95,6 +97,54 @@ public class LogicManagerTest {
         assertEquals(Status.APPLIED, model.getFilteredPersonList().get(0).getStatus());
         JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         assertFalse(saved.readAddressBook().isPresent());
+    }
+
+    @Test
+    public void execute_expandCommand_doesNotSaveOrChangeStoredData() throws Exception {
+        Person candidate = new PersonBuilder().withNote("Feedback\n" + "x".repeat(490)).build();
+        model.addPerson(candidate);
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        saved.saveAddressBook(model.getAddressBook());
+        String original = Files.readString(saved.getAddressBookFilePath());
+        JsonAddressBookStorage rejectingStorage = new JsonAddressBookStorage(saved.getAddressBookFilePath()) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                throw DUMMY_AD_EXCEPTION;
+            }
+        };
+        logic = new LogicManager(model, new StorageManager(rejectingStorage,
+                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"))));
+
+        CommandResult result = logic.execute("expand 1");
+
+        assertEquals("Expanding candidate: " + candidate.getName() + ".", result.getFeedbackToUser());
+        assertTrue(logic.expandedViewProperty().get());
+        assertEquals(original, Files.readString(saved.getAddressBookFilePath()));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_invalidExpand_preservesCurrentView() throws Exception {
+        model.addPerson(new PersonBuilder().build());
+        logic.execute("expand 1");
+
+        assertThrows(ParseException.class, () -> logic.execute("expand 999999999999999999999"));
+        assertThrows(CommandException.class, () -> logic.execute("expand 2"));
+
+        assertTrue(logic.expandedViewProperty().get());
+        assertEquals(1, logic.getFilteredPersonList().size());
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+    }
+
+    @Test
+    public void execute_listAfterExpand_restoresNormalView() throws Exception {
+        model.addPerson(new PersonBuilder().build());
+        logic.execute("expand 1");
+
+        logic.execute("list");
+
+        assertFalse(logic.expandedViewProperty().get());
+        assertEquals(1, logic.getFilteredPersonList().size());
     }
 
     @Test

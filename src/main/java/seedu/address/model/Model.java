@@ -2,6 +2,7 @@ package seedu.address.model;
 
 import java.util.function.Predicate;
 
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
@@ -59,6 +60,15 @@ public interface Model {
      * The person identity of {@code editedPerson} must not be the same as another existing person in the address book.
      */
     void setPerson(Person target, Person editedPerson);
+
+    /** Returns whether the displayed list is in expanded view. */
+    ReadOnlyBooleanProperty expandedViewProperty();
+
+    /**
+     * Shows only the given displayed person in expanded view.
+     * @throws IllegalArgumentException if the person is not in the displayed list.
+     */
+    void expandPerson(Person person);
 
     /** Returns an unmodifiable view of the filtered person list */
     ObservableList<Person> getFilteredPersonList();
