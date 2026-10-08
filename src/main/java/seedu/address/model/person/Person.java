@@ -106,7 +106,7 @@ public class Person {
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
-                && status == otherPerson.status
+                && status.equals(otherPerson.status)
                 && tags.equals(otherPerson.tags);
     }
 
