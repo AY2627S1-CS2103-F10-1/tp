@@ -1,8 +1,9 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
-import java.util.stream.Collectors;
 
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
@@ -48,8 +49,6 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label note;
     @FXML
-    private Label expandedTags;
-    @FXML
     private FlowPane tags;
 
     /**
@@ -60,7 +59,7 @@ public class PersonCard extends UiPart<Region> {
     }
 
     /** Creates a card with complete details and note text when expanded. */
-    public PersonCard(Person person, int displayedIndex, boolean expanded) {
+    public PersonCard(Person person, int displayedIndex, boolean isExpanded) {
         super(FXML);
         this.person = person;
         id.setText(displayedIndex + ". ");
@@ -69,27 +68,38 @@ public class PersonCard extends UiPart<Region> {
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);
         status.setText(person.getStatus().toString());
-        configureExpandedView(expanded);
+        configureExpandedView(isExpanded);
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+                .forEach(tag -> {
+                    Label label = new Label(tag.tagName);
+                    if (isExpanded) {
+                        label.setWrapText(true);
+                        label.setMinWidth(0);
+                        label.maxWidthProperty().bind(tags.widthProperty());
+                        // FlowPane measures children without a width, so reserve the wrapped badge height.
+                        label.minHeightProperty().bind(Bindings.createDoubleBinding(() ->
+                                label.prefHeight(tags.getWidth()), tags.widthProperty(),
+                                label.fontProperty(), label.insetsProperty()));
+                    }
+                    tags.getChildren().add(label);
+                });
     }
 
     /** Configures note visibility and wrapping for the expanded record. */
-    private void configureExpandedView(boolean expanded) {
-        note.setVisible(expanded);
-        note.setManaged(expanded);
-        tags.setVisible(!expanded);
-        tags.setManaged(!expanded);
-        expandedTags.setVisible(expanded && !person.getTags().isEmpty());
-        expandedTags.setManaged(expanded && !person.getTags().isEmpty());
-        if (expanded) {
+    private void configureExpandedView(boolean isExpanded) {
+        note.setVisible(isExpanded);
+        note.setManaged(isExpanded);
+        if (isExpanded) {
             cardPane.setMinWidth(0);
+            tags.setMinWidth(0);
+            tags.setMinHeight(Region.USE_PREF_SIZE);
+            // Remeasure rows after the width and wrapping bindings have settled.
+            tags.widthProperty().addListener((observable, oldWidth, newWidth) ->
+                    Platform.runLater(tags::requestLayout));
             details.prefWidthProperty().bind(cardPane.prefWidthProperty());
-            expandedTags.setText("Tags: " + person.getTags().stream()
-                    .map(tag -> tag.tagName).sorted().collect(Collectors.joining(", ")));
             note.setText(person.getNote().map(value -> "Note: " + value.value).orElse("No note recorded."));
-            for (Label field : new Label[] {name, phone, address, email, status, expandedTags, note}) {
+            for (Label field : new Label[] {name, phone, address, email, status, note}) {
                 field.setWrapText(true);
                 field.setMinWidth(0);
                 field.setMaxWidth(Double.MAX_VALUE);
