@@ -178,6 +178,12 @@ Format: `exit`
 
 AddressBook automatically saves data after every command. You do not need to save manually.
 
+Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement. On filesystems that support file ACLs (access control lists) or POSIX permissions, saving preserves those settings on the existing data file; a failure to read or apply them causes the save to fail. If the data file is a symbolic link, saving updates its existing target and keeps the link. Saving fails if the link's target does not exist, leaving the link unchanged.
+
+The Windows account running HRvest must have permission to write in the data folder and access the existing data file. If those permissions are insufficient, HRvest reports a save error and keeps the existing access restrictions.
+
+A crash or power loss can leave temporary files named `HRvest-<random>.tmp` beside the data file. After closing all HRvest instances, you can delete these leftover `.tmp` files. Keep the saved JSON data file (normally `data/addressbook.json`) and any symbolic-link target; these are not temporary files.
+
 ### Editing the data file
 
 AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
