@@ -10,7 +10,7 @@ import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
 
 /**
- * A UI component that displays information of a {@code Person}.
+ * Displays a candidate's information.
  */
 public class PersonCard extends UiPart<Region> {
 
@@ -46,20 +46,20 @@ public class PersonCard extends UiPart<Region> {
     private FlowPane tags;
 
     /**
-     * Creates a {@code PersonCard} with the given {@code Person} and index to display.
+     * Creates a card with the given candidate and displayed index.
      */
-    public PersonCard(Person person, int displayedIndex) {
+    public PersonCard(Person candidate, int displayedIndex) {
         super(FXML);
-        this.person = person;
+        person = candidate;
         id.setText(displayedIndex + ". ");
-        name.setText(person.getName().fullName);
-        noteIcon.setVisible(person.hasNote());
-        noteIcon.setManaged(person.hasNote());
-        phone.setText(person.getPhone().value);
-        address.setText(person.getAddress().value);
-        email.setText(person.getEmail().value);
-        status.setText(person.getStatus().toString());
-        person.getTags().stream()
+        name.setText(candidate.getName().fullName);
+        noteIcon.setVisible(candidate.hasNote());
+        noteIcon.setManaged(candidate.hasNote());
+        phone.setText(candidate.getPhone().value);
+        address.setText(candidate.getAddress().value);
+        email.setText(candidate.getEmail().value);
+        status.setText(candidate.getStatus().toString());
+        candidate.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
     }
