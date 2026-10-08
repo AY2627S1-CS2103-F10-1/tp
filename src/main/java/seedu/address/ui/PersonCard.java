@@ -1,10 +1,12 @@
 package seedu.address.ui;
 
 import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -30,6 +32,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private HBox cardPane;
     @FXML
+    private GridPane details;
+    @FXML
     private Label name;
     @FXML
     private Label id;
@@ -43,6 +47,8 @@ public class PersonCard extends UiPart<Region> {
     private Label status;
     @FXML
     private Label note;
+    @FXML
+    private Label expandedTags;
     @FXML
     private FlowPane tags;
 
@@ -73,9 +79,17 @@ public class PersonCard extends UiPart<Region> {
     private void configureExpandedView(boolean expanded) {
         note.setVisible(expanded);
         note.setManaged(expanded);
+        tags.setVisible(!expanded);
+        tags.setManaged(!expanded);
+        expandedTags.setVisible(expanded && !person.getTags().isEmpty());
+        expandedTags.setManaged(expanded && !person.getTags().isEmpty());
         if (expanded) {
+            cardPane.setMinWidth(0);
+            details.prefWidthProperty().bind(cardPane.prefWidthProperty());
+            expandedTags.setText("Tags: " + person.getTags().stream()
+                    .map(tag -> tag.tagName).sorted().collect(Collectors.joining(", ")));
             note.setText(person.getNote().map(value -> "Note: " + value.value).orElse("No note recorded."));
-            for (Label field : new Label[] {name, phone, address, email, status, note}) {
+            for (Label field : new Label[] {name, phone, address, email, status, expandedTags, note}) {
                 field.setWrapText(true);
                 field.setMinWidth(0);
                 field.setMaxWidth(Double.MAX_VALUE);

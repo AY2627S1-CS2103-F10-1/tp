@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import java.util.logging.Logger;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -45,7 +46,13 @@ public class PersonListPanel extends UiPart<Region> {
                 setGraphic(null);
                 setText(null);
             } else {
-                setGraphic(new PersonCard(person, getIndex() + 1, expandedView.get()).getRoot());
+                Region card = new PersonCard(person, getIndex() + 1, expandedView.get()).getRoot();
+                if (expandedView.get()) {
+                    card.prefWidthProperty().bind(Bindings.createDoubleBinding(() ->
+                            Math.max(0, getWidth() - getInsets().getLeft() - getInsets().getRight()),
+                            widthProperty(), insetsProperty()));
+                }
+                setGraphic(card);
             }
         }
     }

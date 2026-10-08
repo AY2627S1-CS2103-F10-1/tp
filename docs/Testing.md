@@ -31,6 +31,8 @@ You can run tests in two ways.
 
 ## Types of tests
 
+The expanded-record UI regression test (`PersonCardTest`) starts a separate JavaFX process to check wrapping, note visibility, and view restoration. On Linux without a `DISPLAY`, it runs through `xvfb-run`, which must be available on the system. The GitHub Actions Ubuntu runner includes Xvfb. On desktop systems, the test uses the native display.
+
 This project has three types of tests:
 
 1. *Unit tests* target the lowest-level methods and classes.<br>
