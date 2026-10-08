@@ -207,6 +207,10 @@ Exits the program.
 
 Format: `exit`
 
+### Candidate note indicator
+
+A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`; the card does not display the note text. The planned `expand` command will show full notes separately.
+
 ### Saving the data
 
 AddressBook automatically saves data after every command. You do not need to save manually.
