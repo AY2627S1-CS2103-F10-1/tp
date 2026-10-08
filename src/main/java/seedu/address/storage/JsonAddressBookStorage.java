@@ -102,7 +102,8 @@ public class JsonAddressBookStorage {
         Files.createDirectories(parent);
         Path temporaryFile = Files.createTempFile(parent, "addressbook-", ".tmp");
         try {
-            copyExistingAcl(destination, temporaryFile);
+            copyExistingAcl(Files.getFileAttributeView(destination, AclFileAttributeView.class),
+                    Files.getFileAttributeView(temporaryFile, AclFileAttributeView.class));
             copyExistingPosixPermissions(destination, temporaryFile);
             JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), temporaryFile);
             Files.move(temporaryFile, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
@@ -115,20 +116,22 @@ public class JsonAddressBookStorage {
      * Copies the existing destination's ACL to the temporary file before candidate data is written.
      * Leaves the default ACL unchanged when the destination is absent or ACLs are unsupported.
      *
+     * @param destinationAclView The destination's ACL view, or null if ACLs are unsupported.
+     * @param temporaryAclView The temporary file's ACL view.
      * @throws IOException if reading or applying the ACL fails.
      */
-    private static void copyExistingAcl(Path destination, Path temporaryFile) throws IOException {
-        AclFileAttributeView aclView = Files.getFileAttributeView(destination, AclFileAttributeView.class);
-        if (aclView == null) {
+    static void copyExistingAcl(AclFileAttributeView destinationAclView, AclFileAttributeView temporaryAclView)
+            throws IOException {
+        if (destinationAclView == null) {
             return;
         }
         List<AclEntry> acl;
         try {
-            acl = aclView.getAcl();
+            acl = destinationAclView.getAcl();
         } catch (NoSuchFileException e) {
             return;
         }
-        Files.setAttribute(temporaryFile, "acl:acl", acl);
+        temporaryAclView.setAcl(acl);
     }
 
     /**
