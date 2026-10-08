@@ -163,10 +163,6 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Candidate note indicator
-
-`PersonCard` shows a pinned sticky note icon beside the candidate's name when `Person#hasNote()` is true. The icon has the accessible description `Candidate has a note` and tooltip `Note available`. It is invisible and unmanaged when no note exists, so it leaves no extra space. Its minimum width preserves the icon when a long name is truncated. The card does not display note text.
-
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
