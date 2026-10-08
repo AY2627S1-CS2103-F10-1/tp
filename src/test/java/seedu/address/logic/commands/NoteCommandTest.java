@@ -119,6 +119,9 @@ public class NoteCommandTest {
         assertEquals(NoteCommand.class.getCanonicalName() + "{index=" + INDEX_FIRST_PERSON + "}", command.toString());
     }
 
+    /**
+     * Asserts that a note update succeeds and preserves the candidate's other details.
+     */
     private void assertNoteUpdateSuccess(Index index, String text) {
         Person original = model.getFilteredPersonList().get(index.getZeroBased());
         Person updated = new PersonBuilder(original).withNote(text).build();
