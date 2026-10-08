@@ -19,6 +19,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.NoteCommandParser;
+import seedu.address.logic.parser.ParserUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -27,6 +29,7 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -94,16 +97,43 @@ public class NoteIntegrationTest {
     }
 
     @Test
+    public void execute_noteAfterStatus_keepsSavedStatus() throws Exception {
+        logic.execute("status 2 s/Interviewing");
+        logic.execute("find Benson");
+
+        logic.execute("NoTe 1 NO/Follow up next week");
+
+        Person savedCandidate = readCandidate(1);
+        assertEquals(Status.INTERVIEWING, savedCandidate.getStatus());
+        assertEquals(new Note("Follow up next week"), savedCandidate.getNote().orElseThrow());
+        assertEquals(savedCandidate, model.getAddressBook().getPersonList().get(1));
+        assertTrue(readCandidate(0).getNote().isEmpty());
+    }
+
+    @Test
+    public void execute_statusAfterNote_keepsSavedNote() throws Exception {
+        logic.execute("note 2 no/Interview feedback");
+
+        logic.execute("status 2 s/Offered");
+
+        Person savedCandidate = readCandidate(1);
+        assertEquals(Status.OFFERED, savedCandidate.getStatus());
+        assertEquals(new Note("Interview feedback"), savedCandidate.getNote().orElseThrow());
+        assertEquals(savedCandidate, model.getAddressBook().getPersonList().get(1));
+    }
+
+    @Test
     public void execute_invalidNotes_keepsMemoryDiskAndFilterUnchanged() throws Exception {
         logic.execute("note 2 no/Existing note");
         logic.execute("find Benson");
         AddressBook before = new AddressBook(model.getAddressBook());
         List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
         String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
-        String invalidFormat = String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
         String[] commands = {"note 1", "note abc no/hi", "note 1 no/ ",
             "note 1 no/" + "x".repeat(501), "note 1 no/first no/second"};
-        String[] messages = {invalidFormat, invalidFormat, Note.MESSAGE_BLANK, Note.MESSAGE_TOO_LONG,
+        String[] messages = {NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE,
+            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE,
+            Note.MESSAGE_BLANK, Note.MESSAGE_TOO_LONG,
             Messages.MESSAGE_DUPLICATE_FIELDS + "no/"};
         for (int i = 0; i < commands.length; i++) {
             String command = commands[i];
