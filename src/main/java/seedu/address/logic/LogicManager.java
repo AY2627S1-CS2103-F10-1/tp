@@ -81,8 +81,8 @@ public class LogicManager implements Logic {
      */
     private Model createNoteUpdateModel() {
         Model stagedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        List<Person> displayedPersons = List.copyOf(model.getFilteredPersonList());
-        stagedModel.updateFilteredPersonList(displayedPersons::contains);
+        List<Person> displayedCandidates = List.copyOf(model.getFilteredPersonList());
+        stagedModel.updateFilteredPersonList(displayedCandidates::contains);
         return stagedModel;
     }
 
