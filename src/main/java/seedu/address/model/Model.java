@@ -62,7 +62,7 @@ public interface Model {
     void setPerson(Person target, Person editedPerson);
 
     /** Returns whether the displayed list is in expanded view. */
-    ReadOnlyBooleanProperty expandedViewProperty();
+    ReadOnlyBooleanProperty isExpandedViewProperty();
 
     /**
      * Shows only the given displayed person in expanded view.

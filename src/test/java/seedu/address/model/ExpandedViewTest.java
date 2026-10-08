@@ -22,7 +22,7 @@ public class ExpandedViewTest {
 
         assertThrows(IllegalArgumentException.class, () -> model.expandPerson(other));
 
-        assertTrue(model.expandedViewProperty().get());
+        assertTrue(model.isExpandedViewProperty().get());
         assertEquals(selected, model.getFilteredPersonList().getFirst());
     }
 
@@ -33,7 +33,7 @@ public class ExpandedViewTest {
 
         model.updateFilteredPersonList(selected::equals);
 
-        assertFalse(model.expandedViewProperty().get());
+        assertFalse(model.isExpandedViewProperty().get());
         assertEquals(1, model.getFilteredPersonList().size());
     }
 
@@ -44,7 +44,7 @@ public class ExpandedViewTest {
 
         model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
 
-        assertFalse(model.expandedViewProperty().get());
+        assertFalse(model.isExpandedViewProperty().get());
         assertEquals(size, model.getFilteredPersonList().size());
     }
 
@@ -55,7 +55,7 @@ public class ExpandedViewTest {
 
         model.deletePerson(selected);
 
-        assertFalse(model.expandedViewProperty().get());
+        assertFalse(model.isExpandedViewProperty().get());
         assertTrue(model.getFilteredPersonList().isEmpty());
     }
 
@@ -66,7 +66,7 @@ public class ExpandedViewTest {
 
         model.setPerson(selected, new PersonBuilder(selected).withPhone("91234567").build());
 
-        assertFalse(model.expandedViewProperty().get());
+        assertFalse(model.isExpandedViewProperty().get());
     }
 
     @Test
@@ -75,6 +75,6 @@ public class ExpandedViewTest {
 
         model.setAddressBook(new AddressBook());
 
-        assertFalse(model.expandedViewProperty().get());
+        assertFalse(model.isExpandedViewProperty().get());
     }
 }

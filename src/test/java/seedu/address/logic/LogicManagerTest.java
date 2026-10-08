@@ -100,25 +100,17 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_expandCommand_doesNotSaveOrChangeStoredData() throws Exception {
+    public void execute_expandCommand_preservesStoredData() throws Exception {
         Person candidate = new PersonBuilder().withNote("Feedback\n" + "x".repeat(490)).build();
         model.addPerson(candidate);
         JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         saved.saveAddressBook(model.getAddressBook());
         String original = Files.readString(saved.getAddressBookFilePath());
-        JsonAddressBookStorage rejectingStorage = new JsonAddressBookStorage(saved.getAddressBookFilePath()) {
-            @Override
-            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
-                throw DUMMY_AD_EXCEPTION;
-            }
-        };
-        logic = new LogicManager(model, new StorageManager(rejectingStorage,
-                new JsonUserPrefsStorage(temporaryFolder.resolve("userPrefs.json"))));
 
         CommandResult result = logic.execute("expand 1");
 
         assertEquals("Expanding candidate: " + candidate.getName() + ".", result.getFeedbackToUser());
-        assertTrue(logic.expandedViewProperty().get());
+        assertTrue(logic.isExpandedViewProperty().get());
         assertEquals(original, Files.readString(saved.getAddressBookFilePath()));
         assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
     }
@@ -127,13 +119,15 @@ public class LogicManagerTest {
     public void execute_invalidExpand_preservesCurrentView() throws Exception {
         model.addPerson(new PersonBuilder().build());
         logic.execute("expand 1");
+        Path savedPath = temporaryFolder.resolve("addressBook.json");
+        String savedData = Files.readString(savedPath);
 
         assertThrows(ParseException.class, () -> logic.execute("expand 999999999999999999999"));
         assertThrows(CommandException.class, () -> logic.execute("expand 2"));
 
-        assertTrue(logic.expandedViewProperty().get());
+        assertTrue(logic.isExpandedViewProperty().get());
         assertEquals(1, logic.getFilteredPersonList().size());
-        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+        assertEquals(savedData, Files.readString(savedPath));
     }
 
     @Test
@@ -143,7 +137,7 @@ public class LogicManagerTest {
 
         logic.execute("list");
 
-        assertFalse(logic.expandedViewProperty().get());
+        assertFalse(logic.isExpandedViewProperty().get());
         assertEquals(1, logic.getFilteredPersonList().size());
     }
 

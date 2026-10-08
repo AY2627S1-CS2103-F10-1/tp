@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.ExpandCommand;
+import seedu.address.logic.parser.exceptions.ParseException;
 
 public class ExpandCommandParserTest {
     private final ExpandCommandParser parser = new ExpandCommandParser();
@@ -41,8 +43,14 @@ public class ExpandCommandParserTest {
 
     @Test
     public void parseCommand_expand_dispatchesToExpandParser() throws Exception {
-        for (String command : new String[] {"expand 1", "EXPAND 1", "eXpAnD 1"}) {
-            assertEquals(new ExpandCommand(Index.fromOneBased(1)), new AddressBookParser().parseCommand(command));
+        assertEquals(new ExpandCommand(Index.fromOneBased(1)), new AddressBookParser().parseCommand("expand 1"));
+    }
+
+    @Test
+    public void parseCommand_expandWithDifferentCase_reportsUnknownCommand() {
+        for (String command : new String[] {"EXPAND 1", "eXpAnD 1"}) {
+            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () ->
+                    new AddressBookParser().parseCommand(command));
         }
     }
 }

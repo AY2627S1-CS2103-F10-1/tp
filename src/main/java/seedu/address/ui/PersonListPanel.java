@@ -17,7 +17,7 @@ import seedu.address.model.person.Person;
  */
 public class PersonListPanel extends UiPart<Region> {
     private static final String FXML = "PersonListPanel.fxml";
-    private final ObservableBooleanValue expandedView;
+    private final ObservableBooleanValue isExpandedView;
     private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
 
     @FXML
@@ -26,11 +26,11 @@ public class PersonListPanel extends UiPart<Region> {
     /**
      * Creates a panel observing the displayed persons and the expanded view state.
      */
-    public PersonListPanel(ObservableList<Person> personList, ObservableBooleanValue expandedView) {
+    public PersonListPanel(ObservableList<Person> personList, ObservableBooleanValue isExpandedView) {
         super(FXML);
-        this.expandedView = expandedView;
+        this.isExpandedView = isExpandedView;
         personListView.setItems(personList);
-        expandedView.addListener((observable, oldValue, newValue) -> personListView.refresh());
+        isExpandedView.addListener((observable, oldValue, newValue) -> personListView.refresh());
         personListView.setCellFactory(listView -> new PersonListViewCell());
     }
 
@@ -46,8 +46,10 @@ public class PersonListPanel extends UiPart<Region> {
                 setGraphic(null);
                 setText(null);
             } else {
-                Region card = new PersonCard(person, getIndex() + 1, expandedView.get()).getRoot();
-                if (expandedView.get()) {
+                Region card = new PersonCard(person, getIndex() + 1, isExpandedView.get()).getRoot();
+                if (isExpandedView.get()) {
+                    // Constrain the expanded card to the cell width minus padding so full text wraps on resize.
+                    // Normal cards retain their existing single-line layout.
                     card.prefWidthProperty().bind(Bindings.createDoubleBinding(() ->
                             Math.max(0, getWidth() - getInsets().getLeft() - getInsets().getRight()),
                             widthProperty(), insetsProperty()));

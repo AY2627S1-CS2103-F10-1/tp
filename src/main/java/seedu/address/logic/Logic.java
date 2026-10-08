@@ -22,7 +22,7 @@ public interface Logic {
     CommandResult execute(String commandText) throws CommandException, ParseException;
 
     /** Returns whether the displayed list is in expanded view. */
-    ReadOnlyBooleanProperty expandedViewProperty();
+    ReadOnlyBooleanProperty isExpandedViewProperty();
 
     /** Returns an unmodifiable view of the filtered list of persons */
     ObservableList<Person> getFilteredPersonList();

@@ -25,7 +25,7 @@ public class ModelManager implements Model {
     private final AddressBook addressBook;
     private final UserPrefs userPrefs;
     private final FilteredList<Person> filteredPersons;
-    private final ReadOnlyBooleanWrapper expandedView = new ReadOnlyBooleanWrapper(false);
+    private final ReadOnlyBooleanWrapper isExpandedView = new ReadOnlyBooleanWrapper(false);
 
     /**
      * Initializes a ModelManager with the given addressBook and userPrefs.
@@ -38,7 +38,7 @@ public class ModelManager implements Model {
         this.addressBook = new AddressBook(addressBook);
         this.userPrefs = new UserPrefs(userPrefs);
         filteredPersons = new FilteredList<>(this.addressBook.getPersonList());
-        filteredPersons.addListener((ListChangeListener<Person>) change -> expandedView.set(false));
+        filteredPersons.addListener((ListChangeListener<Person>) change -> isExpandedView.set(false));
     }
 
     public ModelManager() {
@@ -111,8 +111,8 @@ public class ModelManager implements Model {
     }
 
     @Override
-    public ReadOnlyBooleanProperty expandedViewProperty() {
-        return expandedView.getReadOnlyProperty();
+    public ReadOnlyBooleanProperty isExpandedViewProperty() {
+        return isExpandedView.getReadOnlyProperty();
     }
 
     @Override
@@ -120,13 +120,13 @@ public class ModelManager implements Model {
         requireNonNull(person);
         checkArgument(filteredPersons.contains(person), "Person must be in the displayed list.");
         updateFilteredPersonList(person::equals);
-        expandedView.set(true);
+        isExpandedView.set(true);
     }
 
     @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
-        expandedView.set(false);
+        isExpandedView.set(false);
         filteredPersons.setPredicate(predicate);
     }
 
@@ -144,7 +144,7 @@ public class ModelManager implements Model {
         return addressBook.equals(otherModelManager.addressBook)
                 && userPrefs.equals(otherModelManager.userPrefs)
                 && filteredPersons.equals(otherModelManager.filteredPersons)
-                && expandedView.get() == otherModelManager.expandedView.get();
+                && isExpandedView.get() == otherModelManager.isExpandedView.get();
     }
 
 }

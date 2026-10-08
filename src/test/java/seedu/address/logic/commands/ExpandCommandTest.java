@@ -33,7 +33,7 @@ public class ExpandCommandTest {
 
             assertEquals(String.format(ExpandCommand.MESSAGE_SUCCESS, selected.getName()), result.getFeedbackToUser());
             assertEquals(List.of(selected), model.getFilteredPersonList());
-            assertTrue(model.expandedViewProperty().get());
+            assertTrue(model.isExpandedViewProperty().get());
             assertEquals(original, model.getAddressBook());
         }
     }
@@ -46,7 +46,7 @@ public class ExpandCommandTest {
         new ExpandCommand(Index.fromOneBased(1)).execute(model);
 
         assertEquals(List.of(selected), model.getFilteredPersonList());
-        assertTrue(model.expandedViewProperty().get());
+        assertTrue(model.isExpandedViewProperty().get());
     }
 
     @Test
@@ -70,7 +70,7 @@ public class ExpandCommandTest {
                 new ExpandCommand(Index.fromOneBased(2)).execute(model));
 
         assertEquals(List.of(selected), model.getFilteredPersonList());
-        assertTrue(model.expandedViewProperty().get());
+        assertTrue(model.isExpandedViewProperty().get());
     }
 
     @Test
@@ -79,7 +79,7 @@ public class ExpandCommandTest {
 
         assertThrows(CommandException.class, ExpandCommand.MESSAGE_EMPTY_LIST, () ->
                 new ExpandCommand(Index.fromOneBased(1)).execute(model));
-        assertFalse(model.expandedViewProperty().get());
+        assertFalse(model.isExpandedViewProperty().get());
     }
 
     @Test
@@ -88,7 +88,7 @@ public class ExpandCommandTest {
         CommandResult first = command.execute(model);
 
         assertEquals(first, command.execute(model));
-        assertTrue(model.expandedViewProperty().get());
+        assertTrue(model.isExpandedViewProperty().get());
     }
 
     @Test

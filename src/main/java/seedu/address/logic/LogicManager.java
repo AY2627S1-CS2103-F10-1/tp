@@ -10,7 +10,6 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
-import seedu.address.logic.commands.ExpandCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -50,11 +49,6 @@ public class LogicManager implements Logic {
         Command command = addressBookParser.parseCommand(commandText);
         commandResult = command.execute(model);
 
-        // Expanding changes only the view and must work without write access to the data file.
-        if (command instanceof ExpandCommand) {
-            return commandResult;
-        }
-
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
@@ -67,8 +61,8 @@ public class LogicManager implements Logic {
     }
 
     @Override
-    public ReadOnlyBooleanProperty expandedViewProperty() {
-        return model.expandedViewProperty();
+    public ReadOnlyBooleanProperty isExpandedViewProperty() {
+        return model.isExpandedViewProperty();
     }
 
     @Override

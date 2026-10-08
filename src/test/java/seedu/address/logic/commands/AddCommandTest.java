@@ -139,7 +139,7 @@ public class AddCommandTest {
         }
 
         @Override
-        public ReadOnlyBooleanProperty expandedViewProperty() {
+        public ReadOnlyBooleanProperty isExpandedViewProperty() {
             throw new AssertionError("This method should not be called.");
         }
 
