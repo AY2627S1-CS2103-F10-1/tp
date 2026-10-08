@@ -582,7 +582,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected.
 * **Duplicate candidate**: A candidate with the same email address and role as another candidate in HRvest.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
-* **Note**: A dated remark about a candidate, such as interview feedback.
+* **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------

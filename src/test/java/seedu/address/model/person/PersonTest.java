@@ -19,6 +19,34 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonTest {
 
     @Test
+    public void getNote_newPerson_returnsEmptyNote() {
+        assertTrue(ALICE.getNote().isEmpty());
+        assertFalse(ALICE.hasNote());
+    }
+
+    @Test
+    public void equals_differentNotes_changesEqualityButNotIdentity() {
+        Person notedAlice = new PersonBuilder(ALICE).withNote("Interview feedback").build();
+        Person copy = new PersonBuilder(notedAlice).build();
+
+        assertTrue(notedAlice.hasNote());
+        assertEquals(new Note("Interview feedback"), notedAlice.getNote().orElseThrow());
+        assertTrue(ALICE.isSamePerson(notedAlice));
+        assertTrue(notedAlice.isSamePerson(ALICE));
+        assertFalse(ALICE.equals(notedAlice));
+        assertFalse(notedAlice.equals(new PersonBuilder(ALICE).withNote("Other feedback").build()));
+        assertEquals(notedAlice, copy);
+        assertEquals(notedAlice.hashCode(), copy.hashCode());
+        assertFalse(notedAlice.toString().contains("Interview feedback"));
+    }
+
+    @Test
+    public void constructor_nullNote_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new Person(ALICE.getName(), ALICE.getPhone(), ALICE.getEmail(),
+                ALICE.getAddress(), ALICE.getTags(), null));
+    }
+
+    @Test
     public void asObservableList_modifyList_throwsUnsupportedOperationException() {
         Person person = new PersonBuilder().build();
         assertThrows(UnsupportedOperationException.class, () -> person.getTags().remove(0));

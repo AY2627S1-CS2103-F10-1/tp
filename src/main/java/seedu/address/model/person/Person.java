@@ -5,6 +5,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
@@ -23,17 +24,27 @@ public class Person {
 
     // Data fields
     private final Address address;
+    private final Optional<Note> note;
     private final Set<Tag> tags = new HashSet<>();
 
     /**
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        requireAllNonNull(name, phone, email, address, tags);
+        this(name, phone, email, address, tags, Optional.empty());
+    }
+
+    /**
+     * Constructs a person with the given details and an optional note.
+     * Every field must be present and not null.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Optional<Note> note) {
+        requireAllNonNull(name, phone, email, address, tags, note);
         this.name = name;
         this.phone = phone;
         this.email = email;
         this.address = address;
+        this.note = note;
         this.tags.addAll(tags);
     }
 
@@ -51,6 +62,20 @@ public class Person {
 
     public Address getAddress() {
         return address;
+    }
+
+    /**
+     * Returns this candidate's optional note.
+     */
+    public Optional<Note> getNote() {
+        return note;
+    }
+
+    /**
+     * Returns whether this candidate has a note.
+     */
+    public boolean hasNote() {
+        return note.isPresent();
     }
 
     /**
@@ -93,13 +118,14 @@ public class Person {
                 && phone.equals(otherPerson.phone)
                 && email.equals(otherPerson.email)
                 && address.equals(otherPerson.address)
+                && note.equals(otherPerson.note)
                 && tags.equals(otherPerson.tags);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, tags);
+        return Objects.hash(name, phone, email, address, tags, note);
     }
 
     @Override
