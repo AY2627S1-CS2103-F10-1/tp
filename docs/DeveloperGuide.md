@@ -170,13 +170,13 @@ The `note INDEX no/NOTE_TEXT` command replaces a candidate's single optional not
 * The command word and `no/` prefix are case-insensitive. `NoteCommandParser` normalizes reserved prefixes after whitespace, requires an index and the prefix, rejects repeated prefixes, and delegates index and note validation to `ParserUtil`. Text containing other prefixes remains part of the note.
 * `Note` is an immutable value object. It strips surrounding whitespace, rejects blank text, and limits the result to 500 Unicode code points. It preserves internal spacing, capitalization, punctuation, and line breaks.
 * `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. Notes participate in full equality and hashing, but do not affect `Person#isSamePerson()` or duplicate detection. `EditCommand` preserves the note when editing contact details or tags.
-* `NoteCommand` updates the displayed candidate using `Model#setPerson()`. `LogicManager` executes notes against a temporary model containing the same displayed candidates, saves that model through the existing `Storage` API, then updates the live model. Validation and save failures leave the live data and its original filter unchanged. Other commands retain their existing save behavior.
+* `NoteCommand` updates the displayed candidate using `Model#setPerson()`, preserving contact details, tags, and recruitment status. `StatusCommand` preserves the note. `LogicManager` executes notes against a temporary model containing the same displayed candidates, saves that model through the existing `Storage` API, then updates the live model. Validation and save failures leave the live data and its original filter unchanged. Other commands retain their existing save behavior.
 * `JsonAdaptedPerson` stores the note as a string. Missing or `null` notes represent no note, allowing files saved by earlier versions to load. Supplied notes are validated when converting to the model; blank or overlong text causes a data-loading error.
 * `PersonCard` shows a small pinned sticky note icon with the accessible description `Candidate has a note` and tooltip `Note available`. Cards without a note reserve no space for the icon. The card never shows the note text. The separate planned `expand` command can read the note via `getNote()`; that command is not implemented here.
 
 Each candidate has one note to keep the MVP simple. Overwriting discards earlier text; there is no note history, undo, append, or clear command. Identical text still succeeds normally. Logging omits command arguments and note contents.
 
-Automated tests cover model validation and Unicode length boundaries, parser errors and duplicate prefixes, updates to filtered lists, overwrites and identical notes, contact edits preserving notes, JSON validation and backward compatibility, immediate persistence and reloads, and rejected storage writes. See `NoteTest`, `NoteCommandParserTest`, `NoteCommandTest`, and `NoteIntegrationTest`, together with the existing person, edit, parser, and storage tests.
+Automated tests cover model validation and Unicode length boundaries, parser errors and duplicate prefixes, updates to filtered lists, overwrites and identical notes, contact and status updates preserving notes, notes preserving status, JSON validation and backward compatibility, immediate persistence and reloads, and rejected storage writes. See `NoteTest`, `NoteCommandParserTest`, `NoteCommandTest`, and `NoteIntegrationTest`, together with the existing person, edit, parser, and storage tests.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -649,8 +649,10 @@ testers are expected to do more *exploratory* testing.
 ### Adding or replacing a candidate's note
 
 1. Prerequisites: Use `list` with at least two candidates. Record the names at indexes 1 and 2.
+1. Run `status 2 s/Interviewing` before adding a note.<br>
+   Expected: Candidate 2 has status `Interviewing`.
 1. Run `note 2 no/Strong on system design, weak on SQL`.<br>
-   Expected: The success message contains candidate 2's name and the note. Only that candidate gains a pinned sticky note icon. Hovering over it shows `Note available`; no note text appears on the card.
+   Expected: The success message contains candidate 2's name and the note. Only that candidate gains a pinned sticky note icon. Hovering over it shows `Note available`; no note text appears on the card. The candidate's status stays `Interviewing`.
 1. Run `note 2 no/Passed round 2, schedule final interview`, then repeat it.<br>
    Expected: Both commands succeed with the normal message; only the replacement note is stored.
 1. Use `find` with a word from candidate 2's name. Run `note 1 no/Follow up next week`.<br>
@@ -659,6 +661,8 @@ testers are expected to do more *exploratory* testing.
    Expected: The blank-note and repeated-prefix errors appear; no note or displayed list changes.
 1. Edit the noted candidate's phone number using `edit INDEX p/12345678`, then restart HRvest.<br>
    Expected: The phone edit is saved and the note icon remains. The saved JSON contains the latest note in that candidate's `note` field.
+1. Run `status INDEX s/Offered` on the noted candidate.<br>
+   Expected: The status changes to `Offered`; the icon and saved note remain.
 1. Resize the window while a candidate has a long name and a note.<br>
    Expected: The note icon remains visible even if the name is truncated.
 
@@ -678,13 +682,6 @@ testers are expected to do more *exploratory* testing.
       Expected: Similar to previous.
 
 1. _{ more test cases … }_
-
-### Candidate note indicator
-
-1. Prerequisites: Close HRvest and back up the saved JSON file. In a test copy, give one candidate a non-blank `note` string, leave another candidate without a note, and give the candidate with a note a long name.
-1. Launch HRvest using the test data file. Expected: Only the candidate with a note has a sticky note icon beside the name; no note text appears on either card.
-1. Hover over the icon. Expected: The tooltip reads `Note available`.
-1. Narrow the window until the long name is truncated. Expected: The sticky note icon remains visible, and the candidate's status still appears below the contact details.
 
 ### Saving data
 

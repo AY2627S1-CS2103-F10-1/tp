@@ -124,7 +124,7 @@ Format: `note INDEX no/NOTE_TEXT`
 * The `note` command word and `no/` prefix are case-insensitive. Use `no/` once; whitespace followed by this prefix starts another note value and is rejected as a repeated prefix. Other prefix-like text, such as `n/`, remains part of the note.
 * On success, HRvest saves the note immediately, resets the list to show all candidates, and displays `Updated note for <NAME>: <NOTE_TEXT>`.
 * A pinned sticky note icon beside the candidate's name indicates a note exists. Its tooltip reads `Note available`; the card does not display the note text. Viewing full notes using the planned `expand` command is a separate feature.
-* Entering the same note again still succeeds normally. Editing contact details or tags keeps the note. Notes do not affect duplicate detection.
+* Entering the same note again still succeeds normally. Editing contact details, tags, or recruitment status keeps the note. Updating a note keeps the candidate's recruitment status. Notes do not affect duplicate detection.
 * Invalid input leaves the existing note, displayed list, and saved data unchanged. If saving fails, HRvest shows a storage error and keeps the existing note and displayed list.
 
 Examples:
@@ -135,7 +135,8 @@ Examples:
 
 | Problem | Message |
 |---------|---------|
-| Missing index or `no/`, or an index that is not a positive integer | `Invalid command format!` followed by the command usage |
+| Missing `no/` | `The note prefix no/ is required.` followed by the command usage |
+| Missing index, or an index that is not a positive integer | `Index must be a positive integer.` followed by the command usage |
 | Index outside the displayed list | `The candidate index provided is invalid.` |
 | Blank note | `Note cannot be blank.` |
 | More than 500 characters after trimming | `Note cannot exceed 500 characters.` |
@@ -206,10 +207,6 @@ Format: `clear`
 Exits the program.
 
 Format: `exit`
-
-### Candidate note indicator
-
-A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`; the card does not display the note text. The planned `expand` command will show full notes separately.
 
 ### Saving the data
 
