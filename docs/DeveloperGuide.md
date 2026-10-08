@@ -149,7 +149,9 @@ The `Storage` component,
 * is implemented by `StorageManager`, which delegates the actual JSON file access to `JsonAddressBookStorage` and `JsonUserPrefsStorage` (one class per data file).
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
-`JsonAddressBookStorage` writes UTF-8 JSON to a temporary file in the destination directory, then atomically replaces the saved file after writing completes. Failed writes leave the previous saved file intact, and temporary files are removed. Filesystems that cannot perform atomic replacement reject the save instead of attempting a potentially partial overwrite. A filesystem root is rejected as a destination with an `IOException`.
+`JsonAddressBookStorage` writes UTF-8 JSON to a temporary file in the destination directory, then atomically replaces the saved file after writing completes. Symbolic-link destinations are resolved to their existing targets before creating the temporary file and replacing the target, preserving the links. Dangling links cause an `IOException` without changing the links or creating files. On filesystems supporting `AclFileAttributeView`, the existing destination's ACL is applied to the temporary file before writing JSON. POSIX permissions are also copied before writing on filesystems supporting `PosixFileAttributeView`. New destinations retain default ACLs and POSIX permissions. ACL or POSIX permission errors, including `AccessDeniedException`, abort the save and trigger temporary-file cleanup. The existing file's access restrictions are not replaced with default permissions when access is denied; `LogicManager` reports the permission error. Failed writes leave the previous saved file intact. Filesystems that cannot perform atomic replacement reject the save instead of attempting a potentially partial overwrite. A filesystem root is rejected as a destination with an `IOException`.
+
+Temporary files use unique names of the form `HRvest-<random>.tmp`, so a later save does not reuse or overwrite an existing temporary file. The `finally` block attempts to remove the current save's temporary file when execution unwinds normally, including after an `IOException` or an unchecked exception. A forced JVM termination or power loss can prevent this cleanup and leave an orphaned temporary file. Subsequent saves ignore these files. After closing all HRvest instances, leftover `HRvest-*.tmp` files can be removed manually; keep the configured JSON data file and any symbolic-link target.
 
 ### Common classes
 
@@ -161,18 +163,11 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Candidate note support
+### Candidate note command API
 
-Each candidate has one optional note for interview feedback or follow-up context. This increment provides the model and persistence support; the note command and card indicator are implemented separately.
+`NoteCommand` replaces the single note of a candidate identified by the displayed index and resets the list filter after success. It preserves the candidate's contact details, tags, and recruitment status. Out-of-range indexes leave the data and filter unchanged; replacing a note with identical text succeeds normally.
 
-* `Note` is an immutable value object. It strips surrounding whitespace, rejects blank text, and limits the result to 500 Unicode code points. It preserves internal spacing, capitalization, punctuation, and line breaks.
-* `Person#getNote()` returns `Optional<Note>`; `Person#hasNote()` reports whether a note exists. The existing constructor creates a person without a note. The separate planned `expand` command can read this API.
-* Notes participate in full equality and hashing, while `Person#isSamePerson()` and duplicate detection retain their existing behavior. Note text is omitted from `Person#toString()`.
-* `EditCommand` preserves the existing note when changing contact details or tags.
-* `JsonAdaptedPerson` persists notes as strings. Missing or `null` notes represent no note and allow older files to load. Blank or overlong notes produce a data-loading error.
-* `NoteCommand` provides the command API for replacing a displayed candidate's note and resetting the filter. It preserves contact details and tags, reports out-of-range indexes, and treats identical notes as successful updates. This increment does not register a CLI command; parsing and persistence coordination follow separately. `NoteCommandTest` covers first and last indexes, filtered and empty lists, overwrites, identical notes, and value semantics.
-
-Automated tests cover blank and overlong notes, Unicode length boundaries, trimming and preserved contents, equality and identity, contact edits retaining notes, JSON round-trips, invalid stored notes, and files saved by earlier versions.
+This increment provides the command API only. CLI parsing and persistence coordination follow separately. `NoteCommandTest` covers first and last indexes, filtered and empty lists, overwrites, identical notes, status preservation, and value semantics.
 
 ### \[Proposed\] Undo/redo feature
 

@@ -19,6 +19,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 import seedu.address.testutil.PersonBuilder;
 
 public class NoteCommandTest {
@@ -48,6 +49,16 @@ public class NoteCommandTest {
     public void execute_existingNote_replacesEntireNote() {
         Person original = model.getFilteredPersonList().getFirst();
         model.setPerson(original, new PersonBuilder(original).withNote("Old feedback").build());
+
+        assertNoteUpdateSuccess(INDEX_FIRST_PERSON, NOTE_TEXT);
+    }
+
+    @Test
+    public void execute_candidateWithStatus_preservesStatus() {
+        Person original = model.getFilteredPersonList().getFirst();
+        Person interviewingCandidate = new Person(original.getName(), original.getPhone(), original.getEmail(),
+                original.getAddress(), original.getTags(), Status.INTERVIEWING, original.getNote());
+        model.setPerson(original, interviewingCandidate);
 
         assertNoteUpdateSuccess(INDEX_FIRST_PERSON, NOTE_TEXT);
     }
