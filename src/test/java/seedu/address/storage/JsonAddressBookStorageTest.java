@@ -30,9 +30,11 @@ import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
+import javafx.collections.ObservableList;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.person.Person;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -135,6 +137,37 @@ public class JsonAddressBookStorageTest {
 
         assertEquals(addressBook, storage.readAddressBook().orElseThrow());
         try (var files = Files.list(destination.getParent())) {
+            assertEquals(List.of(destination), files.toList());
+        }
+    }
+
+    @Test
+    public void saveAddressBook_serializationFailure_keepsDataAndRemovesBrandedTemporaryFile() throws Exception {
+        Path destination = testFolder.resolve("candidates.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        storage.saveAddressBook(getTypicalAddressBook());
+        String existingData = Files.readString(destination);
+        AddressBook failingAddressBook = new AddressBook() {
+            @Override
+            public ObservableList<Person> getPersonList() {
+                try (var files = Files.list(testFolder)) {
+                    List<Path> temporaryFiles = files.filter(path -> !path.equals(destination)).toList();
+                    assertEquals(1, temporaryFiles.size());
+                    String fileName = temporaryFiles.getFirst().getFileName().toString();
+                    assertTrue(fileName.startsWith("HRvest-"));
+                    assertTrue(fileName.endsWith(".tmp"));
+                } catch (IOException e) {
+                    throw new AssertionError(e);
+                }
+                throw new IllegalStateException("Cannot serialize candidates");
+            }
+        };
+
+        assertThrows(IllegalStateException.class, "Cannot serialize candidates", () ->
+                storage.saveAddressBook(failingAddressBook));
+
+        assertEquals(existingData, Files.readString(destination));
+        try (var files = Files.list(testFolder)) {
             assertEquals(List.of(destination), files.toList());
         }
     }

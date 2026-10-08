@@ -100,7 +100,7 @@ public class JsonAddressBookStorage {
             throw new IOException("The address book file path must refer to a file, not a filesystem root.");
         }
         Files.createDirectories(parent);
-        Path temporaryFile = Files.createTempFile(parent, "addressbook-", ".tmp");
+        Path temporaryFile = Files.createTempFile(parent, "HRvest-", ".tmp");
         try {
             copyExistingAcl(Files.getFileAttributeView(destination, AclFileAttributeView.class),
                     Files.getFileAttributeView(temporaryFile, AclFileAttributeView.class));
