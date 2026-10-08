@@ -44,12 +44,12 @@ public class NoteCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireAllNonNull(model);
-        List<Person> displayedPersons = model.getFilteredPersonList();
-        if (index.getZeroBased() >= displayedPersons.size()) {
+        List<Person> displayedCandidates = model.getFilteredPersonList();
+        if (index.getZeroBased() >= displayedCandidates.size()) {
             throw new CommandException(MESSAGE_INVALID_CANDIDATE_INDEX);
         }
 
-        Person candidate = displayedPersons.get(index.getZeroBased());
+        Person candidate = displayedCandidates.get(index.getZeroBased());
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
                 candidate.getAddress(), candidate.getTags(), candidate.getStatus(), Optional.of(note));
         model.setPerson(candidate, updatedCandidate);
