@@ -148,6 +148,21 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
+### Filtering candidates by status: `filter`
+
+Filters candidates by their hiring status.
+
+Format: `filter s/STATUS`
+
+* Displays all candidates with the specified status.
+* Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
+* The status is case-insensitive.
+
+Examples:
+
+* `filter s/Interviewing` displays all candidates currently in the interviewing stage.
+* `filter s/Offered` displays all candidates who have been made offers.
+
 ### Deleting a candidate: `delete`
 
 Deletes the specified person from HRvest.
@@ -239,6 +254,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
