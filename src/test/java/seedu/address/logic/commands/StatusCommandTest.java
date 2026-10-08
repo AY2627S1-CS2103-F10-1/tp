@@ -19,9 +19,23 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
+import seedu.address.testutil.PersonBuilder;
 
 public class StatusCommandTest {
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_candidateWithNote_preservesNote() throws Exception {
+        Person original = model.getFilteredPersonList().getFirst();
+        Person notedPerson = new PersonBuilder(original).withNote("Interview feedback").build();
+        model.setPerson(original, notedPerson);
+
+        new StatusCommand(INDEX_FIRST_PERSON, Status.SHORTLISTED).execute(model);
+
+        Person updated = model.getFilteredPersonList().getFirst();
+        assertEquals(Status.SHORTLISTED, updated.getStatus());
+        assertEquals(notedPerson.getNote(), updated.getNote());
+    }
 
     @Test
     public void execute_validIndexFilteredList_updatesCandidateAndShowsAll() {

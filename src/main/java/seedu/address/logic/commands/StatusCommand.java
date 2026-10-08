@@ -46,7 +46,7 @@ public class StatusCommand extends Command {
 
         Person candidate = displayedPersons.get(index.getZeroBased());
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
-                candidate.getAddress(), candidate.getTags(), status);
+                candidate.getAddress(), candidate.getTags(), status, candidate.getNote());
         model.setPerson(candidate, updatedCandidate);
         model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         return new CommandResult(String.format(MESSAGE_SUCCESS, candidate.getName(), candidate.getStatus(), status));
