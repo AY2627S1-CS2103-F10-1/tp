@@ -1,6 +1,5 @@
 package seedu.address.logic.parser;
 
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -41,16 +40,21 @@ public class NoteCommandParserTest {
     }
 
     @Test
-    public void parse_missingIndexOrPrefix_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
-        for (String args : new String[] {"", " 1", " no/hi", " 1 n/hi", " 1 hi", " 1no/hi"}) {
+    public void parse_missingPrefix_throwsParseException() {
+        String message = NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE;
+        for (String args : new String[] {"", " 1", " 1 n/hi", " 1 hi", " 1no/hi"}) {
             assertParseFailure(parser, args, message);
         }
     }
 
     @Test
+    public void parse_missingIndex_throwsParseException() {
+        assertParseFailure(parser, " no/hi", ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE);
+    }
+
+    @Test
     public void parse_invalidIndex_throwsParseException() {
-        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
+        String message = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE;
         for (String index : new String[] {"abc", "0", "-1", "+1", "1.5", "1 2", "2147483648"}) {
             assertParseFailure(parser, " " + index + " no/hi", message);
         }
@@ -78,6 +82,7 @@ public class NoteCommandParserTest {
         assertParseFailure(parser, " 1 NO/first no/second", message);
         assertParseFailure(parser, " 1 no/first\tNo/second", message);
         assertParseFailure(parser, " 1 no/first\nNO/second", message);
+        assertParseFailure(parser, " 1 no/first\u2003No/second", message);
     }
 
     @Test
