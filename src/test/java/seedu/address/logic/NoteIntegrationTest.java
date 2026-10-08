@@ -159,6 +159,9 @@ public class NoteIntegrationTest {
                 String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"));
     }
 
+    /**
+     * Asserts that a failed note save preserves live data, saved data, and the original filter predicate.
+     */
     private void assertFailedSaveKeepsState(IOException error, String message) throws Exception {
         Person notedBenson = new PersonBuilder(BENSON).withNote("Existing note").build();
         model.setPerson(BENSON, notedBenson);
