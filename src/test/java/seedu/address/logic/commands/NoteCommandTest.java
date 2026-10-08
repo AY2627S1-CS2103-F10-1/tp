@@ -95,7 +95,7 @@ public class NoteCommandTest {
 
     @Test
     public void execute_emptyDisplayedList_keepsDataUnchanged() {
-        model.updateFilteredPersonList(person -> false);
+        model.updateFilteredPersonList(candidate -> false);
         assertCommandFailure(new NoteCommand(INDEX_FIRST_PERSON, new Note(NOTE_TEXT)), model,
                 NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
     }
