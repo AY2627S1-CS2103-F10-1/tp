@@ -2,10 +2,14 @@ package seedu.address.ui;
 
 import java.util.Comparator;
 
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
 
@@ -29,6 +33,8 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private HBox cardPane;
     @FXML
+    private GridPane details;
+    @FXML
     private Label name;
     @FXML
     private Label noteIcon;
@@ -43,24 +49,65 @@ public class PersonCard extends UiPart<Region> {
     @FXML
     private Label status;
     @FXML
+    private Label note;
+    @FXML
     private FlowPane tags;
 
     /**
      * Creates a card with the given candidate and displayed index.
      */
-    public PersonCard(Person candidate, int displayedIndex) {
+    public PersonCard(Person person, int displayedIndex) {
+        this(person, displayedIndex, false);
+    }
+
+    /** Creates a card with complete details and note text when expanded. */
+    public PersonCard(Person person, int displayedIndex, boolean isExpanded) {
         super(FXML);
         person = candidate;
         id.setText(displayedIndex + ". ");
-        name.setText(candidate.getName().fullName);
-        noteIcon.setVisible(candidate.hasNote());
-        noteIcon.setManaged(candidate.hasNote());
-        phone.setText(candidate.getPhone().value);
-        address.setText(candidate.getAddress().value);
-        email.setText(candidate.getEmail().value);
-        status.setText(candidate.getStatus().toString());
-        candidate.getTags().stream()
+        name.setText(person.getName().fullName);
+        phone.setText(person.getPhone().value);
+        address.setText(person.getAddress().value);
+        email.setText(person.getEmail().value);
+        status.setText(person.getStatus().toString());
+        configureExpandedView(isExpanded);
+        person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> tags.getChildren().add(new Label(tag.tagName)));
+                .forEach(tag -> {
+                    Label label = new Label(tag.tagName);
+                    if (isExpanded) {
+                        label.setWrapText(true);
+                        label.setMinWidth(0);
+                        label.maxWidthProperty().bind(tags.widthProperty());
+                        // FlowPane measures children without a width, so reserve the wrapped badge height.
+                        label.minHeightProperty().bind(Bindings.createDoubleBinding(() ->
+                                label.prefHeight(tags.getWidth()), tags.widthProperty(),
+                                label.fontProperty(), label.insetsProperty()));
+                    }
+                    tags.getChildren().add(label);
+                });
     }
+
+    /** Configures note visibility and wrapping for the expanded record. */
+    private void configureExpandedView(boolean isExpanded) {
+        note.setVisible(isExpanded);
+        note.setManaged(isExpanded);
+        if (isExpanded) {
+            cardPane.setMinWidth(0);
+            tags.setMinWidth(0);
+            tags.setMinHeight(Region.USE_PREF_SIZE);
+            // Remeasure rows after the width and wrapping bindings have settled.
+            tags.widthProperty().addListener((observable, oldWidth, newWidth) ->
+                    Platform.runLater(tags::requestLayout));
+            details.prefWidthProperty().bind(cardPane.prefWidthProperty());
+            note.setText(person.getNote().map(value -> "Note: " + value.value).orElse("No note recorded."));
+            for (Label field : new Label[] {name, phone, address, email, status, note}) {
+                field.setWrapText(true);
+                field.setMinWidth(0);
+                field.setMaxWidth(Double.MAX_VALUE);
+            }
+            HBox.setHgrow(name, Priority.ALWAYS);
+        }
+    }
+
 }
