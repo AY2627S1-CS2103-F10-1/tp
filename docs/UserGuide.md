@@ -22,7 +22,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
 1. Copy the file to the folder you want to use as the _home folder_ for HRvest.
 
-1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar addressbook.jar`.<br>
+1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar HRvest.jar`.<br>
    A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
    ![Ui](images/Ui.png)
 
@@ -78,7 +78,7 @@ Format: `help`
 
 ### Adding a candidate: `add`
 
-Adds a candidate to the address book.
+Adds a person to HRvest.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
 
@@ -93,13 +93,13 @@ Examples:
 
 ### Listing all candidates: `list`
 
-Shows a list of all candidates in the address book.
+Shows a list of all persons in HRvest.
 
 Format: `list`
 
 ### Editing a candidate: `edit`
 
-Edits an existing candidate in the address book.
+Edits an existing person in HRvest.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
 
@@ -150,7 +150,7 @@ Examples:
 
 ### Deleting a candidate: `delete`
 
-Deletes the specified candidate from the address book.
+Deletes the specified person from HRvest.
 
 Format: `delete INDEX`
 
@@ -159,12 +159,28 @@ Format: `delete INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd candidate in the address book.
-* `find Betsy` followed by `delete 1` deletes the 1st candidate in the results of the `find` command.
+* `list` followed by `delete 2` deletes the 2nd person in HRvest.
+* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+
+### Viewing a person's full record: `expand`
+
+Shows the specified person's full record, including their full note.
+
+Format: `expand INDEX`
+
+* Shows the person at the specified `INDEX`.
+* The index refers to the index number shown in the displayed person list.
+* The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
+* The list shows only the selected person at index `1`, with their full note. If the person has no note, it shows `No note recorded.` Run `list` to show all persons again.
+
+Examples:
+
+* `list` followed by `expand 1` shows the 1st person in the address book.
+* `filter s/Interviewing` followed by `expand 2` shows the 2nd person in the results of the `filter` command.
 
 ### Clearing all entries: `clear`
 
-Clears all entries from the address book.
+Clears all entries from HRvest.
 
 Format: `clear`
 
@@ -176,7 +192,7 @@ Format: `exit`
 
 ### Saving the data
 
-AddressBook automatically saves data after every command. You do not need to save manually.
+HRvest automatically saves data after every command. You do not need to save manually.
 
 Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement. On filesystems that support file ACLs (access control lists) or POSIX permissions, saving preserves those settings on the existing data file; a failure to read or apply them causes the save to fail. If the data file is a symbolic link, saving updates its existing target and keeps the link. Saving fails if the link's target does not exist, leaving the link unchanged.
 
@@ -186,13 +202,13 @@ A crash or power loss can leave temporary files named `HRvest-<random>.tmp` besi
 
 ### Editing the data file
 
-AddressBook data is saved automatically as a JSON file `[JAR file location]/data/addressbook.json`. Advanced users are welcome to update data directly by editing that data file.
+HRvest data is saved automatically as a JSON file `[JAR file location]/data/HRvest.json`. Advanced users are welcome to update data directly by editing that data file.
 
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, AddressBook starts with an empty address book at the next run. The invalid file remains on disk until you run a command (AddressBook saves after every command). Still, we recommend backing up the file before editing it.<br>
-Furthermore, certain edits can cause the AddressBook to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+If your changes make the data file invalid, HRvest starts empty at the next run. The invalid file remains on disk until you run a command (HRvest saves after every command). Still, we recommend backing up the file before editing it.<br>
+Furthermore, certain edits can cause HRvest to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
@@ -204,7 +220,7 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous AddressBook home folder.
+**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous HRvest home folder.
 
 --------------------------------------------------------------------------------------------------------------------
 
