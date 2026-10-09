@@ -56,16 +56,18 @@ public class PersonCard extends UiPart<Region> {
     /**
      * Creates a card with the given candidate and displayed index.
      */
-    public PersonCard(Person person, int displayedIndex) {
-        this(person, displayedIndex, false);
+    public PersonCard(Person candidate, int displayedIndex) {
+        this(candidate, displayedIndex, false);
     }
 
     /** Creates a card with complete details and note text when expanded. */
-    public PersonCard(Person person, int displayedIndex, boolean isExpanded) {
+    public PersonCard(Person candidate, int displayedIndex, boolean isExpanded) {
         super(FXML);
         person = candidate;
         id.setText(displayedIndex + ". ");
         name.setText(person.getName().fullName);
+        noteIcon.setVisible(person.hasNote());
+        noteIcon.setManaged(person.hasNote());
         phone.setText(person.getPhone().value);
         address.setText(person.getAddress().value);
         email.setText(person.getEmail().value);
