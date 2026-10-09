@@ -162,21 +162,21 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd person in HRvest.
 * `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
 
-### Viewing a person's full record: `expand`
+### Viewing a candidate's full record: `expand`
 
-Shows the specified person's full record, including their full note.
+Shows the specified candidate's full record, including their full note.
 
 Format: `expand INDEX`
 
-* Shows the person at the specified `INDEX`.
-* The index refers to the index number shown in the displayed person list.
+* Shows the candidate at the specified `INDEX`.
+* The index refers to the index number shown in the displayed candidate list.
 * The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
-* The list shows only the selected person at index `1`, with their full note. If the person has no note, it shows `No note recorded.` Run `list` to show all persons again.
+* The list shows only the selected candidate at index `1`, with their full note. If the candidate has no note, it shows `No note recorded.` Run `list` to show all candidates again.
 
 Examples:
 
-* `list` followed by `expand 1` shows the 1st person in the address book.
-* `filter s/Interviewing` followed by `expand 2` shows the 2nd person in the results of the `filter` command.
+* `list` followed by `expand 1` shows the 1st candidate in HRvest.
+* `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the results of the `filter` command.
 
 ### Clearing all entries: `clear`
 
@@ -192,7 +192,7 @@ Format: `exit`
 
 ### Candidate note indicator
 
-A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`; the card does not display the note text. The planned `expand` command will show full notes separately.
+A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`. Collapsed cards keep the note text hidden; use `expand INDEX` to view the candidate's full note. Candidates without notes have no icon and reserve no icon space.
 
 ### Saving the data
 
