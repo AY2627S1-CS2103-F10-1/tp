@@ -637,6 +637,14 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
+### Candidate note indicator
+
+1. Prerequisites: Close HRvest and back up the saved JSON file. In a test copy, give one candidate a non-blank `note` string, leave another candidate without a note, and give the candidate with a note a long name.
+1. Launch HRvest using the test data file. Expected: Only the candidate with a note has a sticky note icon beside the name; no note text appears on either card.
+1. Hover over the icon. Expected: The tooltip reads `Note available`.
+1. Narrow the window until the long name is truncated. Expected: The sticky note icon remains visible, and the candidate's status still appears below the contact details.
+1. Run `expand INDEX` for the candidate with a note. Expected: The full note appears and the sticky note icon remains visible. Run `list`, then expand the candidate without a note. Expected: `No note recorded.` appears and no icon space is reserved. Run `list` again. Expected: All candidates return to collapsed cards with note contents hidden.
+
 ### Saving data
 
 1. Dealing with missing/corrupted data files

@@ -2,12 +2,14 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
 
 <HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
   <GridPane fx:id="details" HBox.hgrow="ALWAYS">
@@ -26,6 +28,24 @@
           </minWidth>
         </Label>
         <Label fx:id="name" text="\$first" styleClass="cell_big_label" />
+        <Label fx:id="noteIcon" visible="false" managed="false" accessibleText="Candidate has a note">
+          <padding>
+            <Insets left="8" />
+          </padding>
+          <minWidth>
+            <Region fx:constant="USE_PREF_SIZE" />
+          </minWidth>
+          <graphic>
+            <SVGPath styleClass="note_icon" strokeLineCap="ROUND" strokeLineJoin="ROUND"
+                     content="M10.7,5.2 L4.6,3.5 L0.8,18.3 L15.2,22.5 L16.1,19.8
+                              M11.8,4.9 L5.2,6.8 L9.4,21.4 L23,17.6 L19.2,2.8 L16.7,3.5
+                              M16.4,3.7 A1.7,1.7 0 1 1 13,3.7 A1.7,1.7 0 1 1 16.4,3.7 Z M13.8,5.2 L12.8,7
+                              M9.3,11.1 L17.9,8.7 M9.8,13.3 L18.4,10.9 M10.5,15.5 L19,13.1 M11.1,17.7 L15,16.6" />
+          </graphic>
+          <tooltip>
+            <Tooltip text="Note available" />
+          </tooltip>
+        </Label>
       </HBox>
       <FlowPane fx:id="tags" />
       <Label fx:id="phone" styleClass="cell_small_label" text="\$phone" />
