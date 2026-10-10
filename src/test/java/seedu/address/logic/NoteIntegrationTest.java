@@ -39,7 +39,7 @@ import seedu.address.testutil.PersonBuilder;
 public class NoteIntegrationTest {
 
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
     private JsonAddressBookStorage addressBookStorage;

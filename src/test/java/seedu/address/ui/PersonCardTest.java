@@ -49,7 +49,7 @@ public class PersonCardTest {
     private static final String NOTE_TEXT = "Follow up about interview feedback";
 
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @BeforeAll
     public static void setUpToolkit() throws Exception {
