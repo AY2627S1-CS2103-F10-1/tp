@@ -168,7 +168,7 @@ This section describes some noteworthy details on how certain features are imple
 
 `LogicManager` executes a `NoteCommand` against a temporary `ModelManager` so a failed save cannot leave an unsaved note in the live model. `createNoteUpdateModel()` copies the address book and user preferences, then filters the temporary model to the candidates currently displayed in the live model. This preserves the meaning of the command's displayed index.
 
-After the command updates the temporary model, `LogicManager` saves it through `Storage#saveAddressBook()`. Only a successful save is followed by replacing the live address book and resetting its filter. A validation failure or storage exception therefore leaves the live data and its original filter unchanged. `saveModel()` translates storage exceptions into command errors. This staging applies only to note updates; other commands execute against the live model as before.
+After the command updates the temporary model, `LogicManager` saves it through `Storage#saveAddressBook()`. Only a successful save is followed by replacing the live address book and resetting its filter. A validation failure or storage exception therefore leaves the live data, original filter, and expanded view unchanged. `saveModel()` translates storage exceptions into command errors. This staging applies only to note updates; other commands execute against the live model as before.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -655,8 +655,10 @@ testers are expected to do more *exploratory* testing.
    Expected: The phone edit is saved and the note icon remains. The saved JSON contains the latest note in that candidate's `note` field.
 1. Run `status INDEX s/Offered` on the noted candidate.<br>
    Expected: The status changes to `Offered`; the icon and saved note remain.
-1. Resize the window while a candidate has a long name and a note.<br>
-   Expected: The note icon remains visible even if the name is truncated.
+1. Use `expand INDEX` on the noted candidate, then run `note 1 no/Replacement from expanded view`.<br>
+   Expected: The selected candidate receives the replacement and all candidates return to collapsed cards. Expanding that candidate again shows the replacement note.
+1. While viewing an expanded candidate, run `note 1 no/ `.<br>
+   Expected: The blank-note error appears; the candidate's note and expanded view remain unchanged.
 
 ### Deleting a candidate
 
