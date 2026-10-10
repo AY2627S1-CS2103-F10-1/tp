@@ -133,15 +133,6 @@ Examples:
 * `note 2 no/Passed round 2, schedule final interview` replaces the previous note on candidate 2.
 * `find Betsy` followed by `note 1 no/Follow up next week` updates the first displayed search result, then shows all candidates.
 
-| Problem | Message |
-|---------|---------|
-| Missing `no/` | `The note prefix no/ is required.` followed by the command usage |
-| Missing index, or an index that is not a positive integer | `Index must be a positive integer.` followed by the command usage |
-| Index outside the displayed list | `The candidate index provided is invalid.` |
-| Blank note | `Note cannot be blank.` |
-| More than 500 characters after trimming | `Note cannot exceed 500 characters.` |
-| Repeated `no/` prefix | `Multiple values specified for the following single-valued field(s): no/` |
-
 <box type="warning" seamless>
 
 **Overwriting loses the previous note.** Include earlier information in the replacement if you want to keep it. The MVP has no note history or undo, and does not support clearing a note.

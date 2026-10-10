@@ -164,12 +164,6 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Preserving live data when a note save fails
-
-`LogicManager` executes a `NoteCommand` against a temporary `ModelManager` so a failed save cannot leave an unsaved note in the live model. `createNoteUpdateModel()` copies the address book and user preferences, then filters the temporary model to the candidates currently displayed in the live model. This preserves the meaning of the command's displayed index.
-
-After the command updates the temporary model, `LogicManager` saves it through `Storage#saveAddressBook()`. Only a successful save is followed by replacing the live address book and resetting its filter. A validation failure or storage exception therefore leaves the live data, original filter, and expanded view unchanged. `saveModel()` translates storage exceptions into command errors. This staging applies only to note updates; other commands execute against the live model as before.
-
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation
@@ -467,7 +461,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to delete a specific candidate in the list.
-1. HRvest deletes the candidate, together with the candidate's note, and shows the deleted candidate.
+1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
 
    Use case ends.
 
@@ -534,7 +528,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to view the full details of a candidate profile.
-1. HRvest shows the candidate's full details, including the note, if present.
+1. HRvest shows the candidate's full details, including all notes.
 
    Use case ends.
 
@@ -551,7 +545,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to add a note to a specific candidate.
-1. HRvest replaces the candidate's single note, saves it, shows a note icon on the candidate card, and confirms the update. The displayed list resets to all candidates.
+1. HRvest adds the note without overwriting earlier notes and shows the updated candidate profile.
 
    Use case ends.
 
@@ -563,21 +557,9 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-* 1b. The note is blank or exceeds 500 characters after trimming.
+* 1b. The note is empty.
 
     * 1b1. HRvest shows an error message.
-
-      Use case ends.
-
-* 1c. The request is malformed or contains more than one note value.
-
-    * 1c1. HRvest shows an error message without changing the candidate or saved data.
-
-      Use case ends.
-
-* 2a. The note cannot be saved.
-
-    * 2a1. HRvest shows the storage error and retains the existing note and displayed list.
 
       Use case ends.
 
@@ -637,28 +619,6 @@ testers are expected to do more *exploratory* testing.
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
-
-### Adding or replacing a candidate's note
-
-1. Prerequisites: Use `list` with at least two candidates. Record the names at indexes 1 and 2.
-1. Run `status 2 s/Interviewing` before adding a note.<br>
-   Expected: Candidate 2 has status `Interviewing`.
-1. Run `note 2 no/Strong on system design, weak on SQL`.<br>
-   Expected: The success message contains candidate 2's name and the note. Only that candidate gains a pinned sticky note icon. Hovering over it shows `Note available`; no note text appears on the card. The candidate's status stays `Interviewing`.
-1. Run `note 2 no/Passed round 2, schedule final interview`, then repeat it.<br>
-   Expected: Both commands succeed with the normal message; only the replacement note is stored.
-1. Use `find` with a word from candidate 2's name. Run `note 1 no/Follow up next week`.<br>
-   Expected: The first displayed search result receives the note and the list resets to all candidates.
-1. Run `note 1 no/ ` and `note 1 no/first no/second`.<br>
-   Expected: The blank-note and repeated-prefix errors appear; no note or displayed list changes.
-1. Edit the noted candidate's phone number using `edit INDEX p/12345678`, then restart HRvest.<br>
-   Expected: The phone edit is saved and the note icon remains. The saved JSON contains the latest note in that candidate's `note` field.
-1. Run `status INDEX s/Offered` on the noted candidate.<br>
-   Expected: The status changes to `Offered`; the icon and saved note remain.
-1. Use `expand INDEX` on the noted candidate, then run `note 1 no/Replacement from expanded view`.<br>
-   Expected: The selected candidate receives the replacement and all candidates return to collapsed cards. Expanding that candidate again shows the replacement note.
-1. While viewing an expanded candidate, run `note 1 no/ `.<br>
-   Expected: The blank-note error appears; the candidate's note and expanded view remain unchanged.
 
 ### Deleting a candidate
 
