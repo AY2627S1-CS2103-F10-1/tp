@@ -62,7 +62,8 @@ public class NoteIntegrationTest {
         assertEquals("Updated note for " + BENSON.getName() + ": " + replacement,
                 logic.execute("note 2 no/  " + replacement + "  ").getFeedbackToUser());
         assertEquals(new Note(replacement), readCandidate(1).getNote().orElseThrow());
-        Model reloaded = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(), new UserPrefs());
+        Model reloaded = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(),
+                new UserPrefs());
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
         assertTrue(readCandidate(0).getNote().isEmpty());
     }
@@ -104,7 +105,8 @@ public class NoteIntegrationTest {
         assertFalse(logic.isExpandedViewProperty().get());
         logic.execute("expand 2");
         assertTrue(logic.isExpandedViewProperty().get());
-        assertEquals(new Note("Follow up next week"), model.getFilteredPersonList().getFirst().getNote().orElseThrow());
+        assertEquals(new Note("Follow up next week"),
+                model.getFilteredPersonList().getFirst().getNote().orElseThrow());
     }
 
     @Test
@@ -208,7 +210,8 @@ public class NoteIntegrationTest {
     @Test
     public void execute_storagePermissionFailure_keepsExistingNoteAndFilter() throws Exception {
         assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
-                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"), false);
+                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"),
+                false);
     }
 
     @Test
@@ -220,13 +223,15 @@ public class NoteIntegrationTest {
     @Test
     public void execute_storagePermissionFailureInExpandedView_keepsDataAndViewUnchanged() throws Exception {
         assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
-                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"), true);
+                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"),
+                true);
     }
 
     /**
      * Asserts that a failed note save preserves live data, saved data, and the original filter predicate.
      */
-    private void assertFailedSaveKeepsState(IOException error, String message, boolean isExpanded) throws Exception {
+    private void assertFailedSaveKeepsState(IOException error, String message, boolean isExpanded)
+            throws Exception {
         Person notedBenson = new PersonBuilder(BENSON).withNote("Existing note").build();
         model.setPerson(BENSON, notedBenson);
         logic.execute(isExpanded ? "expand 2" : "find Benson");
@@ -253,11 +258,18 @@ public class NoteIntegrationTest {
         }
     }
 
+    /**
+     * Creates logic using the live model, supplied candidate storage, and temporary preferences storage.
+     */
     private Logic createLogic(JsonAddressBookStorage storage) {
-        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"));
+        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(
+                temporaryFolder.resolve("preferences.json"));
         return new LogicManager(model, new StorageManager(storage, prefsStorage));
     }
 
+    /**
+     * Reads the candidate at the given zero-based index from saved data.
+     */
     private Person readCandidate(int index) throws Exception {
         return addressBookStorage.readAddressBook().orElseThrow().getPersonList().get(index);
     }

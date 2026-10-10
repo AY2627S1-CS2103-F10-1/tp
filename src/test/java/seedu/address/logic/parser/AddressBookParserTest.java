@@ -45,7 +45,8 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_multilineNote_preservesLineBreaks() throws Exception {
         String text = "Round 1: passed\nRound 2: follow up";
-        assertEquals(new NoteCommand(INDEX_FIRST_PERSON, new Note(text)), parser.parseCommand("note 1 no/" + text));
+        assertEquals(new NoteCommand(INDEX_FIRST_PERSON, new Note(text)),
+                parser.parseCommand("note 1 no/" + text));
     }
 
     @Test

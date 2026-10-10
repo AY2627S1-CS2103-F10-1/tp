@@ -49,7 +49,8 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_missingIndex_throwsParseException() {
-        assertParseFailure(parser, " no/hi", ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, " no/hi",
+                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE);
     }
 
     @Test

@@ -71,7 +71,8 @@ public class PersonCardTest {
                     new JsonAddressBookStorage(temporaryFolder.resolve("candidates.json")),
                     new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
             assertDoesNotThrow(() -> logic.execute("find Benson"));
-            Region panel = new PersonListPanel(logic.getFilteredPersonList(), logic.isExpandedViewProperty()).getRoot();
+            Region panel = new PersonListPanel(logic.getFilteredPersonList(),
+                    logic.isExpandedViewProperty()).getRoot();
             layoutCard(panel);
 
             assertFalse(panel.lookup("#noteIcon").isVisible());

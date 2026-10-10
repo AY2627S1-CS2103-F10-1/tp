@@ -78,7 +78,7 @@ public class LogicManager implements Logic {
     }
 
     /**
-     * Creates a temporary model with the current displayed candidates so a failed note save leaves memory unchanged.
+     * Creates a temporary model of displayed candidates so failed note saves leave memory unchanged.
      */
     private Model createNoteUpdateModel() {
         Model stagedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
