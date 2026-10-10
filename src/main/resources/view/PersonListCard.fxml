@@ -12,7 +12,7 @@
 <?import javafx.scene.shape.SVGPath?>
 
 <HBox id="cardPane" fx:id="cardPane" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
-  <GridPane HBox.hgrow="ALWAYS">
+  <GridPane fx:id="details" HBox.hgrow="ALWAYS">
     <columnConstraints>
       <ColumnConstraints hgrow="SOMETIMES" minWidth="10" prefWidth="150" />
     </columnConstraints>
@@ -52,6 +52,7 @@
       <Label fx:id="address" styleClass="cell_small_label" text="\$address" />
       <Label fx:id="email" styleClass="cell_small_label" text="\$email" />
       <Label fx:id="status" styleClass="cell_small_label" text="\$status" />
+      <Label fx:id="note" styleClass="cell_small_label" visible="false" managed="false" />
     </VBox>
   </GridPane>
 </HBox>

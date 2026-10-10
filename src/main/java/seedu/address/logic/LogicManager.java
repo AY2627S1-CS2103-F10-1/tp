@@ -7,6 +7,7 @@ import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.logging.Logger;
 
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -84,6 +85,11 @@ public class LogicManager implements Logic {
         List<Person> displayedCandidates = List.copyOf(model.getFilteredPersonList());
         stagedModel.updateFilteredPersonList(displayedCandidates::contains);
         return stagedModel;
+    }
+
+    @Override
+    public ReadOnlyBooleanProperty isExpandedViewProperty() {
+        return model.isExpandedViewProperty();
     }
 
     @Override

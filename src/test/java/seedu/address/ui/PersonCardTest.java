@@ -82,6 +82,38 @@ public class PersonCardTest {
     }
 
     @Test
+    public void constructor_expandedWithNote_showsNoteAndIndicator() throws Exception {
+        runOnFxThread(() -> {
+            Region card = new PersonCard(new PersonBuilder().withNote(NOTE_TEXT).build(), 1, true).getRoot();
+            layoutCard(card);
+
+            Label icon = (Label) card.lookup("#noteIcon");
+            Label note = (Label) card.lookup("#note");
+            assertTrue(icon.isVisible());
+            assertTrue(icon.isManaged());
+            assertTrue(note.isVisible());
+            assertTrue(note.isManaged());
+            assertEquals("Note: " + NOTE_TEXT, note.getText());
+        });
+    }
+
+    @Test
+    public void constructor_expandedWithoutNote_hidesIndicator() throws Exception {
+        runOnFxThread(() -> {
+            Region card = new PersonCard(new PersonBuilder().build(), 1, true).getRoot();
+            layoutCard(card);
+
+            Label icon = (Label) card.lookup("#noteIcon");
+            Label note = (Label) card.lookup("#note");
+            assertFalse(icon.isVisible());
+            assertFalse(icon.isManaged());
+            assertTrue(note.isVisible());
+            assertTrue(note.isManaged());
+            assertEquals("No note recorded.", note.getText());
+        });
+    }
+
+    @Test
     public void constructor_longName_preservesIndicatorAndStatus() throws Exception {
         runOnFxThread(() -> {
             Person candidate = new PersonBuilder().withName("Long Candidate Name ".repeat(20))
