@@ -21,8 +21,10 @@ import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
+import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
@@ -31,6 +33,21 @@ import seedu.address.testutil.PersonUtil;
 public class AddressBookParserTest {
 
     private final AddressBookParser parser = new AddressBookParser();
+
+    @Test
+    public void parseCommand_note_dispatchesToNoteParser() throws Exception {
+        NoteCommand expected = new NoteCommand(INDEX_FIRST_PERSON, new Note("Passed round 2"));
+        assertEquals(expected, parser.parseCommand("note 1 no/Passed round 2"));
+        assertEquals(expected, parser.parseCommand("NOTE 1 NO/Passed round 2"));
+        assertEquals(expected, parser.parseCommand("NoTe\t1\tNo/Passed round 2"));
+    }
+
+    @Test
+    public void parseCommand_multilineNote_preservesLineBreaks() throws Exception {
+        String text = "Round 1: passed\nRound 2: follow up";
+        assertEquals(new NoteCommand(INDEX_FIRST_PERSON, new Note(text)),
+                parser.parseCommand("note 1 no/" + text));
+    }
 
     @Test
     public void parseCommand_add() throws Exception {

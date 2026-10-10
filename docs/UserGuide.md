@@ -113,6 +113,31 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
 
+### Adding or replacing a candidate's note: `note`
+
+Records interview feedback or follow-up context for a candidate. Each candidate has **one note**; running this command again **replaces the existing note entirely**.
+
+Format: `note INDEX no/NOTE_TEXT`
+
+* `INDEX` is required and must be a positive integer within the currently displayed list. Use the displayed index after a search, rather than the candidate's position in the full list.
+* `NOTE_TEXT` is required, must be non-blank, and can contain at most **500 characters after trimming**. Leading and trailing whitespace is removed; internal spacing, capitalization, punctuation, and line breaks are preserved.
+* The `note` command word and `no/` prefix are case-insensitive. Use `no/` once; whitespace followed by this prefix starts another note value and is rejected as a repeated prefix. Other prefix-like text, such as `n/`, remains part of the note.
+* On success, HRvest saves the note immediately, resets the list to show all candidates, and displays `Updated note for <NAME>: <NOTE_TEXT>`.
+* Use `expand INDEX` to view the full note; collapsed cards show only the note indicator.
+* Entering the same note again still succeeds normally. Editing contact details, tags, or recruitment status keeps the note. Updating a note keeps the candidate's recruitment status. Notes do not affect duplicate detection.
+* Invalid input leaves the existing note, displayed list, and saved data unchanged. If saving fails, HRvest shows a storage error and keeps the existing note and displayed list.
+
+Examples:
+
+* `note 2 no/Strong on system design, weak on SQL`
+* `note 2 no/Passed round 2, schedule final interview` replaces the previous note on candidate 2.
+* `find Betsy` followed by `note 1 no/Follow up next week` updates the first displayed search result, then shows all candidates.
+
+<box type="warning" seamless>
+
+**Overwriting loses the previous note.** Include earlier information in the replacement if you want to keep it. The MVP has no note history or undo, and does not support clearing a note.
+</box>
+
 ### Updating a candidate's recruitment status: `status`
 
 Updates the candidate at the given index in the currently displayed list.
@@ -245,5 +270,6 @@ Action     | Format, Examples
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**Note**   | `note INDEX no/NOTE_TEXT`<br> e.g., `note 2 no/Passed round 2, schedule final interview`
 **Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
 **Help**   | `help`
