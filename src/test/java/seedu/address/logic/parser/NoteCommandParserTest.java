@@ -69,9 +69,12 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_noteLengthBoundaries_validatesTrimmedLength() {
-        assertParseSuccess(parser, " 1 no/ " + "x".repeat(500) + " ",
-                new NoteCommand(INDEX_FIRST_PERSON, new Note("x".repeat(500))));
-        assertParseFailure(parser, " 1 no/" + "x".repeat(501), Note.MESSAGE_TOO_LONG);
+        for (String character : new String[] {"x", "\uD83D\uDE00"}) {
+            String note = character.repeat(Note.MAX_LENGTH);
+            assertParseSuccess(parser, " 1 no/ " + note + " ",
+                    new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
+            assertParseFailure(parser, " 1 no/" + note + character, Note.MESSAGE_TOO_LONG);
+        }
     }
 
     @Test

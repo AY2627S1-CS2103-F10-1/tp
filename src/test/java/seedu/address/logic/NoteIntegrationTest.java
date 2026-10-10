@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
-import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
@@ -52,7 +51,7 @@ public class NoteIntegrationTest {
     }
 
     @Test
-    public void execute_noteTwice_replacesNoteOnDiskAndSurvivesReload() throws Exception {
+    public void execute_noteReplacement_persistsAcrossRepeatAndReload() throws Exception {
         String first = "Strong on system design, weak on SQL";
         String replacement = "Passed round 2,  schedule final interview [C++]; \u4e2d\u6587";
         assertEquals("Updated note for " + BENSON.getName() + ": " + first,
@@ -62,33 +61,12 @@ public class NoteIntegrationTest {
         assertEquals("Updated note for " + BENSON.getName() + ": " + replacement,
                 logic.execute("note 2 no/  " + replacement + "  ").getFeedbackToUser());
         assertEquals(new Note(replacement), readCandidate(1).getNote().orElseThrow());
+        assertEquals("Updated note for " + BENSON.getName() + ": " + replacement,
+                logic.execute("note 2 no/" + replacement).getFeedbackToUser());
         Model reloaded = new ModelManager(addressBookStorage.readAddressBook().orElseThrow(),
                 new UserPrefs());
         assertEquals(model.getAddressBook(), reloaded.getAddressBook());
         assertTrue(readCandidate(0).getNote().isEmpty());
-    }
-
-    @Test
-    public void execute_identicalNote_savesAndReturnsNormalSuccess() throws Exception {
-        String command = "note 1 no/Passed round 2";
-        logic.execute(command);
-        assertEquals("Updated note for " + ALICE.getName() + ": Passed round 2",
-                logic.execute(command).getFeedbackToUser());
-        assertEquals(new Note("Passed round 2"), readCandidate(0).getNote().orElseThrow());
-    }
-
-    @Test
-    public void execute_unicodeNoteLengthBoundary_preservesSavedNote() throws Exception {
-        String note = "\uD83D\uDE00".repeat(Note.MAX_LENGTH);
-        logic.execute("note 2 no/  " + note + "  ");
-
-        assertEquals(new Note(note), readCandidate(1).getNote().orElseThrow());
-        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
-        assertThrows(ParseException.class, Note.MESSAGE_TOO_LONG, () ->
-                logic.execute("note 2 no/" + note + "\uD83D\uDE00"));
-
-        assertEquals(new Note(note), model.getAddressBook().getPersonList().get(1).getNote().orElseThrow());
-        assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
     }
 
     @Test
@@ -129,49 +107,33 @@ public class NoteIntegrationTest {
 
     @Test
     public void execute_filteredIndex_savesDisplayedCandidateAndShowsAllCandidates() throws Exception {
-        logic.execute("find Benson");
-        assertEquals(List.of(BENSON), model.getFilteredPersonList());
-
-        logic.execute("note 1 no/Follow up next week");
-
-        assertEquals(getTypicalAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
-        assertEquals(new Note("Follow up next week"), readCandidate(1).getNote().orElseThrow());
-        assertTrue(readCandidate(0).getNote().isEmpty());
-    }
-
-    @Test
-    public void execute_editAfterNote_keepsSavedNote() throws Exception {
-        logic.execute("note 1 no/Interview feedback");
-        logic.execute("edit 1 p/12345678");
-
-        assertEquals(new Note("Interview feedback"), readCandidate(0).getNote().orElseThrow());
-        assertEquals("12345678", readCandidate(0).getPhone().value);
-    }
-
-    @Test
-    public void execute_noteAfterStatus_keepsSavedStatus() throws Exception {
         logic.execute("status 2 s/Interviewing");
+        Person original = model.getAddressBook().getPersonList().get(1);
         logic.execute("find Benson");
+        assertEquals(List.of(original), model.getFilteredPersonList());
 
         logic.execute("NoTe 1 NO/Follow up next week");
 
-        Person savedCandidate = readCandidate(1);
-        assertEquals(Status.INTERVIEWING, savedCandidate.getStatus());
-        assertEquals(new Note("Follow up next week"), savedCandidate.getNote().orElseThrow());
-        assertEquals(savedCandidate, model.getAddressBook().getPersonList().get(1));
+        assertEquals(getTypicalAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
+        Person expected = new PersonBuilder(original).withNote("Follow up next week").build();
+        assertEquals(expected, readCandidate(1));
+        assertEquals(expected, model.getAddressBook().getPersonList().get(1));
         assertTrue(readCandidate(0).getNote().isEmpty());
     }
 
     @Test
-    public void execute_statusAfterNote_keepsSavedNote() throws Exception {
-        logic.execute("note 2 no/Interview feedback");
+    public void execute_contactAndStatusEditsAfterNote_keepsSavedNote() throws Exception {
+        Person original = model.getAddressBook().getPersonList().getFirst();
+        logic.execute("note 1 no/Interview feedback");
+        logic.execute("edit 1 p/12345678");
+        assertEquals(new PersonBuilder(original).withNote("Interview feedback").withPhone("12345678").build(),
+                readCandidate(0));
+        logic.execute("status 1 s/Offered");
 
-        logic.execute("status 2 s/Offered");
-
-        Person savedCandidate = readCandidate(1);
-        assertEquals(Status.OFFERED, savedCandidate.getStatus());
-        assertEquals(new Note("Interview feedback"), savedCandidate.getNote().orElseThrow());
-        assertEquals(savedCandidate, model.getAddressBook().getPersonList().get(1));
+        Person saved = readCandidate(0);
+        assertEquals(Status.OFFERED, saved.getStatus());
+        assertEquals(new Note("Interview feedback"), saved.getNote().orElseThrow());
+        assertEquals("12345678", saved.getPhone().value);
     }
 
     @Test
@@ -202,29 +164,20 @@ public class NoteIntegrationTest {
     }
 
     @Test
-    public void execute_storageIoFailure_keepsExistingNoteAndFilter() throws Exception {
-        assertFailedSaveKeepsState(new IOException("Test write failure"),
-                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"), false);
+    public void execute_storageIoFailure_keepsDataAndViewUnchanged() throws Exception {
+        for (boolean isExpanded : new boolean[] {false, true}) {
+            assertFailedSaveKeepsState(new IOException("Test write failure"),
+                    String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"), isExpanded);
+        }
     }
 
     @Test
-    public void execute_storagePermissionFailure_keepsExistingNoteAndFilter() throws Exception {
-        assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
-                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"),
-                false);
-    }
-
-    @Test
-    public void execute_storageIoFailureInExpandedView_keepsDataAndViewUnchanged() throws Exception {
-        assertFailedSaveKeepsState(new IOException("Test write failure"),
-                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"), true);
-    }
-
-    @Test
-    public void execute_storagePermissionFailureInExpandedView_keepsDataAndViewUnchanged() throws Exception {
-        assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
-                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"),
-                true);
+    public void execute_storagePermissionFailure_keepsDataAndViewUnchanged() throws Exception {
+        for (boolean isExpanded : new boolean[] {false, true}) {
+            assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
+                    String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"),
+                    isExpanded);
+        }
     }
 
     /**
@@ -232,6 +185,8 @@ public class NoteIntegrationTest {
      */
     private void assertFailedSaveKeepsState(IOException error, String message, boolean isExpanded)
             throws Exception {
+        model.setAddressBook(getTypicalAddressBook());
+        logic.execute("list");
         Person notedBenson = new PersonBuilder(BENSON).withNote("Existing note").build();
         model.setPerson(BENSON, notedBenson);
         logic.execute(isExpanded ? "expand 2" : "find Benson");
