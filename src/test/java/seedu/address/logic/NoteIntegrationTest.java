@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
@@ -76,6 +77,55 @@ public class NoteIntegrationTest {
     }
 
     @Test
+    public void execute_unicodeNoteLengthBoundary_preservesSavedNote() throws Exception {
+        String note = "\uD83D\uDE00".repeat(Note.MAX_LENGTH);
+        logic.execute("note 2 no/  " + note + "  ");
+
+        assertEquals(new Note(note), readCandidate(1).getNote().orElseThrow());
+        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
+        assertThrows(ParseException.class, Note.MESSAGE_TOO_LONG, () ->
+                logic.execute("note 2 no/" + note + "\uD83D\uDE00"));
+
+        assertEquals(new Note(note), model.getAddressBook().getPersonList().get(1).getNote().orElseThrow());
+        assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
+    }
+
+    @Test
+    public void execute_noteInExpandedView_savesSelectedCandidateAndCollapsesList() throws Exception {
+        logic.execute("expand 2");
+        assertEquals(List.of(BENSON), model.getFilteredPersonList());
+        assertTrue(logic.isExpandedViewProperty().get());
+
+        logic.execute("note 1 no/Follow up next week");
+
+        assertEquals(new Note("Follow up next week"), readCandidate(1).getNote().orElseThrow());
+        assertTrue(readCandidate(0).getNote().isEmpty());
+        assertEquals(getTypicalAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
+        assertFalse(logic.isExpandedViewProperty().get());
+        logic.execute("expand 2");
+        assertTrue(logic.isExpandedViewProperty().get());
+        assertEquals(new Note("Follow up next week"), model.getFilteredPersonList().getFirst().getNote().orElseThrow());
+    }
+
+    @Test
+    public void execute_invalidNoteInExpandedView_keepsDataAndViewUnchanged() throws Exception {
+        logic.execute("note 2 no/Existing note");
+        logic.execute("expand 2");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
+        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
+
+        assertThrows(ParseException.class, Note.MESSAGE_BLANK, () -> logic.execute("note 1 no/ "));
+        assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
+                logic.execute("note 2 no/New note"));
+
+        assertEquals(before, model.getAddressBook());
+        assertEquals(displayedBefore, model.getFilteredPersonList());
+        assertTrue(logic.isExpandedViewProperty().get());
+        assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
+    }
+
+    @Test
     public void execute_filteredIndex_savesDisplayedCandidateAndShowsAllCandidates() throws Exception {
         logic.execute("find Benson");
         assertEquals(List.of(BENSON), model.getFilteredPersonList());
@@ -139,8 +189,10 @@ public class NoteIntegrationTest {
             String command = commands[i];
             assertThrows(ParseException.class, messages[i], () -> logic.execute(command));
         }
-        assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
-                logic.execute("note 2 no/New note"));
+        for (String command : new String[] {"note 2 no/New note", "note 2147483647 no/New note"}) {
+            assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
+                    logic.execute(command));
+        }
 
         assertEquals(before, model.getAddressBook());
         assertEquals(displayedBefore, model.getFilteredPersonList());
@@ -150,22 +202,34 @@ public class NoteIntegrationTest {
     @Test
     public void execute_storageIoFailure_keepsExistingNoteAndFilter() throws Exception {
         assertFailedSaveKeepsState(new IOException("Test write failure"),
-                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"));
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"), false);
     }
 
     @Test
     public void execute_storagePermissionFailure_keepsExistingNoteAndFilter() throws Exception {
         assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
-                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"));
+                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"), false);
+    }
+
+    @Test
+    public void execute_storageIoFailureInExpandedView_keepsDataAndViewUnchanged() throws Exception {
+        assertFailedSaveKeepsState(new IOException("Test write failure"),
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"), true);
+    }
+
+    @Test
+    public void execute_storagePermissionFailureInExpandedView_keepsDataAndViewUnchanged() throws Exception {
+        assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
+                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"), true);
     }
 
     /**
      * Asserts that a failed note save preserves live data, saved data, and the original filter predicate.
      */
-    private void assertFailedSaveKeepsState(IOException error, String message) throws Exception {
+    private void assertFailedSaveKeepsState(IOException error, String message, boolean isExpanded) throws Exception {
         Person notedBenson = new PersonBuilder(BENSON).withNote("Existing note").build();
         model.setPerson(BENSON, notedBenson);
-        logic.execute("find Benson");
+        logic.execute(isExpanded ? "expand 2" : "find Benson");
         AddressBook before = new AddressBook(model.getAddressBook());
         String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
         Path filePath = addressBookStorage.getAddressBookFilePath();
@@ -181,9 +245,12 @@ public class NoteIntegrationTest {
 
         assertEquals(before, model.getAddressBook());
         assertEquals(List.of(notedBenson), model.getFilteredPersonList());
+        assertEquals(isExpanded, logic.isExpandedViewProperty().get());
         assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
-        model.setPerson(notedBenson, new PersonBuilder(notedBenson).withPhone("12345678").build());
-        assertEquals(1, model.getFilteredPersonList().size());
+        if (!isExpanded) {
+            model.setPerson(notedBenson, new PersonBuilder(notedBenson).withPhone("12345678").build());
+            assertEquals(1, model.getFilteredPersonList().size());
+        }
     }
 
     private Logic createLogic(JsonAddressBookStorage storage) {
