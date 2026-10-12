@@ -23,6 +23,7 @@ import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandTest {
@@ -39,9 +40,22 @@ public class AddCommandTest {
 
         CommandResult commandResult = new AddCommand(validPerson).execute(modelStub);
 
-        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validPerson)),
+        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validPerson)
+                .replace("; Tags: ", "; Status: Applied; Tags: ")),
                 commandResult.getFeedbackToUser());
         assertEquals(List.of(validPerson), modelStub.personsAdded);
+    }
+
+    @Test
+    public void execute_explicitStatus_returnsExpectedFeedback() throws Exception {
+        ModelStubAcceptingPersonAdded modelStub = new ModelStubAcceptingPersonAdded();
+        Person candidate = new PersonBuilder().withStatus(Status.INTERVIEWING).withTags("backend").build();
+
+        CommandResult result = new AddCommand(candidate).execute(modelStub);
+
+        assertEquals("New person added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
+                + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; Tags: [backend]",
+                result.getFeedbackToUser());
     }
 
     @Test
