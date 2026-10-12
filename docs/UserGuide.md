@@ -78,18 +78,22 @@ Format: `help`
 
 ### Adding a candidate: `add`
 
-Adds a person to HRvest.
+Adds a candidate to HRvest. The optional `s/STATUS` sets the initial recruitment status; if omitted, the status defaults to `Applied`. The status is saved and shown on the candidate card. After adding, the full candidate list is shown. Use `status` to change the recruitment status later.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 
 <box type="tip" seamless>
 
 **Tip:** A candidate can have any number of tags, including zero.
 </box>
 
+* Valid initial statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`. Status input ignores case and surrounding whitespace; the saved value uses canonical capitalisation.
+* An empty or unknown `s/` value gives `Invalid status. Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`. Repeated `s/` prefixes are rejected as a repeated single-valued field. These parsing errors do not add or save a candidate.
+
 Examples:
+
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison s/Interviewing t/backend`
 
 ### Listing all candidates: `list`
 
@@ -121,7 +125,7 @@ Format: `status INDEX s/STATUS`
 
 * `INDEX` is a positive, 1-based index in the displayed list.
 * Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
-* New candidates start with `Applied`. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking.
+* Candidates created with `add` start with `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
 * After an update, the full candidate list is shown. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
 * A missing `s/` or non-integer index gives `Invalid command format!`; an index outside the displayed list gives `The candidate index provided is invalid.`
 * An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
@@ -239,7 +243,7 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
