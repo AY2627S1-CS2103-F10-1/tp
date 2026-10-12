@@ -78,7 +78,7 @@ Format: `help`
 
 ### Adding a candidate: `add`
 
-Adds a candidate to HRvest. The optional `s/STATUS` sets the initial recruitment status; if omitted, the status defaults to `Applied`. The status is saved and shown on the candidate card. After adding, the full candidate list is shown. Use `status` to change the recruitment status later.
+Adds a candidate to HRvest.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 

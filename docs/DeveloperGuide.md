@@ -335,14 +335,11 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 
 The terms candidate details, candidate status, duplicate candidate and note are defined in the [Glossary](#glossary).
 
-**Add command implementation:** `AddCommandParser` accepts optional `s/STATUS`, validates it case-insensitively against the seven existing statuses, and constructs the candidate with that status before creating `AddCommand`. Omitted status defaults to `Applied`; explicitly blank, unknown, or repeated status values are rejected before execution. Existing model, UI, and storage support display and persist the chosen status. Default `Person` constructors and legacy JSON records without a status continue to use `Applied`, and explicitly stored statuses remain unchanged. The existing duplicate check remains name-based; email-only duplicate detection is deferred (see [the issue #68 plan](plans/issue-68-add-command.md)).
-
 **Use case: UC01 - Add a candidate**
 
 **MSS**
 
 1. User requests to add a candidate, giving the candidate's details.
-1. HRvest adds the candidate with the supplied initial status, or Applied if omitted, and shows the added candidate.
 
    Use case ends.
 
