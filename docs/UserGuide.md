@@ -82,13 +82,27 @@ Adds a candidate to HRvest.
 
 Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 
-<box type="tip" seamless>
+**Parameters:**
 
-**Tip:** A candidate can have any number of tags, including zero.
-</box>
+| Parameter | Required? | Accepted values and behavior |
+|---|---|---|
+| `n/NAME` | Yes | A non-blank name containing only letters, digits, and spaces, e.g. `n/John Doe`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. Punctuation such as apostrophes and hyphens is not accepted. |
+| `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
+| `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/john.doe@example.com`. The local part allows letters, digits, and `+`, `_`, `.`, or `-` between alphanumeric groups; it must start and end with a letter or digit. Domain labels allow letters, digits, and internal hyphens; the final label must contain at least two characters. Spaces are not accepted. |
+| `a/ADDRESS` | Yes | Any non-blank, single-line address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
+| `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
+| `t/TAG` | No | A non-blank label containing only letters and digits, e.g. `t/backend`. Spaces and punctuation are not accepted. Repeat the prefix for multiple tags: `t/backend t/Java`. Identical tags are removed, but tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. |
 
-* Valid initial statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`. Status input ignores case and surrounding whitespace; the saved value uses canonical capitalisation.
-* An empty or unknown `s/` value gives `Invalid status. Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`. Repeated `s/` prefixes are rejected as a repeated single-valued field. These parsing errors do not add or save a candidate.
+**Input and results:**
+
+* Leading and trailing whitespace is trimmed from each value. Put a space before each prefix; parameters can appear in any order.
+* Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Only `t/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
+* All four required prefixes must have valid values. Missing required prefixes or text before the first prefix produces an invalid-command-format message.
+* An empty or unknown `s/` value gives `Invalid status. Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`. Repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`. Parsing errors do not add or save a candidate.
+* After a successful addition, the candidate is saved and appears in the full candidate list, even if a search had previously narrowed the list. The initial status appears on the candidate card; use `status` to update it later.
+* Currently, a candidate with exactly the same name as an existing candidate is rejected as a duplicate, regardless of the other fields. Name matching is case-sensitive and preserves internal spacing; email uniqueness is not enforced yet.
+* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix preceded by whitespace also starts a new field, even if you intended it to be part of an address.
+* If saving fails because the disk is full or the file is unwritable, an error is shown. The candidate may remain in memory without being saved and may be lost on restart.
 
 Examples:
 
