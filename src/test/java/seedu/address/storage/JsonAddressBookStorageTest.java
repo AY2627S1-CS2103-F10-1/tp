@@ -36,6 +36,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.testutil.PersonBuilder;
 
 public class JsonAddressBookStorageTest {
     private static final Path TEST_DATA_FOLDER = Paths.get("src", "test", "data", "JsonAddressBookStorageTest");
@@ -76,6 +77,31 @@ public class JsonAddressBookStorageTest {
     @Test
     public void readAddressBook_invalidAndValidPersonAddressBook_throwDataLoadingException() {
         assertThrows(DataLoadingException.class, () -> readAddressBook("invalidAndValidPersonAddressBook.json"));
+    }
+
+    @Test
+    public void readAddressBook_duplicateEmailsIgnoringCase_throwsDataLoadingException() throws Exception {
+        Path fixture = Paths.get("src", "test", "data", "JsonSerializableAddressBookTest",
+                "duplicatePersonAddressBook.json");
+        String original = Files.readString(fixture);
+        Path dataFile = testFolder.resolve("duplicateEmails.json");
+        Files.writeString(dataFile, original);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(dataFile);
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+        assertEquals(original, Files.readString(dataFile));
+    }
+
+    @Test
+    public void readAndSaveAddressBook_sameNameDistinctEmails_preservesRecordsAndCase() throws Exception {
+        AddressBook original = new AddressBook();
+        original.addPerson(ALICE);
+        original.addPerson(new PersonBuilder(ALICE).withEmail("Other@Example.com").build());
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("sameName.json"));
+
+        storage.saveAddressBook(original);
+
+        assertEquals(original, storage.readAddressBook().orElseThrow());
     }
 
     @Test

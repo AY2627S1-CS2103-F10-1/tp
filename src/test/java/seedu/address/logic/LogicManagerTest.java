@@ -25,6 +25,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -78,7 +79,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addCommand_savesAppliedAndResetsFilter() throws Exception {
-        Person existing = new PersonBuilder().withName("Existing Candidate").build();
+        Person existing = new PersonBuilder().withName("Existing Candidate").withEmail("existing@example.com").build();
         model.addPerson(existing);
         model.updateFilteredPersonList(person -> false);
         Person expected = new PersonBuilder(AMY).withTags().withStatus(Status.APPLIED).build();
@@ -134,6 +135,24 @@ public class LogicManagerTest {
         assertEquals(original, Files.readString(savedPath));
         assertEquals(1, model.getAddressBook().getPersonList().size());
         assertEquals(Status.APPLIED, model.getAddressBook().getPersonList().get(0).getStatus());
+    }
+
+    @Test
+    public void execute_duplicateEmailWithCaseAndWhitespace_preservesSavedData() throws Exception {
+        logic.execute("add n/Alice p/123 e/alice@example.com a/Street");
+        Path savedPath = temporaryFolder.resolve("addressBook.json");
+        String original = Files.readString(savedPath);
+
+        assertCommandException("add n/Bob p/456 e/  ALICE@EXAMPLE.COM  a/Other Street",
+                AddCommand.MESSAGE_DUPLICATE_PERSON);
+        assertEquals(original, Files.readString(savedPath));
+        logic.execute("add n/Bob p/456 e/bob@example.com a/Other Street");
+        String beforeEdit = Files.readString(savedPath);
+        assertCommandException("edit 2 e/  ALICE@EXAMPLE.COM  ", EditCommand.MESSAGE_DUPLICATE_PERSON);
+
+        assertEquals(beforeEdit, Files.readString(savedPath));
+        assertEquals(2, model.getAddressBook().getPersonList().size());
+        assertEquals("alice@example.com", model.getAddressBook().getPersonList().getFirst().getEmail().value);
     }
 
     @Test

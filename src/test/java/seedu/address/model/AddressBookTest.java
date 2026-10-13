@@ -11,6 +11,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -50,6 +51,17 @@ public class AddressBookTest {
         AddressBookStub newData = new AddressBookStub(newPersons);
 
         assertThrows(DuplicatePersonException.class, () -> addressBook.resetData(newData));
+    }
+
+    @Test
+    public void resetData_duplicateEmailsIgnoringCase_preservesData() {
+        addressBook.addPerson(ALICE);
+        Person duplicate = new PersonBuilder(ALICE).withName("Other Candidate")
+                .withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT)).build();
+        AddressBookStub newData = new AddressBookStub(List.of(ALICE, duplicate));
+
+        assertThrows(DuplicatePersonException.class, () -> addressBook.resetData(newData));
+        assertEquals(List.of(ALICE), addressBook.getPersonList());
     }
 
     @Test

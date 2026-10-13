@@ -10,6 +10,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.junit.jupiter.api.Test;
 
@@ -43,6 +44,53 @@ public class UniquePersonListTest {
         Person editedAlice = new PersonBuilder(ALICE).withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND)
                 .build();
         assertTrue(uniquePersonList.contains(editedAlice));
+    }
+
+    @Test
+    public void add_sameEmailDifferentCaseAndName_throwsDuplicatePersonException() {
+        uniquePersonList.add(ALICE);
+        Person duplicate = new PersonBuilder(BOB).withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.add(duplicate));
+        assertEquals(List.of(ALICE), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void add_sameNameDifferentEmail_success() {
+        uniquePersonList.add(ALICE);
+        Person distinct = new PersonBuilder(BOB).withName(ALICE.getName().fullName).build();
+
+        uniquePersonList.add(distinct);
+
+        assertEquals(List.of(ALICE, distinct), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void setPerson_ownEmailCaseChanged_success() {
+        uniquePersonList.add(ALICE);
+        Person edited = new PersonBuilder(ALICE).withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        uniquePersonList.setPerson(ALICE, edited);
+
+        assertEquals(List.of(edited), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void setPerson_anotherEmailDifferentCase_throwsDuplicatePersonException() {
+        uniquePersonList.setPersons(List.of(ALICE, BOB));
+        Person edited = new PersonBuilder(ALICE).withEmail(BOB.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPerson(ALICE, edited));
+        assertEquals(List.of(ALICE, BOB), uniquePersonList.asUnmodifiableObservableList());
+    }
+
+    @Test
+    public void setPersons_sameEmailDifferentCase_throwsDuplicatePersonException() {
+        uniquePersonList.add(BOB);
+        Person duplicate = new PersonBuilder(BOB).withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPersons(List.of(ALICE, duplicate)));
+        assertEquals(List.of(BOB), uniquePersonList.asUnmodifiableObservableList());
     }
 
     @Test
