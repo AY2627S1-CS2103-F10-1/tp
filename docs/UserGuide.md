@@ -95,14 +95,9 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 
 **Input and results:**
 
-* Leading and trailing whitespace is trimmed from each value. Put a space before each prefix; parameters can appear in any order.
 * Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Only `t/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
 * All four required prefixes must have valid values. Missing required prefixes or text before the first prefix produces an invalid-command-format message.
-* An empty or unknown `s/` value gives `Invalid status. Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`. Repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`. Parsing errors do not add or save a candidate.
-* After a successful addition, the candidate is saved and appears in the full candidate list, even if a search had previously narrowed the list. Use `status` to update the status later.
-* Currently, a candidate with exactly the same name as an existing candidate is rejected as a duplicate, regardless of the other fields. Name matching is case-sensitive and preserves internal spacing; email uniqueness is not enforced yet.
 * Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix preceded by whitespace also starts a new field, even if you intended it to be part of an address.
-* If saving fails because the disk is full or the file is unwritable, an error is shown. The candidate may remain in memory without being saved and may be lost on restart.
 
 Examples:
 
