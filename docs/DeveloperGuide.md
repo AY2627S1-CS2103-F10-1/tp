@@ -340,6 +340,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to add a candidate, giving the candidate's details.
+1. HRvest adds the candidate with status Applied by default (or the specified status, if provided) and shows the added candidate.
 
    Use case ends.
 
