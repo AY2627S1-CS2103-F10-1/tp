@@ -113,8 +113,8 @@ public class LogicManagerTest {
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String original = Files.readString(savedPath);
 
-        assertParseException(input + " s/Hired", "Invalid status. " + Status.MESSAGE_CONSTRAINTS);
-        assertParseException(input + " s/", "Invalid status. " + Status.MESSAGE_CONSTRAINTS);
+        assertParseException(input + " s/Hired", Status.MESSAGE_CONSTRAINTS);
+        assertParseException(input + " s/", Status.MESSAGE_CONSTRAINTS);
         assertParseException(input + " s/Applied s/Offered", Messages.getErrorMessageForDuplicatePrefixes(
                 PREFIX_STATUS));
 

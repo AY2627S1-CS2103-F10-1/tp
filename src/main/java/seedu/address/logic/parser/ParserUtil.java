@@ -108,7 +108,7 @@ public class ParserUtil {
         try {
             return Status.fromString(trimmedStatus);
         } catch (IllegalArgumentException e) {
-            throw new ParseException("Invalid status. " + Status.MESSAGE_CONSTRAINTS, e);
+            throw new ParseException(Status.MESSAGE_CONSTRAINTS, e);
         }
     }
 
