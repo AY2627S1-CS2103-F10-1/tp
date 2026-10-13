@@ -13,6 +13,7 @@ Review changed code in its surrounding context. Preserve the existing architectu
 
 ### Readability and structure
 
+* Before implementing a change, inspect analogous existing code and follow its established patterns for naming, intermediate variables, object construction, and method structure. Depart from those patterns only when there is a concrete readability or maintainability benefit.
 * Keep methods focused. Treat a method beyond about 30 lines, deep nesting, or a hard-to-follow happy path as a prompt to extract steps or use guard clauses when that improves clarity.
 * Apply the Single Level of Abstraction Principle (SLAP): statements in a method should normally operate at one level of abstraction and at the highest useful level.
 * Replace complicated expressions, repeated negations, clever shortcuts, and unexplained literals with clear intermediate values, straightforward control flow, and named constants where appropriate.
