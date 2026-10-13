@@ -114,14 +114,6 @@ public class PersonBuilder {
         return this;
     }
 
-    /**
-     * Sets the {@code Status} of the {@code Person} that we are building.
-     */
-    public PersonBuilder withStatus(Status status) {
-        this.status = status;
-        return this;
-    }
-
     public Person build() {
         return new Person(name, phone, email, address, tags, status, note);
     }
