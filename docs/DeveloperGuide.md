@@ -125,6 +125,7 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* enforces email-only uniqueness through `Person.isSamePerson`, using case-insensitive comparison. `ParserUtil.parseEmail` trims command input, while `Email` validates stored values and preserves case. Full `Person.equals` and `Email.equals` remain case-sensitive. Add, edit, bulk replacement and JSON loading share this identity rule. Edit permits unchanged identity because the list already enforces uniqueness; a changed identity is checked against the entire address book, not only the displayed list.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * tracks whether the displayed list is in expanded view as transient state. The `Logic` API exposes this read-only property to the `UI`; it is not persisted.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
@@ -585,7 +586,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
 * **Candidate details**: A candidate's name, phone number, email address, role, address and tags.
 * **Candidate status**: One of Shortlisted, Interviewing, Offered or Rejected.
-* **Duplicate candidate**: A candidate with the same email address and role as another candidate in HRvest.
+* **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, tags or notes, affect duplicate detection.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
 * **Private contact detail**: A contact detail that is not meant to be shared with others

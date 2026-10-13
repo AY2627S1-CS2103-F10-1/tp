@@ -17,12 +17,12 @@ import seedu.address.model.tag.Tag;
  */
 public class Person {
 
-    // Identity fields
-    private final Name name;
-    private final Phone phone;
+    // Identity field for duplicate detection
     private final Email email;
 
     // Data fields
+    private final Name name;
+    private final Phone phone;
     private final Address address;
     private final Status status;
     private final Optional<Note> note;
@@ -109,7 +109,8 @@ public class Person {
     }
 
     /**
-     * Returns true if both persons have the same name.
+     * Returns true if both persons have the same email, ignoring case.
+     * Emails are trimmed by the parser and validated by the model before comparison.
      * This defines a weaker notion of equality between two persons.
      */
     public boolean isSamePerson(Person otherPerson) {
@@ -118,7 +119,7 @@ public class Person {
         }
 
         return otherPerson != null
-                && otherPerson.getName().equals(getName());
+                && otherPerson.getEmail().value.equalsIgnoreCase(getEmail().value);
     }
 
     /**
