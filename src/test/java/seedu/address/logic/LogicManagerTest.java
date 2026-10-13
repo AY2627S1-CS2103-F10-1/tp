@@ -86,8 +86,7 @@ public class LogicManagerTest {
         CommandResult result = logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + ADDRESS_DESC_AMY);
 
-        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)
-                .replace("; Tags: ", "; Status: Applied; Tags: ")), result.getFeedbackToUser());
+        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)), result.getFeedbackToUser());
         assertEquals(List.of(existing, expected), model.getFilteredPersonList());
         assertEquals(Status.APPLIED, model.getFilteredPersonList().get(1).getStatus());
         JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));

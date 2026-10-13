@@ -9,6 +9,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -59,11 +60,7 @@ public class AddCommand extends Command {
         }
 
         model.addPerson(toAdd);
-        StringBuilder details = new StringBuilder(String.format(
-                "%s; Phone: %s; Email: %s; Address: %s; Status: %s; Tags: ",
-                toAdd.getName(), toAdd.getPhone(), toAdd.getEmail(), toAdd.getAddress(), toAdd.getStatus()));
-        toAdd.getTags().forEach(details::append);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, details));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, Messages.format(toAdd)));
     }
 
     @Override

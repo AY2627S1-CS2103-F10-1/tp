@@ -117,6 +117,8 @@ Format: `list`
 
 ### Editing a candidate: `edit`
 
+The success message shows the candidate's updated details, including their current status.
+
 Edits an existing person in HRvest.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
@@ -167,6 +169,8 @@ Examples:
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
 ### Deleting a candidate: `delete`
+
+The success message shows the deleted candidate's details, including their status.
 
 Deletes the specified person from HRvest.
 
