@@ -7,6 +7,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Status;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -33,6 +35,33 @@ public class ParserUtilTest {
     private static final String VALID_TAG_2 = "neighbour";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void parseStatus_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseStatus(null));
+    }
+
+    @Test
+    public void parseStatus_invalidValue_throwsParseException() {
+        for (String status : List.of("", WHITESPACE, "Unknown", "Short listed")) {
+            assertThrows(ParseException.class, "Invalid status. " + Status.MESSAGE_CONSTRAINTS, () ->
+                    ParserUtil.parseStatus(status));
+        }
+    }
+
+    @Test
+    public void parseStatus_validValues_returnsStatus() throws Exception {
+        for (Status status : Status.values()) {
+            assertEquals(status, ParserUtil.parseStatus(status.toString()));
+            assertEquals(status, ParserUtil.parseStatus(status.toString().toLowerCase(Locale.ROOT)));
+            assertEquals(status, ParserUtil.parseStatus(status.toString().toUpperCase(Locale.ROOT)));
+        }
+    }
+
+    @Test
+    public void parseStatus_mixedCaseWithWhitespace_returnsStatus() throws Exception {
+        assertEquals(Status.INTERVIEWING, ParserUtil.parseStatus(WHITESPACE + "iNtErViEwInG" + WHITESPACE));
+    }
 
     @Test
     public void parseIndex_invalidInput_throwsParseException() {

@@ -48,23 +48,12 @@ public class AddCommandParser implements Parser<AddCommand> {
         Email email = ParserUtil.parseEmail(argMultimap.getValue(PREFIX_EMAIL).get());
         Address address = ParserUtil.parseAddress(argMultimap.getValue(PREFIX_ADDRESS).get());
         Status status = argMultimap.getValue(PREFIX_STATUS).isPresent()
-                ? parseStatus(argMultimap.getValue(PREFIX_STATUS).get()) : Status.APPLIED;
+                ? ParserUtil.parseStatus(argMultimap.getValue(PREFIX_STATUS).get()) : Status.APPLIED;
         Set<Tag> tagList = ParserUtil.parseTags(argMultimap.getAllValues(PREFIX_TAG));
 
         Person person = new Person(name, phone, email, address, tagList, status);
 
         return new AddCommand(person);
-    }
-
-    /**
-     * Parses an explicitly supplied status, rejecting blank or unknown values.
-     */
-    private static Status parseStatus(String value) throws ParseException {
-        try {
-            return Status.fromString(value.trim());
-        } catch (IllegalArgumentException e) {
-            throw new ParseException("Invalid status. " + Status.MESSAGE_CONSTRAINTS);
-        }
     }
 
     /**
