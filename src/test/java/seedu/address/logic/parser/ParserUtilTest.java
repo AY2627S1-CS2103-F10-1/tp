@@ -44,7 +44,7 @@ public class ParserUtilTest {
     @Test
     public void parseStatus_invalidValue_throwsParseException() {
         for (String status : List.of("", WHITESPACE, "Unknown", "Short listed")) {
-            assertThrows(ParseException.class, "Invalid status. " + Status.MESSAGE_CONSTRAINTS, () ->
+            assertThrows(ParseException.class, Status.MESSAGE_CONSTRAINTS, () ->
                     ParserUtil.parseStatus(status));
         }
     }

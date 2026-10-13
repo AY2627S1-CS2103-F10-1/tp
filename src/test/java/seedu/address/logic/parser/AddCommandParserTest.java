@@ -171,7 +171,7 @@ public class AddCommandParserTest {
     @Test
     public void parse_invalidOrBlankStatus_failure() {
         String details = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
-        String message = "Invalid status. " + Status.MESSAGE_CONSTRAINTS;
+        String message = Status.MESSAGE_CONSTRAINTS;
 
         assertParseFailure(parser, details + " s/Hired", message);
         assertParseFailure(parser, details + " s/", message);
@@ -197,7 +197,7 @@ public class AddCommandParserTest {
     @Test
     public void parse_invalidStatusBeforeInvalidTag_reportsStatus() {
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
-                + " s/Hired" + INVALID_TAG_DESC, "Invalid status. " + Status.MESSAGE_CONSTRAINTS);
+                + " s/Hired" + INVALID_TAG_DESC, Status.MESSAGE_CONSTRAINTS);
     }
 
     @Test
