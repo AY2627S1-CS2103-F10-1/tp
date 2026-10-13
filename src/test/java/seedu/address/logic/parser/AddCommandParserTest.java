@@ -28,6 +28,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalPersons.AMY;
@@ -42,6 +43,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
+import seedu.address.model.person.Status;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
@@ -50,7 +52,8 @@ public class AddCommandParserTest {
 
     @Test
     public void parse_allFieldsPresent_success() {
-        Person expectedPerson = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND).build();
+        Person expectedPerson = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND)
+                .withStatus(Status.APPLIED).build();
 
         // whitespace only preamble
         assertParseSuccess(parser, PREAMBLE_WHITESPACE + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
@@ -59,7 +62,7 @@ public class AddCommandParserTest {
 
         // multiple tags - all accepted
         Person expectedPersonMultipleTags = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND, VALID_TAG_HUSBAND)
-                .build();
+                .withStatus(Status.APPLIED).build();
         assertParseSuccess(parser,
                 NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND,
                 new AddCommand(expectedPersonMultipleTags));
@@ -132,9 +135,69 @@ public class AddCommandParserTest {
     @Test
     public void parse_optionalFieldsMissing_success() {
         // zero tags
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
+        Person expectedPerson = new PersonBuilder(AMY).withTags().withStatus(Status.APPLIED).build();
         assertParseSuccess(parser, NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + ADDRESS_DESC_AMY,
                 new AddCommand(expectedPerson));
+    }
+
+    @Test
+    public void parse_usageExample_success() {
+        String example = AddCommand.MESSAGE_USAGE.split("Example: ", 2)[1];
+        Person expected = new PersonBuilder().withName("John Doe").withPhone("98765432")
+                .withEmail("johnd@example.com").withAddress("311, Clementi Ave 2, #02-25")
+                .withTags("friends", "owesMoney").withStatus(Status.INTERVIEWING).build();
+
+        assertParseSuccess(parser, example.substring(AddCommand.COMMAND_WORD.length()), new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_eachExplicitStatus_success() {
+        String details = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
+        for (Status status : Status.values()) {
+            Person expected = new PersonBuilder(BOB).withTags().withStatus(status).build();
+
+            assertParseSuccess(parser, details + " s/" + status, new AddCommand(expected));
+        }
+    }
+
+    @Test
+    public void parse_mixedCaseStatusWithWhitespace_success() {
+        Person expected = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND).withStatus(Status.INTERVIEWING).build();
+
+        assertParseSuccess(parser, " s/  iNtErViEwInG  " + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
+                + ADDRESS_DESC_BOB + TAG_DESC_FRIEND, new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_invalidOrBlankStatus_failure() {
+        String details = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
+        String message = Status.MESSAGE_CONSTRAINTS;
+
+        assertParseFailure(parser, details + " s/Hired", message);
+        assertParseFailure(parser, details + " s/", message);
+        assertParseFailure(parser, details + " s/   ", message);
+    }
+
+    @Test
+    public void parse_repeatedStatus_failure() {
+        String details = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
+        String message = Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STATUS);
+
+        assertParseFailure(parser, details + " s/Applied s/Offered", message);
+        assertParseFailure(parser, details + " s/Applied s/Applied", message);
+        assertParseFailure(parser, details + " s/Hired s/Applied", message);
+    }
+
+    @Test
+    public void parse_invalidAddressBeforeInvalidStatus_reportsAddress() {
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + INVALID_ADDRESS_DESC
+                + " s/Hired", Address.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_invalidStatusBeforeInvalidTag_reportsStatus() {
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
+                + " s/Hired" + INVALID_TAG_DESC, Status.MESSAGE_CONSTRAINTS);
     }
 
     @Test

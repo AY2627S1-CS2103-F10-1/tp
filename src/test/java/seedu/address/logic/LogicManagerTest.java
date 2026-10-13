@@ -9,6 +9,7 @@ import static seedu.address.logic.commands.CommandTestUtil.ADDRESS_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.EMAIL_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.AMY;
 
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,6 +74,74 @@ public class LogicManagerTest {
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
         assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+    }
+
+    @Test
+    public void execute_addCommand_savesAppliedAndResetsFilter() throws Exception {
+        Person existing = new PersonBuilder().withName("Existing Candidate").build();
+        model.addPerson(existing);
+        model.updateFilteredPersonList(person -> false);
+        Person expected = new PersonBuilder(AMY).withTags().withStatus(Status.APPLIED).build();
+
+        CommandResult result = logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
+                + EMAIL_DESC_AMY + ADDRESS_DESC_AMY);
+
+        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)), result.getFeedbackToUser());
+        assertEquals(List.of(existing, expected), model.getFilteredPersonList());
+        assertEquals(Status.APPLIED, model.getFilteredPersonList().get(1).getStatus());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+        assertEquals(Status.APPLIED, saved.readAddressBook().orElseThrow().getPersonList().get(1).getStatus());
+    }
+
+    @Test
+    public void execute_addWithExplicitStatus_savesCanonicalStatus() throws Exception {
+        logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
+                + ADDRESS_DESC_AMY + " s/  iNtErViEwInG  ");
+
+        assertEquals(Status.INTERVIEWING, model.getFilteredPersonList().get(0).getStatus());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(Status.INTERVIEWING, saved.readAddressBook().orElseThrow().getPersonList().get(0).getStatus());
+        assertTrue(Files.readString(saved.getAddressBookFilePath()).contains("\"status\" : \"Interviewing\""));
+    }
+
+    @Test
+    public void execute_addWithInvalidOrRepeatedStatus_preservesSavedData() throws Exception {
+        String input = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+        logic.execute(input);
+        Path savedPath = temporaryFolder.resolve("addressBook.json");
+        String original = Files.readString(savedPath);
+
+        assertParseException(input + " s/Hired", Status.MESSAGE_CONSTRAINTS);
+        assertParseException(input + " s/", Status.MESSAGE_CONSTRAINTS);
+        assertParseException(input + " s/Applied s/Offered", Messages.getErrorMessageForDuplicatePrefixes(
+                PREFIX_STATUS));
+
+        assertEquals(original, Files.readString(savedPath));
+        assertEquals(1, model.getAddressBook().getPersonList().size());
+        assertEquals(Status.APPLIED, model.getAddressBook().getPersonList().get(0).getStatus());
+    }
+
+    @Test
+    public void execute_duplicateAdd_preservesSavedData() throws Exception {
+        String input = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+        logic.execute(input);
+        Path savedPath = temporaryFolder.resolve("addressBook.json");
+        String original = Files.readString(savedPath);
+
+        assertCommandException(input, AddCommand.MESSAGE_DUPLICATE_PERSON);
+
+        assertEquals(original, Files.readString(savedPath));
+        assertEquals(1, model.getAddressBook().getPersonList().size());
+        assertEquals(Status.APPLIED, model.getAddressBook().getPersonList().get(0).getStatus());
+    }
+
+    @Test
+    public void execute_invalidAdd_doesNotChangeOrSaveData() {
+        assertParseException("add", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+
+        assertTrue(model.getAddressBook().getPersonList().isEmpty());
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
     }
 
     @Test
@@ -237,7 +307,7 @@ public class LogicManagerTest {
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
-        Person expectedPerson = new PersonBuilder(AMY).withTags().build();
+        Person expectedPerson = new PersonBuilder(AMY).withTags().withStatus(Status.APPLIED).build();
         ModelManager expectedModel = new ModelManager();
         expectedModel.addPerson(expectedPerson);
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);

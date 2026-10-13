@@ -99,18 +99,18 @@ public class PersonBuilder {
     }
 
     /**
-     * Sets the note of the person being built.
+     * Sets the recruitment status of the person being built.
      */
-    public PersonBuilder withNote(String note) {
-        this.note = Optional.of(new Note(note));
+    public PersonBuilder withStatus(Status status) {
+        this.status = status;
         return this;
     }
 
     /**
-     * Sets the {@code Status} of the {@code Person} that we are building.
+     * Sets the note of the person being built.
      */
-    public PersonBuilder withStatus(Status status) {
-        this.status = status;
+    public PersonBuilder withNote(String note) {
+        this.note = Optional.of(new Note(note));
         return this;
     }
 
