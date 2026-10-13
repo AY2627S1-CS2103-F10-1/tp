@@ -44,7 +44,7 @@ public class AddressBookParserTest {
     public void parseCommand_addWithStatus_success() throws Exception {
         Person person = new PersonBuilder().withStatus(Status.INTERVIEWING).build();
 
-        AddCommand command = (AddCommand) parser.parseCommand(PersonUtil.getAddCommand(person) + " s/Interviewing");
+        AddCommand command = (AddCommand) parser.parseCommand(PersonUtil.getAddCommand(person));
 
         assertEquals(new AddCommand(person), command);
     }
