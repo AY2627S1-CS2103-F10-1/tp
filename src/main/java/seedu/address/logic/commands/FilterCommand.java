@@ -19,7 +19,7 @@ public class FilterCommand extends Command {
             + "Parameters: "
             + PREFIX_STATUS + "STATUS\n"
             + Status.MESSAGE_CONSTRAINTS + "\n"
-            + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "INTERVIEWING";
+            + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "Interviewing";
 
     public static final String MESSAGE_SUCCESS = "Filtered %1$d candidate(s) with status: %2$s";
 
