@@ -1,10 +1,7 @@
 package seedu.address.logic;
 
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
-
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
-import java.util.List;
 import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -13,12 +10,10 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
-import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
-import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.storage.Storage;
 
@@ -52,39 +47,17 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
-        Model executionModel = command instanceof NoteCommand ? createNoteUpdateModel() : model;
-        commandResult = command.execute(executionModel);
-        saveModel(executionModel);
+        commandResult = command.execute(model);
 
-        if (command instanceof NoteCommand) {
-            model.setAddressBook(executionModel.getAddressBook());
-            model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        }
-
-        return commandResult;
-    }
-
-    /**
-     * Saves the model and translates storage failures into user-facing command errors.
-     */
-    private void saveModel(Model modelToSave) throws CommandException {
         try {
-            storage.saveAddressBook(modelToSave.getAddressBook());
+            storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
             throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
         } catch (IOException ioe) {
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
-    }
 
-    /**
-     * Creates a temporary model of displayed candidates so failed note saves leave memory unchanged.
-     */
-    private Model createNoteUpdateModel() {
-        Model stagedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        List<Person> displayedCandidates = List.copyOf(model.getFilteredPersonList());
-        stagedModel.updateFilteredPersonList(displayedCandidates::contains);
-        return stagedModel;
+        return commandResult;
     }
 
     @Override

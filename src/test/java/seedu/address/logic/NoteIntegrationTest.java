@@ -164,34 +164,21 @@ public class NoteIntegrationTest {
     }
 
     @Test
-    public void execute_storageIoFailure_keepsDataAndViewUnchanged() throws Exception {
-        for (boolean isExpanded : new boolean[] {false, true}) {
-            assertFailedSaveKeepsState(new IOException("Test write failure"),
-                    String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"), isExpanded);
-        }
+    public void execute_storageIoFailure_throwsCommandException() {
+        assertSaveFailure(new IOException("Test write failure"),
+                String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test write failure"));
     }
 
     @Test
-    public void execute_storagePermissionFailure_keepsDataAndViewUnchanged() throws Exception {
-        for (boolean isExpanded : new boolean[] {false, true}) {
-            assertFailedSaveKeepsState(new AccessDeniedException("Test permission failure"),
-                    String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"),
-                    isExpanded);
-        }
+    public void execute_storagePermissionFailure_throwsCommandException() {
+        assertSaveFailure(new AccessDeniedException("Test permission failure"),
+                String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"));
     }
 
     /**
-     * Asserts that a failed note save preserves live data, saved data, and the original filter predicate.
+     * Asserts that a note command reports the given storage error when saving fails.
      */
-    private void assertFailedSaveKeepsState(IOException error, String message, boolean isExpanded)
-            throws Exception {
-        model.setAddressBook(getTypicalAddressBook());
-        logic.execute("list");
-        Person notedBenson = new PersonBuilder(BENSON).withNote("Existing note").build();
-        model.setPerson(BENSON, notedBenson);
-        logic.execute(isExpanded ? "expand 2" : "find Benson");
-        AddressBook before = new AddressBook(model.getAddressBook());
-        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
+    private void assertSaveFailure(IOException error, String message) {
         Path filePath = addressBookStorage.getAddressBookFilePath();
         JsonAddressBookStorage failingStorage = new JsonAddressBookStorage(filePath) {
             @Override
@@ -202,15 +189,6 @@ public class NoteIntegrationTest {
         Logic failingLogic = createLogic(failingStorage);
 
         assertThrows(CommandException.class, message, () -> failingLogic.execute("note 1 no/Replacement"));
-
-        assertEquals(before, model.getAddressBook());
-        assertEquals(List.of(notedBenson), model.getFilteredPersonList());
-        assertEquals(isExpanded, logic.isExpandedViewProperty().get());
-        assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
-        if (!isExpanded) {
-            model.setPerson(notedBenson, new PersonBuilder(notedBenson).withPhone("12345678").build());
-            assertEquals(1, model.getFilteredPersonList().size());
-        }
     }
 
     /**
