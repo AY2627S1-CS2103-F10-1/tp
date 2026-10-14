@@ -133,28 +133,30 @@ Examples:
 
 After an ordinary `edit`, `note`, or `status` update, the current name or status filter remains active. Displayed indexes may change when a candidate stops matching. Expanding a candidate replaces that filter with a selection of the candidate: an update keeps them expanded at index `1`, even if their new name or status would not match the earlier filter. Check the displayed list before the next index command; use `list` to show all candidates.
 
-### Adding or replacing a candidate's note: `note`
+### Adding, replacing, or clearing a candidate's note: `note`
 
 Adds a note to the specified candidate, such as interview feedback or follow-up context.
 
-Format: `note INDEX no/NOTE_TEXT`
+Format: `note INDEX no/[NOTE_TEXT]`
 
 * Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
-* `NOTE_TEXT` must not be blank and can contain at most 500 characters. Leading and trailing spaces are removed; spacing, capitalisation, and punctuation within the note are kept.
+* To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
+* Non-empty `NOTE_TEXT` can contain at most 500 characters. Leading and trailing spaces are removed; spacing, capitalisation, and punctuation within the note are kept.
 * Supply `no/` only once. Other prefixes, such as `n/`, are treated as part of the note.
-* After the note is updated, the current filter is kept. The message is `Updated note for NAME: NOTE_TEXT`.
+* After the note is updated or cleared, the current filter is kept. When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
 * Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
 
 Examples:
 
 * `note 2 no/Strong on system design, weak on SQL`
+* `note 2 no/` clears the 2nd displayed candidate's note. The note icon disappears; expanding the candidate shows `No note recorded.`
 * `find Betsy` followed by `note 1 no/Follow up next week` adds a note to the 1st candidate in the results of the `find` command.
 
 <box type="warning" seamless>
 
 **Caution:**
-Replacing a note deletes the previous note permanently. To keep earlier information, include it in the new note. A note cannot be removed once added.
+Replacing or removing a note deletes the previous note permanently. To keep earlier information, include it in the new note.
 </box>
 
 ### Updating a candidate's recruitment status: `status`
@@ -309,6 +311,6 @@ Action     | Format, Examples
 **Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
-**Note**   | `note INDEX no/NOTE_TEXT`<br> e.g., `note 2 no/Passed round 2, schedule final interview`
+**Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear
 **Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
 **Help**   | `help`

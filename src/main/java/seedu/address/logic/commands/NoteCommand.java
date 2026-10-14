@@ -15,21 +15,22 @@ import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 
 /**
- * Replaces the single note of a candidate in the displayed list.
+ * Replaces or clears the single note of a candidate in the displayed list.
  */
 public class NoteCommand extends Command {
 
     public static final String COMMAND_WORD = "note";
     public static final String MESSAGE_USAGE = COMMAND_WORD
-            + ": Replaces the note of the candidate identified by the displayed index.\n"
+            + ": Replaces or clears the note of the candidate identified by the displayed index.\n"
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_NOTE
-            + "NOTE_TEXT (non-blank, at most 500 characters after trimming)\n"
+            + "[NOTE_TEXT] (at most 500 characters after trimming; omit to clear the note)\n"
             + "Example: " + COMMAND_WORD + " 2 " + PREFIX_NOTE + "Strong on system design, weak on SQL";
     public static final String MESSAGE_SUCCESS = "Updated note for %1$s: %2$s";
+    public static final String MESSAGE_CLEAR_SUCCESS = "Cleared note for %1$s";
     public static final String MESSAGE_INVALID_CANDIDATE_INDEX = "The candidate index provided is invalid.";
 
     private final Index index;
-    private final Note note;
+    private final Optional<Note> note;
 
     /**
      * Constructs a command to replace the note at the given displayed index.
@@ -37,7 +38,16 @@ public class NoteCommand extends Command {
     public NoteCommand(Index index, Note note) {
         requireAllNonNull(index, note);
         this.index = index;
-        this.note = note;
+        this.note = Optional.of(note);
+    }
+
+    /**
+     * Constructs a command to clear the note at the given displayed index.
+     */
+    public NoteCommand(Index index) {
+        requireAllNonNull(index);
+        this.index = index;
+        note = Optional.empty();
     }
 
     @Override
@@ -50,9 +60,11 @@ public class NoteCommand extends Command {
 
         Person candidate = displayedCandidates.get(index.getZeroBased());
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
-                candidate.getAddress(), candidate.getTags(), candidate.getStatus(), Optional.of(note));
+                candidate.getAddress(), candidate.getTags(), candidate.getStatus(), note);
         model.setPerson(candidate, updatedCandidate);
-        return new CommandResult(String.format(MESSAGE_SUCCESS, candidate.getName(), note));
+        String message = note.map(value -> String.format(MESSAGE_SUCCESS, candidate.getName(), value))
+                .orElseGet(() -> String.format(MESSAGE_CLEAR_SUCCESS, candidate.getName()));
+        return new CommandResult(message);
     }
 
     @Override

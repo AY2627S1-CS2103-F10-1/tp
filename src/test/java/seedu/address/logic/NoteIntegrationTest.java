@@ -94,7 +94,7 @@ public class NoteIntegrationTest {
         List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
         String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
 
-        assertThrows(ParseException.class, Note.MESSAGE_BLANK, () -> logic.execute("note 1 no/ "));
+        assertThrows(ParseException.class, Note.MESSAGE_TOO_LONG, () -> logic.execute("note 1 no/" + "x".repeat(501)));
         assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
                 logic.execute("note 2 no/New note"));
 
@@ -142,11 +142,11 @@ public class NoteIntegrationTest {
         AddressBook before = new AddressBook(model.getAddressBook());
         List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
         String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
-        String[] commands = {"note 1", "note abc no/hi", "note 1 no/ ",
+        String[] commands = {"note 1", "note abc no/hi",
             "note 1 no/" + "x".repeat(501), "note 1 no/first no/second"};
         String[] messages = {NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE,
             ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE,
-            Note.MESSAGE_BLANK, Note.MESSAGE_TOO_LONG,
+            Note.MESSAGE_TOO_LONG,
             Messages.MESSAGE_DUPLICATE_FIELDS + "no/"};
         for (int i = 0; i < commands.length; i++) {
             String command = commands[i];
