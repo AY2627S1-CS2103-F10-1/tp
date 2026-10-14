@@ -20,7 +20,7 @@ import seedu.address.testutil.PersonBuilder;
 
 public class CandidateDataNormalizationTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void readAndSaveAddressBook_emptyNoteAndPaddedStatus_preservesAllCandidates() throws Exception {

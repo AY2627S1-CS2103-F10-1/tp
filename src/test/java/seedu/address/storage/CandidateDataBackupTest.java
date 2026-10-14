@@ -29,7 +29,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 
 public class CandidateDataBackupTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void backupAddressBook_invalidBytes_preservesExactBytesAndExistingBackups() throws Exception {

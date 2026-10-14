@@ -29,7 +29,7 @@ import seedu.address.ui.Ui;
 
 public class MainAppTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void initModelManager_successfulRecovery_notifiesUiAfterStartingWithSavedEmptyData() throws Exception {

@@ -29,7 +29,7 @@ import seedu.address.storage.StorageManager;
 
 public class CandidateDataInitializerTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void load_rejectedFiles_preservesOriginalBeforeCommandsCanSave() throws Exception {

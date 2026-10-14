@@ -12,7 +12,7 @@ import javafx.scene.control.Alert.AlertType;
 
 public class UiManagerTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void showRecoveryWarning_completedBackup_explainsBackupAndRestorationPath() {
