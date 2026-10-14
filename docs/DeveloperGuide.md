@@ -643,7 +643,7 @@ testers are expected to do more *exploratory* testing.
 1. Run `find Betsy` (use a candidate name in your test data), then `note 1 no/Follow up`. Expected: Only the matching candidates remain displayed. `delete 1` deletes the displayed candidate.
 1. Run `filter s/Applied`, then `status 1 s/Offered`. Expected: The updated candidate disappears, and only remaining Applied candidates are shown. Repeat with `edit 1 s/Offered`.
 1. Run `find Betsy`, then change that candidate's name with `edit 1 n/Other Name`. Expected: The candidate disappears if the new name does not match.
-1. Run `list`, `expand 2`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded after each update.
+1. Run `filter s/Applied`, `expand 1`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded at index `1` after each update, including the Offered status change. Expansion replaces the earlier status filter with a selection of the candidate. Run `list` to show all candidates again.
 
 ### Candidate note indicator
 

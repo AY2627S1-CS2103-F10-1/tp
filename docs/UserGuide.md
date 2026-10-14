@@ -131,7 +131,7 @@ Examples:
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
 *  `edit 3 s/Interviewing` Updates the status of the 3rd candidate to `Interviewing`.
 
-After `edit`, `note`, or `status`, an expanded candidate stays expanded with the updated details. Other filters continue to apply, and displayed indexes may change when a candidate stops matching. Check the displayed list before the next index command; use `list` to show all candidates.
+After an ordinary `edit`, `note`, or `status` update, the current name or status filter remains active. Displayed indexes may change when a candidate stops matching. Expanding a candidate replaces that filter with a selection of the candidate: an update keeps them expanded at index `1`, even if their new name or status would not match the earlier filter. Check the displayed list before the next index command; use `list` to show all candidates.
 
 ### Adding or replacing a candidate's note: `note`
 
