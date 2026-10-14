@@ -1,6 +1,7 @@
 package seedu.address.ui;
 
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Platform;
@@ -26,14 +27,23 @@ public class UiManager implements Ui {
     private Logic logic;
     private Path dataFilePath;
     private MainWindow mainWindow;
+    private final Optional<Path> recoveryBackup;
 
     /**
      * Creates a {@code UiManager} with the given {@code Logic} and the data file path
      * to show in the status bar.
      */
     public UiManager(Logic logic, Path dataFilePath) {
+        this(logic, dataFilePath, Optional.empty());
+    }
+
+    /**
+     * Creates the UI with an optional startup recovery backup to explain to the user.
+     */
+    public UiManager(Logic logic, Path dataFilePath, Optional<Path> recoveryBackup) {
         this.logic = logic;
         this.dataFilePath = dataFilePath;
+        this.recoveryBackup = recoveryBackup;
     }
 
     @Override
@@ -47,6 +57,12 @@ public class UiManager implements Ui {
             mainWindow = new MainWindow(primaryStage, logic, dataFilePath);
             mainWindow.show(); //This should be called before creating other UI parts
             mainWindow.fillInnerParts();
+            recoveryBackup.ifPresent(backup -> showAlertDialogAndWait(AlertType.WARNING,
+                    "Candidate data recovery", "The candidate data file could not be loaded",
+                    "HRvest preserved the original file at:\n" + backup
+                            + "\n\nAn empty candidate list has been saved. Close HRvest, make a copy of the backup,"
+                            + " repair that copy, and replace " + dataFilePath.toAbsolutePath()
+                            + " with it to recover your candidates. Keep the backup until recovery is complete."));
 
         } catch (Throwable e) {
             logger.severe(StringUtil.getDetails(e));

@@ -3,12 +3,14 @@ package seedu.address.storage;
 import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.List;
@@ -57,6 +59,9 @@ public class JsonAddressBookStorage {
     public Optional<ReadOnlyAddressBook> readAddressBook(Path filePath) throws DataLoadingException {
         requireNonNull(filePath);
 
+        if (!isExistingDataFile(filePath)) {
+            return Optional.empty();
+        }
         Optional<JsonSerializableAddressBook> jsonAddressBook = JsonUtil.readJsonFile(
                 filePath, JsonSerializableAddressBook.class);
         if (!jsonAddressBook.isPresent()) {
@@ -68,6 +73,63 @@ public class JsonAddressBookStorage {
         } catch (IllegalValueException ive) {
             logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
             throw new DataLoadingException(ive);
+        }
+    }
+
+    /**
+     * Distinguishes a genuinely missing file from inaccessible paths and dangling symbolic links.
+     */
+    private static boolean isExistingDataFile(Path filePath) throws DataLoadingException {
+        try {
+            if (!Files.readAttributes(filePath, BasicFileAttributes.class).isRegularFile()) {
+                throw new IOException("The candidate data path must be a regular file.");
+            }
+            return true;
+        } catch (NoSuchFileException e) {
+            if (!Files.isSymbolicLink(filePath)) {
+                return false;
+            }
+            throw new DataLoadingException(e);
+        } catch (IOException e) {
+            throw new DataLoadingException(e);
+        }
+    }
+
+    /**
+     * Creates a persistent, uniquely named backup with the original bytes and access restrictions.
+     * Resolves existing symbolic links and fails safely for missing, dangling, or inaccessible paths.
+     *
+     * @return The absolute backup path beside the resolved data file.
+     * @throws IOException if backup creation, permission preservation, or copying fails.
+     */
+    public Path backupAddressBook() throws IOException {
+        Path source = filePath.toRealPath();
+        if (!Files.readAttributes(source, BasicFileAttributes.class).isRegularFile()) {
+            throw new IOException("The candidate data path must be a regular file.");
+        }
+        Path backup = Files.createTempFile(source.getParent(), "HRvest-", "-corrupt.json");
+        try {
+            copyExistingAcl(Files.getFileAttributeView(source, AclFileAttributeView.class),
+                    Files.getFileAttributeView(backup, AclFileAttributeView.class));
+            copyExistingPosixPermissions(source, backup);
+            copyDataFile(source, backup);
+            return backup;
+        } catch (IOException e) {
+            try {
+                Files.deleteIfExists(backup);
+            } catch (IOException cleanupError) {
+                e.addSuppressed(cleanupError);
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Copies candidate bytes without replacing the backup's already restricted file attributes.
+     */
+    void copyDataFile(Path source, Path backup) throws IOException {
+        try (OutputStream output = Files.newOutputStream(backup)) {
+            Files.copy(source, output);
         }
     }
 

@@ -81,10 +81,10 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_blankNote_throwsIllegalValueException() {
+    public void toModelType_blankNote_returnsCandidateWithoutNote() throws Exception {
         JsonAdaptedPerson candidate =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS, " \t ");
-        assertThrows(IllegalValueException.class, Note.MESSAGE_BLANK, candidate::toModelType);
+        assertEquals(BENSON, candidate.toModelType());
     }
 
     @Test

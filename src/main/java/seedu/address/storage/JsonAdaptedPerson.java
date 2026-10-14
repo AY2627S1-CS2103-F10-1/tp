@@ -130,7 +130,7 @@ class JsonAdaptedPerson {
 
         final Status modelStatus;
         try {
-            modelStatus = status == null ? Status.APPLIED : Status.fromString(status);
+            modelStatus = status == null ? Status.APPLIED : Status.fromString(status.strip());
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException(Status.MESSAGE_CONSTRAINTS);
         }
@@ -143,7 +143,7 @@ class JsonAdaptedPerson {
      * Converts the optional note, accepting absent notes in legacy files and validating any supplied text.
      */
     private Optional<Note> toModelNote() throws IllegalValueException {
-        if (note == null) {
+        if (note == null || note.isBlank()) {
             return Optional.empty();
         }
         try {

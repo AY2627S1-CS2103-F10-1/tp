@@ -48,6 +48,14 @@ public interface Storage {
     Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException;
 
     /**
+     * Preserves an exact copy of the existing candidate data file beside its resolved destination.
+     *
+     * @return The path to the persistent backup.
+     * @throws IOException if the original file cannot be safely backed up.
+     */
+    Path backupAddressBook() throws IOException;
+
+    /**
      * Saves the given {@link ReadOnlyAddressBook} to the storage.
      * @param addressBook cannot be null.
      * @throws IOException if there was any problem writing to the file.
