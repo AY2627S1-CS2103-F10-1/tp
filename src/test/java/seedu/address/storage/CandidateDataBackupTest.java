@@ -44,7 +44,7 @@ public class CandidateDataBackupTest {
 
         assertArrayEquals(original, Files.readAllBytes(backup));
         assertArrayEquals(original, Files.readAllBytes(path));
-        assertEquals(path.getParent(), backup.getParent());
+        assertEquals(path.getParent().toRealPath(), backup.getParent());
         assertTrue(backup.getFileName().toString().startsWith("HRvest-"));
         assertTrue(backup.getFileName().toString().endsWith("-corrupt.json"));
         assertEquals("previous backup", Files.readString(previous));
@@ -74,6 +74,32 @@ public class CandidateDataBackupTest {
     }
 
     @Test
+    public void backupAddressBook_cleanupFailure_reportsCopyFailureAndRetainsOriginal() throws Exception {
+        Path path = temporaryFolder.resolve("candidates.json");
+        Files.writeString(path, "original data");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(path) {
+            @Override
+            void copyDataFile(Path source, Path backup) throws IOException {
+                Files.delete(backup);
+                Files.createDirectory(backup);
+                Files.writeString(backup.resolve("partial"), "partial data");
+                throw new IOException("Copy failed");
+            }
+        };
+
+        assertThrows(IOException.class, "Copy failed", () -> {
+            try {
+                storage.backupAddressBook();
+            } catch (IOException e) {
+                assertEquals(1, e.getSuppressed().length);
+                throw e;
+            }
+        });
+
+        assertEquals("original data", Files.readString(path));
+    }
+
+    @Test
     public void backupAddressBook_symbolicLink_preservesLinkAndBacksUpTarget() throws Exception {
         Path target = temporaryFolder.resolve("target").resolve("candidates.json");
         Files.createDirectories(target.getParent());
@@ -83,7 +109,7 @@ public class CandidateDataBackupTest {
 
         Path backup = new JsonAddressBookStorage(link).backupAddressBook();
 
-        assertEquals(target.getParent(), backup.getParent());
+        assertEquals(target.getParent().toRealPath(), backup.getParent());
         assertEquals("original data", Files.readString(backup));
         assertTrue(Files.isSymbolicLink(link));
         assertEquals("original data", Files.readString(target));

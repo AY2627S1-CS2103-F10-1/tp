@@ -55,7 +55,7 @@ public class MainApp extends Application {
 
         logic = new LogicManager(model, storage);
 
-        ui = new UiManager(logic, storage.getAddressBookFilePath(), recoveryBackup);
+        ui = new UiManager(logic, storage.getAddressBookFilePath());
     }
 
     /**
@@ -120,6 +120,7 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) {
         logger.info("Starting HRvest " + MainApp.VERSION);
         ui.start(primaryStage);
+        recoveryBackup.ifPresent(ui::showRecoveryWarning);
     }
 
     @Override
