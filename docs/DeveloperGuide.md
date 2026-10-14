@@ -648,6 +648,11 @@ testers are expected to do more *exploratory* testing.
 
 ### Saving data
 
+1. Checking null entries in a test copy of the data file
+
+   1. Close HRvest and back up `data/HRvest.json`. Insert `null` alongside a valid candidate in the `persons` array, then launch HRvest. Expected: The app handles a data loading failure and opens a window, rather than crashing with a `NullPointerException`. Close HRvest and restore the valid backup before running further commands.
+   1. Restore the test copy, insert `null` in one candidate's `tags` array, and repeat. Expected: The same controlled data loading failure. Restore the valid backup after testing.
+
 1. Dealing with missing/corrupted data files
 
    1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
