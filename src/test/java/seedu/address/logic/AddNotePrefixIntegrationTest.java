@@ -24,7 +24,7 @@ import seedu.address.storage.StorageManager;
 
 public class AddNotePrefixIntegrationTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void execute_addWithNotePrefix_keepsCandidatesViewAndSavedFileUnchanged() throws Exception {
