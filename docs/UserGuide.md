@@ -130,6 +130,30 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
 
+### Adding or replacing a candidate's note: `note`
+
+Adds a note to the specified candidate, such as interview feedback or follow-up context.
+
+Format: `note INDEX no/NOTE_TEXT`
+
+* Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
+* Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
+* `NOTE_TEXT` must not be blank and can contain at most 500 characters. Leading and trailing spaces are removed; spacing, capitalisation, and punctuation within the note are kept.
+* Supply `no/` only once. Other prefixes, such as `n/`, are treated as part of the note.
+* After the note is updated, the full candidate list is shown. The message is `Updated note for NAME: NOTE_TEXT`.
+* Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
+
+Examples:
+
+* `note 2 no/Strong on system design, weak on SQL`
+* `find Betsy` followed by `note 1 no/Follow up next week` adds a note to the 1st candidate in the results of the `find` command.
+
+<box type="warning" seamless>
+
+**Caution:**
+Replacing a note deletes the previous note permanently. To keep earlier information, include it in the new note. A note cannot be removed once added.
+</box>
+
 ### Updating a candidate's recruitment status: `status`
 
 Updates the candidate at the given index in the currently displayed list.
@@ -282,5 +306,6 @@ Action     | Format, Examples
 **Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
+**Note**   | `note INDEX no/NOTE_TEXT`<br> e.g., `note 2 no/Passed round 2, schedule final interview`
 **Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
 **Help**   | `help`
