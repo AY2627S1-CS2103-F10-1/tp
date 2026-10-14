@@ -640,6 +640,13 @@ testers are expected to do more *exploratory* testing.
 
 ### Candidate note indicator
 
+1. Clearing a note
+
+   1. Run `note 2 no/Follow up`, then `note 2 no/`. Expected: The feedback is `Cleared note for NAME`, and that candidate's sticky note icon disappears. Other candidates' notes and all contact details remain unchanged.
+   1. Run `list`, then `expand 2`. Expected: The candidate shows `No note recorded.` Close and restart HRvest; the note remains absent.
+   1. Run `list`, `find NAME`, and `note 1 no/` for a candidate with a note. Expected: The note is removed from the displayed candidate. Repeat clearing a candidate without a note; the command succeeds without changing their details.
+   1. Run `note 1` without the prefix, or `note 1 no/first no/`. Expected: A missing-prefix or duplicate-prefix error leaves the candidate's note unchanged.
+
 1. Prerequisites: Close HRvest and back up the saved JSON file. In a test copy, give one candidate a non-blank `note` string, leave another candidate without a note, and give the candidate with a note a long name.
 1. Launch HRvest using the test data file. Expected: Only the candidate with a note has a sticky note icon beside the name; no note text appears on either card.
 1. Hover over the icon. Expected: The tooltip reads `Note available`.
