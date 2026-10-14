@@ -18,7 +18,7 @@ import seedu.address.commons.util.JsonUtil;
 
 public class NullCandidateDataTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     @Test
     public void toModelType_nullCandidate_throwsIllegalValueException() {
