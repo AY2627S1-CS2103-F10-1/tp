@@ -584,7 +584,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
-* **Candidate details**: A candidate's name, phone number, email address, role, address and tags.
+* **Candidate details**: A candidate's name, phone number, email address, address, status and tags.
 * **Candidate status**: One of Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, or Withdrawn.
 * **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, tags or notes, affect duplicate detection.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
