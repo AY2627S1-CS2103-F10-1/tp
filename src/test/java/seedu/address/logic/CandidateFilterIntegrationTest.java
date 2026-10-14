@@ -23,7 +23,7 @@ import seedu.address.storage.StorageManager;
 
 public class CandidateFilterIntegrationTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     private Model model;
     private Logic logic;
@@ -40,11 +40,18 @@ public class CandidateFilterIntegrationTest {
     }
 
     @Test
-    public void execute_updateAfterFind_nextDeleteTargetsDisplayedCandidate() throws Exception {
-        for (String command : List.of("note 1 no/Follow up", "status 1 s/Offered", "edit 1 p/91234567")) {
-            setUp();
-            assertFindUpdateKeepsSelection(command);
-        }
+    public void execute_noteAfterFind_nextDeleteTargetsDisplayedCandidate() throws Exception {
+        assertFindUpdateKeepsSelection("note 1 no/Follow up");
+    }
+
+    @Test
+    public void execute_statusAfterFind_nextDeleteTargetsDisplayedCandidate() throws Exception {
+        assertFindUpdateKeepsSelection("status 1 s/Offered");
+    }
+
+    @Test
+    public void execute_editAfterFind_nextDeleteTargetsDisplayedCandidate() throws Exception {
+        assertFindUpdateKeepsSelection("edit 1 p/91234567");
     }
 
     /**
@@ -63,11 +70,13 @@ public class CandidateFilterIntegrationTest {
     }
 
     @Test
-    public void execute_statusChangeAfterFilter_removesCandidateThatNoLongerMatches() throws Exception {
-        for (String command : List.of("status 1 s/Offered", "edit 1 s/Offered")) {
-            setUp();
-            assertStatusUpdateKeepsFilter(command);
-        }
+    public void execute_statusAfterFilter_removesCandidateThatNoLongerMatches() throws Exception {
+        assertStatusUpdateKeepsFilter("status 1 s/Offered");
+    }
+
+    @Test
+    public void execute_statusEditAfterFilter_removesCandidateThatNoLongerMatches() throws Exception {
+        assertStatusUpdateKeepsFilter("edit 1 s/Offered");
     }
 
     /**
@@ -88,17 +97,25 @@ public class CandidateFilterIntegrationTest {
     }
 
     @Test
-    public void execute_updateExpandedCandidate_keepsUpdatedCandidateExpanded() throws Exception {
-        for (String command : List.of("note 1 no/Follow up", "status 1 s/Offered", "edit 1 n/New Name")) {
-            setUp();
-            assertExpandedUpdateKeepsSelection(command);
-        }
+    public void execute_noteAfterExpansion_keepsUpdatedCandidateExpanded() throws Exception {
+        assertExpandedUpdateKeepsSelection("note 1 no/Follow up");
+    }
+
+    @Test
+    public void execute_statusAfterExpansion_keepsUpdatedCandidateExpanded() throws Exception {
+        assertExpandedUpdateKeepsSelection("status 1 s/Offered");
+    }
+
+    @Test
+    public void execute_editAfterExpansion_keepsUpdatedCandidateExpanded() throws Exception {
+        assertExpandedUpdateKeepsSelection("edit 1 n/New Name");
     }
 
     /**
      * Verifies that replacing a candidate record does not lose the expanded selection.
      */
     private void assertExpandedUpdateKeepsSelection(String command) throws Exception {
+        logic.execute("filter s/Applied");
         logic.execute("expand 2");
 
         logic.execute(command);
