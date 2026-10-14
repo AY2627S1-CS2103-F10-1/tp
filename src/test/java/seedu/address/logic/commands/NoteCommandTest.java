@@ -31,6 +31,50 @@ public class NoteCommandTest {
     public void constructor_nullArguments_throwsNullPointerException() {
         assertThrows(NullPointerException.class, () -> new NoteCommand(null, new Note(NOTE_TEXT)));
         assertThrows(NullPointerException.class, () -> new NoteCommand(INDEX_FIRST_PERSON, null));
+        assertThrows(NullPointerException.class, () -> new NoteCommand(null));
+    }
+
+    @Test
+    public void execute_clearNote_preservesCandidateDetails() {
+        Person original = model.getFilteredPersonList().getFirst();
+        Person noted = new PersonBuilder(original).withStatus(Status.INTERVIEWING).withNote(NOTE_TEXT).build();
+        model.setPerson(original, noted);
+        Person cleared = new Person(original.getName(), original.getPhone(), original.getEmail(), original.getAddress(),
+                original.getTags(), Status.INTERVIEWING);
+        Model expected = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        expected.setPerson(noted, cleared);
+
+        assertCommandSuccess(new NoteCommand(INDEX_FIRST_PERSON), model,
+                String.format(NoteCommand.MESSAGE_CLEAR_SUCCESS, original.getName()), expected);
+        assertFalse(model.getFilteredPersonList().getFirst().hasNote());
+    }
+
+    @Test
+    public void execute_clearAbsentNote_succeedsWithoutChangingCandidate() {
+        Person original = model.getFilteredPersonList().getFirst();
+        Model expected = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+
+        assertCommandSuccess(new NoteCommand(INDEX_FIRST_PERSON), model,
+                String.format(NoteCommand.MESSAGE_CLEAR_SUCCESS, original.getName()), expected);
+    }
+
+    @Test
+    public void execute_clearOutsideDisplayedList_keepsDataAndFilterUnchanged() {
+        showPersonAtIndex(model, INDEX_FIRST_PERSON);
+
+        assertCommandFailure(new NoteCommand(INDEX_SECOND_PERSON), model, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+    }
+
+    @Test
+    public void equals_clearCommands_comparesOperationAndIndex() {
+        NoteCommand clear = new NoteCommand(INDEX_FIRST_PERSON);
+        NoteCommand copy = new NoteCommand(INDEX_FIRST_PERSON);
+
+        assertEquals(clear, copy);
+        assertEquals(clear.hashCode(), copy.hashCode());
+        assertFalse(clear.equals(new NoteCommand(INDEX_SECOND_PERSON)));
+        assertFalse(clear.equals(new NoteCommand(INDEX_FIRST_PERSON, new Note(NOTE_TEXT))));
+        assertFalse(new NoteCommand(INDEX_FIRST_PERSON, new Note(NOTE_TEXT)).equals(clear));
     }
 
     @Test
