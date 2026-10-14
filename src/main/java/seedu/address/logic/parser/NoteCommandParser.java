@@ -8,7 +8,7 @@ import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
- * Parses arguments for replacing a candidate's note.
+ * Parses arguments for replacing or clearing a candidate's note.
  */
 public class NoteCommandParser implements Parser<NoteCommand> {
 
@@ -31,6 +31,7 @@ public class NoteCommandParser implements Parser<NoteCommand> {
         }
 
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
-        return new NoteCommand(index, ParserUtil.parseNote(arguments.getValue(PREFIX_NOTE).orElseThrow()));
+        String noteText = arguments.getValue(PREFIX_NOTE).orElseThrow();
+        return noteText.isBlank() ? new NoteCommand(index) : new NoteCommand(index, ParserUtil.parseNote(noteText));
     }
 }
