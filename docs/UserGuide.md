@@ -152,7 +152,7 @@ Examples:
 <box type="warning" seamless>
 
 **Caution:**
-Replacing a note deletes the previous note permanently. To keep earlier information, include it in the new note. The `note` command cannot remove a note; advanced users can remove it by editing the saved data file while HRvest is closed.
+Replacing or removing a note deletes the previous note permanently. To keep earlier information, include it in the new note.
 </box>
 
 ### Updating a candidate's recruitment status: `status`
