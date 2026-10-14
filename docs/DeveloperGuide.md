@@ -155,6 +155,10 @@ The `Storage` component,
 
 Temporary files use unique names of the form `HRvest-<random>.tmp`, so a later save does not reuse or overwrite an existing temporary file. The `finally` block attempts to remove the current save's temporary file when execution unwinds normally, including after an `IOException` or an unchecked exception. A forced JVM termination or power loss can prevent this cleanup and leave an orphaned temporary file. Subsequent saves ignore these files. After closing all HRvest instances, leftover `HRvest-*.tmp` files can be removed manually; keep the configured JSON data file and any symbolic-link target.
 
+During startup, `MainApp` uses `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<random>-corrupt.json` backup through `Storage`, followed by an atomic save of an empty address book. The backup preserves the original bytes and supported access restrictions before any candidate bytes are copied. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
+
+Both backup and replacement saving must finish before commands become available. Otherwise startup aborts with an actionable terminal error, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
+
 ### Common classes
 
 Classes used by multiple components are in the `seedu.address.commons` package.
@@ -650,6 +654,12 @@ testers are expected to do more *exploratory* testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. _{Explain how to simulate missing or corrupted data files and state the expected behavior.}_
+   1. Prerequisites: Use a test folder and back up its `data/HRvest.json`. Close HRvest, make the test data file invalid (for example, change one candidate's email to `invalid`), and launch. Expected: A warning gives the full path of a new `HRvest-<random>-corrupt.json` beside the data file; its bytes match the invalid original. The app shows an empty list, already saved to `data/HRvest.json`.
+   1. Run `list`, `find Alice`, and `help`. Expected: The backup remains unchanged. Restart HRvest. Expected: The list stays empty and no additional backup or recovery warning appears.
+   1. Close HRvest, copy the backup, repair the invalid email in the copy, and replace the data file with that copy. Expected: All candidates return after relaunch; the backup remains unchanged.
+   1. Repeat with malformed JSON and duplicate emails that differ only in case. Expected: The same recovery process, with a separate backup for each invalid file.
+   1. Close HRvest and edit a valid test file to contain `"note": ""` and `"status": " Applied "`. Expected: All candidates load, the note is absent, the status is Applied, and no recovery backup is created.
+   1. Make the test data file invalid and deny writing in its folder. Launch from a terminal with `java -jar HRvest.jar`. Expected: Startup stops before a window opens, an actionable terminal error appears, and the original file is unchanged. Restore permissions after testing.
+   1. Move the data file out of the test folder and launch. Expected: Sample candidates appear without a recovery warning or backup.
 
 1. _{ more test cases … }_
