@@ -53,9 +53,10 @@ public class NoteCommandParserTest {
     }
 
     @Test
-    public void parse_blankNote_throwsParseException() {
-        assertParseFailure(parser, " 1 no/ \t ", Note.MESSAGE_BLANK);
-        assertParseFailure(parser, " 1 no/\u2003", Note.MESSAGE_BLANK);
+    public void parse_blankNote_returnsClearCommand() {
+        for (String args : new String[] {" 1 no/", " 1 no/ \t ", " 1 no/\u2003"}) {
+            assertParseSuccess(parser, args, new NoteCommand(INDEX_FIRST_PERSON));
+        }
     }
 
     @Test
