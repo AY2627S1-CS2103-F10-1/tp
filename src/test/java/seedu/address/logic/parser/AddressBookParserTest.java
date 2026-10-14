@@ -40,8 +40,11 @@ public class AddressBookParserTest {
     public void parseCommand_note_dispatchesToNoteParser() throws Exception {
         NoteCommand expected = new NoteCommand(INDEX_FIRST_PERSON, new Note("Passed round 2"));
         assertEquals(expected, parser.parseCommand("note 1 no/Passed round 2"));
-        assertEquals(expected, parser.parseCommand("NOTE 1 NO/Passed round 2"));
-        assertEquals(expected, parser.parseCommand("NoTe\t1\tNo/Passed round 2"));
+    }
+
+    @Test
+    public void parseCommand_uppercaseNote_throwsParseException() {
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("NOTE 1 no/x"));
     }
 
     @Test

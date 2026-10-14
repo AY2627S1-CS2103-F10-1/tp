@@ -112,7 +112,7 @@ public class NoteIntegrationTest {
         logic.execute("find Benson");
         assertEquals(List.of(original), model.getFilteredPersonList());
 
-        logic.execute("NoTe 1 NO/Follow up next week");
+        logic.execute("note 1 no/Follow up next week");
 
         assertEquals(getTypicalAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
         Person expected = new PersonBuilder(original).withNote("Follow up next week").build();

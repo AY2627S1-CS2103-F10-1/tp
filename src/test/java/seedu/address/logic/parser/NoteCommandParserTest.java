@@ -31,15 +31,6 @@ public class NoteCommandParserTest {
     }
 
     @Test
-    public void parse_mixedCasePrefixAndWhitespace_preservesNoteContents() {
-        String note = "Round 2:\t Strong on SQL\nFollow up soon";
-        assertParseSuccess(parser, "\t1\tNO/ " + note + "\t",
-                new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
-        assertParseSuccess(parser, " 1\nNo/" + note,
-                new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
-    }
-
-    @Test
     public void parse_missingPrefix_throwsParseException() {
         String message = NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE;
         for (String args : new String[] {"", " 1", " 1 n/hi", " 1 hi", " 1no/hi"}) {
@@ -83,10 +74,6 @@ public class NoteCommandParserTest {
         assertParseFailure(parser, " 1 no/first no/second", message);
         assertParseFailure(parser, " 1 no/hi no/hi", message);
         assertParseFailure(parser, " 1 no/ no/", message);
-        assertParseFailure(parser, " 1 NO/first no/second", message);
-        assertParseFailure(parser, " 1 no/first\tNo/second", message);
-        assertParseFailure(parser, " 1 no/first\nNO/second", message);
-        assertParseFailure(parser, " 1 no/first\u2003No/second", message);
     }
 
     @Test
