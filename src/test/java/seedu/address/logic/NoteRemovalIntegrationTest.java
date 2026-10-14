@@ -31,7 +31,7 @@ import seedu.address.testutil.PersonBuilder;
 
 public class NoteRemovalIntegrationTest {
     @TempDir
-    public Path temporaryFolder;
+    Path temporaryFolder;
 
     private Model model;
     private JsonAddressBookStorage storage;
