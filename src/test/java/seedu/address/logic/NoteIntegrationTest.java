@@ -1,7 +1,6 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.BENSON;
@@ -70,7 +69,7 @@ public class NoteIntegrationTest {
     }
 
     @Test
-    public void execute_noteInExpandedView_savesSelectedCandidateAndCollapsesList() throws Exception {
+    public void execute_noteInExpandedView_savesSelectedCandidateAndKeepsExpandedView() throws Exception {
         logic.execute("expand 2");
         assertEquals(List.of(BENSON), model.getFilteredPersonList());
         assertTrue(logic.isExpandedViewProperty().get());
@@ -79,9 +78,9 @@ public class NoteIntegrationTest {
 
         assertEquals(new Note("Follow up next week"), readCandidate(1).getNote().orElseThrow());
         assertTrue(readCandidate(0).getNote().isEmpty());
-        assertEquals(getTypicalAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
-        assertFalse(logic.isExpandedViewProperty().get());
-        logic.execute("expand 2");
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertTrue(logic.isExpandedViewProperty().get());
+        logic.execute("expand 1");
         assertTrue(logic.isExpandedViewProperty().get());
         assertEquals(new Note("Follow up next week"),
                 model.getFilteredPersonList().getFirst().getNote().orElseThrow());
@@ -106,7 +105,7 @@ public class NoteIntegrationTest {
     }
 
     @Test
-    public void execute_filteredIndex_savesDisplayedCandidateAndShowsAllCandidates() throws Exception {
+    public void execute_filteredIndex_savesDisplayedCandidateAndKeepsFilter() throws Exception {
         logic.execute("status 2 s/Interviewing");
         Person original = model.getAddressBook().getPersonList().get(1);
         logic.execute("find Benson");
@@ -114,7 +113,7 @@ public class NoteIntegrationTest {
 
         logic.execute("note 1 no/Follow up next week");
 
-        assertEquals(getTypicalAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
+        assertEquals(1, model.getFilteredPersonList().size());
         Person expected = new PersonBuilder(original).withNote("Follow up next week").build();
         assertEquals(expected, readCandidate(1));
         assertEquals(expected, model.getAddressBook().getPersonList().get(1));

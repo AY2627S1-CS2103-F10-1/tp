@@ -70,11 +70,11 @@ public class NoteCommandTest {
     }
 
     @Test
-    public void execute_filteredIndex_updatesDisplayedCandidateAndResetsFilter() {
+    public void execute_filteredIndex_updatesDisplayedCandidateAndKeepsFilter() {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
         assertNoteUpdateSuccess(INDEX_FIRST_PERSON, NOTE_TEXT);
-        assertEquals(getTypicalAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
+        assertEquals(1, model.getFilteredPersonList().size());
         assertTrue(model.getAddressBook().getPersonList().get(1).hasNote());
         assertFalse(model.getAddressBook().getPersonList().getFirst().hasNote());
     }
@@ -126,6 +126,10 @@ public class NoteCommandTest {
         Person original = model.getFilteredPersonList().get(index.getZeroBased());
         Person updated = new PersonBuilder(original).withNote(text).build();
         Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        if (model.getFilteredPersonList().size() == 1) {
+            Index originalIndex = Index.fromZeroBased(model.getAddressBook().getPersonList().indexOf(original));
+            showPersonAtIndex(expectedModel, originalIndex);
+        }
         expectedModel.setPerson(original, updated);
         String expectedMessage = String.format(NoteCommand.MESSAGE_SUCCESS, original.getName(), text);
 

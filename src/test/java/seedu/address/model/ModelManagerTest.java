@@ -163,14 +163,16 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void setPerson_expandedPerson_resetsExpandedView() {
+    public void setPerson_expandedPerson_keepsUpdatedCandidateExpanded() {
         ModelManager model = createModelWithTypicalPersons();
         Person selected = model.getFilteredPersonList().getFirst();
         model.expandPerson(selected);
 
-        model.setPerson(selected, new PersonBuilder(selected).withPhone("91234567").build());
+        Person updated = new PersonBuilder(selected).withPhone("91234567").build();
+        model.setPerson(selected, updated);
 
-        assertFalse(model.isExpandedViewProperty().get());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(updated), model.getFilteredPersonList());
     }
 
     @Test

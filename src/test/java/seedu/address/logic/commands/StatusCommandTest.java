@@ -38,7 +38,7 @@ public class StatusCommandTest {
     }
 
     @Test
-    public void execute_validIndexFilteredList_updatesCandidateAndShowsAll() {
+    public void execute_validIndexFilteredList_updatesCandidateAndKeepsFilter() {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         Person candidate = model.getFilteredPersonList().get(0);
         StatusCommand command = new StatusCommand(INDEX_FIRST_PERSON, Status.ACCEPTED);
@@ -46,12 +46,13 @@ public class StatusCommandTest {
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         Person updated = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
                 candidate.getAddress(), candidate.getTags(), Status.ACCEPTED);
+        showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
         expectedModel.setPerson(candidate, updated);
         String expectedMessage = String.format(StatusCommand.MESSAGE_SUCCESS,
                 candidate.getName(), candidate.getStatus(), Status.ACCEPTED);
 
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
-        assertEquals(expectedModel.getAddressBook().getPersonList().size(), model.getFilteredPersonList().size());
+        assertEquals(1, model.getFilteredPersonList().size());
     }
 
     @Test
