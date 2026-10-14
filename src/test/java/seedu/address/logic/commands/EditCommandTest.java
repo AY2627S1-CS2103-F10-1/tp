@@ -15,6 +15,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -124,6 +126,43 @@ public class EditCommandTest {
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_emailMatchesHiddenCandidateIgnoringCase_failure() {
+        Person other = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased());
+        showPersonAtIndex(model, INDEX_FIRST_PERSON);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withEmail(other.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertCommandFailure(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                EditCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    @Test
+    public void execute_onlyOwnEmailCaseChanged_success() {
+        Person original = model.getFilteredPersonList().getFirst();
+        String email = original.getEmail().value.toUpperCase(Locale.ROOT);
+        Person edited = new PersonBuilder(original).withEmail(email).build();
+        Model expected = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expected.setPerson(original, edited);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withEmail(email).build();
+
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(edited)), expected);
+    }
+
+    @Test
+    public void execute_nameMatchesAnotherCandidateWithDifferentEmail_success() {
+        Person original = model.getFilteredPersonList().getFirst();
+        String name = model.getFilteredPersonList().get(INDEX_SECOND_PERSON.getZeroBased()).getName().fullName;
+        Person edited = new PersonBuilder(original).withName(name).build();
+        Model expected = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expected.setPerson(original, edited);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName(name).build();
+
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(edited)), expected);
     }
 
     @Test

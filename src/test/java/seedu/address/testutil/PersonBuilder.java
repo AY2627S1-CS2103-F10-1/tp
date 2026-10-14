@@ -99,6 +99,14 @@ public class PersonBuilder {
     }
 
     /**
+     * Sets the recruitment status of the person being built.
+     */
+    public PersonBuilder withStatus(Status status) {
+        this.status = status;
+        return this;
+    }
+
+    /**
      * Sets the note of the person being built.
      */
     public PersonBuilder withNote(String note) {

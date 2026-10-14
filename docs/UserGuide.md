@@ -78,18 +78,32 @@ Format: `help`
 
 ### Adding a candidate: `add`
 
-Adds a person to HRvest.
+Adds a candidate to HRvest.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 
-<box type="tip" seamless>
+**Parameters:**
 
-**Tip:** A candidate can have any number of tags, including zero.
-</box>
+| Parameter | Required? | Accepted values and behavior |
+|---|---|---|
+| `n/NAME` | Yes | A non-blank name containing only letters, digits, and spaces, e.g. `n/John Doe`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. Punctuation such as apostrophes and hyphens is not accepted. |
+| `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
+| `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/john.doe@example.com`. The local part allows letters, digits, and `+`, `_`, `.`, or `-` between alphanumeric groups; it must start and end with a letter or digit. Domain labels allow letters, digits, and internal hyphens; the final label must contain at least two characters. Spaces are not accepted. |
+| `a/ADDRESS` | Yes | Any non-blank, single-line address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
+| `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
+| `t/TAG` | No | A non-blank label containing only letters and digits, e.g. `t/backend`. Spaces and punctuation are not accepted. Repeat the prefix for multiple tags: `t/backend t/Java`. Identical tags are removed, but tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. |
+
+**Input and results:**
+
+* Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Only `t/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
+* All four required prefixes must have valid values. Missing required prefixes or text before the first prefix produces an invalid-command-format message.
+* Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This person already exists in the address book.` Names, phones, addresses, statuses, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
+* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix preceded by whitespace also starts a new field, even if you intended it to be part of an address.
 
 Examples:
+
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe t/friend e/betsycrowe@example.com a/Newgate Prison p/1234567 t/criminal`
+* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison s/Interviewing t/backend`
 
 ### Listing all candidates: `list`
 
@@ -99,6 +113,8 @@ Format: `list`
 
 ### Editing a candidate: `edit`
 
+The success message shows the candidate's updated details, including their current status.
+
 Edits an existing person in HRvest.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
@@ -106,6 +122,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [t/TAG]... `
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values.
+* An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This person already exists in the address book.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
 
@@ -146,7 +163,7 @@ Format: `status INDEX s/STATUS`
 
 * `INDEX` is a positive, 1-based index in the displayed list.
 * Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
-* New candidates start with `Applied`. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking.
+* Candidates created with `add` start with `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
 * After an update, the full candidate list is shown. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
 * A missing `s/` or non-integer index gives `Invalid command format!`; an index outside the displayed list gives `The candidate index provided is invalid.`
 * An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
@@ -173,7 +190,24 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
+### Filtering candidates by status: `filter`
+
+Filters candidates by their hiring status.
+
+Format: `filter s/STATUS`
+
+* Displays all candidates with the specified status.
+* Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
+* The status is case-insensitive.
+
+Examples:
+
+* `filter s/Interviewing` displays all candidates currently in the interviewing stage.
+* `filter s/Offered` displays all candidates who have been made offers.
+
 ### Deleting a candidate: `delete`
+
+The success message shows the deleted candidate's details, including their status.
 
 Deletes the specified person from HRvest.
 
@@ -237,6 +271,8 @@ HRvest data is saved automatically as a JSON file `[JAR file location]/data/HRve
 
 **Caution:**
 If your changes make the data file invalid, HRvest starts empty at the next run. The invalid file remains on disk until you run a command (HRvest saves after every command). Still, we recommend backing up the file before editing it.<br>
+Files containing candidates with the same email, ignoring case, are invalid even if the candidates have different names. This also applies to older files created before email uniqueness was enforced. Back up and correct these files before opening them in this version: the existing load-error handling starts empty, and the next successful command (including `list`) can overwrite the old file. No automatic backup or merge is performed.
+
 Furthermore, certain edits can cause HRvest to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 </box>
 
@@ -264,10 +300,11 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Note**   | `note INDEX no/NOTE_TEXT`<br> e.g., `note 2 no/Passed round 2, schedule final interview`

@@ -53,30 +53,41 @@ public class PersonTest {
     }
 
     @Test
-    public void isSamePerson() {
+    public void isSamePerson_selfOrNull_returnsExpectedResult() {
         // same object -> returns true
         assertTrue(ALICE.isSamePerson(ALICE));
 
         // null -> returns false
         assertFalse(ALICE.isSamePerson(null));
 
-        // same name, all other attributes different -> returns true
-        Person editedAlice = new PersonBuilder(ALICE).withPhone(VALID_PHONE_BOB).withEmail(VALID_EMAIL_BOB)
-                .withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND).build();
+    }
+
+    @Test
+    public void isSamePerson_sameEmailDifferentDetails_returnsTrue() {
+        Person editedAlice = new PersonBuilder(ALICE).withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
+                .withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND).withStatus(Status.OFFERED)
+                .withNote("Interview feedback").build();
+
         assertTrue(ALICE.isSamePerson(editedAlice));
+        assertTrue(editedAlice.isSamePerson(ALICE));
+    }
 
-        // different name, all other attributes same -> returns false
-        editedAlice = new PersonBuilder(ALICE).withName(VALID_NAME_BOB).build();
+    @Test
+    public void isSamePerson_sameNameDifferentEmail_returnsFalse() {
+        Person editedAlice = new PersonBuilder(ALICE).withEmail(VALID_EMAIL_BOB).build();
+
         assertFalse(ALICE.isSamePerson(editedAlice));
+        assertFalse(editedAlice.isSamePerson(ALICE));
+    }
 
-        // name differs in case, all other attributes same -> returns false
-        Person editedBob = new PersonBuilder(BOB).withName(VALID_NAME_BOB.toLowerCase()).build();
-        assertFalse(BOB.isSamePerson(editedBob));
+    @Test
+    public void isSamePerson_emailCaseDiffers_returnsTrueButNotEqual() {
+        Person lowerCase = new PersonBuilder().withEmail("alice@example.com").build();
+        Person mixedCase = new PersonBuilder(lowerCase).withEmail("AlIcE@ExAmPlE.CoM").build();
 
-        // name has trailing spaces, all other attributes same -> returns false
-        String nameWithTrailingSpaces = VALID_NAME_BOB + " ";
-        editedBob = new PersonBuilder(BOB).withName(nameWithTrailingSpaces).build();
-        assertFalse(BOB.isSamePerson(editedBob));
+        assertTrue(lowerCase.isSamePerson(mixedCase));
+        assertTrue(mixedCase.isSamePerson(lowerCase));
+        assertFalse(lowerCase.equals(mixedCase));
     }
 
     @Test

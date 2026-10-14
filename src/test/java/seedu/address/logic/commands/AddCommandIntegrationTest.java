@@ -4,6 +4,8 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,6 +38,25 @@ public class AddCommandIntegrationTest {
         assertCommandSuccess(new AddCommand(validPerson), model,
                 String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(validPerson)),
                 expectedModel);
+    }
+
+    @Test
+    public void execute_sameEmailDifferentNameIgnoringCase_failure() {
+        Person existing = model.getFilteredPersonList().getFirst();
+        Person duplicate = new PersonBuilder().withEmail(existing.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertCommandFailure(new AddCommand(duplicate), model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+    }
+
+    @Test
+    public void execute_sameNameDifferentEmail_success() {
+        Person existing = model.getFilteredPersonList().getFirst();
+        Person distinct = new PersonBuilder(existing).withEmail("distinct@example.com").build();
+        Model expected = new ModelManager(model.getAddressBook(), new UserPrefs());
+        expected.addPerson(distinct);
+
+        assertCommandSuccess(new AddCommand(distinct), model,
+                String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(distinct)), expected);
     }
 
     @Test
