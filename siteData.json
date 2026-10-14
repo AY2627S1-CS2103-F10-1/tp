@@ -115,7 +115,7 @@
         "adding-a-candidate-add": "Adding a candidate: add",
         "listing-all-candidates-list": "Listing all candidates: list",
         "editing-a-candidate-edit": "Editing a candidate: edit",
-        "adding-or-replacing-a-candidate-s-note-note": "Adding or replacing a candidate's note: note",
+        "adding-replacing-or-clearing-a-candidate-s-note-note": "Adding, replacing, or clearing a candidate's note: note",
         "updating-a-candidate-s-recruitment-status-status": "Updating a candidate's recruitment status: status",
         "locating-candidates-by-name-find": "Locating candidates by name: find",
         "filtering-candidates-by-status-filter": "Filtering candidates by status: filter",
