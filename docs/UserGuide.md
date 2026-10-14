@@ -132,27 +132,26 @@ Examples:
 
 ### Adding or replacing a candidate's note: `note`
 
-Records interview feedback or follow-up context for a candidate. Each candidate has **one note**; running this command again **replaces the existing note entirely**.
+Adds a note to the specified candidate, such as interview feedback or follow-up context.
 
 Format: `note INDEX no/NOTE_TEXT`
 
-* `INDEX` is required and must be a positive integer within the currently displayed list. Use the displayed index after a search, rather than the candidate's position in the full list.
-* `NOTE_TEXT` is required, must be non-blank, and can contain at most **500 characters after trimming**. Leading and trailing whitespace is removed; internal spacing, capitalization, punctuation, and line breaks are preserved.
-* The `note` command word and `no/` prefix are case-insensitive. Use `no/` once; whitespace followed by this prefix starts another note value and is rejected as a repeated prefix. Other prefix-like text, such as `n/`, remains part of the note.
-* On success, HRvest saves the note immediately, resets the list to show all candidates, and displays `Updated note for <NAME>: <NOTE_TEXT>`.
-* Use `expand INDEX` to view the full note; collapsed cards show only the note indicator.
-* Entering the same note again still succeeds normally. Editing contact details, tags, or recruitment status keeps the note. Updating a note keeps the candidate's recruitment status. Notes do not affect duplicate detection.
-* Invalid input leaves the existing note, displayed list, and saved data unchanged. If saving fails, HRvest shows a storage error and keeps the existing note and displayed list.
+* Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
+* Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
+* `NOTE_TEXT` must not be blank and can contain at most 500 characters. Leading and trailing spaces are removed; spacing, capitalisation, and punctuation within the note are kept.
+* Supply `no/` only once. Other prefixes, such as `n/`, are treated as part of the note.
+* After the note is updated, the full candidate list is shown. The message is `Updated note for NAME: NOTE_TEXT`.
+* Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
 
 Examples:
 
 * `note 2 no/Strong on system design, weak on SQL`
-* `note 2 no/Passed round 2, schedule final interview` replaces the previous note on candidate 2.
-* `find Betsy` followed by `note 1 no/Follow up next week` updates the first displayed search result, then shows all candidates.
+* `find Betsy` followed by `note 1 no/Follow up next week` adds a note to the 1st candidate in the results of the `find` command.
 
 <box type="warning" seamless>
 
-**Overwriting loses the previous note.** Include earlier information in the replacement if you want to keep it. The MVP has no note history or undo, and does not support clearing a note.
+**Caution:**
+Replacing a note deletes the previous note permanently. To keep earlier information, include it in the new note. A note cannot be removed once added.
 </box>
 
 ### Updating a candidate's recruitment status: `status`
