@@ -54,7 +54,7 @@ public class EditCommandTest {
 
     @Test
     public void execute_allFieldsSpecifiedUnfilteredList_success() {
-        Person editedPerson = new PersonBuilder().build();
+        Person editedPerson = new PersonBuilder().withStatus(Status.INTERVIEWING).build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(editedPerson).build();
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
 
@@ -85,6 +85,35 @@ public class EditCommandTest {
         expectedModel.setPerson(lastPerson, editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_statusOnlyFilteredList_updatesStatusAndPreservesOtherFields() {
+        Person original = model.getFilteredPersonList().getFirst();
+        Person notedPerson = new PersonBuilder(original).withNote("Passed round 2").build();
+        model.setPerson(original, notedPerson);
+        showPersonAtIndex(model, INDEX_FIRST_PERSON);
+        Person editedPerson = new PersonBuilder(notedPerson).withStatus(Status.INTERVIEWING).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withStatus(Status.INTERVIEWING).build();
+        Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        expectedModel.setPerson(notedPerson, editedPerson);
+
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
+    }
+
+    @Test
+    public void execute_statusAndPhone_updatesBoth() {
+        Person original = model.getFilteredPersonList().getFirst();
+        Person editedPerson = new PersonBuilder(original).withPhone(VALID_PHONE_BOB)
+                .withStatus(Status.OFFERED).build();
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withPhone(VALID_PHONE_BOB)
+                .withStatus(Status.OFFERED).build();
+        Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        expectedModel.setPerson(original, editedPerson);
+
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
+                String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)), expectedModel);
     }
 
     @Test
