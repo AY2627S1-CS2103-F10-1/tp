@@ -38,7 +38,8 @@ public class AddNotePrefixIntegrationTest {
         String fileBefore = Files.readString(storage.getAddressBookFilePath());
 
         for (String command : List.of("add n/A p/123 e/a@x.com a/Blk 1 no/great candidate",
-                "add n/A p/123 e/a@x.com a/Blk 1 no/")) {
+                "add n/A p/123 e/a@x.com a/Blk 1 no/",
+                "add n/A p/123 e/a@x.com a/Blk 1\tno/great candidate")) {
             assertThrows(ParseException.class, AddCommandParser.MESSAGE_UNSUPPORTED_NOTE, () -> logic.execute(command));
         }
 

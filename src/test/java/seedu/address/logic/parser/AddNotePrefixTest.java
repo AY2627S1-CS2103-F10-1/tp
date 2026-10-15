@@ -33,6 +33,14 @@ public class AddNotePrefixTest {
     }
 
     @Test
+    public void parse_notePrefixAfterNonSpaceWhitespace_reportsUnsupportedNote() {
+        for (String separator : List.of("\t", "\n", " \t")) {
+            assertParseFailure(parser, REQUIRED_FIELDS + separator + "no/feedback",
+                    AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        }
+    }
+
+    @Test
     public void parse_notePrefixInsideAddressWord_preservesLiteralAddress() {
         AddCommand expected = new AddCommand(new PersonBuilder().withName("A").withPhone("123")
                 .withEmail("a@x.com").withAddress("Blk 1 yes/no/feedback").build());

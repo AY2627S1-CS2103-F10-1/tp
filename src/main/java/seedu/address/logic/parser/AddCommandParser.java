@@ -10,6 +10,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import seedu.address.logic.commands.AddCommand;
@@ -30,19 +31,23 @@ public class AddCommandParser implements Parser<AddCommand> {
     public static final String MESSAGE_UNSUPPORTED_NOTE = "The add command does not support no/. "
             + "Add the candidate first, then use note INDEX no/NOTE_TEXT.";
 
+    // ArgumentTokenizer only recognises prefixes after a space, so a tab before no/ must be caught separately.
+    private static final Pattern NOTE_PREFIX_PATTERN =
+            Pattern.compile("(^|\\s)" + Pattern.quote(PREFIX_NOTE.getPrefix()));
+
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
      * @throws ParseException if the user input does not conform to the expected format
      */
     public AddCommand parse(String args) throws ParseException {
-        ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                        PREFIX_STATUS, PREFIX_TAG, PREFIX_NOTE);
-
-        if (argMultimap.getValue(PREFIX_NOTE).isPresent()) {
+        if (NOTE_PREFIX_PATTERN.matcher(args).find()) {
             throw new ParseException(MESSAGE_UNSUPPORTED_NOTE);
         }
+
+        ArgumentMultimap argMultimap =
+                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                        PREFIX_STATUS, PREFIX_TAG);
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL)
                 || !argMultimap.getPreamble().isEmpty()) {
