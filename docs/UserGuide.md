@@ -276,6 +276,8 @@ If your changes make the data file invalid, HRvest starts empty at the next run.
 Files containing candidates with the same email, ignoring case, are invalid even if the candidates have different names. This also applies to older files created before email uniqueness was enforced. Back up and correct these files before opening them in this version: the existing load-error handling starts empty, and the next successful command (including `list`) can overwrite the old file. No automatic backup or merge is performed.
 
 Furthermore, certain edits can cause HRvest to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+
+The `persons` array must contain candidate objects, and each candidate's `tags` array must contain tag strings. Null entries in either array are invalid and are reported as a data loading failure instead of crashing startup. An empty array is valid; a null JSON root or a missing/null `persons` array is invalid.
 </box>
 
 ### Archiving data files `[coming in v2.0]`
