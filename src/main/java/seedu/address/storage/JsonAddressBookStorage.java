@@ -109,10 +109,11 @@ public class JsonAddressBookStorage {
         }
         Path backup = Files.createTempFile(source.getParent(), "HRvest-", "-corrupt.json");
         try {
+            // Restrictions are applied last so that a write-restricted original does not block the copy.
+            copyDataFile(source, backup);
             copyExistingAcl(Files.getFileAttributeView(source, AclFileAttributeView.class),
                     Files.getFileAttributeView(backup, AclFileAttributeView.class));
             copyExistingPosixPermissions(source, backup);
-            copyDataFile(source, backup);
             return backup;
         } catch (IOException e) {
             try {
@@ -125,7 +126,7 @@ public class JsonAddressBookStorage {
     }
 
     /**
-     * Copies candidate bytes without replacing the backup's already restricted file attributes.
+     * Copies candidate bytes into the existing backup file.
      */
     void copyDataFile(Path source, Path backup) throws IOException {
         try (OutputStream output = Files.newOutputStream(backup)) {

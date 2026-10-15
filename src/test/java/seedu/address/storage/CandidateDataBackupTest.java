@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
@@ -202,6 +203,38 @@ public class CandidateDataBackupTest {
         Path backup = new JsonAddressBookStorage(path).backupAddressBook();
 
         assertEquals(aclView.getAcl(), Files.getFileAttributeView(backup, AclFileAttributeView.class).getAcl());
+        assertEquals("original data", Files.readString(backup));
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    public void backupAddressBook_writeRestrictedAcl_copiesBytesBeforeRestrictingBackup() throws Exception {
+        Path path = temporaryFolder.resolve("candidates.json");
+        Files.writeString(path, "original data");
+        AclFileAttributeView aclView = Files.getFileAttributeView(path, AclFileAttributeView.class);
+        EnumSet<AclEntryPermission> readOnly = EnumSet.allOf(AclEntryPermission.class);
+        readOnly.removeAll(EnumSet.of(AclEntryPermission.WRITE_DATA, AclEntryPermission.APPEND_DATA));
+        AclEntry ownerReadOnly = AclEntry.newBuilder().setType(AclEntryType.ALLOW)
+                .setPrincipal(aclView.getOwner()).setPermissions(readOnly).build();
+        aclView.setAcl(List.of(ownerReadOnly));
+
+        Path backup = new JsonAddressBookStorage(path).backupAddressBook();
+
+        assertEquals(aclView.getAcl(), Files.getFileAttributeView(backup, AclFileAttributeView.class).getAcl());
+        assertEquals("original data", Files.readString(backup));
+    }
+
+    @Test
+    @DisabledOnOs(OS.WINDOWS)
+    public void backupAddressBook_readOnlyPosixFile_copiesBytesBeforeRestrictingBackup() throws Exception {
+        Path path = temporaryFolder.resolve("candidates.json");
+        Files.writeString(path, "original data");
+        var permissions = PosixFilePermissions.fromString("r--------");
+        Files.setPosixFilePermissions(path, permissions);
+
+        Path backup = new JsonAddressBookStorage(path).backupAddressBook();
+
+        assertEquals(permissions, Files.getPosixFilePermissions(backup));
         assertEquals("original data", Files.readString(backup));
     }
 }
