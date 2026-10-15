@@ -1,4 +1,4 @@
-package seedu.address;
+package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -23,9 +23,6 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.util.SampleDataUtil;
-import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
 
 public class CandidateDataInitializerTest {
     @TempDir
