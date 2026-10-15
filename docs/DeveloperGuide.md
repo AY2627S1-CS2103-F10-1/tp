@@ -624,7 +624,8 @@ testers are expected to do more *exploratory* testing.
 ### Rejecting note input in `add`
 
 1. Run `add n/A p/123 e/a@x.com a/Blk 1 no/great candidate`. Expected: The error explains that `add` does not support `no/` and directs you to `note`. No candidate is added and existing data stays unchanged.
-1. Repeat with `no/` empty, before the required fields, or after a tag/status field. Expected: The same error, with no candidate or file changes.
+1. Run `add n/A p/123 e/a@x.com a/Blk 1 no/` (empty note). Expected: The same error, with no candidate or file changes.
+1. Repeat with `no/` before the required fields, or after a tag/status field. Expected: The same error, with no candidate or file changes.
 1. Run `add n/A p/123 e/a@x.com a/Blk 1 yes/no/feedback` with an unused email. Expected: The candidate is added with the literal address `Blk 1 yes/no/feedback`.
 
 ### Deleting a candidate
