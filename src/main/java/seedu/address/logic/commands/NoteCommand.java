@@ -2,7 +2,6 @@ package seedu.address.logic.commands;
 
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
 import java.util.List;
 import java.util.Objects;
@@ -63,7 +62,6 @@ public class NoteCommand extends Command {
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
                 candidate.getAddress(), candidate.getTags(), candidate.getStatus(), note);
         model.setPerson(candidate, updatedCandidate);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         String message = note.map(value -> String.format(MESSAGE_SUCCESS, candidate.getName(), value))
                 .orElseGet(() -> String.format(MESSAGE_CLEAR_SUCCESS, candidate.getName()));
         return new CommandResult(message);
