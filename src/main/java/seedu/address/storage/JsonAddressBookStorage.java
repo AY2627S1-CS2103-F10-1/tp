@@ -13,6 +13,9 @@ import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -29,11 +32,22 @@ import seedu.address.model.ReadOnlyAddressBook;
 public class JsonAddressBookStorage {
 
     private static final Logger logger = LogsCenter.getLogger(JsonAddressBookStorage.class);
+    // Sorts backups by creation time when listed by name.
+    private static final DateTimeFormatter BACKUP_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss");
 
     private Path filePath;
+    private final Clock clock;
 
     public JsonAddressBookStorage(Path filePath) {
+        this(filePath, Clock.systemDefaultZone());
+    }
+
+    /**
+     * Creates a storage whose recovery backups are timestamped using {@code clock}.
+     */
+    JsonAddressBookStorage(Path filePath, Clock clock) {
         this.filePath = filePath;
+        this.clock = clock;
     }
 
     public Path getAddressBookFilePath() {
@@ -96,7 +110,7 @@ public class JsonAddressBookStorage {
     }
 
     /**
-     * Creates a persistent, uniquely named backup with the original bytes and access restrictions.
+     * Creates a persistent, timestamped, uniquely named backup with the original bytes and access restrictions.
      * Resolves existing symbolic links and fails safely for missing, dangling, or inaccessible paths.
      *
      * @return The absolute backup path beside the resolved data file.
@@ -107,7 +121,8 @@ public class JsonAddressBookStorage {
         if (!Files.readAttributes(source, BasicFileAttributes.class).isRegularFile()) {
             throw new IOException("The candidate data path must be a regular file.");
         }
-        Path backup = Files.createTempFile(source.getParent(), "HRvest-", "-corrupt.json");
+        String timestamp = LocalDateTime.now(clock).format(BACKUP_TIMESTAMP_FORMAT);
+        Path backup = Files.createTempFile(source.getParent(), "HRvest-" + timestamp + "-", "-corrupt.json");
         try {
             // Restrictions are applied last so that a write-restricted original does not block the copy.
             copyDataFile(source, backup);

@@ -3,6 +3,7 @@ package seedu.address.storage;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -15,6 +16,9 @@ import java.nio.file.attribute.AclEntryPermission;
 import java.nio.file.attribute.AclEntryType;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -49,6 +53,24 @@ public class CandidateDataBackupTest {
         assertTrue(backup.getFileName().toString().startsWith("HRvest-"));
         assertTrue(backup.getFileName().toString().endsWith("-corrupt.json"));
         assertEquals("previous backup", Files.readString(previous));
+    }
+
+    @Test
+    public void backupAddressBook_sameTimestamp_prefixesTimestampAndKeepsNamesUnique() throws Exception {
+        Path path = temporaryFolder.resolve("candidates.json");
+        Files.writeString(path, "original data");
+        Clock clock = Clock.fixed(Instant.parse("2026-10-14T12:00:00Z"), ZoneOffset.UTC);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(path, clock);
+
+        Path first = storage.backupAddressBook();
+        Path second = storage.backupAddressBook();
+
+        for (Path backup : List.of(first, second)) {
+            String name = backup.getFileName().toString();
+            assertTrue(name.startsWith("HRvest-20261014T120000-"), name);
+            assertTrue(name.endsWith("-corrupt.json"), name);
+        }
+        assertNotEquals(first, second);
     }
 
     @Test
