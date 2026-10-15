@@ -38,16 +38,14 @@ public class NoteStorageTest {
     }
 
     @Test
-    public void readAddressBook_blankOrOverlongNote_throwsDataLoadingException() throws Exception {
+    public void readAddressBook_overlongNote_throwsDataLoadingException() throws Exception {
         Path path = temporaryFolder.resolve("invalid-note.json");
         JsonAddressBookStorage storage = new JsonAddressBookStorage(path);
-        for (String note : new String[] {"", " \t ", "x".repeat(501)}) {
-            JsonAdaptedPerson adapted = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
-                    ALICE.getEmail().value, ALICE.getAddress().value, List.of(), note);
-            Files.writeString(path, "{\"persons\":[" + JsonUtil.toJsonString(adapted) + "]}");
+        JsonAdaptedPerson adapted = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
+                ALICE.getEmail().value, ALICE.getAddress().value, List.of(), "x".repeat(501));
+        Files.writeString(path, "{\"persons\":[" + JsonUtil.toJsonString(adapted) + "]}");
 
-            assertThrows(DataLoadingException.class, storage::readAddressBook);
-        }
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
     }
 
     @Test

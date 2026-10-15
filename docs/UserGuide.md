@@ -264,17 +264,21 @@ Saving writes a temporary file before atomically replacing the data file. If sav
 
 The Windows account running HRvest must have permission to write in the data folder and access the existing data file. If those permissions are insufficient, HRvest reports a save error and keeps the existing access restrictions.
 
-A crash or power loss can leave temporary files named `HRvest-<random>.tmp` beside the data file. After closing all HRvest instances, you can delete these leftover `.tmp` files. Keep the saved JSON data file (normally `data/addressbook.json`) and any symbolic-link target; these are not temporary files.
+A crash or power loss can leave temporary files named `HRvest-<random>.tmp` beside the data file. After closing all HRvest instances, you can delete these leftover `.tmp` files. Keep the saved JSON data file (normally `data/HRvest.json`), any symbolic-link target, and recovery backups ending in `-corrupt.json`; these are not temporary files.
 
 ### Editing the data file
 
 HRvest data is saved automatically as a JSON file `[JAR file location]/data/HRvest.json`. Advanced users are welcome to update data directly by editing that data file.
 
+Close HRvest before editing, and keep a backup. To remove a note, remove its `note` field, set it to `null`, or set it to an empty or whitespace-only string. Leading and trailing whitespace in saved statuses is ignored, just as in commands; for example, `"status": " Applied "` loads as `Applied`.
+
 <box type="warning" seamless>
 
 **Caution:**
-If your changes make the data file invalid, HRvest starts empty at the next run. The invalid file remains on disk until you run a command (HRvest saves after every command). Still, we recommend backing up the file before editing it.<br>
-Files containing candidates with the same email, ignoring case, are invalid even if the candidates have different names. This also applies to older files created before email uniqueness was enforced. Back up and correct these files before opening them in this version: the existing load-error handling starts empty, and the next successful command (including `list`) can overwrite the old file. No automatic backup or merge is performed.
+If the data file cannot be loaded, HRvest first preserves its exact contents in a unique `HRvest-<timestamp>-<random>-corrupt.json` backup beside the data file (beside the target for a symbolic link). The timestamp is your local date and time, for example `HRvest-20261014T120000-123456-corrupt.json`, so sorting by name puts the newest backup last. It then saves an empty candidate list before opening the window. A warning shows the backup's full path and recovery instructions. Commands such as `list`, `find`, and `help` cannot overwrite this backup. Backups are kept until you remove them yourself.<br>
+If creating the backup or saving the replacement fails, HRvest stops before opening the window and prints recovery instructions to the terminal. The original file remains intact; a completed backup is also kept. Check file and folder permissions and restart after repairing the file.<br>
+To restore your candidates, close HRvest, copy the backup, repair the copy, and replace `data/HRvest.json` (or its symbolic-link target) with the repaired copy. Keep the backup until you have verified your candidates are restored. HRvest does not automatically repair or merge records.<br>
+Files containing candidates with the same email, ignoring case, are invalid even if the candidates have different names. This also applies to older files created before email uniqueness was enforced. Such files use the same backup and recovery process. Missing files still start with sample candidates; a successfully recovered empty file stays empty on later launches.
 
 Furthermore, certain edits can cause HRvest to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
 

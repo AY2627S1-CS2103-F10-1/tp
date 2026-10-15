@@ -13,13 +13,11 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.logic.Logic;
 import seedu.address.logic.LogicManager;
-import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
-import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
-import seedu.address.model.util.SampleDataUtil;
+import seedu.address.storage.CandidateDataInitializer;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
@@ -42,6 +40,7 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private Optional<Path> recoveryBackup = Optional.empty();
 
     @Override
     public void init() throws Exception {
@@ -63,27 +62,27 @@ public class MainApp extends Application {
     /**
      * Returns a {@code ModelManager} with the data from {@code storage}'s address book and {@code userPrefs}. <br>
      * The data from the sample address book will be used instead if {@code storage}'s address book is not found,
-     * or an empty address book will be used instead if errors occur when reading {@code storage}'s address book.
+     * or an empty address book will be saved after rejected data has been safely backed up.
+     *
+     * @throws IOException if preserving or replacing rejected data fails.
      */
-    private Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) {
+    Model initModelManager(Storage storage, ReadOnlyUserPrefs userPrefs) throws IOException {
         logger.info("Using data file : " + storage.getAddressBookFilePath());
 
-        Optional<ReadOnlyAddressBook> addressBookOptional;
-        ReadOnlyAddressBook initialData;
+        CandidateDataInitializer initializer = new CandidateDataInitializer(storage);
         try {
-            addressBookOptional = storage.readAddressBook();
-            if (addressBookOptional.isEmpty()) {
-                logger.info("Creating a new data file " + storage.getAddressBookFilePath()
-                        + " populated with sample candidates.");
-            }
-            initialData = addressBookOptional.orElseGet(SampleDataUtil::getSampleAddressBook);
-        } catch (DataLoadingException e) {
-            logger.warning("Data file at " + storage.getAddressBookFilePath() + " could not be loaded."
-                    + " Will be starting empty.");
-            initialData = new AddressBook();
+            Model initializedModel = new ModelManager(initializer.load(), userPrefs);
+            recoveryBackup = initializer.getRecoveryBackup();
+            return initializedModel;
+        } catch (IOException e) {
+            String message = "HRvest could not safely recover " + storage.getAddressBookFilePath()
+                    + ". Startup stopped; no commands can overwrite the original file."
+                    + " Check file and folder permissions, repair the data file, and restart."
+                    + initializer.getRecoveryBackup().map(path -> " Backup retained at: " + path).orElse("");
+            logger.severe(message);
+            System.err.println(message);
+            throw e;
         }
-
-        return new ModelManager(initialData, userPrefs);
     }
 
     /**
@@ -122,6 +121,7 @@ public class MainApp extends Application {
     public void start(Stage primaryStage) {
         logger.info("Starting HRvest " + MainApp.VERSION);
         ui.start(primaryStage);
+        recoveryBackup.ifPresent(ui::showRecoveryWarning);
     }
 
     @Override

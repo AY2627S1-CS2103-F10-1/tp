@@ -58,6 +58,15 @@ public class UiManager implements Ui {
         return new Image(MainApp.class.getResourceAsStream(imagePath));
     }
 
+    @Override
+    public void showRecoveryWarning(Path backup) {
+        showAlertDialogAndWait(AlertType.WARNING, "Candidate data recovery",
+                "The candidate data file could not be loaded", "HRvest preserved the original file at:\n" + backup
+                        + "\n\nAn empty candidate list has been saved. Close HRvest, make a copy of the backup,"
+                        + " repair that copy, and replace " + dataFilePath.toAbsolutePath()
+                        + " with it to recover your candidates. Keep the backup until recovery is complete.");
+    }
+
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {
         showAlertDialogAndWait(mainWindow.getPrimaryStage(), type, title, headerText, contentText);
     }
