@@ -568,7 +568,29 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-*{More to be added}*
+**Use case: UC10 - Export candidate data**
+
+**MSS**
+
+1. User requests to export candidate data.
+1. HRvest exports the candidate data to a file on the user's computer.
+1. HRvest shows a confirmation message.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. There are no candidates.
+
+    * 2a1. HRvest still exports a file with no candidate data.
+
+      Use case resumes at step 3.
+
+* 2b. The data cannot be exported.
+
+    * 2b1. HRvest shows an error message.
+
+      Use case ends.
 
 ### Non-Functional Requirements
 
