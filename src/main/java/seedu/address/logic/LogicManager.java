@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -10,6 +11,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.ExportCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -49,6 +51,10 @@ public class LogicManager implements Logic {
         Command command = addressBookParser.parseCommand(commandText);
         commandResult = command.execute(model);
 
+        if (commandResult.isExport()) {
+            return exportAddressBook();
+        }
+
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
@@ -58,6 +64,17 @@ public class LogicManager implements Logic {
         }
 
         return commandResult;
+    }
+
+    /** Completes export before reporting success and deliberately bypasses unrelated JSON saving. */
+    private CommandResult exportAddressBook() throws CommandException {
+        try {
+            Path destination = storage.exportAddressBook(model.getAddressBook());
+            return new CommandResult(String.format(ExportCommand.MESSAGE_SUCCESS,
+                    model.getAddressBook().getPersonList().size(), destination));
+        } catch (IOException e) {
+            throw new CommandException("Export failed: " + e.getMessage(), e);
+        }
     }
 
     @Override

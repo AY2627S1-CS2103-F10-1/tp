@@ -53,11 +53,22 @@ public class CommandResultTest {
     }
 
     @Test
+    public void equals_exportRequest_includesFlag() {
+        CommandResult request = new CommandResult("", false, false, true);
+        CommandResult same = new CommandResult("", false, false, true);
+        assertEquals(request, same);
+        assertEquals(request.hashCode(), same.hashCode());
+        assertNotEquals(new CommandResult(""), request);
+        assertFalse(new CommandResult("").isExport());
+        assertTrue(request.isExport());
+    }
+
+    @Test
     public void toStringMethod() {
         CommandResult commandResult = new CommandResult("feedback");
         String expected = CommandResult.class.getCanonicalName() + "{feedbackToUser="
                 + commandResult.getFeedbackToUser() + ", showHelp=" + commandResult.isShowHelp()
-                + ", exit=" + commandResult.isExit() + "}";
+                + ", exit=" + commandResult.isExit() + ", export=" + commandResult.isExport() + "}";
         assertEquals(expected, commandResult.toString());
     }
 }
