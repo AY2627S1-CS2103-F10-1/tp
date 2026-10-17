@@ -258,9 +258,19 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
-### \[Proposed\] Data archiving
+### Data archiving
 
-_{Explain here how the data archiving feature will be implemented}_
+#### CSV export
+
+The `export` command creates a CSV copy of all candidate records, regardless of the current search or filter. It leaves the application's data and current view unchanged.
+
+`ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
+
+The writer exports one row per candidate to `export.csv` beside the configured data directory, with a header and all candidate fields. Tags are stored as a sorted JSON array within one CSV cell so their names and casing can be preserved.
+
+HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. It is non-destructive to HRvest's stored records: the CSV is a separate copy of data that remains available in the application. For this reason, export uses direct writing with failure reporting rather than rollback or deletion of a failed output file; the user can retry after resolving the problem. This differs from saving HRvest's source data, where atomic replacement protects the existing records. The non-destructive guarantee does not extend to an earlier CSV: each export directly overwrites it, so an interrupted or failed write may destroy the previous export and leave an empty or incomplete file.
+
+Failures display `Export failed:` with the reason and destination when available. Check that the file/folder is writable. Directories, symbolic links (including dangling links), and other non-regular destinations are rejected without deleting them. If the required parent directory cannot be determined, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged; a failure after opening the destination warns that the export may be incomplete and the previous export may be lost.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -568,7 +578,29 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-*{More to be added}*
+**Use case: UC10 - Export candidate data**
+
+**MSS**
+
+1. User requests to export candidate data.
+1. HRvest exports the candidate data to a file on the user's computer.
+1. HRvest shows a confirmation message.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. There are no candidates.
+
+    * 2a1. HRvest still exports a file with no candidate data.
+
+      Use case resumes at step 3.
+
+* 2b. The data cannot be exported.
+
+    * 2b1. HRvest shows an error message.
+
+      Use case ends.
 
 ### Non-Functional Requirements
 
