@@ -252,7 +252,7 @@ Exports every candidate to `export.csv` in the same parent folder as the applica
 
 Format: `export`
 
-* Use the lowercase command with no arguments; surrounding whitespace is accepted. Extra arguments produce are not supported.
+* Use the lowercase command with no arguments; surrounding whitespace is accepted. Extra arguments are not supported.
 * The destination is always `export.csv` beside the application's configured data directory. You are not able to specify your own export path.
 * The UTF-8 CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Every field is quoted, embedded quotes are doubled, and records end with CRLF. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty.
 * Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
