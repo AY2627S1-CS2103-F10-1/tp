@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.role.Role;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -27,19 +28,20 @@ public class Person {
     private final Status status;
     private final Optional<Note> note;
     private final Set<Tag> tags = new HashSet<>();
+    private final Set<Role> roles = new HashSet<>();
 
     /**
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags) {
-        this(name, phone, email, address, tags, Status.APPLIED, Optional.empty());
+        this(name, phone, email, address, tags, Status.APPLIED, Optional.empty(), Collections.emptySet());
     }
 
     /**
      * Creates a person with an explicit recruitment status.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status) {
-        this(name, phone, email, address, tags, status, Optional.empty());
+        this(name, phone, email, address, tags, status, Optional.empty(), Collections.emptySet());
     }
 
     /**
@@ -47,7 +49,7 @@ public class Person {
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Optional<Note> note) {
-        this(name, phone, email, address, tags, Status.APPLIED, note);
+        this(name, phone, email, address, tags, Status.APPLIED, note, Collections.emptySet());
     }
 
     /**
@@ -56,7 +58,16 @@ public class Person {
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
             Optional<Note> note) {
-        requireAllNonNull(name, phone, email, address, tags, status, note);
+        this(name, phone, email, address, tags, status, note, Collections.emptySet());
+    }
+
+    /**
+     * Full constructor including the candidate's applied roles.
+     * Every field must be present and not null.
+     */
+    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
+            Optional<Note> note, Set<Role> roles) {
+        requireAllNonNull(name, phone, email, address, tags, status, note, roles);
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -64,6 +75,7 @@ public class Person {
         this.status = status;
         this.note = note;
         this.tags.addAll(tags);
+        this.roles.addAll(roles);
     }
 
     public Name getName() {
@@ -109,6 +121,14 @@ public class Person {
     }
 
     /**
+     * Returns an immutable role set, which throws {@code UnsupportedOperationException}
+     * if modification is attempted.
+     */
+    public Set<Role> getRoles() {
+        return Collections.unmodifiableSet(roles);
+    }
+
+    /**
      * Returns true if both persons have the same email, ignoring case.
      * Emails are trimmed by the parser and validated by the model before comparison.
      * This defines a weaker notion of equality between two persons.
@@ -143,13 +163,14 @@ public class Person {
                 && address.equals(otherPerson.address)
                 && status.equals(otherPerson.status)
                 && note.equals(otherPerson.note)
-                && tags.equals(otherPerson.tags);
+                && tags.equals(otherPerson.tags)
+                && roles.equals(otherPerson.roles);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, tags, status, note);
+        return Objects.hash(name, phone, email, address, tags, status, note, roles);
     }
 
     @Override
@@ -161,6 +182,7 @@ public class Person {
                 .add("address", address)
                 .add("status", status)
                 .add("tags", tags)
+                .add("roles", roles)
                 .toString();
     }
 
