@@ -41,7 +41,7 @@ public class ExportIntegrationTest {
 
         CommandResult result = logic.execute("export");
 
-        assertEquals("Exported 2 candidates to " + directory.resolve("export.csv") + ".", result.getFeedbackToUser());
+        assertEquals("Exported successfully to " + directory.resolve("export.csv") + ".", result.getFeedbackToUser());
         assertEquals(List.of(alice, bob), model.getAddressBook().getPersonList());
         assertEquals(List.of(bob), model.getFilteredPersonList());
         assertTrue(model.isExpandedViewProperty().get());
@@ -53,9 +53,9 @@ public class ExportIntegrationTest {
     }
 
     @Test
-    public void execute_emptyBook_reportsZero() throws Exception {
+    public void execute_emptyBook_reportsSuccess() throws Exception {
         Logic logic = new LogicManager(new ModelManager(), createStorage(directory.resolve("data/book.json")));
-        assertEquals("Exported 0 candidates to " + directory.resolve("export.csv") + ".",
+        assertEquals("Exported successfully to " + directory.resolve("export.csv") + ".",
                 logic.execute("export").getFeedbackToUser());
         assertEquals(1, Files.readAllLines(directory.resolve("export.csv")).size());
     }

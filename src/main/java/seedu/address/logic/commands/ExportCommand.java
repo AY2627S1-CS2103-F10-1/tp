@@ -9,7 +9,7 @@ public class ExportCommand extends Command {
     public static final String COMMAND_WORD = "export";
     public static final String MESSAGE_USAGE = "Usage: export\n"
             + "Extra arguments are ignored. Custom data locations and output paths cannot be specified.";
-    public static final String MESSAGE_SUCCESS = "Exported %d candidates to %s.";
+    public static final String MESSAGE_SUCCESS = "Exported successfully to %s.";
 
     @Override
     public CommandResult execute(Model model) {

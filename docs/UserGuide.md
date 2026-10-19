@@ -256,8 +256,8 @@ Format: `export`
 * The destination is always `export.csv` beside the application's configured data directory. You are not able to specify your own export path.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty.
 * Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
-* Success displays `Exported N candidates to PATH.`, with the candidate count and absolute destination, only after writing and closing the file succeeds.
-* If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows. Any previous `export.csv` is replaced by this header-only file. The success count is zero.
+* Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
+* If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows. Any previous `export.csv` is replaced by this header-only file.
 
 **Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
 

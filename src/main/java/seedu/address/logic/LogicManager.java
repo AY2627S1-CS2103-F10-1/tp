@@ -70,8 +70,7 @@ public class LogicManager implements Logic {
     private CommandResult exportAddressBook() throws CommandException {
         try {
             Path destination = storage.exportAddressBook(model.getAddressBook());
-            return new CommandResult(String.format(ExportCommand.MESSAGE_SUCCESS,
-                    model.getAddressBook().getPersonList().size(), destination));
+            return new CommandResult(String.format(ExportCommand.MESSAGE_SUCCESS, destination));
         } catch (IOException e) {
             throw new CommandException("Export failed: " + e.getMessage(), e);
         }
