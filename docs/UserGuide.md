@@ -61,7 +61,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for `help`, `list`, `exit`, and `clear` are ignored. `export` rejects extra parameters.<br>
+* Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -252,9 +252,9 @@ Exports every candidate to `export.csv` in the same parent folder as the applica
 
 Format: `export`
 
-* Use the lowercase command with no arguments; surrounding whitespace is accepted. Extra arguments are not supported.
+* Use the lowercase command; surrounding whitespace is accepted.
 * The destination is always `export.csv` beside the application's configured data directory. You are not able to specify your own export path.
-* The UTF-8 CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Every field is quoted, embedded quotes are doubled, and records end with CRLF. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty.
+* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty.
 * Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
 * Success displays `Exported N candidates to PATH.`, with the candidate count and absolute destination, only after writing and closing the file succeeds.
 * If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows. Any previous `export.csv` is replaced by this header-only file. The success count is zero.
@@ -275,7 +275,8 @@ A pinned sticky note icon beside a candidate's name indicates that a note exists
 
 ### Saving the data
 
-HRvest automatically saves data after every successful command except `export`, which only writes CSV. You do not need to save manually.
+HRvest automatically saves data after every successful command.
+You can also export the data to CSV using the [`export` command](#exporting-candidates-export).
 
 Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement. On filesystems that support file ACLs (access control lists) or POSIX permissions, saving preserves those settings on the existing data file; a failure to read or apply them causes the save to fail. If the data file is a symbolic link, saving updates its existing target and keeps the link. Saving fails if the link's target does not exist, leaving the link unchanged.
 

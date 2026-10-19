@@ -8,7 +8,7 @@ import seedu.address.model.Model;
 public class ExportCommand extends Command {
     public static final String COMMAND_WORD = "export";
     public static final String MESSAGE_USAGE = "Usage: export\n"
-            + "Arguments, including custom data locations and output paths, are not supported.";
+            + "Extra arguments are ignored. Custom data locations and output paths cannot be specified.";
     public static final String MESSAGE_SUCCESS = "Exported %d candidates to %s.";
 
     @Override
