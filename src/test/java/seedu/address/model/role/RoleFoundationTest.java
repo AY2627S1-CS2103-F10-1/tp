@@ -66,6 +66,37 @@ class RoleFoundationTest {
     }
 
     @Test
+    void renameRole_expandedAssignedPerson_restoresFullList() {
+        ModelManager model = assignedModel();
+        model.addPerson(new PersonBuilder().withName("Other Candidate")
+                .withPhone("81234567").withEmail("other@example.com").build());
+        model.expandPerson(model.getFilteredPersonList().getFirst());
+
+        model.renameRole("Engineer", "Senior Engineer");
+
+        assertFalse(model.isExpandedViewProperty().get());
+        assertEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
+        assertEquals(2, model.getFilteredPersonList().size());
+        assertEquals(Set.of(model.getRoleCatalogue().requireRole("Senior Engineer")),
+                model.getFilteredPersonList().getFirst().getRoles());
+    }
+
+    @Test
+    void deleteRole_expandedAssignedPerson_restoresFullList() {
+        ModelManager model = assignedModel();
+        model.addPerson(new PersonBuilder().withName("Other Candidate")
+                .withPhone("81234567").withEmail("other@example.com").build());
+        model.expandPerson(model.getFilteredPersonList().getFirst());
+
+        model.deleteRole("Engineer");
+
+        assertFalse(model.isExpandedViewProperty().get());
+        assertEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
+        assertEquals(2, model.getFilteredPersonList().size());
+        assertEquals(Set.of(Role.NO_ROLE), model.getFilteredPersonList().getFirst().getRoles());
+    }
+
+    @Test
     void deleteRole_remainingAndLastAssignments_preservesOthersThenUsesFallback() {
         ModelManager model = assignedModel();
         model.createRole("Designer");
@@ -127,6 +158,21 @@ class RoleFoundationTest {
         assertEquals(Set.of(Role.NO_ROLE), person.getRoles());
         assertThrows(IllegalArgumentException.class, () -> person.withRoles(Set.of()));
         assertThrows(UnsupportedOperationException.class, () -> person.getRoles().clear());
+    }
+
+    @Test
+    void role_reservedIdentityAndName_preservesValidation() {
+        assertEquals(Role.NO_ROLE, new Role(Role.NO_ROLE_ID, Role.NO_ROLE_NAME));
+        assertThrows(IllegalArgumentException.class, () -> new Role(Role.NO_ROLE_ID, "Engineer"));
+        assertThrows(IllegalArgumentException.class, () -> new Role(Role.NO_ROLE_ID, "no role"));
+        assertThrows(IllegalArgumentException.class, () -> Role.create(" NO ROLE "));
+    }
+
+    @Test
+    void createRole_embeddedControlCharacters_rejectsWithExamples() {
+        for (String name : List.of("Software\tEngineer", "Software\nEngineer", "Software\rEngineer")) {
+            assertThrows(IllegalArgumentException.class, Role.MESSAGE_CONSTRAINTS, () -> Role.create(name));
+        }
     }
 
     @Test

@@ -9,8 +9,11 @@ import java.util.UUID;
 
 /** Represents an immutable catalogue entry with a stable identity across renames. */
 public final class Role {
-    public static final String MESSAGE_CONSTRAINTS = "Role names must not be blank or contain control characters.";
-    public static final Role NO_ROLE = new Role("no-role", "No role");
+    public static final String MESSAGE_CONSTRAINTS =
+            "Role names must not be blank or contain control characters (e.g. tabs, newlines, or carriage returns).";
+    public static final String NO_ROLE_ID = "no-role";
+    public static final String NO_ROLE_NAME = "No role";
+    public static final Role NO_ROLE = new Role(NO_ROLE_ID, NO_ROLE_NAME);
 
     private final String id;
     private final String name;
@@ -19,12 +22,13 @@ public final class Role {
     public Role(String id, String name) {
         requireNonNull(id);
         requireNonNull(name);
-        checkArgument(id.equals("no-role") || isUuid(id), "Invalid role identity.");
+        boolean isBuiltIn = id.equals(NO_ROLE_ID);
+        checkArgument(isBuiltIn || isUuid(id), "Invalid role identity.");
         this.name = validateName(name);
-        checkArgument(id.equals("no-role") == normalize(this.name).equals(normalize("No role")),
-                "The built-in No role identity and name are reserved.");
-        checkArgument(!id.equals("no-role") || this.name.equals("No role"),
-                "The built-in role must be named No role.");
+        checkArgument(isBuiltIn == normalize(this.name).equals(normalize(NO_ROLE_NAME)),
+                "The built-in " + NO_ROLE_NAME + " identity and name are reserved.");
+        checkArgument(!isBuiltIn || this.name.equals(NO_ROLE_NAME),
+                "The built-in role must be named " + NO_ROLE_NAME + ".");
         this.id = id;
     }
 
@@ -64,7 +68,7 @@ public final class Role {
 
     /** Returns a renamed entry retaining its identity. */
     public Role renamed(String name) {
-        checkArgument(!equals(NO_ROLE), "No role cannot be renamed or deleted.");
+        checkArgument(!equals(NO_ROLE), NO_ROLE_NAME + " cannot be renamed or deleted.");
         return new Role(id, name);
     }
 

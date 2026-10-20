@@ -145,7 +145,11 @@ public class ModelManager implements Model {
             }
             replacement.addPerson(person.withRoles(assignments));
         }
+        boolean wasExpanded = isExpandedView.get();
         addressBook.resetData(replacement);
+        if (wasExpanded) {
+            updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
+        }
     }
 
     //=========== Filtered Person List Accessors =============================================================
