@@ -3,11 +3,13 @@ package seedu.address.model;
 import static java.util.Objects.requireNonNull;
 
 import java.util.List;
+import java.util.Objects;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
+import seedu.address.model.role.RoleCatalogue;
 
 /**
  * Wraps all data at the address-book level.
@@ -16,6 +18,7 @@ import seedu.address.model.person.UniquePersonList;
 public class AddressBook implements ReadOnlyAddressBook {
 
     private final UniquePersonList persons = new UniquePersonList();
+    private RoleCatalogue roleCatalogue = new RoleCatalogue();
 
     public AddressBook() {}
 
@@ -34,6 +37,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      * {@code persons} must not contain duplicate persons.
      */
     public void setPersons(List<Person> persons) {
+        persons.forEach(person -> roleCatalogue.validateReferences(person.getRoles()));
         this.persons.setPersons(persons);
     }
 
@@ -43,7 +47,24 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void resetData(ReadOnlyAddressBook newData) {
         requireNonNull(newData);
 
-        setPersons(newData.getPersonList());
+        RoleCatalogue replacement = newData.getRoleCatalogue();
+        newData.getPersonList().forEach(person -> replacement.validateReferences(person.getRoles()));
+        UniquePersonList validated = new UniquePersonList();
+        validated.setPersons(newData.getPersonList());
+        roleCatalogue = replacement;
+        persons.setPersons(validated);
+    }
+
+    @Override
+    public RoleCatalogue getRoleCatalogue() {
+        return roleCatalogue;
+    }
+
+    /** Replaces the catalogue only when every current person reference remains valid. */
+    public void setRoleCatalogue(RoleCatalogue catalogue) {
+        requireNonNull(catalogue);
+        persons.asUnmodifiableObservableList().forEach(person -> catalogue.validateReferences(person.getRoles()));
+        roleCatalogue = catalogue;
     }
 
     //// person-level operations
@@ -61,6 +82,7 @@ public class AddressBook implements ReadOnlyAddressBook {
      * The person must not already exist in the address book.
      */
     public void addPerson(Person p) {
+        roleCatalogue.validateReferences(p.getRoles());
         persons.add(p);
     }
 
@@ -72,6 +94,7 @@ public class AddressBook implements ReadOnlyAddressBook {
     public void setPerson(Person target, Person editedPerson) {
         requireNonNull(editedPerson);
 
+        roleCatalogue.validateReferences(editedPerson.getRoles());
         persons.setPerson(target, editedPerson);
     }
 
@@ -108,11 +131,12 @@ public class AddressBook implements ReadOnlyAddressBook {
             return false;
         }
 
-        return persons.equals(otherAddressBook.persons);
+        return persons.equals(otherAddressBook.persons)
+                && roleCatalogue.equals(otherAddressBook.roleCatalogue);
     }
 
     @Override
     public int hashCode() {
-        return persons.hashCode();
+        return Objects.hash(persons, roleCatalogue);
     }
 }

@@ -2,6 +2,7 @@ package seedu.address.model;
 
 import javafx.collections.ObservableList;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.RoleCatalogue;
 
 /**
  * Unmodifiable view of an address book
@@ -13,5 +14,10 @@ public interface ReadOnlyAddressBook {
      * This list will not contain any duplicate persons.
      */
     ObservableList<Person> getPersonList();
+
+    /** Returns the catalogue; legacy implementations contain only the built-in role. */
+    default RoleCatalogue getRoleCatalogue() {
+        return new RoleCatalogue();
+    }
 
 }
