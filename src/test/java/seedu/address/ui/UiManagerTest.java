@@ -28,6 +28,8 @@ public class UiManagerTest {
         assertTrue(ui.content.contains(dataFile.toAbsolutePath().toString()));
         assertTrue(ui.content.contains("An empty candidate list has been saved"));
         assertTrue(ui.content.contains("Close HRvest"));
+        assertTrue(ui.content.contains(".roles.json"));
+        assertTrue(ui.content.contains("data/roles.json"));
         assertTrue(ui.content.contains("repair that copy"));
         assertTrue(ui.content.contains("Keep the backup until recovery is complete"));
     }

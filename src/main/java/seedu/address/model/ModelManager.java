@@ -106,6 +106,18 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public Runnable createRestorePoint() {
+        AddressBook snapshot = new AddressBook(addressBook);
+        Predicate<? super Person> predicate = filteredPersons.getPredicate();
+        boolean expanded = isExpandedView.get();
+        return () -> {
+            addressBook.resetData(snapshot);
+            filteredPersons.setPredicate(predicate);
+            isExpandedView.set(expanded);
+        };
+    }
+
+    @Override
     public void createRole(String name) {
         List<Role> roles = new ArrayList<>(getRoleCatalogue().getRoles());
         checkArgument(getRoleCatalogue().find(name).isEmpty(), "A role with this name already exists.");

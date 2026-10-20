@@ -82,6 +82,12 @@ public interface Model {
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
 
+    /** Captures a rollback action for a command whose subsequent save may fail. */
+    default Runnable createRestorePoint() {
+        AddressBook snapshot = new AddressBook(getAddressBook());
+        return () -> setAddressBook(snapshot);
+    }
+
     /** Returns the shared immutable role catalogue. */
     default RoleCatalogue getRoleCatalogue() {
         return getAddressBook().getRoleCatalogue();

@@ -19,6 +19,7 @@ public class StorageManager implements Storage {
     private static final Logger logger = LogsCenter.getLogger(StorageManager.class);
     private JsonAddressBookStorage addressBookStorage;
     private JsonUserPrefsStorage userPrefsStorage;
+    private final RoleDataStorage roleDataStorage;
 
     /**
      * Creates a {@code StorageManager} with the given address book and user prefs storage.
@@ -26,6 +27,7 @@ public class StorageManager implements Storage {
     public StorageManager(JsonAddressBookStorage addressBookStorage, JsonUserPrefsStorage userPrefsStorage) {
         this.addressBookStorage = addressBookStorage;
         this.userPrefsStorage = userPrefsStorage;
+        roleDataStorage = new RoleDataStorage(addressBookStorage);
     }
 
     // ================ UserPrefs methods ==============================
@@ -56,18 +58,18 @@ public class StorageManager implements Storage {
     @Override
     public Optional<ReadOnlyAddressBook> readAddressBook() throws DataLoadingException {
         logger.fine("Attempting to read data from file: " + addressBookStorage.getAddressBookFilePath());
-        return addressBookStorage.readAddressBook();
+        return roleDataStorage.read();
     }
 
     @Override
     public Path backupAddressBook() throws IOException {
-        return addressBookStorage.backupAddressBook();
+        return roleDataStorage.backup();
     }
 
     @Override
     public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
         logger.fine("Attempting to write to data file: " + addressBookStorage.getAddressBookFilePath());
-        addressBookStorage.saveAddressBook(addressBook);
+        roleDataStorage.save(addressBook);
     }
 
 }
