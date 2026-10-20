@@ -41,7 +41,7 @@ public final class Role {
     private static String validateName(String name) {
         requireNonNull(name);
         String trimmed = name.strip();
-        checkArgument(!trimmed.isEmpty() && name.codePoints().noneMatch(Character::isISOControl),
+        checkArgument(!trimmed.isEmpty() && trimmed.codePoints().noneMatch(Character::isISOControl),
                 MESSAGE_CONSTRAINTS);
         return trimmed;
     }

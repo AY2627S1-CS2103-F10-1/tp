@@ -81,25 +81,20 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
     /** Returns the shared immutable role catalogue. */
     default RoleCatalogue getRoleCatalogue() {
         return getAddressBook().getRoleCatalogue();
     }
 
     /** Creates an unused role after checking name uniqueness. */
-    default void createRole(String name) {
-        throw new UnsupportedOperationException();
-    }
+    void createRole(String name);
 
     /** Renames a role globally without replacing any person's assignments. */
-    default void renameRole(String oldName, String newName) {
-        throw new UnsupportedOperationException();
-    }
+    void renameRole(String oldName, String newName);
 
     /** Removes a role globally, falling back to No role only for empty assignments. */
-    default void deleteRole(String name) {
-        throw new UnsupportedOperationException();
-    }
+    void deleteRole(String name);
 
     /** Resolves and replaces a person's assignments atomically. */
     default void replacePersonRoles(Person person, Collection<String> names) {

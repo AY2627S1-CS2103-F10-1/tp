@@ -130,7 +130,7 @@ class RoleFoundationTest {
 
     @Test
     void role_valueSemantics_preservesNameAndIdentity() {
-        Role role = Role.create(" Engineer ");
+        Role role = Role.create(" \tEngineer\t ");
         Role copy = new Role(role.getId(), "Engineer");
         assertEquals(role, copy);
         assertEquals(role.hashCode(), copy.hashCode());

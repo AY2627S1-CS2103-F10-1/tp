@@ -107,8 +107,7 @@ public class ModelManager implements Model {
 
     @Override
     public void createRole(String name) {
-        List<Role> roles =
-                new ArrayList<>(getRoleCatalogue().getRoles());
+        List<Role> roles = new ArrayList<>(getRoleCatalogue().getRoles());
         checkArgument(getRoleCatalogue().find(name).isEmpty(), "A role with this name already exists.");
         roles.add(Role.create(name));
         addressBook.setRoleCatalogue(new RoleCatalogue(roles));
@@ -132,8 +131,8 @@ public class ModelManager implements Model {
         replaceRoleData(role, null, new RoleCatalogue(remaining));
     }
 
-    private void replaceRoleData(Role oldRole, Role renamed,
-            RoleCatalogue catalogue) {
+    /** Validates a complete replacement before updating live catalogue and person references. */
+    private void replaceRoleData(Role oldRole, Role renamed, RoleCatalogue catalogue) {
         AddressBook replacement = new AddressBook();
         replacement.setRoleCatalogue(catalogue);
         for (Person person : addressBook.getPersonList()) {
