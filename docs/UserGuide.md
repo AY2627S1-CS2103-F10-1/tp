@@ -256,6 +256,15 @@ Format: `exit`
 
 A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`. Collapsed cards keep the note text hidden; use `expand INDEX` to view the candidate's full note. Candidates without notes have no icon and reserve no icon space.
 
+### Navigating command history
+
+The command box remembers every command you submit in the current session so you can re-run or edit a past command without retyping it.
+
+* `Up` cycles backwards through your submitted commands. Repeated presses walk further into the past.
+* `Down` cycles forwards. Pressing past the newest entry clears the box so you can type a fresh command.
+* Both successful and rejected commands are recorded, so you can quickly fix a typo and resubmit.
+* Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent commands.
+
 ### Saving the data
 
 HRvest automatically saves data after every command. You do not need to save manually.

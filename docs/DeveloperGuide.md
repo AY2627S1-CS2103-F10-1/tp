@@ -169,6 +169,41 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Command history navigation
+
+The command history feature lets a user walk through commands they submitted earlier in the current session, using the `Up` and `Down` arrow keys. It is implemented as a single collaborator (`CommandHistory`) owned by `CommandBox`.
+
+#### How it fits in
+
+`CommandBox` already owns the JavaFX `TextField` and runs user input through `CommandExecutor` on Enter. The new field reuses that path:
+
+1. On Enter, `CommandBox#handleCommandEntered` records the raw text with `CommandHistory#add` **before** dispatching to the executor. Rejected commands are recorded too so the user can press Up and fix a typo.
+2. A `KEY_PRESSED` event filter on `commandTextField` catches `UP` and `DOWN` presses, calls `history.previous()` or `history.next()`, and swaps the text field's contents with the result. The event is consumed so the caret does not move within the text field.
+
+#### `CommandHistory` design
+
+`CommandHistory` is a small, package-private helper. It stores submitted commands in insertion order and tracks a `cursor` that sits at `entries.size()` when the user is composing a fresh command (the "past-the-end" position).
+
+* `add(String)` appends and resets the cursor to the past-the-end position. Blank commands are ignored.
+* `previous()` moves the cursor one step back and returns the command there, or `Optional.empty()` when already at the oldest entry.
+* `next()` moves the cursor forward. On reaching the past-the-end position it returns an empty string so the UI knows to clear the field.
+* Entries are capped at `MAX_ENTRIES` (100) to bound memory for long-running sessions. The oldest entry is dropped when the cap is reached.
+
+The class diagram below shows the collaborator relationship:
+
+<puml src="diagrams/CommandHistoryClassDiagram.puml" alt="CommandHistoryClassDiagram" />
+
+The sequence diagram below shows the flow for a user pressing `Up` twice then `Down` once:
+
+<puml src="diagrams/CommandHistorySequenceDiagram.puml" alt="CommandHistorySequenceDiagram" />
+
+#### Design considerations
+
+* **Session-only, no persistence.** Keeping history in memory avoids a storage format change for a quality-of-life feature. Users who want cross-session recall can re-type the few commands they care about or wait for a persisted variant later.
+* **Record failed commands too.** The whole point of Up/Down is to iterate faster; forcing users to retype a mistyped `filtwr s/Interviewing` would defeat that.
+* **Hard cap at 100 entries.** Prevents unbounded growth in long sessions. 100 is chosen to be well above the dozen or so commands a typical session uses while still being cheap.
+* **Event filter, not handler.** A filter runs before the `TextField`'s own key-handling, so the arrow keys do not also move the caret while cycling.
+
 ### \[Proposed\] Undo/redo feature
 
 #### Proposed Implementation

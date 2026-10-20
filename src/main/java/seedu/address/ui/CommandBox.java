@@ -1,8 +1,12 @@
 package seedu.address.ui;
 
+import java.util.Optional;
+
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Region;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -17,6 +21,7 @@ public class CommandBox extends UiPart<Region> {
     private static final String FXML = "CommandBox.fxml";
 
     private final CommandExecutor commandExecutor;
+    private final CommandHistory history;
 
     @FXML
     private TextField commandTextField;
@@ -25,10 +30,20 @@ public class CommandBox extends UiPart<Region> {
      * Creates a {@code CommandBox} with the given {@code CommandExecutor}.
      */
     public CommandBox(CommandExecutor commandExecutor) {
+        this(commandExecutor, new CommandHistory());
+    }
+
+    /**
+     * Creates a {@code CommandBox} with an injected {@code CommandHistory}.
+     * Primarily for tests.
+     */
+    public CommandBox(CommandExecutor commandExecutor, CommandHistory history) {
         super(FXML);
         this.commandExecutor = commandExecutor;
+        this.history = history;
         // calls #setStyleToDefault() whenever there is a change to the text of the command box.
         commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
+        commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleArrowNavigation);
     }
 
     /**
@@ -41,12 +56,37 @@ public class CommandBox extends UiPart<Region> {
             return;
         }
 
+        // Record the command regardless of success so users can fix typos with Up.
+        history.add(commandText);
+
         try {
             commandExecutor.execute(commandText);
             commandTextField.setText("");
         } catch (CommandException | ParseException e) {
             setStyleToIndicateCommandFailure();
         }
+    }
+
+    /**
+     * Intercepts Up and Down arrow key presses to walk through command history.
+     * Consumes the event so the caret does not move within the text field.
+     */
+    private void handleArrowNavigation(KeyEvent event) {
+        if (event.getCode() == KeyCode.UP) {
+            applyHistoryEntry(history.previous());
+            event.consume();
+        } else if (event.getCode() == KeyCode.DOWN) {
+            applyHistoryEntry(history.next());
+            event.consume();
+        }
+    }
+
+    private void applyHistoryEntry(Optional<String> entry) {
+        if (entry.isEmpty()) {
+            return;
+        }
+        commandTextField.setText(entry.get());
+        commandTextField.positionCaret(entry.get().length());
     }
 
     /**

@@ -1,0 +1,34 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam classAttributeIconSize 0
+
+package "seedu.address.ui" <<Rectangle>> {
+    class CommandBox {
+        -commandExecutor: CommandExecutor
+        -history: CommandHistory
+        -commandTextField: TextField
+        +handleCommandEntered()
+        -handleArrowNavigation(event: KeyEvent)
+        -applyHistoryEntry(entry: Optional<String>)
+    }
+
+    class CommandHistory {
+        +MAX_ENTRIES: int
+        -entries: List<String>
+        -cursor: int
+        +add(command: String)
+        +previous(): Optional<String>
+        +next(): Optional<String>
+        +getEntries(): List<String>
+        +getCursor(): int
+    }
+
+    interface CommandExecutor <<interface>> {
+        +execute(commandText: String): CommandResult
+    }
+}
+
+CommandBox *--> "1" CommandHistory
+CommandBox ..> CommandExecutor : uses >
+@enduml
