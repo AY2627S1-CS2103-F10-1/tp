@@ -11,6 +11,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.StatusCommand;
@@ -141,6 +142,15 @@ class RoleFoundationTest {
         RoleCatalogue second = new RoleCatalogue(List.of(Role.NO_ROLE, copy));
         assertEquals(first, second);
         assertEquals(first.hashCode(), second.hashCode());
+    }
+
+    @Test
+    void clear_peopleWithRoles_preservesUnusedCatalogueEntries() {
+        ModelManager model = assignedModel();
+        RoleCatalogue catalogue = model.getRoleCatalogue();
+        new ClearCommand().execute(model);
+        assertTrue(model.getAddressBook().getPersonList().isEmpty());
+        assertEquals(catalogue, model.getRoleCatalogue());
     }
 
     private ModelManager assignedModel() {
