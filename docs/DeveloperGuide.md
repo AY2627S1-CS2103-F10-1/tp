@@ -150,7 +150,13 @@ Use `Model.getRoleCatalogue().find(name)` or `requireRole(name)` for lookup, and
 
 For Francis's integration, use these APIs for person add/edit/filter rather than duplicating normalization or assignment validation. Existing person constructors explicitly default to `No role` so existing commands compile independently; this is temporary creation compatibility, not the final add-command rule. Francis must require explicitly supplied roles in the add parser and resolve them against the catalogue before adding. Keep constructor compatibility for legacy callers and retain storage migration. Existing edit/note/status copies preserve assignments; clearing candidates preserves the catalogue. UI display and role input syntax belong to Francis's changes.
 
-The foundation increment exposes no role commands; persistence and management-command increments follow separately.
+The catalogue is persisted separately in `data/roles.json`; candidate records contain role IDs. `StorageManager` coordinates both through `RoleDataStorage`, loading the catalogue before resolving assignments. Missing legacy assignments migrate to `No role`; explicitly empty, duplicate, null-element, or unknown references are invalid. Missing catalogues are accepted only when candidates can resolve against the built-in role.
+
+Saving two files cannot use a single filesystem rename. Before either replacement, a versioned `roles-transaction.json` rollback journal stores the exact previous bytes and whether each file existed. A successful save atomically replaces both files and removes the journal. A failure restores both previous files; if rollback cannot finish, the journal remains and further saves are blocked. Startup restores an interrupted transaction before reading references. Invalid journals block replacement recovery so their before-images are never silently discarded. This protocol assumes one running HRvest instance; concurrent writers are unsupported.
+
+Invalid candidate/catalogue data uses the existing backup-before-replacement recovery. Both originals must be preserved before saving an empty candidate list and default catalogue. The companion role backup is named after the candidate backup with `.roles.json` appended; when only the catalogue exists, its backup is the primary recovery path. `LogicManager` uses `Model.createRestorePoint()` to restore the pre-command address book, filter, and expanded view after save failure.
+
+The persistence increment exposes no role commands; the management-command increment follows separately.
 
 ### Storage component
 
