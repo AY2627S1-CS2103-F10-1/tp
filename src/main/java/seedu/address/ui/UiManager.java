@@ -60,13 +60,20 @@ public class UiManager implements Ui {
 
     @Override
     public void showRecoveryWarning(Path backup) {
+        Path rolesFile = dataFilePath.toAbsolutePath().resolveSibling("roles.json");
+        String instructions;
+        if (backup.getFileName().toString().endsWith(".roles.json")) {
+            instructions = "Close HRvest, make a copy of the catalogue backup, repair that copy, and replace "
+                    + rolesFile + " with it. The candidate file was absent when recovery started.";
+        } else {
+            instructions = "Close HRvest, make a copy of the backup, repair that copy, and replace "
+                    + dataFilePath.toAbsolutePath() + " with it. If present, restore the companion backup "
+                    + backup + ".roles.json to " + rolesFile + ".";
+        }
         showAlertDialogAndWait(AlertType.WARNING, "Candidate data recovery",
                 "Candidate or role data could not be loaded", "HRvest preserved the original data at:\n" + backup
-                        + "\nIf present, the companion role backup has the same name followed by .roles.json."
-                        + "\n\nAn empty candidate list has been saved with the built-in role catalogue."
-                        + " Close HRvest, make a copy of the backup, repair that copy, and replace "
-                        + dataFilePath.toAbsolutePath() + " with it. Restore the companion backup to data/roles.json."
-                        + " Keep the backup until recovery is complete.");
+                        + "\n\nAn empty candidate list has been saved with the built-in role catalogue. "
+                        + instructions + " Keep the backup until recovery is complete.");
     }
 
     void showAlertDialogAndWait(Alert.AlertType type, String title, String headerText, String contentText) {

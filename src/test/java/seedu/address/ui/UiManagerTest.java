@@ -29,9 +29,20 @@ public class UiManagerTest {
         assertTrue(ui.content.contains("An empty candidate list has been saved"));
         assertTrue(ui.content.contains("Close HRvest"));
         assertTrue(ui.content.contains(".roles.json"));
-        assertTrue(ui.content.contains("data/roles.json"));
+        assertTrue(ui.content.contains(dataFile.toAbsolutePath().resolveSibling("roles.json").toString()));
         assertTrue(ui.content.contains("repair that copy"));
         assertTrue(ui.content.contains("Keep the backup until recovery is complete"));
+    }
+
+    @Test
+    public void showRecoveryWarning_catalogueOnlyBackup_explainsCatalogueDestination() {
+        Path dataFile = temporaryFolder.resolve("candidates.json");
+        Path backup = temporaryFolder.resolve("HRvest-example-corrupt.json.roles.json");
+        CapturingUiManager ui = new CapturingUiManager(dataFile);
+        ui.showRecoveryWarning(backup);
+        assertTrue(ui.content.contains(backup.toString()));
+        assertTrue(ui.content.contains(dataFile.toAbsolutePath().resolveSibling("roles.json").toString()));
+        assertTrue(ui.content.contains("candidate file was absent"));
     }
 
     /**

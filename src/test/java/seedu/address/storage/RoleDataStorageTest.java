@@ -266,7 +266,9 @@ class RoleDataStorageTest {
         Files.writeString(roles, "invalid catalogue");
         CandidateDataInitializer initializer = new CandidateDataInitializer(storage());
         assertTrue(initializer.load().getPersonList().isEmpty());
-        assertEquals("invalid catalogue", Files.readString(initializer.getRecoveryBackup().orElseThrow()));
+        Path backup = initializer.getRecoveryBackup().orElseThrow();
+        assertTrue(backup.getFileName().toString().endsWith(".roles.json"));
+        assertEquals("invalid catalogue", Files.readString(backup));
         assertEquals(List.of(Role.NO_ROLE), storage().readAddressBook().orElseThrow().getRoleCatalogue().getRoles());
     }
 

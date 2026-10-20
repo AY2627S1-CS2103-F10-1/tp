@@ -132,7 +132,12 @@ class RoleDataStorage {
         if (candidateBackup == null && roleBackup == null) {
             throw new IOException("No original data files could be preserved.");
         }
-        return candidateBackup == null ? roleBackup : candidateBackup;
+        if (candidateBackup == null) {
+            Path primary = roleBackup.resolveSibling(roleBackup.getFileName() + ".roles.json");
+            Files.move(roleBackup, primary);
+            return primary;
+        }
+        return candidateBackup;
     }
 
     private static boolean exists(Path path) throws IOException {
