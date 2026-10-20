@@ -140,6 +140,18 @@ The `Model` component,
 </box>
 
 
+### Role catalogue integration
+
+Roles have stable IDs and trimmed display names. `Role.normalize` defines case-insensitive name lookup using `Locale.ROOT`; internal spaces remain significant. `RoleCatalogue` rejects duplicate IDs/names and requires the protected `Role.NO_ROLE`. A person's immutable role set is always nonempty. ?No role? may coexist with other roles.
+
+Use `Model.getRoleCatalogue().find(name)` or `requireRole(name)` for lookup, and `resolve(names)` to resolve a nonempty collection of existing names. `Model.replacePersonRoles(person, names)` validates the complete replacement before updating the person. `Person.withRoles(roles)` copies all other fields; catalogue membership is checked at the address-book boundary. Do not construct roles to resolve user-supplied names.
+
+`Model.createRole`, `renameRole`, and `deleteRole` own catalogue changes. Rename keeps the ID and updates every affected person's immutable references, including candidates outside the displayed filter. Delete preserves remaining assignments and supplies ?No role? only when none remain. Replacement data is validated before live state changes.
+
+For Francis's integration, use these APIs for person add/edit/filter rather than duplicating normalization or assignment validation. Existing person constructors explicitly default to ?No role? so existing commands compile independently; this is temporary creation compatibility, not the final add-command rule. Francis must require explicitly supplied roles in the add parser and resolve them against the catalogue before adding. Keep constructor compatibility for legacy callers and retain storage migration. Existing edit/note/status copies preserve assignments. UI display and role input syntax belong to Francis's changes.
+
+The foundation increment exposes no role commands; persistence and management-command increments follow separately.
+
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
