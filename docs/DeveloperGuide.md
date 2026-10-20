@@ -156,7 +156,7 @@ Saving two files cannot use a single filesystem rename. Before either replacemen
 
 Invalid candidate/catalogue data uses the existing backup-before-replacement recovery. Both originals must be preserved before saving an empty candidate list and default catalogue. The companion role backup is named after the candidate backup with `.roles.json` appended; when only the catalogue exists, its backup is the primary recovery path. `LogicManager` uses `Model.createRestorePoint()` to restore the pre-command address book, filter, and expanded view after save failure.
 
-The persistence increment exposes no role commands; the management-command increment follows separately.
+Role-management commands address entries by name through `RoleCatalogue`, avoiding indexes that could change after sorting. `RoleCommandParser` shares prefix validation across `create_role n/NAME`, `edit_role r/EXISTING_NAME n/NEW_NAME`, `delete_role r/NAME`, and argument-free `list_role`. The new commands and prefixes accept either case; existing person command syntax is unchanged. Whitespace-delimited parameter tokens are reserved in command input. The model still owns uniqueness, reference propagation, fallback, and protection checks, so Francis can reuse those invariants independently of parsing.
 
 ### Storage component
 

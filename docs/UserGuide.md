@@ -240,9 +240,49 @@ Examples:
 * `list` followed by `expand 1` shows the 1st candidate in HRvest.
 * `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the results of the `filter` command.
 
+### Managing the role catalogue
+
+Each candidate has one or more roles from a shared catalogue. The built-in `No role` always exists, cannot be renamed or deleted, and may coexist with other roles. Roles can remain in the catalogue without any candidates assigned to them.
+
+Role names ignore surrounding whitespace and case for lookup and uniqueness: ` Software Engineer ` and `software engineer` identify the same role. Display names keep their capitalisation and internal spaces; `Software  Engineer` with two spaces is distinct. Names must be nonblank and cannot contain internal control characters such as line breaks. Punctuation and Unicode names are accepted. In role commands, whitespace followed by an application prefix (`n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/`, ignoring case) is reserved syntax and cannot be part of a role name. Quotes are literal characters, not an escaping mechanism.
+
+The four role command words and their prefixes are case-insensitive. Each required prefix must appear exactly once, with whitespace before it. Successful changes save automatically. Duplicate names, unknown roles, protected-role operations, and malformed input report an error and leave candidates and the catalogue unchanged.
+
+#### Creating an unused role: `create_role`
+
+Format: `create_role n/NAME`
+
+Example: `create_role n/Software Engineer`
+
+Creates a catalogue entry without assigning it to anyone. Creation fails if the trimmed name matches an existing role ignoring case, including `No role`.
+
+#### Renaming a role globally: `edit_role`
+
+Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
+
+Example: `edit_role r/Software Engineer n/Senior Software Engineer`
+
+Renames the existing role for every assigned candidate, including those outside the displayed list. Other assignments remain unchanged. The new name must not conflict with another catalogue entry. A case-only rename is allowed for ordinary roles. Every rename attempt targeting `No role` is rejected.
+
+#### Deleting a role globally: `delete_role`
+
+Format: `delete_role r/NAME`
+
+Example: `delete_role r/Senior Software Engineer`
+
+Removes the role from the catalogue and every assigned candidate. Each candidate keeps their other roles. HRvest assigns `No role` only when deletion would otherwise leave that candidate without any roles. Deleting `No role` or an unknown role is rejected.
+
+#### Listing the complete catalogue: `list_role`
+
+Format: `list_role`
+
+Shows all names in the command result, including unused roles and `No role`, sorted by their case-insensitive lookup names. This command accepts no arguments and keeps the candidate filter unchanged.
+
+New candidates receive `No role`. Candidate add/edit commands retain their existing syntax in this version; catalogue commands update assignments only as a consequence of renaming or deleting a role.
+
 ### Clearing all entries: `clear`
 
-Clears all entries from HRvest.
+Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
 
 Format: `clear`
 
@@ -312,6 +352,10 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Create role** | `create_role n/NAME`<br> e.g., `create_role n/Software Engineer`
+**Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
+**Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
+**List roles** | `list_role`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
