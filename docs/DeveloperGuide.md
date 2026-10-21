@@ -182,7 +182,7 @@ The command history feature lets a user walk through commands they submitted ear
 
 #### `CommandHistory` design
 
-`CommandHistory` is a small, package-private helper. It stores submitted commands in insertion order and tracks a `cursor` that sits at `entries.size()` when the user is composing a fresh command (the "past-the-end" position).
+`CommandHistory` is a small helper class in the `ui` package. It stores submitted commands in insertion order and tracks a `cursor` that sits at `entries.size()` when the user is composing a fresh command (the "past-the-end" position).
 
 * `add(String)` appends and resets the cursor to the past-the-end position. Blank commands are ignored.
 * `previous()` moves the cursor one step back and returns the command there, or `Optional.empty()` when already at the oldest entry.

@@ -29,9 +29,10 @@ public class CommandHistory {
 
     /**
      * Records a submitted command and resets the cursor to the past-the-end position.
-     * Null and empty commands are ignored; whitespace-only commands are also ignored.
+     * Blank commands (empty or whitespace-only) are ignored.
      *
      * @param command the raw user input that was submitted
+     * @throws NullPointerException if {@code command} is null
      */
     public void add(String command) {
         requireNonNull(command);
