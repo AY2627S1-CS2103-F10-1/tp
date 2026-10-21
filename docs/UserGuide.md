@@ -270,7 +270,7 @@ A crash or power loss can leave temporary files named `HRvest-<random>.tmp` besi
 
 HRvest saves candidates automatically in `[JAR file location]/data/HRvest.json` and the complete role catalogue in `data/roles.json`. Unused roles survive restarts. Back up and restore these files together. Candidate `roles` arrays contain catalogue IDs, not display names; every reference must exist and each candidate must have at least one role. `No role` has the fixed ID `no-role` and may coexist with other roles. Legacy candidates without a `roles` field migrate to `No role`; explicitly empty arrays are invalid. Advanced users may edit these files while HRvest is closed.
 
-Do not edit or delete `data/roles-transaction.json` if it exists. It contains the previous pair of files for an interrupted save; restart HRvest to roll back that save before loading data. If HRvest reports an invalid journal or cannot complete rollback, keep all three files and repair the journal or restore a known consistent backup before restarting. Run only one HRvest instance against these data files.
+Do not edit or delete `data/roles-transaction.json` if it exists. It contains the previous pair of files for an interrupted save; restart HRvest to roll back that save before loading data. If HRvest reports an invalid journal or cannot complete rollback, keep all three files and repair the journal or restore a known consistent backup before restarting. Run only one HRvest instance against these data files. The configured candidate file, role catalogue, and transaction journal must refer to different files, including through symbolic links; HRvest rejects conflicting paths before changing data.
 
 Close HRvest before editing, and keep a backup. To remove a note, remove its `note` field, set it to `null`, or set it to an empty or whitespace-only string. Leading and trailing whitespace in saved statuses is ignored, just as in commands; for example, `"status": " Applied "` loads as `Applied`.
 
@@ -296,7 +296,7 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous HRvest home folder.
+**A**: Install HRvest on the other computer, then close HRvest on both computers. Copy both `data/HRvest.json` and `data/roles.json` from your previous HRvest home folder into the new HRvest home folder, replacing the corresponding files together. The role catalogue is required to preserve unused roles and load candidates assigned custom roles. If you configured a different candidate data path, copy that candidate file and its sibling `roles.json` instead. If `roles-transaction.json` exists, restart HRvest on the source computer to finish recovery, then close it before copying the files.
 
 --------------------------------------------------------------------------------------------------------------------
 

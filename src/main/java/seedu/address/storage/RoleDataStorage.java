@@ -35,6 +35,7 @@ class RoleDataStorage {
 
     Optional<ReadOnlyAddressBook> read() throws DataLoadingException {
         try {
+            validateDestinations();
             recover();
             RoleCatalogue catalogue = readCatalogue();
             Optional<ReadOnlyAddressBook> loaded = candidates.readAddressBook(candidates.getAddressBookFilePath(),
@@ -63,6 +64,7 @@ class RoleDataStorage {
     }
 
     void save(ReadOnlyAddressBook data) throws IOException {
+        validateDestinations();
         if (recoveryRequired || exists(journalPath)) {
             throw new IOException("An interrupted data save needs recovery. Restart HRvest before saving again.");
         }
@@ -120,6 +122,7 @@ class RoleDataStorage {
 
     /** Preserves both originals before recovery can replace either file. */
     Path backup() throws IOException {
+        validateDestinations();
         if (recoveryRequired || exists(journalPath)) {
             throw new IOException("Repair the interrupted transaction before replacing candidate or role data.");
         }
@@ -138,6 +141,30 @@ class RoleDataStorage {
             return primary;
         }
         return candidateBackup;
+    }
+
+    /** Rejects aliases before any journal recovery, backup, or save can modify the data files. */
+    private void validateDestinations() throws IOException {
+        Path[] paths = {candidates.getAddressBookFilePath(), rolesPath, journalPath};
+        for (int i = 0; i < paths.length; i++) {
+            for (int j = i + 1; j < paths.length; j++) {
+                if (resolveDestination(paths[i]).equals(resolveDestination(paths[j]))
+                        || (exists(paths[i]) && exists(paths[j]) && Files.isSameFile(paths[i], paths[j]))) {
+                    throw new IOException("Candidate, role catalogue, and transaction journal paths must refer "
+                            + "to different files. Change the candidate data path or conflicting symbolic links.");
+                }
+            }
+        }
+    }
+
+    /** Resolves existing links and parent directories while allowing a new destination to be absent. */
+    private static Path resolveDestination(Path path) throws IOException {
+        Path absolute = path.toAbsolutePath();
+        if (exists(absolute)) {
+            return absolute.toRealPath();
+        }
+        Path parent = absolute.getParent();
+        return parent == null ? absolute : resolveDestination(parent).resolve(absolute.getFileName()).normalize();
     }
 
     private static boolean exists(Path path) throws IOException {

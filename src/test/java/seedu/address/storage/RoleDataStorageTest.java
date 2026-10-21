@@ -30,6 +30,61 @@ class RoleDataStorageTest {
     Path directory;
 
     @Test
+    void save_reservedCandidatePath_rejectsBeforeCreatingFiles() throws Exception {
+        for (String name : List.of("roles.json", "roles-transaction.json")) {
+            RoleDataStorage storage = new RoleDataStorage(new JsonAddressBookStorage(directory.resolve(name)));
+
+            assertThrows(IOException.class, () -> storage.save(assignedModel().getAddressBook()));
+
+            assertFalse(Files.exists(directory.resolve("roles.json")));
+            assertFalse(Files.exists(directory.resolve("roles-transaction.json")));
+        }
+    }
+
+    @Test
+    void initialize_reservedCandidatePath_preservesOriginalFiles() throws Exception {
+        for (String name : List.of("roles.json", "roles-transaction.json")) {
+            Path destination = directory.resolve(name);
+            Files.writeString(destination, "original data");
+            Storage storage = new StorageManager(new JsonAddressBookStorage(destination),
+                    new JsonUserPrefsStorage(directory.resolve("preferences.json")));
+
+            assertThrows(IOException.class, () -> new CandidateDataInitializer(storage).load());
+
+            assertEquals("original data", Files.readString(destination));
+            Files.delete(destination);
+        }
+    }
+
+    @Test
+    void save_symbolicLinkCollisions_preservesTargetsAndLinks() throws Exception {
+        Path target = directory.resolve("shared.json");
+        Files.writeString(target, "original data");
+        List<Path> destinations = List.of(candidatePath(), directory.resolve("roles.json"),
+                directory.resolve("roles-transaction.json"));
+        for (int i = 0; i < destinations.size(); i++) {
+            for (int j = i + 1; j < destinations.size(); j++) {
+                Path first = Files.createSymbolicLink(destinations.get(i), target);
+                Path second = Files.createSymbolicLink(destinations.get(j), target);
+                RoleDataStorage storage = new RoleDataStorage(new JsonAddressBookStorage(candidatePath()));
+
+                assertThrows(IOException.class, () -> storage.save(assignedModel().getAddressBook()));
+                assertThrows(DataLoadingException.class, storage::read);
+                assertThrows(IOException.class, storage::backup);
+
+                assertEquals("original data", Files.readString(target));
+                assertTrue(Files.isSymbolicLink(first));
+                assertTrue(Files.isSymbolicLink(second));
+                Files.delete(first);
+                Files.delete(second);
+                for (Path destination : destinations) {
+                    assertFalse(Files.exists(destination));
+                }
+            }
+        }
+    }
+
+    @Test
     void saveAndRead_unusedRolesAndMultipleAssignments_surviveRestart() throws Exception {
         ModelManager model = assignedModel();
         model.createRole("Unused role");
