@@ -45,15 +45,13 @@ public class CommandResult {
         this(feedbackToUser, false, false);
     }
 
-
     /**
      * Constructs a {@code CommandResult} meant for the ExportCommand
      * CH: You can read about the rationale in ExportCommand
      */
     public static CommandResult createExportRequest() {
-       return new CommandResult("", false, false, true);
-   }
-
+        return new CommandResult("", false, false, true);
+    }
 
     public String getFeedbackToUser() {
         return feedbackToUser;
