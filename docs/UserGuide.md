@@ -61,7 +61,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
+* Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
   For example, `help 123` is interpreted as `help`.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -246,6 +246,23 @@ Clears all entries from HRvest.
 
 Format: `clear`
 
+### Exporting candidates: `export`
+
+Exports every candidate to `export.csv` inside the application's data folder, alongside the configured JSON data file (for example, `./data/data.json` gives `./data/export.csv`). Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
+
+Format: `export`
+
+* Use the lowercase command; surrounding whitespace is accepted.
+* The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
+* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
+* Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
+* If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
+
+**Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
+
+**For more technical details, you can refer to the** [Developer Guide](./DeveloperGuide.md)
+
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -258,7 +275,8 @@ A pinned sticky note icon beside a candidate's name indicates that a note exists
 
 ### Saving the data
 
-HRvest automatically saves data after every command. You do not need to save manually.
+HRvest automatically saves data after every successful command.
+You can also export the data to CSV using the [`export` command](#exporting-candidates-export).
 
 Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement. On filesystems that support file ACLs (access control lists) or POSIX permissions, saving preserves those settings on the existing data file; a failure to read or apply them causes the save to fail. If the data file is a symbolic link, saving updates its existing target and keeps the link. Saving fails if the link's target does not exist, leaving the link unchanged.
 
@@ -313,6 +331,7 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Export** | `export`
 **Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
