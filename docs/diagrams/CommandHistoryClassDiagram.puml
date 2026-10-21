@@ -7,10 +7,12 @@ package "seedu.address.ui" <<Rectangle>> {
     class CommandBox {
         -commandExecutor: CommandExecutor
         -history: CommandHistory
+        -draft: Optional<String>
         -commandTextField: TextField
-        +handleCommandEntered()
+        -handleCommandEntered()
         -handleArrowNavigation(event: KeyEvent)
-        -applyHistoryEntry(entry: Optional<String>)
+        -captureDraftIfStartingNavigation()
+        -applyHistoryEntry(entry: String)
     }
 
     class CommandHistory {

@@ -87,6 +87,26 @@ public class CommandHistoryTest {
     }
 
     @Test
+    public void add_consecutiveDuplicate_isSkipped() {
+        CommandHistory h = new CommandHistory();
+        h.add("list");
+        h.add("list");
+        h.add("list");
+        assertEquals(1, h.getEntries().size());
+        assertEquals("list", h.getEntries().get(0));
+        assertEquals(1, h.getCursor());
+    }
+
+    @Test
+    public void add_nonConsecutiveDuplicate_isKept() {
+        CommandHistory h = new CommandHistory();
+        h.add("list");
+        h.add("find Alice");
+        h.add("list");
+        assertEquals(3, h.getEntries().size());
+    }
+
+    @Test
     public void getEntries_returnsImmutableCopy() {
         CommandHistory h = new CommandHistory();
         h.add("list");

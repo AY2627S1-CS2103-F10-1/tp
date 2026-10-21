@@ -260,10 +260,10 @@ A pinned sticky note icon beside a candidate's name indicates that a note exists
 
 The command box remembers every command you submit in the current session so you can re-run or edit a past command without retyping it.
 
-* `Up` cycles backwards through your submitted commands. Repeated presses walk further into the past.
-* `Down` cycles forwards. Pressing past the newest entry clears the box so you can type a fresh command.
-* Both successful and rejected commands are recorded, so you can quickly fix a typo and resubmit.
-* Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent commands.
+* `Up` moves back through your submitted commands. Repeated presses walk further into the past; the earliest entry stays shown once you reach it.
+* `Down` moves forward. Pressing past the newest entry restores whatever draft you were typing before you started navigating, or clears the box if there was no draft.
+* Both successful and rejected commands are recorded, so you can quickly fix a typo and resubmit. A command identical to the most recent one does not take up an extra slot.
+* Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent distinct commands.
 
 ### Saving the data
 

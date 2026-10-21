@@ -16,6 +16,8 @@ import java.util.Optional;
  *       new command. That "past-the-end" position maps to an empty text field.</li>
  *   <li>Every submitted command is recorded, including ones that failed to parse or execute,
  *       so users can press Up and fix a typo.</li>
+ *   <li>A command identical to the most recent entry is skipped, mirroring
+ *       bash's {@code ignoredups}, so a repeated submission does not take an extra slot.</li>
  *   <li>Older entries are discarded once {@link #MAX_ENTRIES} is reached.</li>
  * </ul>
  */
@@ -29,7 +31,9 @@ public class CommandHistory {
 
     /**
      * Records a submitted command and resets the cursor to the past-the-end position.
-     * Blank commands (empty or whitespace-only) are ignored.
+     * Blank commands (empty or whitespace-only) are ignored. A command that is identical
+     * to the most recent entry is also skipped so repeated submissions do not fill the
+     * history buffer.
      *
      * @param command the raw user input that was submitted
      * @throws NullPointerException if {@code command} is null
@@ -37,6 +41,10 @@ public class CommandHistory {
     public void add(String command) {
         requireNonNull(command);
         if (command.isBlank()) {
+            return;
+        }
+        if (!entries.isEmpty() && entries.get(entries.size() - 1).equals(command)) {
+            cursor = entries.size();
             return;
         }
         if (entries.size() == MAX_ENTRIES) {
@@ -62,7 +70,7 @@ public class CommandHistory {
     /**
      * Returns the next command relative to the current cursor. If the cursor is at the
      * newest entry, moves to the past-the-end position and returns an empty string so
-     * the UI can clear its input field.
+     * the UI can clear or restore its input field.
      */
     public Optional<String> next() {
         if (cursor >= entries.size()) {
@@ -76,7 +84,8 @@ public class CommandHistory {
     }
 
     /**
-     * Returns an unmodifiable view of the recorded entries, oldest first.
+     * Returns an immutable copy of the recorded entries, oldest first.
+     * Changes to the history after this call do not appear in the returned list.
      */
     public List<String> getEntries() {
         return List.copyOf(entries);

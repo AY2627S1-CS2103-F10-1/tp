@@ -22,6 +22,7 @@ public class CommandBox extends UiPart<Region> {
 
     private final CommandExecutor commandExecutor;
     private final CommandHistory history;
+    private Optional<String> draft = Optional.empty();
 
     @FXML
     private TextField commandTextField;
@@ -34,10 +35,10 @@ public class CommandBox extends UiPart<Region> {
     }
 
     /**
-     * Creates a {@code CommandBox} with an injected {@code CommandHistory}.
-     * Primarily for tests.
+     * Creates a {@code CommandBox} with an injected {@code CommandHistory}, for tests
+     * that want to seed or inspect history state.
      */
-    public CommandBox(CommandExecutor commandExecutor, CommandHistory history) {
+    CommandBox(CommandExecutor commandExecutor, CommandHistory history) {
         super(FXML);
         this.commandExecutor = commandExecutor;
         this.history = history;
@@ -56,13 +57,17 @@ public class CommandBox extends UiPart<Region> {
             return;
         }
 
-        // Record the command regardless of success so users can fix typos with Up.
+        // Record first so the user can press Up to recover the command, successful or not.
         history.add(commandText);
+        draft = Optional.empty();
 
         try {
             commandExecutor.execute(commandText);
             commandTextField.setText("");
         } catch (CommandException | ParseException e) {
+            // Clear the failed text so pressing Up immediately after shows it from history,
+            // instead of appearing to do nothing because the field already holds that text.
+            commandTextField.setText("");
             setStyleToIndicateCommandFailure();
         }
     }
@@ -73,20 +78,34 @@ public class CommandBox extends UiPart<Region> {
      */
     private void handleArrowNavigation(KeyEvent event) {
         if (event.getCode() == KeyCode.UP) {
-            applyHistoryEntry(history.previous());
+            captureDraftIfStartingNavigation();
+            history.previous().ifPresent(this::applyHistoryEntry);
             event.consume();
         } else if (event.getCode() == KeyCode.DOWN) {
-            applyHistoryEntry(history.next());
+            Optional<String> entry = history.next();
+            if (entry.isEmpty()) {
+                return;
+            }
+            if (entry.get().isEmpty() && draft.isPresent()) {
+                applyHistoryEntry(draft.get());
+                draft = Optional.empty();
+            } else {
+                applyHistoryEntry(entry.get());
+            }
             event.consume();
         }
     }
 
-    private void applyHistoryEntry(Optional<String> entry) {
-        if (entry.isEmpty()) {
-            return;
+    private void captureDraftIfStartingNavigation() {
+        if (draft.isEmpty() && history.getCursor() == history.getEntries().size()
+                && !commandTextField.getText().isEmpty()) {
+            draft = Optional.of(commandTextField.getText());
         }
-        commandTextField.setText(entry.get());
-        commandTextField.positionCaret(entry.get().length());
+    }
+
+    private void applyHistoryEntry(String entry) {
+        commandTextField.setText(entry);
+        commandTextField.positionCaret(entry.length());
     }
 
     /**
