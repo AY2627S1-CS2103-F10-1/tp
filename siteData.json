@@ -64,6 +64,7 @@
         "launch-and-shutdown": "Launch and shutdown",
         "rejecting-note-input-in-add": "Rejecting note input in add",
         "deleting-a-candidate": "Deleting a candidate",
+        "preserving-filters-after-candidate-updates": "Preserving filters after candidate updates",
         "candidate-note-indicator": "Candidate note indicator",
         "saving-data": "Saving data"
       },
