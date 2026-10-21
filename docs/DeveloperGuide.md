@@ -145,10 +145,6 @@ Roles retain their IDs across renames, but `Role.equals` compares both ID and na
 
 The shared integration contract is `Model.getRoleCatalogue()` for catalogue access, `RoleCatalogue.find/requireRole/resolve` for normalized lookup and membership validation, and `Model.replacePersonRoles` with `Person.withRoles` for assignment replacement. Existing candidate constructors temporarily supply `No role`; requiring explicit role input in candidate add/edit/filter commands and displaying roles are separate integration work. Legacy-file migration remains independent of that command syntax.
 
-The following successful `edit_role r/Engineer n/Senior Engineer` rename keeps model and storage internals abstract. `renameRole` updates the catalogue and every assigned candidate, including candidates outside the current filter. Validation failures leave the original model unchanged. If saving fails, `LogicManager` invokes the restore point to recover the address book, filter, and expanded view before reporting an error.
-
-<puml src="diagrams/RoleRenameSequenceDiagram.puml" alt="Successful role rename and coordinated save" />
-
 <box type="info" seamless>
 
 **Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
