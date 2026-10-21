@@ -106,7 +106,7 @@ public class EditCommand extends Command {
         Status updatedStatus = editPersonDescriptor.getStatus().orElse(personToEdit.getStatus());
 
         return new Person(updatedName, updatedPhone, updatedEmail, updatedAddress, updatedTags, updatedStatus,
-                personToEdit.getNote());
+                personToEdit.getNote(), personToEdit.getRoles());
     }
 
     @Override

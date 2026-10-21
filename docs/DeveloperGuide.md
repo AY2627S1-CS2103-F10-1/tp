@@ -125,12 +125,15 @@ How the parsing works:
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
+* stores a role catalogue in `AddressBook`, independently of candidate assignments, so unused roles remain available and clearing candidates preserves the catalogue. Each candidate has a nonempty, immutable set of roles from this catalogue; the protected `No role` entry supplies the fallback when deleting a candidate's last assigned role.
 * enforces email-only uniqueness through `Person.isSamePerson`, using case-insensitive comparison. `ParserUtil.parseEmail` trims command input, while `Email` validates stored values and preserves case. Full `Person.equals` and `Email.equals` remain case-sensitive. Add, edit, bulk replacement and JSON loading share this identity rule. Edit permits unchanged identity because the list already enforces uniqueness; a changed identity is checked against the entire address book, not only the displayed list.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * tracks whether the displayed list is in expanded view as transient state. The `Logic` API exposes this read-only property to the `UI`; it is not persisted.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
+
+Roles retain their IDs across renames, but `Role.equals` compares both ID and name. Renaming therefore requires replacing the role values held by candidates as well as the catalogue entry. `ModelManager` validates a replacement address book before applying a rename or deletion, preventing stale role references or partially applied validation failures. These operations also reset an expanded view to the full list because its filter captures the candidate's previous value.
 
 <box type="info" seamless>
 
