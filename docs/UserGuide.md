@@ -254,14 +254,14 @@ Format: `export`
 
 * Use the lowercase command; surrounding whitespace is accepted.
 * The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
-* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty.
-* Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
+* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
-* If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows. Any previous `export.csv` is replaced by this header-only file.
+* If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
 
 **Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
 
-**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, and spreadsheet auto-detection can alter values.
+**For more technical details, you can refer to the** [Developer Guide](./DeveloperGuide.md)
 
 ### Exiting the program: `exit`
 
