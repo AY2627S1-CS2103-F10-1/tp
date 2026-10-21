@@ -14,6 +14,8 @@ Class JsonUserPrefsStorage
 }
 
 package "AddressBook Storage" #F4F6F6{
+Class RoleDataStorage
+Class JsonRoleCatalogue
 Class JsonAddressBookStorage
 Class JsonSerializableAddressBook
 Class JsonAdaptedPerson
@@ -28,6 +30,15 @@ HiddenOutside ..> Storage
 StorageManager .up.|> Storage
 StorageManager -down-> "1" JsonUserPrefsStorage
 StorageManager -down-> "1" JsonAddressBookStorage
+StorageManager -down-> "1" RoleDataStorage
+RoleDataStorage --> "1" JsonAddressBookStorage
+RoleDataStorage ..> JsonRoleCatalogue : reads / writes
+note bottom of RoleDataStorage
+  Rollback journal coordinates
+  two atomic file replacements;
+  the pair is not atomic.
+end note
+JsonAdaptedPerson : role IDs
 
 JsonAddressBookStorage ..> JsonSerializableAddressBook
 JsonSerializableAddressBook --> "*" JsonAdaptedPerson
