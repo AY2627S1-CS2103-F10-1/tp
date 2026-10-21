@@ -1,6 +1,7 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -41,11 +42,13 @@ public class ExportIntegrationTest {
 
         CommandResult result = logic.execute("export");
 
-        assertEquals("Exported successfully to " + directory.resolve("export.csv") + ".", result.getFeedbackToUser());
+        assertEquals("Exported successfully to " + directory.resolve("data/export.csv") + ".",
+                result.getFeedbackToUser());
+        assertFalse(Files.exists(directory.resolve("export.csv")));
         assertEquals(List.of(alice, bob), model.getAddressBook().getPersonList());
         assertEquals(List.of(bob), model.getFilteredPersonList());
         assertTrue(model.isExpandedViewProperty().get());
-        List<String> records = Files.readAllLines(directory.resolve("export.csv"));
+        List<String> records = Files.readAllLines(directory.resolve("data/export.csv"));
         assertEquals(3, records.size());
         assertTrue(records.get(1).startsWith("\"Alice\""));
         assertTrue(records.get(2).startsWith("\"Bob\""));
@@ -54,10 +57,11 @@ public class ExportIntegrationTest {
 
     @Test
     public void execute_emptyBook_reportsSuccess() throws Exception {
+        Files.createDirectory(directory.resolve("data"));
         Logic logic = new LogicManager(new ModelManager(), createStorage(directory.resolve("data/book.json")));
-        assertEquals("Exported successfully to " + directory.resolve("export.csv") + ".",
+        assertEquals("Exported successfully to " + directory.resolve("data/export.csv") + ".",
                 logic.execute("export").getFeedbackToUser());
-        assertEquals(1, Files.readAllLines(directory.resolve("export.csv")).size());
+        assertEquals(1, Files.readAllLines(directory.resolve("data/export.csv")).size());
     }
 
     @Test
@@ -66,7 +70,7 @@ public class ExportIntegrationTest {
         var person = new PersonBuilder().withEmail("alice@example.com").build();
         model.addPerson(person);
         model.expandPerson(person);
-        Files.createDirectory(directory.resolve("export.csv"));
+        Files.createDirectories(directory.resolve("data/export.csv"));
         Logic logic = new LogicManager(model, createStorage(directory.resolve("data/book.json")));
 
         assertThrows(CommandException.class, () -> logic.execute("export"));
@@ -74,7 +78,7 @@ public class ExportIntegrationTest {
         assertEquals(List.of(person), model.getAddressBook().getPersonList());
         assertEquals(List.of(person), model.getFilteredPersonList());
         assertTrue(model.isExpandedViewProperty().get());
-        assertTrue(Files.isDirectory(directory.resolve("export.csv")));
+        assertTrue(Files.isDirectory(directory.resolve("data/export.csv")));
     }
 
     private StorageManager createStorage(Path dataFile) {

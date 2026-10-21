@@ -264,7 +264,7 @@ The `export` command creates a CSV copy of all candidate records, regardless of 
 
 `ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
 
-The writer exports one row per candidate to `export.csv` beside the configured data directory, with a header and all candidate fields. Tags are stored as a sorted JSON array within one CSV cell so their names and casing can be preserved.
+The writer exports one row per candidate to `export.csv` inside the configured data directory, alongside the JSON data file, with a header and all candidate fields. Tags are stored as a sorted JSON array within one CSV cell so their names and casing can be preserved.
 
 HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. It is non-destructive to HRvest's stored records: the CSV is a separate copy of data that remains available in the application. For this reason, export uses direct writing with failure reporting rather than rollback or deletion of a failed output file; the user can retry after resolving the problem. This differs from saving HRvest's source data, where atomic replacement protects the existing records. The non-destructive guarantee does not extend to an earlier CSV: each export directly overwrites it, so an interrupted or failed write may destroy the previous export and leave an empty or incomplete file.
 

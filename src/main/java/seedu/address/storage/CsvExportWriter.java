@@ -25,13 +25,13 @@ public class CsvExportWriter {
     private static final List<String> HEADERS = List.of("name", "phone", "email", "address", "status", "tags", "note");
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
-    /** Returns the export path beside the configured data directory, without resolving symbolic links. */
+    /** Returns the export path beside the configured JSON data file, without resolving symbolic links. */
     public static Path resolveDestination(Path dataFile) throws IOException {
         Path dataDirectory = requireNonNull(dataFile).toAbsolutePath().normalize().getParent();
-        if (dataDirectory == null || dataDirectory.getParent() == null) {
+        if (dataDirectory == null) {
             throw new IOException("The export directory could not be determined from " + dataFile + ".");
         }
-        return dataDirectory.getParent().resolve("export.csv");
+        return dataDirectory.resolve("export.csv");
     }
 
     /** Exports all candidates and returns only after closing the destination successfully. */
