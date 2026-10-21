@@ -6,12 +6,6 @@
 
 # HRvest Developer Guide
 
-<box type="info" seamless>
-
-**Role feature integration:** Role documentation describes the combined implementation in PRs #129, #130, and #131 (issues #126, #127, and #128). These sections apply once those implementation PRs are merged; merging this documentation alone does not enable role commands or catalogue persistence.
-
-</box>
-
 <!-- * Table of Contents -->
 <page-nav-print />
 
@@ -122,7 +116,7 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
-Role-management commands identify catalogue entries by name rather than by their position in the sorted catalogue, so creating or renaming another role does not change the target of an existing command. `RoleCommandParser` handles command syntax; catalogue uniqueness, protected-role checks, and assignment updates remain in the model.
+For role-management commands, `AddressBookParser` selects `RoleCommandParser` to parse role names and create the corresponding `Command`. During execution, the command delegates catalogue validation and assignment updates to the `Model`.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
@@ -133,7 +127,7 @@ Role-management commands identify catalogue entries by name rather than by their
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores a role catalogue in `AddressBook`, independently of candidate assignments, so unused roles remain available and clearing candidates preserves the catalogue. Each candidate has a nonempty, immutable set of roles from this catalogue; the protected `No role` entry supplies the fallback when deleting a candidate's last assigned role.
+* stores a shared role catalogue in `AddressBook`, separately from candidate assignments.
 * enforces email-only uniqueness through `Person.isSamePerson`, using case-insensitive comparison. `ParserUtil.parseEmail` trims command input, while `Email` validates stored values and preserves case. Full `Person.equals` and `Email.equals` remain case-sensitive. Add, edit, bulk replacement and JSON loading share this identity rule. Edit permits unchanged identity because the list already enforces uniqueness; a changed identity is checked against the entire address book, not only the displayed list.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * tracks whether the displayed list is in expanded view as transient state. The `Logic` API exposes this read-only property to the `UI`; it is not persisted.
@@ -141,9 +135,13 @@ The `Model` component,
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 
-Roles retain their IDs across renames, but `Role.equals` compares both ID and name. Renaming therefore requires replacing the role values held by candidates as well as the catalogue entry. `ModelManager` validates a replacement address book before applying a rename or deletion, preventing stale role references or partially applied validation failures. These operations also reset an expanded view to the full list because its filter captures the candidate's previous value.
+#### Role catalogue design
 
-The shared integration contract is `Model.getRoleCatalogue()` for catalogue access, `RoleCatalogue.find/requireRole/resolve` for normalized lookup and membership validation, and `Model.replacePersonRoles` with `Person.withRoles` for assignment replacement. Existing candidate constructors temporarily supply `No role`; requiring explicit role input in candidate add/edit/filter commands and displaying roles are separate integration work. Legacy-file migration remains independent of that command syntax.
+The catalogue stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position, so catalogue sorting does not change their targets.
+
+* Each candidate has at least one role from the catalogue. The protected `No role` entry provides a fallback when deleting the candidate's last role.
+* Roles keep a stable identity across renames. A rename updates the catalogue and all assigned candidates together, including candidates outside the displayed list.
+* The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates.
 
 <box type="info" seamless>
 
@@ -172,11 +170,16 @@ During startup, `MainApp` uses the storage component's `CandidateDataInitializer
 
 Both backup and replacement saving must finish before commands become available. Otherwise startup aborts with an actionable terminal error, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
 
-The catalogue is persisted separately in `data/roles.json`; candidate records contain role IDs. `StorageManager` coordinates both through `RoleDataStorage`, loading the catalogue before resolving assignments. Missing legacy assignments migrate to `No role`; explicitly empty, duplicate, null-element, or unknown references are invalid. Missing catalogues are accepted only when candidates can resolve against the built-in role.
+#### Coordinating candidate and role storage
 
-Before loading, backing up, or saving, `RoleDataStorage` rejects collisions between candidate, catalogue, and journal destinations, resolving symbolic links and checking existing file identity. This prevents recovery and writes from overwriting another member of the transaction. Saving two files cannot use a single filesystem rename. Before either replacement, a versioned `roles-transaction.json` rollback journal stores the exact previous bytes and whether each file existed. A successful save replaces each file atomically in sequence, then removes the journal; the pair is not replaced in one atomic operation. A failure restores both previous files; if rollback cannot finish, the journal remains and further saves are blocked. Startup restores an interrupted transaction before reading references. Invalid journals block replacement recovery so their before-images are never silently discarded. This protocol assumes one running HRvest instance; concurrent writers are unsupported.
+Candidates store role IDs, while `roles.json` stores the catalogue. `RoleDataStorage` loads the catalogue first so that it can validate candidate assignments. Older candidates without role assignments receive `No role`; invalid assignments use the data-recovery process described above.
 
-Invalid candidate/catalogue data uses the existing backup-before-replacement recovery. Both originals must be preserved before saving an empty candidate list and default catalogue. The companion role backup is named after the candidate backup with `.roles.json` appended; when only the catalogue exists, its backup is the primary recovery path. `LogicManager` uses `Model.createRestorePoint()` to restore the pre-command address book, filter, and expanded view after save failure.
+The two files must stay consistent, but a filesystem rename can replace only one file at a time. To support recovery:
+
+* A rollback journal, `roles-transaction.json`, preserves the previous files before either is replaced. Failed or interrupted saves restore that pair before data is loaded again.
+* Invalid journals or incomplete rollback block further saves, preserving the recovery data. Candidate, catalogue, and journal paths must identify different files, and concurrent HRvest instances are unsupported.
+* Recovery from invalid candidate or catalogue data backs up both originals before saving an empty candidate list and the built-in catalogue. The catalogue backup uses the candidate backup name with `.roles.json` appended; a catalogue-only backup is used when no candidate file exists.
+* If saving a command fails, `LogicManager` restores the previous model data, filter, and expanded view so that memory and saved data remain consistent after successful rollback.
 
 ### Common classes
 
@@ -724,7 +727,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Managing roles
 
-These checks require the combined role implementation. Use a separate test folder and keep a matching backup of candidate and catalogue files.
+Use a separate test folder and keep a matching backup of candidate and catalogue files.
 
 1. Run `create_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
 1. Run `create_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalogue.

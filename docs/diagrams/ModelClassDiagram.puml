@@ -39,6 +39,10 @@ UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" RoleCatalogue
 RoleCatalogue --> "1..*" Role : catalogue
+note right of RoleCatalogue
+  Always contains the protected
+  "No role" entry.
+end note
 Person --> "1..*" Role : assigned roles
 
 AddressBook *--> "1" UniquePersonList
