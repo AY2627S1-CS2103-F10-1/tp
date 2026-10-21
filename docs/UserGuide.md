@@ -248,12 +248,12 @@ Format: `clear`
 
 ### Exporting candidates: `export`
 
-Exports every candidate to `export.csv` in the same parent folder as the application's `data/` folder (for example if the data folder was `./data/` then the export would be at `./export.csv`). Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
+Exports every candidate to `export.csv` inside the application's data folder, alongside the configured JSON data file (for example, `./data/data.json` gives `./data/export.csv`). Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
 
 Format: `export`
 
 * Use the lowercase command; surrounding whitespace is accepted.
-* The destination is always `export.csv` beside the application's configured data directory. You are not able to specify your own export path.
+* The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty.
 * Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.

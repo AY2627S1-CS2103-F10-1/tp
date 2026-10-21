@@ -89,13 +89,13 @@ public class CsvExportWriterTest {
     }
 
     @Test
-    public void resolveDestination_relativeNormalizedAndUnicode_usesDataParent() throws Exception {
-        assertEquals(Path.of("export.csv").toAbsolutePath(),
+    public void resolveDestination_relativeNormalizedAndUnicode_usesDataDirectory() throws Exception {
+        assertEquals(Path.of("data", "export.csv").toAbsolutePath(),
                 CsvExportWriter.resolveDestination(Path.of("data", "addressbook.json")));
-        assertEquals(directory.resolve("街 space/export.csv"), CsvExportWriter.resolveDestination(
+        assertEquals(directory.resolve("街 space/data/export.csv"), CsvExportWriter.resolveDestination(
                 directory.resolve("街 space/data/../data/addressbook.json")));
         assertThrows(IOException.class, () -> CsvExportWriter.resolveDestination(directory.getRoot()));
-        assertThrows(IOException.class, () ->
+        assertEquals(directory.getRoot().resolve("export.csv"),
                 CsvExportWriter.resolveDestination(directory.getRoot().resolve("book.json")));
     }
 
@@ -121,7 +121,7 @@ public class CsvExportWriterTest {
         assertThrows(IOException.class, () -> exporter.export(new AddressBook(), link));
         assertTrue(Files.isSymbolicLink(link));
         assertFalse(Files.exists(target));
-        assertEquals(directory.resolve("export.csv"), CsvExportWriter.resolveDestination(
+        assertEquals(directory.resolve("data/export.csv"), CsvExportWriter.resolveDestination(
                 Files.createSymbolicLink(directory.resolve("data"), directory.resolve("elsewhere"))
                         .resolve("book.json")));
     }
