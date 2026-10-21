@@ -140,6 +140,24 @@ The `Model` component,
 </box>
 
 
+### Role catalogue integration
+
+Roles have stable IDs and trimmed display names. `Role.normalize` defines case-insensitive name lookup using `Locale.ROOT`; internal spaces remain significant. `RoleCatalogue` rejects duplicate IDs/names and requires the protected `Role.NO_ROLE`. A person's immutable role set is always nonempty. `No role` may coexist with other roles.
+
+Use `Model.getRoleCatalogue().find(name)` or `requireRole(name)` for lookup, and `resolve(names)` to resolve a nonempty collection of existing names. `Model.replacePersonRoles(person, names)` validates the complete replacement before updating the person. `Person.withRoles(roles)` copies all other fields; catalogue membership is checked at the address-book boundary. Do not construct roles to resolve user-supplied names.
+
+`Model.createRole`, `renameRole`, and `deleteRole` own catalogue changes. Rename keeps the ID and updates every affected person's immutable references, including candidates outside the displayed filter. Delete preserves remaining assignments and supplies `No role` only when none remain. Replacement data is validated before live state changes.
+
+For Francis's integration, use these APIs for person add/edit/filter rather than duplicating normalization or assignment validation. Existing person constructors explicitly default to `No role` so existing commands compile independently; this is temporary creation compatibility, not the final add-command rule. Francis must require explicitly supplied roles in the add parser and resolve them against the catalogue before adding. Keep constructor compatibility for legacy callers and retain storage migration. Existing edit/note/status copies preserve assignments; clearing candidates preserves the catalogue. UI display and role input syntax belong to Francis's changes.
+
+The catalogue is persisted separately in `data/roles.json`; candidate records contain role IDs. `StorageManager` coordinates both through `RoleDataStorage`, loading the catalogue before resolving assignments. Missing legacy assignments migrate to `No role`; explicitly empty, duplicate, null-element, or unknown references are invalid. Missing catalogues are accepted only when candidates can resolve against the built-in role.
+
+Saving two files cannot use a single filesystem rename. Before either replacement, a versioned `roles-transaction.json` rollback journal stores the exact previous bytes and whether each file existed. A successful save atomically replaces both files and removes the journal. A failure restores both previous files; if rollback cannot finish, the journal remains and further saves are blocked. Startup restores an interrupted transaction before reading references. Invalid journals block replacement recovery so their before-images are never silently discarded. This protocol assumes one running HRvest instance; concurrent writers are unsupported.
+
+Invalid candidate/catalogue data uses the existing backup-before-replacement recovery. Both originals must be preserved before saving an empty candidate list and default catalogue. The companion role backup is named after the candidate backup with `.roles.json` appended; when only the catalogue exists, its backup is the primary recovery path. `LogicManager` uses `Model.createRestorePoint()` to restore the pre-command address book, filter, and expanded view after save failure.
+
+Role-management commands address entries by name through `RoleCatalogue`, avoiding indexes that could change after sorting. `RoleCommandParser` shares prefix validation across `create_role n/NAME`, `edit_role r/EXISTING_NAME n/NEW_NAME`, `delete_role r/NAME`, and argument-free `list_role`. The new commands and prefixes accept either case; existing person command syntax is unchanged. Whitespace-delimited parameter tokens are reserved in command input. The model still owns uniqueness, reference propagation, fallback, and protection checks, so Francis can reuse those invariants independently of parsing.
+
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)

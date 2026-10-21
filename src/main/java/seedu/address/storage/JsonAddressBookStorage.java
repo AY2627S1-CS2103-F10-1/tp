@@ -4,10 +4,12 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -25,6 +27,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.role.RoleCatalogue;
 
 /**
  * A class to access AddressBook data stored as a JSON file on the hard disk.
@@ -71,8 +74,13 @@ public class JsonAddressBookStorage {
      * @throws DataLoadingException if loading the data from storage failed.
      */
     public Optional<ReadOnlyAddressBook> readAddressBook(Path filePath) throws DataLoadingException {
-        requireNonNull(filePath);
+        return readAddressBook(filePath, new RoleCatalogue());
+    }
 
+    /** Reads candidate references against a separately loaded catalogue. */
+    public Optional<ReadOnlyAddressBook> readAddressBook(Path filePath, RoleCatalogue catalogue)
+            throws DataLoadingException {
+        requireNonNull(filePath);
         if (!isExistingDataFile(filePath)) {
             return Optional.empty();
         }
@@ -83,7 +91,7 @@ public class JsonAddressBookStorage {
         }
 
         try {
-            return Optional.of(jsonAddressBook.get().toModelType());
+            return Optional.of(jsonAddressBook.get().toModelType(catalogue));
         } catch (IllegalValueException ive) {
             logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
             throw new DataLoadingException(ive);
@@ -167,8 +175,27 @@ public class JsonAddressBookStorage {
      */
     public void saveAddressBook(ReadOnlyAddressBook addressBook, Path filePath) throws IOException {
         requireNonNull(addressBook);
-        requireNonNull(filePath);
+        writeFile(filePath, filePath,
+                temporary -> JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), temporary));
+    }
 
+    /** Atomically saves a JSON value while preserving existing destination permissions and links. */
+    static void writeJson(Object value, Path filePath) throws IOException {
+        writeFile(filePath, filePath, temporary -> JsonUtil.saveJsonFile(value, temporary));
+    }
+
+    /** Atomically restores raw before-image bytes without parsing or modifying the original data. */
+    static void writeBytes(byte[] bytes, Path filePath) throws IOException {
+        writeBytes(bytes, filePath, filePath);
+    }
+
+    /** Applies source permissions before writing sensitive journal bytes to a new destination. */
+    static void writeBytes(byte[] bytes, Path filePath, Path permissionsSource) throws IOException {
+        writeFile(filePath, permissionsSource, temporary -> Files.write(temporary, bytes));
+    }
+
+    private static void writeFile(Path filePath, Path permissionsSource, FileWriter writer) throws IOException {
+        requireNonNull(filePath);
         Path destination = filePath.toAbsolutePath();
         if (Files.isSymbolicLink(destination)) {
             destination = destination.toRealPath();
@@ -180,14 +207,27 @@ public class JsonAddressBookStorage {
         Files.createDirectories(parent);
         Path temporaryFile = Files.createTempFile(parent, "HRvest-", ".tmp");
         try {
-            copyExistingAcl(Files.getFileAttributeView(destination, AclFileAttributeView.class),
+            Path permissions = Files.exists(destination) ? destination : permissionsSource;
+            copyExistingAcl(Files.getFileAttributeView(permissions, AclFileAttributeView.class),
                     Files.getFileAttributeView(temporaryFile, AclFileAttributeView.class));
-            copyExistingPosixPermissions(destination, temporaryFile);
-            JsonUtil.saveJsonFile(new JsonSerializableAddressBook(addressBook), temporaryFile);
+            copyExistingPosixPermissions(permissions, temporaryFile);
+            writer.write(temporaryFile);
+            try (FileChannel channel = FileChannel.open(temporaryFile, StandardOpenOption.WRITE)) {
+                channel.force(true);
+            }
+            // Some providers replace attributes when closing a write channel (notably ZIP filesystems).
+            copyExistingAcl(Files.getFileAttributeView(permissions, AclFileAttributeView.class),
+                    Files.getFileAttributeView(temporaryFile, AclFileAttributeView.class));
+            copyExistingPosixPermissions(permissions, temporaryFile);
             Files.move(temporaryFile, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } finally {
             Files.deleteIfExists(temporaryFile);
         }
+    }
+
+    @FunctionalInterface
+    private interface FileWriter {
+        void write(Path path) throws IOException;
     }
 
     /**
