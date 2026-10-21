@@ -11,7 +11,6 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
-import seedu.address.logic.commands.ExportCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -68,9 +67,11 @@ public class LogicManager implements Logic {
 
     /** Completes export before reporting success and deliberately bypasses unrelated JSON saving. */
     private CommandResult exportAddressBook() throws CommandException {
+        // CH: The export command's logic and execution is here
+        final String messageSuccess = "Exported successfully to %s.";
         try {
             Path destination = storage.exportAddressBook(model.getAddressBook());
-            return new CommandResult(String.format(ExportCommand.MESSAGE_SUCCESS, destination));
+            return new CommandResult(String.format(messageSuccess, destination));
         } catch (IOException e) {
             throw new CommandException("Export failed: " + e.getMessage(), e);
         }

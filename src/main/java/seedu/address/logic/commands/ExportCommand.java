@@ -9,7 +9,12 @@ public class ExportCommand extends Command {
     public static final String COMMAND_WORD = "export";
     public static final String MESSAGE_USAGE = "Usage: export\n"
             + "Extra arguments are ignored. Custom data locations and output paths cannot be specified.";
-    public static final String MESSAGE_SUCCESS = "Exported successfully to %s.";
+
+    /**
+     * CH: This command is bespoke in that most of the command is handled in LogicManager with side effects.
+     * As such the CommandResult is used to trigger the LogicManager where it has access to the model and storage
+     * If not we would need to pass in the model and storage to all execute functions
+     */
 
     @Override
     public CommandResult execute(Model model) {
