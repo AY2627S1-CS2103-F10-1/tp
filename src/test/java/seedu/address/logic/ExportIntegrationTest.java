@@ -65,6 +65,16 @@ public class ExportIntegrationTest {
     }
 
     @Test
+    public void execute_missingDataFolder_createsFolderAndExports() throws Exception {
+        ModelManager model = new ModelManager();
+        model.addPerson(new PersonBuilder().build());
+        Logic logic = new LogicManager(model, createStorage(directory.resolve("data/book.json")));
+        assertEquals("Exported successfully to " + directory.resolve("data/export.csv") + ".",
+                logic.execute("export").getFeedbackToUser());
+        assertEquals(2, Files.readAllLines(directory.resolve("data/export.csv")).size());
+    }
+
+    @Test
     public void execute_exportFailure_preservesStateAndDoesNotSaveJson() throws Exception {
         ModelManager model = new ModelManager();
         var person = new PersonBuilder().withEmail("alice@example.com").build();
