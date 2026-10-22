@@ -135,14 +135,6 @@ The `Model` component,
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
 
-#### Role catalogue design
-
-The catalogue stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position, so catalogue sorting does not change their targets.
-
-* Each candidate has at least one role from the catalogue. The protected `No role` entry provides a fallback when deleting the candidate's last role.
-* Roles keep a stable identity across renames. A rename updates the catalogue and all assigned candidates together, including candidates outside the displayed list.
-* The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates.
-
 <box type="info" seamless>
 
 **Note:** The alternative, arguably more object-oriented, design below keeps a unique list of tags in `AddressBook`, and each `Person` references tags from that list. This lets `AddressBook` maintain one `Tag` object per unique tag instead of each `Person` holding its own `Tag` objects.<br>
@@ -150,6 +142,13 @@ The catalogue stores roles independently of candidates so that unused roles rema
 <puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
 </box>
 
+#### Role catalogue design
+
+The catalogue stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position, so catalogue sorting does not change their targets.
+
+* Each candidate has at least one role from the catalogue. The protected `No role` entry provides a fallback when deleting the candidate's last role.
+* Roles keep a stable identity across renames. A rename updates the catalogue and all assigned candidates together, including candidates outside the displayed list.
+* The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates.
 
 ### Storage component
 
