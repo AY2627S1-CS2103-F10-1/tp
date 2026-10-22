@@ -639,6 +639,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * **Candidate**: A person being considered for an open role.
 * **Open role**: A position for which the startup is currently recruiting.
+* **Role catalogue**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.

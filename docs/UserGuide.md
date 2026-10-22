@@ -62,7 +62,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
 * Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The role catalogue command `list_role` is an exception: it rejects all arguments.
+  For example, `help 123` is interpreted as `help`. The `list_role` command is an exception: it rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -244,7 +244,7 @@ Examples:
 
 ### Managing the role catalogue
 
-Manage the roles available to candidates in the shared [role catalogue](#glossary).
+The role catalogue is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
 * Each candidate has one or more roles. New candidates receive `No role`; `add` and `edit` do not assign other roles in this version.
 * `No role` cannot be renamed or deleted and may coexist with other roles.
@@ -395,12 +395,6 @@ _Details coming soon ..._
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
 2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
-
---------------------------------------------------------------------------------------------------------------------
-
-## Glossary
-
-* **Role catalogue**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
 --------------------------------------------------------------------------------------------------------------------
 
