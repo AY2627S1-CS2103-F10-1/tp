@@ -10,7 +10,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
@@ -153,6 +155,36 @@ public class CsvExportWriterTest {
                 + ": The file or folder is not writable (permission denied).", () ->
                 exporter.export(new AddressBook(), destination));
         assertFalse(Files.exists(destination));
+    }
+
+    @Test
+    public void export_missingFolder_reportsReasonWithoutRepeatingPath() {
+        Path destination = directory.resolve("export.csv");
+        CsvExportWriter exporter = new CsvExportWriter() {
+            @Override
+            protected Writer openWriter(Path path) throws IOException {
+                throw new NoSuchFileException(path.toString());
+            }
+        };
+        assertThrows(IOException.class, "Could not export to " + destination
+                + ": The folder to export to does not exist.", () ->
+                exporter.export(new AddressBook(), destination));
+    }
+
+    @Test
+    public void describeFailure_fileSystemException_usesReasonNotPath() {
+        String path = directory.resolve("export.csv").toString();
+        String lockedReason = "The process cannot access the file because it is being used by another process";
+        assertEquals(lockedReason, CsvExportWriter.describeFailure(
+                new FileSystemException(path, null, lockedReason)));
+        assertEquals("The file or folder could not be accessed.", CsvExportWriter.describeFailure(
+                new FileSystemException(path)));
+    }
+
+    @Test
+    public void describeFailure_otherExceptions_usesMessageOrFallback() {
+        assertEquals("write failed", CsvExportWriter.describeFailure(new IOException("write failed")));
+        assertEquals("An unknown error occurred.", CsvExportWriter.describeFailure(new IOException()));
     }
 
     @Test
