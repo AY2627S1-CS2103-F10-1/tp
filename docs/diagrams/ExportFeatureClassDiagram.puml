@@ -1,0 +1,65 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor STORAGE_COLOR
+skinparam classBackgroundColor STORAGE_COLOR
+skinparam classFontColor #FFFFFF
+skinparam classAttributeFontColor #FFFFFF
+skinparam classStereotypeFontColor #FFFFFF
+
+package Logic as LogicPackage {
+    Class LogicManager LOGIC_COLOR
+
+    package Parser as ParserPackage #F4F6F6 {
+        Class ExportCommandParser LOGIC_COLOR {
+            +parse(args: String): ExportCommand
+        }
+    }
+
+    package Commands as CommandsPackage #F4F6F6 {
+        Class ExportCommand LOGIC_COLOR {
+            +execute(model: Model): CommandResult
+        }
+        Class CommandResult LOGIC_COLOR {
+            -export: boolean
+            +isExport(): boolean
+        }
+    }
+}
+
+package Storage as StoragePackage {
+    Class "<<interface>>\nStorage" as Storage {
+        +exportAddressBook(addressBook: ReadOnlyAddressBook): Path
+    }
+    Class StorageManager {
+        +exportAddressBook(addressBook: ReadOnlyAddressBook): Path
+    }
+    class CsvExportWriter {
+        {static} +resolveDestination(dataFile: Path): Path
+        +export(addressBook: ReadOnlyAddressBook, destination: Path): Path
+        #openWriter(destination: Path): Writer
+        ~writeCsv(addressBook: ReadOnlyAddressBook, writer: Writer): void
+        -writeRecord(writer: Writer, fields: List<String>): void
+        {static} ~escapeField(field: String): String
+    }
+}
+
+abstract class Writer
+
+show Storage methods
+show StorageManager methods
+show CsvExportWriter methods
+
+show ExportCommandParser methods
+show ExportCommand methods
+show CommandResult members
+
+ExportCommandParser ..> ExportCommand : creates
+ExportCommand ..> CommandResult : creates with export = true
+LogicManager ..> CommandResult : checks isExport()
+LogicManager --> "1" Storage : storage
+StorageManager .up.|> Storage
+StorageManager ..> CsvExportWriter : creates / calls export()
+CsvExportWriter ..> Writer : opens / writes CSV through
+
+@enduml
