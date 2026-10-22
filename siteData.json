@@ -66,6 +66,7 @@
         "deleting-a-candidate": "Deleting a candidate",
         "preserving-filters-after-candidate-updates": "Preserving filters after candidate updates",
         "candidate-note-indicator": "Candidate note indicator",
+        "managing-roles": "Managing roles",
         "saving-data": "Saving data"
       },
       "headingKeywords": {}
@@ -123,6 +124,7 @@
         "filtering-candidates-by-status-filter": "Filtering candidates by status: filter",
         "deleting-a-candidate-delete": "Deleting a candidate: delete",
         "viewing-a-candidate-s-full-record-expand": "Viewing a candidate's full record: expand",
+        "managing-the-role-catalogue": "Managing the role catalogue",
         "clearing-all-entries-clear": "Clearing all entries: clear",
         "exporting-candidates-export": "Exporting candidates: export",
         "exiting-the-program-exit": "Exiting the program: exit",
