@@ -62,7 +62,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
 * Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
-  For example, `help 123` is interpreted as `help`.
+  For example, `help 123` is interpreted as `help`. The `list_role` command is an exception: it rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -242,9 +242,70 @@ Examples:
 * `list` followed by `expand 1` shows the 1st candidate in HRvest.
 * `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the results of the `filter` command.
 
+### Managing the role catalogue
+
+The role catalogue is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
+
+* Each candidate has one or more roles. New candidates receive `No role`; `add` and `edit` do not assign other roles in this version.
+* `No role` cannot be renamed or deleted and may coexist with other roles.
+* Unused roles remain available, including after `clear` and restarts.
+* Role command words and prefixes are case-insensitive. Put whitespace before each prefix and supply each required prefix exactly once.
+* Changes save automatically. Invalid commands report an error without changing candidates or roles.
+
+**Role names:**
+
+* Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
+* Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
+* Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
+* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
+
+#### Creating an unused role: `create_role`
+
+Creates a role without assigning it to a candidate.
+
+Format: `create_role n/NAME`
+
+* The name must not match an existing role, including `No role`.
+
+Example: `create_role n/Software Engineer`
+
+#### Renaming a role globally: `edit_role`
+
+Renames a role for every assigned candidate, including those outside the displayed list.
+
+Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
+
+* The role must exist and must not be `No role`.
+* The new name must not match another role. Changing only capitalisation is allowed.
+* Other role assignments stay unchanged.
+* Exits expanded view and shows all candidates; other candidate filters remain active.
+
+Example: `edit_role r/Software Engineer n/Senior Software Engineer`
+
+#### Deleting a role globally: `delete_role`
+
+Removes a role from the catalogue and all assigned candidates.
+
+Format: `delete_role r/NAME`
+
+* The role must exist and must not be `No role`.
+* Candidates keep their other roles. Those losing their last role receive `No role`.
+* Exits expanded view and shows all candidates; other candidate filters remain active.
+
+Example: `delete_role r/Senior Software Engineer`
+
+#### Listing the complete catalogue: `list_role`
+
+Shows all role names in the command result, including unused roles and `No role`.
+
+Format: `list_role`
+
+* Names are sorted alphabetically, ignoring case.
+* Accepts no arguments and keeps the candidate filter unchanged.
+
 ### Clearing all entries: `clear`
 
-Clears all entries from HRvest.
+Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
 
 Format: `clear`
 
@@ -277,32 +338,40 @@ A pinned sticky note icon beside a candidate's name indicates that a note exists
 
 ### Saving the data
 
-HRvest automatically saves data after every successful command.
-You can also export the data to CSV using the [`export` command](#exporting-candidates-export).
+HRvest automatically saves data after every successful command. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
-Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement. On filesystems that support file ACLs (access control lists) or POSIX permissions, saving preserves those settings on the existing data file; a failure to read or apply them causes the save to fail. If the data file is a symbolic link, saving updates its existing target and keeps the link. Saving fails if the link's target does not exist, leaving the link unchanged.
-
-The Windows account running HRvest must have permission to write in the data folder and access the existing data file. If those permissions are insufficient, HRvest reports a save error and keeps the existing access restrictions.
-
-A crash or power loss can leave temporary files named `HRvest-<random>.tmp` beside the data file. After closing all HRvest instances, you can delete these leftover `.tmp` files. Keep the saved JSON data file (normally `data/HRvest.json`), any symbolic-link target, and recovery backups ending in `-corrupt.json`; these are not temporary files.
+* Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
+* Run only one HRvest instance at a time. Your account needs permission to access the files and write to their folder.
+* If saving fails, follow the error message before continuing. Do not edit or delete `roles-transaction.json`; restart HRvest to recover an interrupted save.
 
 ### Editing the data file
 
-HRvest data is saved automatically as a JSON file `[JAR file location]/data/HRvest.json`. Advanced users are welcome to update data directly by editing that data file.
+Advanced users may edit the JSON files. For a custom candidate data path, use that file and the `roles.json` beside it.
 
-Close HRvest before editing, and keep a backup. To remove a note, remove its `note` field, set it to `null`, or set it to an empty or whitespace-only string. Leading and trailing whitespace in saved statuses is ignored, just as in commands; for example, `"status": " Applied "` loads as `Applied`.
+**Before editing:**
+
+1. Complete any interrupted-save recovery, then close HRvest.
+1. Back up both data files together.
+1. Edit the files, then restart HRvest to check your changes.
+
+**When editing records:**
+
+* Keep candidate emails unique, ignoring case.
+* Each candidate needs at least one valid role ID from `roles.json`, without duplicates. Use `no-role` for `No role`, rather than its display name.
+* Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
+
+**If data cannot be loaded:**
 
 <box type="warning" seamless>
 
-**Caution:**
-If the data file cannot be loaded, HRvest first preserves its exact contents in a unique `HRvest-<timestamp>-<random>-corrupt.json` backup beside the data file (beside the target for a symbolic link). The timestamp is your local date and time, for example `HRvest-20261014T120000-123456-corrupt.json`, so sorting by name puts the newest backup last. It then saves an empty candidate list before opening the window. A warning shows the backup's full path and recovery instructions. Commands such as `list`, `find`, and `help` cannot overwrite this backup. Backups are kept until you remove them yourself.<br>
-If creating the backup or saving the replacement fails, HRvest stops before opening the window and prints recovery instructions to the terminal. The original file remains intact; a completed backup is also kept. Check file and folder permissions and restart after repairing the file.<br>
-To restore your candidates, close HRvest, copy the backup, repair the copy, and replace `data/HRvest.json` (or its symbolic-link target) with the repaired copy. Keep the backup until you have verified your candidates are restored. HRvest does not automatically repair or merge records.<br>
-Files containing candidates with the same email, ignoring case, are invalid even if the candidates have different names. This also applies to older files created before email uniqueness was enforced. Such files use the same backup and recovery process. Missing files still start with sample candidates; a successfully recovered empty file stays empty on later launches.
+Invalid edits can cause HRvest to start with an empty candidate list and the default role catalogue. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
 
-Furthermore, certain edits can cause HRvest to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+1. Close HRvest and copy the backups shown in the warning.
+1. Repair the copies and restore the corresponding candidate and role files together.
+1. Restart HRvest and verify your data before deleting any backups.
 
-The `persons` array must contain candidate objects, and each candidate's `tags` array must contain tag strings. Null entries in either array are invalid and are reported as a data loading failure instead of crashing startup. An empty array is valid; a null JSON root or a missing/null `persons` array is invalid.
+HRvest does not repair or merge records automatically. See the [Developer Guide](DeveloperGuide.md#storage-component) for storage and recovery details.
+
 </box>
 
 ### Archiving data files `[coming in v2.0]`
@@ -314,7 +383,11 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install the app on the other computer and overwrite the data file it creates with the data file from your previous HRvest home folder.
+**A**: Install HRvest on the new computer, then:
+
+1. If `roles-transaction.json` exists on the old computer, restart HRvest there to complete recovery first. If recovery fails, follow the reported instructions before transferring.
+1. Close HRvest on both computers.
+1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together. For a custom candidate path, copy that file and its neighbouring `roles.json` instead.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -330,6 +403,10 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Create role** | `create_role n/NAME`<br> e.g., `create_role n/Software Engineer`
+**Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
+**Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
+**List roles** | `list_role`
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
