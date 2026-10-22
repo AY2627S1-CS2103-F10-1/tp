@@ -100,13 +100,25 @@ public class CsvExportWriterTest {
     }
 
     @Test
-    public void export_directoryOrMissingParent_failsWithoutDeleting() throws Exception {
+    public void export_directoryDestination_failsWithoutDeleting() throws Exception {
         Path destination = Files.createDirectory(directory.resolve("export.csv"));
         assertThrows(IOException.class, () -> new CsvExportWriter().export(new AddressBook(), destination));
         assertTrue(Files.isDirectory(destination));
-        Path missing = directory.resolve("missing/export.csv");
-        assertThrows(IOException.class, () -> new CsvExportWriter().export(new AddressBook(), missing));
-        assertFalse(Files.exists(missing.getParent()));
+    }
+
+    @Test
+    public void export_missingParent_createsParentAndExports() throws Exception {
+        Path missing = directory.resolve("missing/nested/export.csv");
+        assertEquals(missing, new CsvExportWriter().export(new AddressBook(), missing));
+        assertEquals(1, Files.readAllLines(missing).size());
+    }
+
+    @Test
+    public void export_parentIsFile_failsWithoutDeleting() throws Exception {
+        Path parent = Files.writeString(directory.resolve("data"), "original");
+        assertThrows(IOException.class, () -> new CsvExportWriter().export(new AddressBook(),
+                parent.resolve("export.csv")));
+        assertEquals("original", Files.readString(parent));
     }
 
     @Test

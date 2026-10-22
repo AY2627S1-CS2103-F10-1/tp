@@ -317,6 +317,7 @@ Format: `export`
 
 * Use the lowercase command; surrounding whitespace is accepted.
 * The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
+* If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
 * For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.

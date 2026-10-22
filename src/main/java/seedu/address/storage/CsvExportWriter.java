@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import seedu.address.commons.util.FileUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 
@@ -40,6 +41,8 @@ public class CsvExportWriter {
         requireNonNull(destination);
         boolean opened = false;
         try {
+            // The data folder may not exist yet, e.g. when sample data has not been saved.
+            FileUtil.createParentDirsOfFile(destination);
             checkDestination(destination);
             try (Writer writer = openWriter(destination)) {
                 opened = true;
@@ -63,7 +66,7 @@ public class CsvExportWriter {
                 throw new IOException("The destination is not a regular file (directories and links are not allowed).");
             }
         } catch (NoSuchFileException e) {
-            // CREATE handles an absent destination; do not create missing parent directories.
+            // CREATE handles an absent destination.
         }
     }
 
