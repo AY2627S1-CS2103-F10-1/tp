@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -50,11 +51,28 @@ public class CsvExportWriter {
             }
             return destination;
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
-            String reason = e instanceof AccessDeniedException
-                    ? "The file or folder is not writable (permission denied)." : e.getMessage();
+            String reason = describeFailure(e);
             String warning = opened ? " The export may be empty or incomplete; the previous export may be lost." : "";
             throw new IOException("Could not export to " + destination + ": " + reason + warning, e);
         }
+    }
+
+    /**
+     * Returns a user-facing reason for {@code e}.
+     * File system exceptions are described by their reason, as their message only repeats the path.
+     */
+    static String describeFailure(Exception e) {
+        if (e instanceof AccessDeniedException) {
+            return "The file or folder is not writable (permission denied).";
+        }
+        if (e instanceof NoSuchFileException) {
+            return "The folder to export to does not exist.";
+        }
+        if (e instanceof FileSystemException fileSystemException) {
+            String reason = fileSystemException.getReason();
+            return reason == null ? "The file or folder could not be accessed." : reason;
+        }
+        return e.getMessage() == null ? "An unknown error occurred." : e.getMessage();
     }
 
     /** Rejects existing non-regular entries; opening also refuses symbolic links to limit replacement races. */
