@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.List;
 
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
@@ -25,9 +25,10 @@ public class FilterCommand extends Command {
             + Status.MESSAGE_CONSTRAINTS + "\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "Interviewing " + PREFIX_STATUS + "Offered";
 
-    public static final String MESSAGE_SUCCESS = "Filtered %1$d candidate(s) with status: %2$s";
+    public static final String MESSAGE_SUCCESS = "Filtered %1$d candidate(s) with status(es): %2$s";
 
-    private static final String STATUS_SEPARATOR = " or ";
+    private static final String STATUS_SEPARATOR = ", ";
+    private static final String LAST_STATUS_SEPARATOR = " or ";
 
     private final StatusContainsKeywordPredicate predicate;
 
@@ -53,10 +54,22 @@ public class FilterCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(predicate);
-        String statuses = predicate.getStatuses().stream()
-                .map(Status::toString)
-                .collect(Collectors.joining(STATUS_SEPARATOR));
-        return new CommandResult(String.format(MESSAGE_SUCCESS, model.getFilteredPersonList().size(), statuses));
+        List<String> statusNames = predicate.getStatuses().stream().map(Status::toString).toList();
+        return new CommandResult(String.format(MESSAGE_SUCCESS, model.getFilteredPersonList().size(),
+                joinStatusNames(statusNames)));
+    }
+
+    /**
+     * Joins status names as "A", "A or B", or "A, B or C".
+     */
+    private static String joinStatusNames(List<String> statusNames) {
+        assert !statusNames.isEmpty() : "A filter always has at least one status";
+        int lastIndex = statusNames.size() - 1;
+        if (lastIndex == 0) {
+            return statusNames.get(0);
+        }
+        return String.join(STATUS_SEPARATOR, statusNames.subList(0, lastIndex))
+                + LAST_STATUS_SEPARATOR + statusNames.get(lastIndex);
     }
 
     @Override

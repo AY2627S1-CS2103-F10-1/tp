@@ -72,6 +72,18 @@ public class FilterCommandTest {
     }
 
     @Test
+    public void execute_threeStatuses_joinsWithCommasAndFinalOr() {
+        FilterCommand command = new FilterCommand(List.of(Status.OFFERED, Status.APPLIED, Status.INTERVIEWING));
+        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+        expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(
+                List.of(Status.APPLIED, Status.INTERVIEWING, Status.OFFERED)));
+        String expectedMessage = "Filtered " + expectedModel.getFilteredPersonList().size()
+                + " candidate(s) with status(es): Applied, Interviewing or Offered";
+
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+    }
+
+    @Test
     public void equals() {
         FilterCommand filterAppliedCommand = new FilterCommand(Status.APPLIED);
         FilterCommand filterAcceptedCommand = new FilterCommand(Status.ACCEPTED);
