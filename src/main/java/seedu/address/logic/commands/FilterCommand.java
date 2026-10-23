@@ -3,6 +3,9 @@ package seedu.address.logic.commands;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.Model;
 import seedu.address.model.person.Status;
@@ -16,12 +19,15 @@ public class FilterCommand extends Command {
     public static final String COMMAND_WORD = "filter";
 
     public static final String MESSAGE_USAGE = COMMAND_WORD + ": Filters candidates by status. "
+            + "Repeat " + PREFIX_STATUS + " to show candidates in any of several statuses.\n"
             + "Parameters: "
-            + PREFIX_STATUS + "STATUS\n"
+            + PREFIX_STATUS + "STATUS [" + PREFIX_STATUS + "MORE_STATUS]...\n"
             + Status.MESSAGE_CONSTRAINTS + "\n"
-            + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "Interviewing";
+            + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "Interviewing " + PREFIX_STATUS + "Offered";
 
     public static final String MESSAGE_SUCCESS = "Filtered %1$d candidate(s) with status: %2$s";
+
+    private static final String STATUS_SEPARATOR = " or ";
 
     private final StatusContainsKeywordPredicate predicate;
 
@@ -34,13 +40,23 @@ public class FilterCommand extends Command {
         this.predicate = new StatusContainsKeywordPredicate(status);
     }
 
+    /**
+     * Constructs a FilterCommand to show candidates with any of the specified statuses.
+     *
+     * @param statuses the statuses to filter by; must not be empty
+     */
+    public FilterCommand(Collection<Status> statuses) {
+        this.predicate = new StatusContainsKeywordPredicate(statuses);
+    }
+
     @Override
     public CommandResult execute(Model model) {
         requireNonNull(model);
         model.updateFilteredPersonList(predicate);
-        return new CommandResult(
-                String.format(MESSAGE_SUCCESS, model.getFilteredPersonList().size(),
-                        predicate.getStatus()));
+        String statuses = predicate.getStatuses().stream()
+                .map(Status::toString)
+                .collect(Collectors.joining(STATUS_SEPARATOR));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, model.getFilteredPersonList().size(), statuses));
     }
 
     @Override
