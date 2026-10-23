@@ -16,6 +16,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -84,10 +85,27 @@ public class CsvExportWriterTest {
         assertEquals(3, Files.readAllLines(destination).size());
         assertTrue(Files.readString(destination).endsWith("\"[]\",\"\"\r\n"));
         exporter.export(new AddressBook(), destination);
-        assertEquals(HEADER, Files.readString(destination));
+        assertEquals(CsvExportWriter.BYTE_ORDER_MARK + HEADER, Files.readString(destination));
         try (var entries = Files.list(directory)) {
             assertEquals(1, entries.count());
         }
+    }
+
+    @Test
+    public void export_nonAsciiText_startsWithUtf8ByteOrderMark() throws Exception {
+        Path destination = directory.resolve("export.csv");
+        AddressBook book = new AddressBook();
+        book.addPerson(new PersonBuilder().withAddress("Zürich 街").withNote("réalisé café").build());
+
+        new CsvExportWriter().export(book, destination);
+
+        byte[] bytes = Files.readAllBytes(destination);
+        assertEquals(List.of((byte) 0xEF, (byte) 0xBB, (byte) 0xBF),
+                List.of(bytes[0], bytes[1], bytes[2]));
+        String content = Files.readString(destination);
+        assertEquals(1, content.chars().filter(c -> c == CsvExportWriter.BYTE_ORDER_MARK).count());
+        assertTrue(content.startsWith(CsvExportWriter.BYTE_ORDER_MARK + HEADER));
+        assertTrue(content.contains("\"Zürich 街\"") && content.contains("\"réalisé café\""));
     }
 
     @Test
