@@ -31,6 +31,11 @@ public class NoteCommandParserTest {
     }
 
     @Test
+    public void parse_uppercasePrefix_returnsCommand() {
+        assertParseSuccess(parser, " 1 NO/Follow up", new NoteCommand(INDEX_FIRST_PERSON, new Note("Follow up")));
+    }
+
+    @Test
     public void parse_missingPrefix_throwsParseException() {
         String message = NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE;
         for (String args : new String[] {"", " 1", " 1 n/hi", " 1 hi", " 1no/hi"}) {

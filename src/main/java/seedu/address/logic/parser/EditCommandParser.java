@@ -25,6 +25,9 @@ import seedu.address.model.tag.Tag;
  */
 public class EditCommandParser implements Parser<EditCommand> {
 
+    public static final String MESSAGE_UNSUPPORTED_NOTE = "The edit command does not support no/. "
+            + "Use note INDEX no/NOTE_TEXT to add, replace or clear a note.";
+
     /**
      * Parses the given {@code String} of arguments in the context of the EditCommand
      * and returns an EditCommand object for execution.
@@ -32,6 +35,8 @@ public class EditCommandParser implements Parser<EditCommand> {
      */
     public EditCommand parse(String args) throws ParseException {
         requireNonNull(args);
+        ParserUtil.verifyNoNotePrefix(args, MESSAGE_UNSUPPORTED_NOTE);
+
         ArgumentMultimap argMultimap =
                 ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                         PREFIX_STATUS, PREFIX_TAG);

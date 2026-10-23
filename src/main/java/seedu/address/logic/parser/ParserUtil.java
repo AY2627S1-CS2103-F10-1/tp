@@ -1,10 +1,12 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
@@ -23,6 +25,25 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    // ArgumentTokenizer only recognises prefixes after a space, so a tab before no/ must be caught separately.
+    private static final Pattern NOTE_PREFIX_PATTERN =
+            Pattern.compile("(^|\\s)" + Pattern.quote(PREFIX_NOTE.getPrefix()), Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Rejects {@code args} if it contains the note prefix, so that commands without a note field
+     * do not silently store note text in another field.
+     *
+     * @param args Arguments of a command that does not accept a note.
+     * @param message Error message that points the user to the note command.
+     * @throws ParseException If {@code args} contains the note prefix after whitespace or at its start.
+     */
+    public static void verifyNoNotePrefix(String args, String message) throws ParseException {
+        requireNonNull(args);
+        if (NOTE_PREFIX_PATTERN.matcher(args).find()) {
+            throw new ParseException(message);
+        }
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
