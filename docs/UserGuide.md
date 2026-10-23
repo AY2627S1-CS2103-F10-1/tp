@@ -337,6 +337,15 @@ Format: `exit`
 
 A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`. Collapsed cards keep the note text hidden; use `expand INDEX` to view the candidate's full note. Candidates without notes have no icon and reserve no icon space.
 
+### Displayed candidate count
+
+The line above the candidate list shows how many candidates are displayed, so you can tell when some are hidden rather than deleted:
+
+* `Showing all 6 candidates.` when every candidate is displayed, or `Showing 1 candidate.` when HRvest has only one.
+* `Showing 2 of 6 candidates (filtered). Type list to show all.` when `find`, `filter`, or a later update to a filtered list hides some candidates.
+* `Expanded view of 1 of 6 candidates. Type list to show all.` after `expand`, or `Expanded view of the only candidate.` when HRvest has only one.
+* `No candidates.` when HRvest has no candidates.
+
 ### Navigating command history
 
 The command box remembers every command you submit in the current session so you can re-run or edit a past command without retyping it.

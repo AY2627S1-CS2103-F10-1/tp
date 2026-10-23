@@ -6,6 +6,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.Region;
@@ -21,17 +22,25 @@ public class PersonListPanel extends UiPart<Region> {
     private final Logger logger = LogsCenter.getLogger(PersonListPanel.class);
 
     @FXML
+    private Label listSummary;
+
+    @FXML
     private ListView<Person> personListView;
 
     /**
-     * Creates a panel observing the displayed persons and the expanded view state.
+     * Creates a panel observing the displayed persons, all persons and the expanded view state.
+     * A summary above the list shows how many of all persons are displayed.
      */
-    public PersonListPanel(ObservableList<Person> personList, ObservableBooleanValue isExpandedView) {
+    public PersonListPanel(ObservableList<Person> personList, ObservableList<Person> allPersons,
+            ObservableBooleanValue isExpandedView) {
         super(FXML);
         this.isExpandedView = isExpandedView;
         personListView.setItems(personList);
         isExpandedView.addListener((observable, oldValue, newValue) -> personListView.refresh());
         personListView.setCellFactory(listView -> new PersonListViewCell());
+        listSummary.textProperty().bind(Bindings.createStringBinding(() ->
+                ListSummary.describe(personList.size(), allPersons.size(), isExpandedView.get()),
+                personList, allPersons, isExpandedView));
     }
 
     /**
