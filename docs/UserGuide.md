@@ -35,7 +35,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
    * `delete 3` : Deletes the 3rd candidate shown in the current list.
 
-   * `clear` : Deletes all candidates.
+   * `clear confirm` : Deletes all candidates. `clear` on its own only asks you to confirm.
 
    * `exit` : Exits the app.
 
@@ -61,8 +61,8 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list_role` command is an exception: it rejects all arguments.
+* Extraneous parameters for `help`, `list`, `exit`, and `export` are ignored.<br>
+  For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -307,7 +307,17 @@ Format: `list_role`
 
 Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
 
-Format: `clear`
+Format: `clear confirm`
+
+* `clear` on its own deletes nothing. It shows how many candidates would be deleted and asks you to enter `clear confirm`.
+* `clear confirm` deletes every candidate, including those hidden by the current `find` or `filter`. The message is `All candidates have been cleared.`
+* `confirm` ignores letter case. Any other text after `clear` is rejected.
+* If there are no candidates, both forms reply `There are no candidates to clear.`
+
+<box type="warning" seamless>
+
+**Caution:** Clearing cannot be undone. Use `export` first if you may need the candidates again.
+</box>
 
 ### Exporting candidates: `export`
 
@@ -417,7 +427,7 @@ Action     | Format, Examples
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`
-**Clear**  | `clear`
+**Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`
