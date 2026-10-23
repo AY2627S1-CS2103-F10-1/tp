@@ -341,10 +341,10 @@ A pinned sticky note icon beside a candidate's name indicates that a note exists
 
 The line above the candidate list shows how many candidates are displayed, so you can tell when some are hidden rather than deleted:
 
-* `Showing all 6 candidates.` when every candidate is displayed.
+* `Showing all 6 candidates.` when every candidate is displayed, or `Showing 1 candidate.` when HRvest has only one.
 * `Showing 2 of 6 candidates (filtered). Type list to show all.` when `find`, `filter`, or a later update to a filtered list hides some candidates.
-* `Expanded view of 1 of 6 candidates. Type list to show all.` after `expand`.
-* `No candidates yet.` when HRvest has no candidates.
+* `Expanded view of 1 of 6 candidates. Type list to show all.` after `expand`, or `Expanded view of the only candidate.` when HRvest has only one.
+* `No candidates.` when HRvest has no candidates.
 
 ### Navigating command history
 
