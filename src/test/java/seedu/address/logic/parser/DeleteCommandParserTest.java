@@ -5,8 +5,11 @@ import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailur
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.DeleteCommand;
 
 /**
@@ -28,5 +31,19 @@ public class DeleteCommandParserTest {
     @Test
     public void parse_invalidArgs_throwsParseException() {
         assertParseFailure(parser, "a", String.format(MESSAGE_INVALID_COMMAND_FORMAT, DeleteCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_zeroOrNegativeIndex_throwsInvalidIndexMessage() {
+        for (String index : List.of("0", "-1", "-0", "000")) {
+            assertParseFailure(parser, index, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_indexTooLarge_throwsInvalidDisplayedIndexMessage() {
+        for (String index : List.of("2147483648", "99999999999")) {
+            assertParseFailure(parser, index, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        }
     }
 }
