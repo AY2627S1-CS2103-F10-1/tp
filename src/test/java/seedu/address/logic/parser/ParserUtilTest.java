@@ -64,6 +64,25 @@ public class ParserUtilTest {
     }
 
     @Test
+    public void verifyNoNotePrefix_notePrefixPresent_throwsParseException() {
+        for (String args : List.of("no/hi", " no/", " a/Blk 1 no/hi", " a/Blk 1\tno/hi", " NO/hi", " No/hi")) {
+            assertThrows(ParseException.class, "message", () -> ParserUtil.verifyNoNotePrefix(args, "message"));
+        }
+    }
+
+    @Test
+    public void verifyNoNotePrefix_notePrefixAbsentOrInsideWord_doesNotThrow() throws Exception {
+        for (String args : List.of("", " a/Blk 1", " a/Blk 1 yes/no/feedback", " a/techno/house", " n/Nolan")) {
+            ParserUtil.verifyNoNotePrefix(args, "message");
+        }
+    }
+
+    @Test
+    public void verifyNoNotePrefix_nullArgs_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.verifyNoNotePrefix(null, "message"));
+    }
+
+    @Test
     public void parseIndex_invalidInput_throwsParseException() {
         assertThrows(ParseException.class, () -> ParserUtil.parseIndex("10 a"));
     }
