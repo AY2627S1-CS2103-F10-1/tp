@@ -78,6 +78,19 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void getAllPersonList_filteredView_includesHiddenPersons() throws Exception {
+        Person hidden = new PersonBuilder().withName("Hidden Person").withEmail("hidden@example.com").build();
+        model.addPerson(AMY);
+        model.addPerson(hidden);
+
+        logic.execute("find " + AMY.getName().fullName.split(" ")[0]);
+
+        assertEquals(List.of(AMY), logic.getFilteredPersonList());
+        assertEquals(List.of(AMY, hidden), logic.getAllPersonList());
+        assertThrows(UnsupportedOperationException.class, () -> logic.getAllPersonList().remove(0));
+    }
+
+    @Test
     public void execute_addCommand_savesAppliedAndResetsFilter() throws Exception {
         Person existing = new PersonBuilder().withName("Existing Candidate").withEmail("existing@example.com").build();
         model.addPerson(existing);
