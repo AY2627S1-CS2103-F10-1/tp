@@ -123,6 +123,46 @@ public class StringUtilTest {
         assertTrue(StringUtil.containsWordIgnoreCase("AAA bBb ccc  bbb", "bbB"));
     }
 
+    //---------------- Tests for containsWordStartingWithIgnoreCase --------------------------------------
+
+    /*
+     * Invalid equivalence partitions for prefix: null, empty, multiple words
+     * Invalid equivalence partitions for sentence: null
+     * Valid partitions: prefix is a whole word, prefix starts a word, prefix is inside or longer than every word
+     */
+
+    @Test
+    public void containsWordStartingWithIgnoreCase_invalidInputs_throwsException() {
+        assertThrows(NullPointerException.class, () ->
+                StringUtil.containsWordStartingWithIgnoreCase("typical sentence", null));
+        assertThrows(NullPointerException.class, () -> StringUtil.containsWordStartingWithIgnoreCase(null, "abc"));
+        assertThrows(IllegalArgumentException.class, "Prefix parameter cannot be empty", () ->
+                StringUtil.containsWordStartingWithIgnoreCase("typical sentence", "  "));
+        assertThrows(IllegalArgumentException.class, "Prefix parameter should be a single word", () ->
+                StringUtil.containsWordStartingWithIgnoreCase("typical sentence", "aaa BBB"));
+    }
+
+    @Test
+    public void containsWordStartingWithIgnoreCase_validInputs_correctResult() {
+        // Empty sentence
+        assertFalse(StringUtil.containsWordStartingWithIgnoreCase("", "abc"));
+        assertFalse(StringUtil.containsWordStartingWithIgnoreCase("    ", "123"));
+
+        // Prefix inside a word or longer than every word
+        assertFalse(StringUtil.containsWordStartingWithIgnoreCase("aaa bbb ccc", "bc"));
+        assertFalse(StringUtil.containsWordStartingWithIgnoreCase("aaa bbb ccc", "bbbb"));
+
+        // Prefix starts a word, with different upper/lower case letters
+        assertTrue(StringUtil.containsWordStartingWithIgnoreCase("Alex Yeoh", "ale"));
+        assertTrue(StringUtil.containsWordStartingWithIgnoreCase("Alex Yeoh", "YEO"));
+        assertTrue(StringUtil.containsWordStartingWithIgnoreCase("  AAA   bBb   ccc  ", "b"));
+        assertTrue(StringUtil.containsWordStartingWithIgnoreCase("aaa bbb ccc", "  cc  "));
+
+        // Prefix is a whole word
+        assertTrue(StringUtil.containsWordStartingWithIgnoreCase("aaa bBb ccc", "Bbb"));
+        assertTrue(StringUtil.containsWordStartingWithIgnoreCase("Aaa", "aaa"));
+    }
+
     //---------------- Tests for getDetails --------------------------------------
 
     /*

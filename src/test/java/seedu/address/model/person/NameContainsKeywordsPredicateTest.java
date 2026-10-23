@@ -57,6 +57,32 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_keywordStartsNameWord_returnsTrue() {
+        // Start of the first word
+        NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("Ale"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Alex Yeoh").build()));
+
+        // Start of a later word, different case
+        predicate = new NameContainsKeywordsPredicate(List.of("yEo"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Alex Yeoh").build()));
+
+        // Single letter
+        predicate = new NameContainsKeywordsPredicate(List.of("y"));
+        assertTrue(predicate.test(new PersonBuilder().withName("Alex Yeoh").build()));
+    }
+
+    @Test
+    public void test_keywordInsideOrLongerThanNameWord_returnsFalse() {
+        // Inside a word
+        NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("lex", "eoh"));
+        assertFalse(predicate.test(new PersonBuilder().withName("Alex Yeoh").build()));
+
+        // Longer than the word it starts
+        predicate = new NameContainsKeywordsPredicate(List.of("Alexander"));
+        assertFalse(predicate.test(new PersonBuilder().withName("Alex Yeoh").build()));
+    }
+
+    @Test
     public void test_nameDoesNotContainKeywords_returnsFalse() {
         // Zero keywords
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of());
