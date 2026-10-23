@@ -319,9 +319,20 @@ Format: `export`
 * The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* The file is UTF-8 with a byte order mark, so spreadsheet programs such as Excel show accented and non-Latin text correctly.
 * For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
 * If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
+
+<box type="warning" seamless>
+
+**Opening the CSV in a spreadsheet:** The CSV holds your data exactly as stored, but spreadsheet programs change some values when you double-click to open the file:
+
+* Phone numbers lose their leading zeroes, for example `007` becomes `7`.
+* Text that starts with `=`, `+`, `-` or `@`, such as an address `=1+2`, is treated as a formula and calculated.
+
+To keep every value as stored, import the file instead. In Excel, use **Data > From Text/CSV**, choose **Transform Data**, and set the columns to **Text** before loading. Do not open exports from untrusted data with formulas enabled.
+</box>
 
 **Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
 
