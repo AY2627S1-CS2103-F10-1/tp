@@ -584,8 +584,8 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User requests to filter candidates by candidate status.
-1. HRvest shows candidates with the specified status.
+1. User requests to filter candidates by one or more candidate statuses.
+1. HRvest shows candidates with any of the specified statuses.
 
    Use case ends.
 

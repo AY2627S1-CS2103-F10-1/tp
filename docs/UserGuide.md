@@ -199,16 +199,19 @@ Examples:
 
 Filters candidates by their hiring status.
 
-Format: `filter s/STATUS`
+Format: `filter s/STATUS [s/MORE_STATUS]...`
 
 * Displays all candidates with the specified status.
+* Repeat `s/` to display candidates in any of several statuses (an `OR` filter). Repeating a status has no extra effect.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
 * The status is case-insensitive.
+* If any given status is invalid, nothing is filtered and the valid statuses are listed.
 
 Examples:
 
 * `filter s/Interviewing` displays all candidates currently in the interviewing stage.
 * `filter s/Offered` displays all candidates who have been made offers.
+* `filter s/Interviewing s/Offered` displays all candidates who are interviewing or have been made offers.
 
 ### Deleting a candidate: `delete`
 
@@ -421,7 +424,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`
-**Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
+**Filter** | `filter s/STATUS [s/MORE_STATUS]...`<br> e.g., `filter s/Interviewing s/Offered`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear
