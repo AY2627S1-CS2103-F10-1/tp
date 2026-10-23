@@ -8,6 +8,7 @@ import java.util.Set;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -35,6 +36,41 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses {@code oneBasedIndex} like {@link #parseIndex(String)}, but explains why a whole number is rejected.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @param oneBasedIndex Index typed by the user, from the displayed list.
+     * @param formatErrorMessage Message used when {@code oneBasedIndex} is not a whole number.
+     * @return The parsed index.
+     * @throws ParseException If {@code oneBasedIndex} is not a whole number, is zero or negative,
+     *     or is too large to identify any displayed candidate.
+     */
+    public static Index parseDisplayedIndex(String oneBasedIndex, String formatErrorMessage)
+            throws ParseException {
+        requireNonNull(oneBasedIndex);
+        String trimmedIndex = oneBasedIndex.trim();
+        if (!isWholeNumber(trimmedIndex)) {
+            throw new ParseException(formatErrorMessage);
+        }
+        if (isZeroOrNegative(trimmedIndex)) {
+            throw new ParseException(MESSAGE_INVALID_INDEX);
+        }
+        if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+            // Too large for an int, so no displayed list can be this long.
+            throw new ParseException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        }
+        return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    private static boolean isWholeNumber(String text) {
+        return text.matches("-?\\d+");
+    }
+
+    private static boolean isZeroOrNegative(String wholeNumber) {
+        return wholeNumber.startsWith("-") || wholeNumber.matches("0+");
     }
 
     /**

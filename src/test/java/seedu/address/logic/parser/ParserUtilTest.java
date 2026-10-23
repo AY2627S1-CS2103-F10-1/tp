@@ -12,6 +12,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -81,6 +83,42 @@ public class ParserUtilTest {
 
         // Leading and trailing whitespaces
         assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseIndex("  1  "));
+    }
+
+    @Test
+    public void parseDisplayedIndex_notWholeNumber_throwsFormatMessage() {
+        for (String index : List.of("", WHITESPACE, "a", "10 a", "1.5", "+1", "1-", "--1")) {
+            assertThrows(ParseException.class, "format", () -> ParserUtil.parseDisplayedIndex(index, "format"));
+        }
+    }
+
+    @Test
+    public void parseDisplayedIndex_zeroOrNegative_throwsInvalidIndexMessage() {
+        for (String index : List.of("0", "000", "-0", "-1", "-99999999999")) {
+            assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
+                    ParserUtil.parseDisplayedIndex(index, "format"));
+        }
+    }
+
+    @Test
+    public void parseDisplayedIndex_tooLarge_throwsInvalidDisplayedIndexMessage() {
+        for (String index : List.of(Long.toString(Integer.MAX_VALUE + 1L), "99999999999999999999")) {
+            assertThrows(ParseException.class, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX, () ->
+                    ParserUtil.parseDisplayedIndex(index, "format"));
+        }
+    }
+
+    @Test
+    public void parseDisplayedIndex_validInput_success() throws Exception {
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseDisplayedIndex("1", "format"));
+        assertEquals(INDEX_FIRST_PERSON, ParserUtil.parseDisplayedIndex(WHITESPACE + "001" + WHITESPACE, "format"));
+        assertEquals(Index.fromOneBased(Integer.MAX_VALUE),
+                ParserUtil.parseDisplayedIndex(Integer.toString(Integer.MAX_VALUE), "format"));
+    }
+
+    @Test
+    public void parseDisplayedIndex_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseDisplayedIndex(null, "format"));
     }
 
     @Test
