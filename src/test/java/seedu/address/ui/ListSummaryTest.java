@@ -9,14 +9,19 @@ public class ListSummaryTest {
 
     @Test
     public void describe_noCandidates_reportsEmpty() {
-        assertEquals(ListSummary.MESSAGE_NO_CANDIDATES, ListSummary.describe(0, 0, false));
-        assertEquals(ListSummary.MESSAGE_NO_CANDIDATES, ListSummary.describe(0, 0, true));
+        assertEquals("No candidates.", ListSummary.describe(0, 0, false));
+        assertEquals("No candidates.", ListSummary.describe(0, 0, true));
     }
 
     @Test
     public void describe_allShown_reportsTotal() {
         assertEquals("Showing all 6 candidates.", ListSummary.describe(6, 6, false));
-        assertEquals("Showing all 1 candidate.", ListSummary.describe(1, 1, false));
+        assertEquals("Showing all 2 candidates.", ListSummary.describe(2, 2, false));
+    }
+
+    @Test
+    public void describe_onlyCandidateShown_omitsAll() {
+        assertEquals("Showing 1 candidate.", ListSummary.describe(1, 1, false));
     }
 
     @Test
@@ -31,8 +36,11 @@ public class ListSummaryTest {
     public void describe_expanded_reportsExpandedView() {
         assertEquals("Expanded view of 1 of 6 candidates. Type list to show all.",
                 ListSummary.describe(1, 6, true));
-        assertEquals("Expanded view of 1 of 1 candidate. Type list to show all.",
-                ListSummary.describe(1, 1, true));
+    }
+
+    @Test
+    public void describe_expandedOnlyCandidate_omitsListHint() {
+        assertEquals("Expanded view of the only candidate.", ListSummary.describe(1, 1, true));
     }
 
     @Test

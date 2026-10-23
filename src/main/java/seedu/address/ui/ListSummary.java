@@ -4,10 +4,12 @@ package seedu.address.ui;
  * Describes how many candidates the list panel shows, so users can tell when a filter hides candidates.
  */
 public class ListSummary {
-    public static final String MESSAGE_NO_CANDIDATES = "No candidates yet.";
-    public static final String MESSAGE_ALL_SHOWN = "Showing all %1$d %2$s.";
+    public static final String MESSAGE_NO_CANDIDATES = "No candidates.";
+    public static final String MESSAGE_ONLY_CANDIDATE = "Showing 1 candidate.";
+    public static final String MESSAGE_ALL_SHOWN = "Showing all %1$d candidates.";
     public static final String MESSAGE_FILTERED = "Showing %1$d of %2$d %3$s (filtered). Type list to show all.";
-    public static final String MESSAGE_EXPANDED = "Expanded view of 1 of %1$d %2$s. Type list to show all.";
+    public static final String MESSAGE_EXPANDED_ONLY_CANDIDATE = "Expanded view of the only candidate.";
+    public static final String MESSAGE_EXPANDED = "Expanded view of 1 of %1$d candidates. Type list to show all.";
 
     private ListSummary() {
     }
@@ -26,10 +28,10 @@ public class ListSummary {
             return MESSAGE_NO_CANDIDATES;
         }
         if (isExpanded) {
-            return String.format(MESSAGE_EXPANDED, totalCount, pluralize(totalCount));
+            return totalCount == 1 ? MESSAGE_EXPANDED_ONLY_CANDIDATE : String.format(MESSAGE_EXPANDED, totalCount);
         }
         if (shownCount == totalCount) {
-            return String.format(MESSAGE_ALL_SHOWN, totalCount, pluralize(totalCount));
+            return totalCount == 1 ? MESSAGE_ONLY_CANDIDATE : String.format(MESSAGE_ALL_SHOWN, totalCount);
         }
         return String.format(MESSAGE_FILTERED, shownCount, totalCount, pluralize(totalCount));
     }
