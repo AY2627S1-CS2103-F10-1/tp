@@ -224,6 +224,21 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_uppercasePrefixes_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress("12 Kent Ridge Drive")
+                .withStatus(Status.OFFERED).withEmail(VALID_EMAIL_AMY).build();
+
+        assertParseSuccess(parser, "1 A/12 Kent Ridge Drive S/Offered E/" + VALID_EMAIL_AMY,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_uppercaseRepeatedPrefix_failure() {
+        assertParseFailure(parser, "1 s/Applied S/Offered",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STATUS));
+    }
+
+    @Test
     public void parse_resetTags_success() {
         Index targetIndex = INDEX_THIRD_PERSON;
         String userInput = targetIndex.getOneBased() + TAG_EMPTY;

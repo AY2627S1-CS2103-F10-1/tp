@@ -37,6 +37,12 @@ public class FilterCommandParserTest {
     }
 
     @Test
+    public void parse_uppercasePrefix_returnsFilterCommand() {
+        FilterCommand expected = new FilterCommand(Status.OFFERED);
+        assertParseSuccess(parser, " S/Offered", expected);
+    }
+
+    @Test
     public void parse_missingStatus_throwsParseException() {
         assertParseFailure(parser, "     ",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, FilterCommand.MESSAGE_USAGE));
