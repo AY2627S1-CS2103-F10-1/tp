@@ -591,13 +591,13 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **Extensions**
 
-* 1a. The specified status is not a valid candidate status.
+* 1a. A specified status is not a valid candidate status.
 
     * 1a1. HRvest shows an error message listing the valid candidate statuses.
 
       Use case ends.
 
-* 2a. No candidates match the specified status.
+* 2a. No candidates match any of the specified statuses.
 
     * 2a1. HRvest informs the user that no candidates match.
 

@@ -204,10 +204,10 @@ Filters candidates by their hiring status.
 
 Format: `filter s/STATUS [s/MORE_STATUS]...`
 
-* Displays all candidates with the specified status.
+* Displays all candidates whose status is any of the specified statuses.
 * Repeat `s/` to display candidates in any of several statuses (an `OR` filter). Repeating a status has no extra effect.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
-* The status is case-insensitive.
+* Statuses are case-insensitive.
 * If any given status is invalid, nothing is filtered and the valid statuses are listed.
 
 Examples:
