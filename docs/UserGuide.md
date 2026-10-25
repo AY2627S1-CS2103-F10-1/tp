@@ -112,6 +112,8 @@ Shows a list of all persons in HRvest.
 
 Format: `list`
 
+* If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
+
 ### Editing a candidate: `edit`
 
 The success message shows the candidate's updated details, including their current status.
@@ -123,6 +125,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values. The current filter is kept; candidates that no longer match disappear from the displayed list.
+* If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This person already exists in the address book.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
