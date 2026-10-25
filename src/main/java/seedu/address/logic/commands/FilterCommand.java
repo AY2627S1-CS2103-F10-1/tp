@@ -61,9 +61,9 @@ public class FilterCommand extends Command {
 
     /**
      * Joins status names as "A", "A or B", or "A, B or C".
+     * The list is never empty, because {@code StatusContainsKeywordPredicate} requires at least one status.
      */
     private static String joinStatusNames(List<String> statusNames) {
-        assert !statusNames.isEmpty() : "A filter always has at least one status";
         int lastIndex = statusNames.size() - 1;
         if (lastIndex == 0) {
             return statusNames.get(0);
