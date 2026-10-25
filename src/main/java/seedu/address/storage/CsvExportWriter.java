@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -17,11 +18,15 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import seedu.address.commons.util.FileUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 
-/** Writes raw candidate data as UTF-8 CSV, directly to the fixed export destination. */
+/** Writes raw candidate data as UTF-8 CSV with a byte order mark, directly to the fixed export destination. */
 public class CsvExportWriter {
+    /** Lets spreadsheet programs such as Excel detect UTF-8, so that non-ASCII text is not garbled. */
+    static final char BYTE_ORDER_MARK = '\uFEFF';
+
     private static final List<String> HEADERS = List.of("name", "phone", "email", "address", "status", "tags", "note");
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
@@ -40,18 +45,38 @@ public class CsvExportWriter {
         requireNonNull(destination);
         boolean opened = false;
         try {
+            // The data folder may not exist yet, e.g. when sample data has not been saved.
+            FileUtil.createParentDirsOfFile(destination);
             checkDestination(destination);
             try (Writer writer = openWriter(destination)) {
                 opened = true;
+                writer.write(BYTE_ORDER_MARK);
                 writeCsv(addressBook, writer);
             }
             return destination;
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
-            String reason = e instanceof AccessDeniedException
-                    ? "The file or folder is not writable (permission denied)." : e.getMessage();
+            String reason = describeFailure(e);
             String warning = opened ? " The export may be empty or incomplete; the previous export may be lost." : "";
             throw new IOException("Could not export to " + destination + ": " + reason + warning, e);
         }
+    }
+
+    /**
+     * Returns a user-facing reason for {@code e}.
+     * File system exceptions are described by their reason, as their message only repeats the path.
+     */
+    static String describeFailure(Exception e) {
+        if (e instanceof AccessDeniedException) {
+            return "The file or folder is not writable (permission denied).";
+        }
+        if (e instanceof NoSuchFileException) {
+            return "The folder to export to does not exist.";
+        }
+        if (e instanceof FileSystemException fileSystemException) {
+            String reason = fileSystemException.getReason();
+            return reason == null ? "The file or folder could not be accessed." : reason;
+        }
+        return e.getMessage() == null ? "An unknown error occurred." : e.getMessage();
     }
 
     /** Rejects existing non-regular entries; opening also refuses symbolic links to limit replacement races. */
@@ -63,7 +88,7 @@ public class CsvExportWriter {
                 throw new IOException("The destination is not a regular file (directories and links are not allowed).");
             }
         } catch (NoSuchFileException e) {
-            // CREATE handles an absent destination; do not create missing parent directories.
+            // CREATE handles an absent destination.
         }
     }
 

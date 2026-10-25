@@ -121,7 +121,7 @@ For role-management commands, `AddressBookParser` selects `RoleCommandParser` to
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+<puml src="diagrams/ModelClassDiagram.puml" width="600" />
 
 
 The `Model` component,
@@ -329,13 +329,13 @@ You can refer to the diagram below as a reference.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
 
-The writer exports one row per candidate to `export.csv` inside the configured data directory, alongside the JSON data file, with a header and all candidate fields. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
+The writer exports one row per candidate, with a header and all candidate fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. A future CSV import must skip the mark before reading the header. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
 
-**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, and spreadsheet auto-detection can alter values.
+**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users instead. Spreadsheet auto-detection can still alter values when the file is opened directly.
 
 HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. It is non-destructive to HRvest's stored records: the CSV is a separate copy of data that remains available in the application. For this reason, export uses direct writing with failure reporting rather than rollback or deletion of a failed output file; the user can retry after resolving the problem. This differs from saving HRvest's source data, where atomic replacement protects the existing records. The non-destructive guarantee does not extend to an earlier CSV: each export directly overwrites it, so an interrupted or failed write may destroy the previous export and leave an empty or incomplete file.
 
-Failures display `Export failed:` with the reason and destination when available. Check that the file/folder is writable. Directories, symbolic links (including dangling links), and other non-regular destinations are rejected without deleting them. If the required parent directory cannot be determined, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged; a failure after opening the destination warns that the export may be incomplete and the previous export may be lost.
+Failures display `Export failed:` with the reason and destination when available. Check that the file/folder is writable. Directories, symbolic links (including dangling links), and other non-regular destinations are rejected without deleting them. A missing data directory is created first, as JSON saving does. If the required parent directory cannot be determined or created, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged; a failure after opening the destination warns that the export may be incomplete and the previous export may be lost.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -778,7 +778,7 @@ Use a separate test folder and keep a matching backup of candidate and catalogue
 1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
 1. To check global assignment updates, close HRvest. In a test copy, assign the new role ID to two candidates' `roles` arrays; give one candidate another valid role too. Restart, filter so one candidate is hidden, and rename the role again. Close HRvest and inspect both files. Expected: The catalogue name changes, both candidates retain the same role ID, and their other fields and assignments remain unchanged.
 1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalogue entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.
-1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear`, then `list_role`. Expected: Candidates are removed while remaining catalogue entries survive. Restore both test files together after testing.
+1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear confirm`, then `list_role`. Expected: Candidates are removed while remaining catalogue entries survive. Restore both test files together after testing.
 
 ### Saving data
 

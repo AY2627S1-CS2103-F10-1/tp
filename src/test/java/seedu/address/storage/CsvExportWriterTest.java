@@ -10,10 +10,13 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -82,10 +85,27 @@ public class CsvExportWriterTest {
         assertEquals(3, Files.readAllLines(destination).size());
         assertTrue(Files.readString(destination).endsWith("\"[]\",\"\"\r\n"));
         exporter.export(new AddressBook(), destination);
-        assertEquals(HEADER, Files.readString(destination));
+        assertEquals(CsvExportWriter.BYTE_ORDER_MARK + HEADER, Files.readString(destination));
         try (var entries = Files.list(directory)) {
             assertEquals(1, entries.count());
         }
+    }
+
+    @Test
+    public void export_nonAsciiText_startsWithUtf8ByteOrderMark() throws Exception {
+        Path destination = directory.resolve("export.csv");
+        AddressBook book = new AddressBook();
+        book.addPerson(new PersonBuilder().withAddress("Zürich 街").withNote("réalisé café").build());
+
+        new CsvExportWriter().export(book, destination);
+
+        byte[] bytes = Files.readAllBytes(destination);
+        assertEquals(List.of((byte) 0xEF, (byte) 0xBB, (byte) 0xBF),
+                List.of(bytes[0], bytes[1], bytes[2]));
+        String content = Files.readString(destination);
+        assertEquals(1, content.chars().filter(c -> c == CsvExportWriter.BYTE_ORDER_MARK).count());
+        assertTrue(content.startsWith(CsvExportWriter.BYTE_ORDER_MARK + HEADER));
+        assertTrue(content.contains("\"Zürich 街\"") && content.contains("\"réalisé café\""));
     }
 
     @Test
@@ -100,13 +120,25 @@ public class CsvExportWriterTest {
     }
 
     @Test
-    public void export_directoryOrMissingParent_failsWithoutDeleting() throws Exception {
+    public void export_directoryDestination_failsWithoutDeleting() throws Exception {
         Path destination = Files.createDirectory(directory.resolve("export.csv"));
         assertThrows(IOException.class, () -> new CsvExportWriter().export(new AddressBook(), destination));
         assertTrue(Files.isDirectory(destination));
-        Path missing = directory.resolve("missing/export.csv");
-        assertThrows(IOException.class, () -> new CsvExportWriter().export(new AddressBook(), missing));
-        assertFalse(Files.exists(missing.getParent()));
+    }
+
+    @Test
+    public void export_missingParent_createsParentAndExports() throws Exception {
+        Path missing = directory.resolve("missing/nested/export.csv");
+        assertEquals(missing, new CsvExportWriter().export(new AddressBook(), missing));
+        assertEquals(1, Files.readAllLines(missing).size());
+    }
+
+    @Test
+    public void export_parentIsFile_failsWithoutDeleting() throws Exception {
+        Path parent = Files.writeString(directory.resolve("data"), "original");
+        assertThrows(IOException.class, () -> new CsvExportWriter().export(new AddressBook(),
+                parent.resolve("export.csv")));
+        assertEquals("original", Files.readString(parent));
     }
 
     @Test
@@ -153,6 +185,36 @@ public class CsvExportWriterTest {
                 + ": The file or folder is not writable (permission denied).", () ->
                 exporter.export(new AddressBook(), destination));
         assertFalse(Files.exists(destination));
+    }
+
+    @Test
+    public void export_missingFolder_reportsReasonWithoutRepeatingPath() {
+        Path destination = directory.resolve("export.csv");
+        CsvExportWriter exporter = new CsvExportWriter() {
+            @Override
+            protected Writer openWriter(Path path) throws IOException {
+                throw new NoSuchFileException(path.toString());
+            }
+        };
+        assertThrows(IOException.class, "Could not export to " + destination
+                + ": The folder to export to does not exist.", () ->
+                exporter.export(new AddressBook(), destination));
+    }
+
+    @Test
+    public void describeFailure_fileSystemException_usesReasonNotPath() {
+        String path = directory.resolve("export.csv").toString();
+        String lockedReason = "The process cannot access the file because it is being used by another process";
+        assertEquals(lockedReason, CsvExportWriter.describeFailure(
+                new FileSystemException(path, null, lockedReason)));
+        assertEquals("The file or folder could not be accessed.", CsvExportWriter.describeFailure(
+                new FileSystemException(path)));
+    }
+
+    @Test
+    public void describeFailure_otherExceptions_usesMessageOrFallback() {
+        assertEquals("write failed", CsvExportWriter.describeFailure(new IOException("write failed")));
+        assertEquals("An unknown error occurred.", CsvExportWriter.describeFailure(new IOException()));
     }
 
     @Test
