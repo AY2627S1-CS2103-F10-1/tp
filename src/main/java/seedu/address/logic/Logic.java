@@ -27,6 +27,9 @@ public interface Logic {
     /** Returns an unmodifiable view of the filtered list of persons */
     ObservableList<Person> getFilteredPersonList();
 
+    /** Returns an unmodifiable view of every person, including those hidden by the current filter. */
+    ObservableList<Person> getAllPersonList();
+
     /**
      * Returns the user prefs' GUI settings.
      */

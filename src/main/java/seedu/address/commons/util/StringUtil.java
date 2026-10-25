@@ -39,6 +39,29 @@ public class StringUtil {
     }
 
     /**
+     * Returns true if a word in {@code sentence} starts with {@code prefix}.
+     *   Ignores case, and a whole word also counts as starting with itself.
+     *   <br>examples:<pre>
+     *       containsWordStartingWithIgnoreCase("ABc def", "ab") == true
+     *       containsWordStartingWithIgnoreCase("ABc def", "DEF") == true
+     *       containsWordStartingWithIgnoreCase("ABc def", "bc") == false //not at the start of a word
+     *       </pre>
+     * @param sentence cannot be null
+     * @param prefix cannot be null, cannot be empty, must be a single word
+     */
+    public static boolean containsWordStartingWithIgnoreCase(String sentence, String prefix) {
+        requireNonNull(sentence);
+        requireNonNull(prefix);
+
+        String preppedPrefix = prefix.trim();
+        checkArgument(!preppedPrefix.isEmpty(), "Prefix parameter cannot be empty");
+        checkArgument(preppedPrefix.split("\\s+").length == 1, "Prefix parameter should be a single word");
+
+        return Arrays.stream(sentence.split("\\s+"))
+                .anyMatch(word -> word.regionMatches(true, 0, preppedPrefix, 0, preppedPrefix.length()));
+    }
+
+    /**
      * Returns a detailed message of {@code t}, including the stack trace.
      */
     public static String getDetails(Throwable t) {
