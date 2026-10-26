@@ -344,6 +344,15 @@ Format: `exit`
 
 A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`. Collapsed cards keep the note text hidden; use `expand INDEX` to view the candidate's full note. Candidates without notes have no icon and reserve no icon space.
 
+### Header summary cards
+
+The **HRVest** text logo appears above the command box. When the window is wide enough, a row beside it shows **Total candidates** and one card for each recruitment status: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, and Withdrawn.
+
+* Each card shows **shown / total**: the number in the currently displayed candidate list versus the number among all candidates loaded in HRvest. For example, `2 / 8` on Interviewing means two interviewing candidates are currently shown, out of eight overall.
+* Searching, filtering, or expanding a candidate changes the shown counts; overall counts still include candidates hidden from the list. Use `list` to show all candidates again.
+* Adding, updating, deleting, or clearing candidates updates the counts automatically. Statuses with no candidates still have a card, and an empty data set shows `0 / 0` on every card.
+* The cards appear together on one row only when every card fits at its minimum width. If the window is too narrow, the entire row disappears while the logo stays visible. Widen the window to restore all cards with up-to-date counts.
+
 ### Displayed candidate count
 
 The line above the candidate list shows how many candidates are displayed, so you can tell when some are hidden rather than deleted:

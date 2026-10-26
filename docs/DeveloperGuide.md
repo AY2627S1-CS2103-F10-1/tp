@@ -71,7 +71,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. All of these, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. These, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts. `MainWindow` also hosts `CandidateSummaryHeader`, a programmatically constructed JavaFX `Region` for the logo and enum-driven summary cards.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -193,6 +193,12 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Responsive candidate summary header
+
+`CandidateSummaryHeader` observes the filtered and full candidate lists exposed by `Logic`, without maintaining another candidate collection. It generates cards from `Status.values()` and binds each count separately to its corresponding list. Separate count bindings matter because the full list can notify observers before the filtered list has finished processing the same change; iterating both lists from that notification could read stale filtered indexes during deletion or replacement.
+
+The header measures the complete row even while it is invisible and unmanaged. Its fit threshold includes the logo, padding, logo-to-card gap, card gaps, and each card's natural width with a minimum of 105 pixels. Natural widths include the current count text, so larger counts can raise the threshold. Below that threshold, the whole group is hidden and unmanaged; the header's minimum width depends only on the logo. This avoids forcing the window wider or creating a visibility feedback loop based on the currently managed children. Count changes explicitly request header layout because unmanaged children do not propagate layout requests to their parent.
 
 ### Command history navigation
 
@@ -753,6 +759,14 @@ testers are expected to do more *exploratory* testing.
 1. Run `filter s/Applied`, then `status 1 s/Offered`. Expected: The updated candidate disappears, and only remaining Applied candidates are shown. The line above the list reads `Showing N of M candidates (filtered). Type list to show all.`, where `M` still counts the updated candidate. Repeat with `edit 1 s/Offered`.
 1. Run `find Betsy`, then change that candidate's name with `edit 1 n/Other Name`. Expected: The candidate disappears if the new name does not match.
 1. Run `filter s/Applied`, `expand 1`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded at index `1` after each update, including the Offered status change. Expansion replaces the earlier status filter with a selection of the candidate. Run `list` to show all candidates again.
+
+### Header summary cards
+
+1. Launch HRvest and widen the window until all summary cards appear beside the logo. Confirm there is one Total candidates card and one card per status, including statuses with zero candidates.
+1. Run `list`, then `filter s/Interviewing` and `find Alex`. Check that shown counts match the displayed candidates, while overall counts continue to include hidden candidates. An empty search result should show zero shown counts without clearing overall counts.
+1. Add, update a candidate's status, delete, and clear candidates. Check that total and per-status counts update, including when a status edit removes a candidate from the current filter.
+1. Slowly narrow the window. Confirm that all cards disappear together, the logo remains visible, and neither partial cards nor a wrapped row appears. Widen it again and confirm every card returns without flickering or clipping.
+1. Change candidate data while the cards are hidden, then widen the window. Confirm the restored counts are current. Repeat resizing with wider count values and check that full labels and numbers remain visible whenever the row is shown.
 
 ### Candidate note indicator
 

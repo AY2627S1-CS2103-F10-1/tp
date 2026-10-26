@@ -38,6 +38,9 @@ public class MainWindow extends UiPart<Stage> {
     private HelpWindow helpWindow;
 
     @FXML
+    private StackPane summaryHeaderPlaceholder;
+
+    @FXML
     private StackPane commandBoxPlaceholder;
 
     @FXML
@@ -114,6 +117,10 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
+        CandidateSummaryHeader summaryHeader = new CandidateSummaryHeader(
+                logic.getFilteredPersonList(), logic.getAllPersonList());
+        summaryHeaderPlaceholder.getChildren().add(summaryHeader);
+
         personListPanel = new PersonListPanel(logic.getFilteredPersonList(), logic.getAllPersonList(),
                 logic.isExpandedViewProperty());
         personListPanelPlaceholder.getChildren().add(personListPanel.getRoot());
