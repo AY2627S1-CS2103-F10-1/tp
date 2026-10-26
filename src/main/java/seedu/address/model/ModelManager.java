@@ -136,6 +136,11 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public Predicate<? super Person> getPersonFilter() {
+        return filteredPersons.getPredicate();
+    }
+
+    @Override
     public void updateFilteredPersonList(Predicate<Person> predicate) {
         requireNonNull(predicate);
         isExpandedView.set(false);

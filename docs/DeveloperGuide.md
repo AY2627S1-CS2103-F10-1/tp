@@ -319,6 +319,18 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
+### Atomic CSV import
+
+Import is a batch operation over the complete in-memory address book, not the displayed list. `AddressBookParser` rejects arguments through `ImportCommandParser`. `LogicManager` routes `ImportCommand` to `ImportOperation`, which stages and validates the batch before publication. This coordinator is needed because ordinary add/edit saving does not restore model state on save failure.
+
+`StorageManager.readImport` delegates to `CsvImportReader`. For `/app/data/HRvest.json`, it reads only `/app/import.csv`. The reader rejects links and non-regular files, acquires a non-blocking shared lock, and buffers at most 10 MiB while comparing identity, size, and modification time around reading. The lock and channel close on every outcome. Parsing happens on the buffered copy after release, so later edits cannot affect the parsed data. Locks may be advisory and metadata checks cannot detect every concurrent change; users must not edit the input during import or externally modify saved JSON. There is no new coordination protocol for external writers to saved JSON.
+
+`StrictCsvParser` accepts fully quoted, seven-column CSV with CRLF record endings. `CandidateCsvParser` requires strict UTF-8 without a BOM and exact headers, validates fields through existing command/model rules, and uses Jackson's existing streaming parser only for a flat tags array of strings. No dependencies are added. Import intentionally has its own encoding and path contract, independent of export. Empty bytes are an explicit header exception; both empty and header-only inputs run the complete save pipeline. The [User Guide](UserGuide.md#importing-candidates-import) lists the template and hard limits: 10 MiB, 10,000 candidates, 65,536 code points per decoded field, 100 tag entries, 256 code points per tag, and the existing 500-code-point note cap. Limits apply before unbounded accumulation; tag count is checked before deduplication. Tags and statuses retain existing parsing semantics.
+
+Before mutation, `ImportOperation` copies the address book and retains the filter predicate and expanded candidate. Candidate value objects are immutable, so the independent address-book collection can share those values safely. A case-insensitive email index detects conflicts both within the batch and against all existing candidates. Only after validation succeeds is the combined collection applied, then persisted through normal JSON saving with its existing atomic-replacement protections. Success clears the filter and exits expanded view. Existing order is preserved and imported records are appended in CSV order.
+
+If reading or validation fails, live state remains untouched. If model application or saving fails, the coordinator restores the in-memory snapshot and view before returning the error; pre-existing unsaved changes are preserved. It never reloads JSON for rollback or modifies the input. Save errors use the normal error format. A rollback failure is reported separately without claiming restoration. This is ordinary exception recovery, not a promise of rollback following JVM termination or power loss; a successfully persisted import remains saved after a later crash.
+
 ### CSV export
 
 The `export` command creates a CSV copy of all candidate records, regardless of the current search or filter. It leaves the application's data and current view unchanged.
@@ -329,7 +341,7 @@ You can refer to the diagram below as a reference.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
 
-The writer exports one row per candidate, with a header and all candidate fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. A future CSV import must skip the mark before reading the header. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
+The writer exports one row per candidate, with a header and all candidate fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
 
 **Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users instead. Spreadsheet auto-detection can still alter values when the file is opened directly.
 
@@ -642,6 +654,30 @@ The terms candidate details, candidate status, duplicate candidate and note are 
     * 1b1. HRvest shows an error message.
 
       Use case ends.
+
+**Use case: UC11 - Import candidates**
+
+**MSS**
+
+1. User prepares `import.csv` in the required location and enters `import`.
+1. HRvest reads and validates the complete batch, checking email conflicts against all candidates and within the file.
+1. HRvest appends and saves the candidates, then shows the default list view with all candidates and the imported count.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. Input is missing, unreadable, malformed, oversized, or contains invalid/duplicate candidates.
+
+  * 2a1. HRvest explains the failure and leaves the pre-import data and view unchanged.
+
+    Use case ends.
+
+* 3a. Applying or saving fails.
+
+  * 3a1. HRvest restores the pre-import in-memory data and view, retaining unsaved changes, and reports the error. A rollback failure is reported separately.
+
+    Use case ends.
 
 **Use case: UC10 - Export candidate data**
 

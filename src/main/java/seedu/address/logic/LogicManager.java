@@ -50,6 +50,10 @@ public class LogicManager implements Logic {
         Command command = addressBookParser.parseCommand(commandText);
         commandResult = command.execute(model);
 
+        if (commandResult.isImport()) {
+            return new ImportOperation(model, storage).execute();
+        }
+
         if (commandResult.isExport()) {
             return exportAddressBook();
         }

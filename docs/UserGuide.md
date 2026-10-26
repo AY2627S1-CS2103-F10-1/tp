@@ -348,6 +348,44 @@ To keep every value as stored, import the file instead. In Excel, use **Data > F
 
 **For more technical details, you can refer to the** [Developer Guide](./DeveloperGuide.md)
 
+### Importing candidates: `import`
+
+Appends candidates from `import.csv` to all candidates currently loaded in HRvest, preserving existing order and appending new candidates in file order.
+
+Format: `import`
+
+* Accepts no arguments. For a configured data file `/app/data/HRvest.json`, the input is `/app/import.csv`, beside `data/`, not inside it. No other location is tried.
+* The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
+* Success displays `Imported N candidates successfully.`, saves normally, clears filters, exits expanded view, and shows all candidates in the default list view.
+* An empty (zero-byte) file or valid header-only file runs the same pipeline, saves normally, resets the view, and reports 0 imported candidates. Whitespace-only files are invalid.
+* Only readable regular files are accepted; symbolic links, directories, and special files are rejected. Missing files, read failures, and unavailable locks produce an error explaining the problem and expected path. Do not edit the file during import. HRvest locks and buffers it, rejecting detected changes, but cannot prevent or detect every external edit on every filesystem.
+* `import.csv` is never modified. On failure, HRvest reports the error and restores the pre-import in-memory data, filter, and expanded view, including any pre-existing unsaved changes. Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash/power-loss recovery is not an in-memory rollback guarantee. Do not modify saved JSON or run another HRvest instance during import.
+
+**Required CSV template:** UTF-8 **without a BOM**, exact lowercase headers in the order below, every field double-quoted, and CRLF (`\r\n`) record endings, including the final record. Double embedded quotes. Commas and line breaks are allowed inside quoted fields where the field's existing validation permits them. No extra blank records, unquoted fields, alternate delimiters, or trailing content are accepted.
+
+```csv
+"name","phone","email","address","status","tags","note"
+"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[""Java"",""backend""]",""
+```
+
+Configure your editor to save the example with CRLF line endings and UTF-8 without a BOM. Import has its own fixed location and encoding requirements; do not assume a renamed export is directly accepted.
+
+Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. An empty or whitespace-only note means no note. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
+
+**Import limits:** Limits are enforced while reading/parsing; exceeding any limit rejects the whole import with an error.
+
+| Resource | Maximum |
+|------|------|
+| File | 10 MiB (10,485,760 bytes) |
+| Candidates in one import | 10,000, excluding the header |
+| Decoded field | 65,536 Unicode characters before trimming |
+| Note | Existing 500 Unicode characters after trimming |
+| Tags per candidate | 100 array entries before deduplication |
+| Each tag name | 256 Unicode characters before trimming |
+| Tag JSON structure | One flat array of strings only |
+
+These are import limits, not new add/edit restrictions. Files exceeding them cannot be imported even if their contents originated in HRvest.
+
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -442,6 +480,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`
+**Import** | `import`
 **Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
