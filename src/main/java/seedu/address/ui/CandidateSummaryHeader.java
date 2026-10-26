@@ -2,13 +2,13 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Locale;
-
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
 
 /**
@@ -24,23 +24,23 @@ public class CandidateSummaryHeader extends UiPart<Region> {
     private HBox summaryCards;
 
     /**
-     * Creates a header displaying counts from the given summary provider.
+     * Creates a header observing the displayed candidates and all candidates loaded in memory.
      */
-    public CandidateSummaryHeader(CandidateSummary summary) {
+    public CandidateSummaryHeader(ObservableList<Person> shownPersons, ObservableList<Person> allPersons) {
         super(FXML, new HeaderLayout());
-        requireNonNull(summary);
+        requireNonNull(shownPersons);
+        requireNonNull(allPersons);
         AppLogo logo = new AppLogo();
         logoPlaceholder.getChildren().add(logo.getRoot());
         HeaderLayout layout = (HeaderLayout) getRoot();
         layout.setContent(logoPlaceholder, summaryCards);
-        addCard("Total candidates", "total", summary.getTotalCounts());
+        addCard(new CandidateSummaryCard(shownPersons, allPersons));
         for (Status status : Status.values()) {
-            addCard(status.toString(), status.name().toLowerCase(Locale.ROOT), summary.getStatusCounts(status));
+            addCard(new CandidateSummaryCard(status, shownPersons, allPersons));
         }
     }
 
-    private void addCard(String title, String id, CandidateSummary.Counts counts) {
-        CandidateSummaryCard card = new CandidateSummaryCard(title, id, counts);
+    private void addCard(CandidateSummaryCard card) {
         // An unmanaged group does not propagate layout requests to this header.
         card.countTextProperty().addListener(observable -> getRoot().requestLayout());
         summaryCards.getChildren().add(card.getRoot());

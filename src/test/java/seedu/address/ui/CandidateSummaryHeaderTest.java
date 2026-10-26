@@ -22,14 +22,16 @@ import seedu.address.testutil.PersonBuilder;
 
 public class CandidateSummaryHeaderTest {
     @Test
-    public void constructor_nullSummary_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> new CandidateSummaryHeader(null));
+    public void constructor_nullLists_throwsNullPointerException() {
+        ObservableList<Person> persons = FXCollections.observableArrayList();
+        assertThrows(NullPointerException.class, () -> new CandidateSummaryHeader(null, persons));
+        assertThrows(NullPointerException.class, () -> new CandidateSummaryHeader(persons, null));
     }
 
     @Test
     public void constructor_emptyLists_includesAllStatusesInEnumOrder() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
+        Region header = new CandidateSummaryHeader(persons, persons).getRoot();
         Region cards = cards(header);
 
         assertEquals("HRVest", ((Text) header.lookup("#logo")).getText());
@@ -46,7 +48,7 @@ public class CandidateSummaryHeaderTest {
     @Test
     public void layout_onlyLogoFits_keepsLogoOutsideHiddenCardGroup() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
+        Region header = new CandidateSummaryHeader(persons, persons).getRoot();
         Region logoContainer = (Region) header.lookup("#logoPlaceholder");
         Node logo = header.lookup("#logo");
 
@@ -69,7 +71,7 @@ public class CandidateSummaryHeaderTest {
         ObservableList<Person> allPersons = FXCollections.observableArrayList();
         FilteredList<Person> shownPersons = new FilteredList<>(allPersons,
                 person -> person.getStatus() == Status.INTERVIEWING);
-        Region header = new CandidateSummaryHeader(new CandidateSummary(shownPersons, allPersons)).getRoot();
+        Region header = new CandidateSummaryHeader(shownPersons, allPersons).getRoot();
         layout(header, header.minWidth(-1));
         assertFalse(cards(header).isVisible());
 
@@ -103,7 +105,7 @@ public class CandidateSummaryHeaderTest {
     @Test
     public void layout_widthCrossesThreshold_showsAllOrNoneWithoutOscillation() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
+        Region header = new CandidateSummaryHeader(persons, persons).getRoot();
         double requiredWidth = header.prefWidth(-1);
         Region cards = cards(header);
 
@@ -133,7 +135,7 @@ public class CandidateSummaryHeaderTest {
     @Test
     public void layout_wideCountText_increasesRequiredWidthWithoutClipping() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
+        Region header = new CandidateSummaryHeader(persons, persons).getRoot();
         Text count = (Text) header.lookup("#totalCount");
         double originalWidth = header.prefWidth(-1);
         layout(header, header.minWidth(-1));
