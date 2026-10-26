@@ -264,7 +264,7 @@ The role catalogue is the shared collection of roles available in HRvest, includ
 * Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
 * Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
-* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
+* Whitespace followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case, even in `roles.json`. Quotes do not escape it. Names may start with a prefix, e.g. `n/Engineer`.
 
 #### Creating an unused role: `create_role`
 
@@ -369,6 +369,7 @@ HRvest automatically saves data after every successful command. Use [`export`](#
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
 * Run only one HRvest instance at a time. Your account needs permission to access the files and write to their folder.
 * If saving fails, follow the error message before continuing. Do not edit or delete `roles-transaction.json`; restart HRvest to recover an interrupted save.
+* If recovery reports a destination mismatch, restore the original configured data path or symbolic-link target and restart before moving any data files.
 
 ### Editing the data file
 

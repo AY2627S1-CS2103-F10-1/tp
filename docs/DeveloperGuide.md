@@ -148,7 +148,7 @@ The catalogue stores roles independently of candidates so that unused roles rema
 
 * Each candidate has at least one role from the catalogue. The protected `No role` entry provides a fallback when deleting the candidate's last role.
 * Roles keep a stable identity across renames. A rename updates the catalogue and all assigned candidates together, including candidates outside the displayed list.
-* The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates.
+* The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates. Shared role-name validation keeps API-created and loaded roles addressable by commands.
 
 ### Storage component
 
@@ -179,8 +179,8 @@ Candidates store role IDs, while `roles.json` stores the catalogue. `RoleDataSto
 
 The two files must stay consistent, but a filesystem rename can replace only one file at a time. To support recovery:
 
-* A rollback journal, `roles-transaction.json`, preserves the previous files before either is replaced. Failed or interrupted saves restore that pair before data is loaded again.
-* Invalid journals or incomplete rollback block further saves, preserving the recovery data. Candidate, catalogue, and journal paths must identify different files, and concurrent HRvest instances are unsupported.
+* A rollback journal, `roles-transaction.json`, preserves the previous files and their resolved destinations before either is replaced. Recovery checks both destinations before restoring the pair, preventing a changed data path or symbolic-link target from overwriting unrelated files.
+* Invalid journals, destination mismatches, or incomplete rollback block further saves and preserve the journal for repair. Candidate, catalogue, and journal paths must identify different files; concurrent HRvest instances are unsupported.
 * Recovery from invalid candidate or catalogue data backs up both originals before saving an empty candidate list and the built-in catalogue. The catalogue backup uses the candidate backup name with `.roles.json` appended; a catalogue-only backup is used when no candidate file exists.
 * If saving a command fails, `LogicManager` restores the previous model data, filter, and expanded view so that memory and saved data remain consistent after successful rollback.
 
@@ -391,6 +391,10 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 |----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
 | `* *`    | familiar user     | find a candidate by a partial keyword of their name               | find a candidate whose full name I do not remember                    |
 | `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a complete history of my interactions with that candidate        |
+| `* *`    | familiar user     | create roles before adding candidates                             | prepare the catalogue for upcoming hiring                             |
+| `* *`    | familiar user     | list all available roles, including unused ones                   | reuse an existing role instead of creating a duplicate                |
+| `* *`    | familiar user     | rename a role across all assigned candidates                      | correct a job title consistently                                      |
+| `* *`    | familiar user     | remove an obsolete role while retaining other assignments         | keep the catalogue relevant without losing unrelated hiring details   |
 | `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
 | `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
@@ -666,6 +670,79 @@ The terms candidate details, candidate status, duplicate candidate and note are 
     * 2b1. HRvest shows an error message.
 
       Use case ends.
+
+**Use case: UC11 - Create a role**
+
+**MSS**
+
+1. User requests to create a role, giving its name.
+1. HRvest adds the unused role to the catalogue and confirms creation.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The name is invalid or matches an existing role, including `No role`.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC12 - Rename a role globally**
+
+**MSS**
+
+1. User requests to rename an existing role, giving the role and its new name.
+1. HRvest renames the role in the catalogue and for all candidates assigned to it, preserving their other roles, and confirms the change.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The role does not exist or is the protected `No role` entry.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1b. The new name is invalid or matches another role, including `No role`.
+
+    * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1c. The new name is unchanged or differs only in capitalisation.
+
+    * 1c1. HRvest accepts the name and confirms the change, updating the capitalisation if needed.
+
+      Use case ends.
+
+**Use case: UC13 - Delete a role globally**
+
+**MSS**
+
+1. User requests to delete an existing role.
+1. HRvest removes the role from the catalogue and all candidates assigned to it, preserves their other roles, and assigns `No role` to candidates left without a role.
+1. HRvest confirms deletion.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The role does not exist or is the protected `No role` entry.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC14 - List the role catalogue**
+
+**MSS**
+
+1. User requests to list available roles.
+1. HRvest shows all catalogue entries, including unused roles and `No role`, in alphabetical order ignoring case.
+
+   Use case ends.
 
 ### Non-Functional Requirements
 
