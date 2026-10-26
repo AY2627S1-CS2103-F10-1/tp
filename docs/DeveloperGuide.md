@@ -71,7 +71,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `CandidateSummaryHeader`, and `StatusBarFooter`. These, including `MainWindow`, the standalone `AppLogo`, `CandidateSummaryCard`, and the reusable `StatusSummaryCard`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CandidateSummaryHeader`, `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. `CandidateSummaryHeader` composes the top row from an `AppLogo` and a group of summary cards: one `CandidateSummaryCard` for all candidates and a `StatusSummaryCard` for each recruitment status. These UI parts, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -196,7 +196,7 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Responsive candidate summary header
 
-`MainWindow` passes the filtered and full candidate lists exposed by `Logic` to `CandidateSummaryHeader`, which generates cards from `Status.values()`. The header composes a standalone `AppLogo` and the card group into an `HBox` row. The logo, header, total-only `CandidateSummaryCard`, and per-status `StatusSummaryCard` use matching FXML files for their markup. `CandidateSummaryCard` counts all candidates using list sizes, while each `StatusSummaryCard` counts only candidates matching its required status. Each card owns its counting and display bindings; no separate count provider, nullable status mode, or copied candidate collection is needed.
+`CandidateSummaryHeader` is the top-level header component, composing a standalone `AppLogo` and the card group into an `HBox` row. `MainWindow` supplies it with the filtered and full candidate lists exposed by `Logic`. The header creates one total-only `CandidateSummaryCard` and generates a `StatusSummaryCard` for each value in `Status.values()`. The header, logo, and cards use matching FXML files for their markup. `CandidateSummaryCard` counts all candidates using list sizes, while each `StatusSummaryCard` counts only candidates matching its required status. Each card owns its counting and display bindings; no separate count provider, nullable status mode, or copied candidate collection is needed.
 
 Both card types bind each count separately to its corresponding list. Separate count bindings matter because the full list can notify observers before the filtered list has finished processing the same change; iterating both lists from that notification could read stale filtered indexes during deletion or replacement.
 
