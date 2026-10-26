@@ -18,3 +18,8 @@
 .tooltip-text {
     -fx-text-fill: white;
 }
+
+.list-summary {
+    -fx-text-fill: white;
+    -fx-padding: 0 0 6 2;
+}

@@ -56,6 +56,9 @@ public class NoteRemovalIntegrationTest {
         assertEquals(String.format(NoteCommand.MESSAGE_CLEAR_SUCCESS, BENSON.getName()),
                 logic.execute("note 1 no/").getFeedbackToUser());
 
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertEquals(BENSON.getEmail(), model.getFilteredPersonList().getFirst().getEmail());
+        assertFalse(model.getFilteredPersonList().getFirst().hasNote());
         ReadOnlyAddressBook reloaded = storage.readAddressBook().orElseThrow();
         assertEquals(model.getAddressBook(), reloaded);
         assertTrue(reloaded.getPersonList().getFirst().hasNote());
@@ -73,6 +76,10 @@ public class NoteRemovalIntegrationTest {
 
         logic.execute("note 1 no/");
 
+        assertTrue(logic.isExpandedViewProperty().get());
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertEquals(BENSON.getEmail(), model.getFilteredPersonList().getFirst().getEmail());
+        assertFalse(model.getFilteredPersonList().getFirst().hasNote());
         assertFalse(storage.readAddressBook().orElseThrow().getPersonList().get(1).hasNote());
         assertTrue(storage.readAddressBook().orElseThrow().getPersonList().getFirst().hasNote());
     }

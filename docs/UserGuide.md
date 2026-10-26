@@ -61,8 +61,8 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for commands that take no parameters, such as `help`, `list`, `exit`, and `clear`, are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The role catalogue command `list_role` is an exception: it rejects all arguments.
+* Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
+  For example, `help 123` is interpreted as `help`. The `list_role` command is an exception: it rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -112,6 +112,8 @@ Shows a list of all persons in HRvest.
 
 Format: `list`
 
+* If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
+
 ### Editing a candidate: `edit`
 
 The success message shows the candidate's updated details, including their current status.
@@ -122,7 +124,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
+* Existing values will be updated to the input values. The current filter is kept; candidates that no longer match disappear from the displayed list.
+* If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This person already exists in the address book.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
@@ -131,6 +134,8 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
 *  `edit 3 s/Interviewing` Updates the status of the 3rd candidate to `Interviewing`.
+
+After an ordinary `edit`, `note`, or `status` update, the current name or status filter remains active. Displayed indexes may change when a candidate stops matching. Expanding a candidate replaces that filter with a selection of the candidate: an update keeps them expanded at index `1`, even if their new name or status would not match the earlier filter. Check the displayed list before the next index command; use `list` to show all candidates.
 
 ### Adding, replacing, or clearing a candidate's note: `note`
 
@@ -143,7 +148,7 @@ Format: `note INDEX no/[NOTE_TEXT]`
 * To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
 * Non-empty `NOTE_TEXT` can contain at most 500 characters. Leading and trailing spaces are removed; spacing, capitalisation, and punctuation within the note are kept.
 * Supply `no/` only once. Other prefixes, such as `n/`, are treated as part of the note.
-* After the note is updated, the full candidate list is shown. The message is `Updated note for NAME: NOTE_TEXT`.
+* After the note is updated or cleared, the current filter is kept. When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
 * Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
 
 Examples:
@@ -167,7 +172,7 @@ Format: `status INDEX s/STATUS`
 * `INDEX` is a positive, 1-based index in the displayed list.
 * Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
 * Candidates created with `add` start with `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
-* After an update, the full candidate list is shown. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
+* After an update, the current filter is kept. Candidates that no longer match a status filter disappear from the displayed list. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
 * A missing `s/` or non-integer index gives `Invalid command format!`; an index outside the displayed list gives `The candidate index provided is invalid.`
 * An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
 
@@ -178,18 +183,19 @@ Examples:
 
 ### Locating candidates by name: `find`
 
-Finds candidates whose names contain any of the given keywords.
+Finds candidates with a word in their name that starts with any of the given keywords.
 
 Format: `find KEYWORD [MORE_KEYWORDS]`
 
 * The search is case-insensitive; for example, `hans` matches `Hans`.
 * Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
 * The search considers only names.
-* Only full words match; for example, `Han` does not match `Hans`.
+* A keyword matches the start of any word in a name; for example, `Han` matches `Hans`, and `Gru` matches `Hans Gruber`. Text inside a word does not match; for example, `ans` does not match `Hans`.
 * Candidates matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 
 Examples:
 * `find John` returns `john` and `John Doe`
+* `find ale` returns `Alex Yeoh`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
@@ -197,16 +203,19 @@ Examples:
 
 Filters candidates by their hiring status.
 
-Format: `filter s/STATUS`
+Format: `filter s/STATUS [s/MORE_STATUS]...`
 
-* Displays all candidates with the specified status.
+* Displays all candidates whose status is any of the specified statuses.
+* Repeat `s/` to display candidates in any of several statuses (an `OR` filter). Repeating a status has no extra effect.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
-* The status is case-insensitive.
+* Statuses are case-insensitive.
+* If any given status is invalid, nothing is filtered and the valid statuses are listed.
 
 Examples:
 
 * `filter s/Interviewing` displays all candidates currently in the interviewing stage.
 * `filter s/Offered` displays all candidates who have been made offers.
+* `filter s/Interviewing s/Offered` displays all candidates who are interviewing or have been made offers.
 
 ### Deleting a candidate: `delete`
 
@@ -242,49 +251,88 @@ Examples:
 
 ### Managing the role catalogue
 
-Each candidate has one or more roles from a shared catalogue. The built-in `No role` always exists, cannot be renamed or deleted, and may coexist with other roles. Roles can remain in the catalogue without any candidates assigned to them.
+The role catalogue is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
-Role names ignore surrounding whitespace and case for lookup and uniqueness: ` Software Engineer ` and `software engineer` identify the same role. Display names keep their capitalisation and internal spaces; `Software  Engineer` with two spaces is distinct. Names must be nonblank and cannot contain internal control characters such as tabs, newlines, or carriage returns. Punctuation and Unicode names are accepted. In role commands, whitespace followed by an application prefix (`n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/`, ignoring case) is reserved syntax and cannot be part of a role name. Quotes are literal characters, not an escaping mechanism.
+* Each candidate has one or more roles. New candidates receive `No role`; `add` and `edit` do not assign other roles in this version.
+* `No role` cannot be renamed or deleted and may coexist with other roles.
+* Unused roles remain available, including after `clear` and restarts.
+* Role command words and prefixes are case-insensitive. Put whitespace before each prefix and supply each required prefix exactly once.
+* Changes save automatically. Invalid commands report an error without changing candidates or roles.
 
-The four role command words and their prefixes are case-insensitive. Each required prefix must appear exactly once, with whitespace before it. Successful changes save automatically. Duplicate names, unknown roles, protected-role operations, and malformed input report an error and leave candidates and the catalogue unchanged.
+**Role names:**
+
+* Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
+* Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
+* Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
+* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
 
 #### Creating an unused role: `create_role`
 
+Creates a role without assigning it to a candidate.
+
 Format: `create_role n/NAME`
+
+* The name must not match an existing role, including `No role`.
 
 Example: `create_role n/Software Engineer`
 
-Creates a catalogue entry without assigning it to anyone. Creation fails if the trimmed name matches an existing role ignoring case, including `No role`.
-
 #### Renaming a role globally: `edit_role`
+
+Renames a role for every assigned candidate, including those outside the displayed list.
 
 Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
 
-Example: `edit_role r/Software Engineer n/Senior Software Engineer`
+* The role must exist and must not be `No role`.
+* The new name must not match another role. Changing only capitalisation is allowed.
+* Other role assignments stay unchanged.
+* Exits expanded view and shows all candidates; other candidate filters remain active.
 
-Renames the existing role for every assigned candidate, including those outside the displayed list. Other assignments remain unchanged. The new name must not conflict with another catalogue entry. A case-only rename is allowed for ordinary roles. Every rename attempt targeting `No role` is rejected. A successful rename exits expanded view and shows all candidates; other candidate filters remain active.
+Example: `edit_role r/Software Engineer n/Senior Software Engineer`
 
 #### Deleting a role globally: `delete_role`
 
+Removes a role from the catalogue and all assigned candidates.
+
 Format: `delete_role r/NAME`
+
+* The role must exist and must not be `No role`.
+* Candidates keep their other roles. Those losing their last role receive `No role`.
+* Exits expanded view and shows all candidates; other candidate filters remain active.
 
 Example: `delete_role r/Senior Software Engineer`
 
-Removes the role from the catalogue and every assigned candidate. Each candidate keeps their other roles. HRvest assigns `No role` only when deletion would otherwise leave that candidate without any roles. Deleting `No role` or an unknown role is rejected. A successful deletion exits expanded view and shows all candidates; other candidate filters remain active.
-
 #### Listing the complete catalogue: `list_role`
+
+Shows all role names in the command result, including unused roles and `No role`.
 
 Format: `list_role`
 
-Shows all names in the command result, including unused roles and `No role`, sorted by their case-insensitive lookup names. This command accepts no arguments and keeps the candidate filter unchanged.
-
-New candidates receive `No role`. Candidate add/edit commands retain their existing syntax in this version; catalogue commands update assignments only as a consequence of renaming or deleting a role.
+* Names are sorted alphabetically, ignoring case.
+* Accepts no arguments and keeps the candidate filter unchanged.
 
 ### Clearing all entries: `clear`
 
 Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
 
 Format: `clear`
+
+### Exporting candidates: `export`
+
+Exports every candidate to `export.csv` inside the application's data folder, alongside the configured JSON data file (for example, `./data/data.json` gives `./data/export.csv`). Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
+
+Format: `export`
+
+* Use the lowercase command; surrounding whitespace is accepted.
+* The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
+* If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
+* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
+* Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
+* If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
+
+**Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
+
+**For more technical details, you can refer to the** [Developer Guide](./DeveloperGuide.md)
 
 ### Exiting the program: `exit`
 
@@ -296,35 +344,60 @@ Format: `exit`
 
 A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`. Collapsed cards keep the note text hidden; use `expand INDEX` to view the candidate's full note. Candidates without notes have no icon and reserve no icon space.
 
+### Displayed candidate count
+
+The line above the candidate list shows how many candidates are displayed, so you can tell when some are hidden rather than deleted:
+
+* `Showing all 6 candidates.` when every candidate is displayed, or `Showing 1 candidate.` when HRvest has only one.
+* `Showing 2 of 6 candidates (filtered). Type list to show all.` when `find`, `filter`, or a later update to a filtered list hides some candidates.
+* `Expanded view of 1 of 6 candidates. Type list to show all.` after `expand`, or `Expanded view of the only candidate.` when HRvest has only one.
+* `No candidates.` when HRvest has no candidates.
+
+### Navigating command history
+
+The command box remembers every command you submit in the current session so you can re-run or edit a past command without retyping it.
+
+* `Up` moves back through your submitted commands. Repeated presses walk further into the past; the earliest entry stays shown once you reach it.
+* `Down` moves forward. Pressing past the newest entry restores whatever draft you were typing before you started navigating, or clears the box if there was no draft.
+* Both successful and rejected commands are recorded, so you can quickly fix a typo and resubmit. A command identical to the most recent one does not take up an extra slot.
+* Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent distinct commands.
+
 ### Saving the data
 
-HRvest automatically saves data after every command. You do not need to save manually.
+HRvest automatically saves data after every successful command. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
-Saving writes a temporary file before atomically replacing the data file. If saving fails, HRvest shows an error and keeps the previous saved file. The data folder must support atomic file replacement. On filesystems that support file ACLs (access control lists) or POSIX permissions, saving preserves those settings on the existing data file; a failure to read or apply them causes the save to fail. If the data file is a symbolic link, saving updates its existing target and keeps the link. Saving fails if the link's target does not exist, leaving the link unchanged.
-
-The Windows account running HRvest must have permission to write in the data folder and access the existing data file. If those permissions are insufficient, HRvest reports a save error and keeps the existing access restrictions.
-
-A crash or power loss can leave temporary files named `HRvest-<random>.tmp` beside the data file. After closing all HRvest instances, you can delete these leftover `.tmp` files. Keep the saved JSON data file (normally `data/HRvest.json`), any symbolic-link target, and recovery backups ending in `-corrupt.json`; these are not temporary files.
+* Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
+* Run only one HRvest instance at a time. Your account needs permission to access the files and write to their folder.
+* If saving fails, follow the error message before continuing. Do not edit or delete `roles-transaction.json`; restart HRvest to recover an interrupted save.
 
 ### Editing the data file
 
-HRvest saves candidates automatically in `[JAR file location]/data/HRvest.json` and the complete role catalogue in `data/roles.json`. Unused roles survive restarts. Back up and restore these files together. Candidate `roles` arrays contain catalogue IDs, not display names; every reference must exist and each candidate must have at least one role. `No role` has the fixed ID `no-role` and may coexist with other roles. Legacy candidates without a `roles` field migrate to `No role`; explicitly empty arrays are invalid. Advanced users may edit these files while HRvest is closed.
+Advanced users may edit the JSON files. For a custom candidate data path, use that file and the `roles.json` beside it.
 
-Do not edit or delete `data/roles-transaction.json` if it exists. It contains the previous pair of files for an interrupted save; restart HRvest to roll back that save before loading data. If HRvest reports an invalid journal or cannot complete rollback, keep all three files and repair the journal or restore a known consistent backup before restarting. Run only one HRvest instance against these data files. The configured candidate file, role catalogue, and transaction journal must refer to different files, including through symbolic links; HRvest rejects conflicting paths before changing data.
+**Before editing:**
 
-Close HRvest before editing, and keep a backup. To remove a note, remove its `note` field, set it to `null`, or set it to an empty or whitespace-only string. Leading and trailing whitespace in saved statuses is ignored, just as in commands; for example, `"status": " Applied "` loads as `Applied`.
+1. Complete any interrupted-save recovery, then close HRvest.
+1. Back up both data files together.
+1. Edit the files, then restart HRvest to check your changes.
+
+**When editing records:**
+
+* Keep candidate emails unique, ignoring case.
+* Each candidate needs at least one valid role ID from `roles.json`, without duplicates. Use `no-role` for `No role`, rather than its display name.
+* Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
+
+**If data cannot be loaded:**
 
 <box type="warning" seamless>
 
-**Caution:**
-If candidate or catalogue data cannot be loaded, HRvest preserves both existing originals before replacing either file. The companion catalogue backup uses the candidate backup name followed by `.roles.json`; if only the catalogue exists, the warning points to its backup. HRvest first preserves the candidate file's exact contents in a unique `HRvest-<timestamp>-<random>-corrupt.json` backup beside the data file (beside the target for a symbolic link). The timestamp is your local date and time, for example `HRvest-20261014T120000-123456-corrupt.json`, so sorting by name puts the newest backup last. It then saves an empty candidate list and the built-in role catalogue before opening the window. A warning shows the backup's full path and recovery instructions. Commands such as `list`, `find`, and `help` cannot overwrite this backup. Backups are kept until you remove them yourself.<br>
-If creating the backup or saving the replacement fails, HRvest stops before opening the window and prints recovery instructions to the terminal. The original file remains intact; a completed backup is also kept. Check file and folder permissions and restart after repairing the file.<br>
-To restore your candidates, close HRvest, copy the backup, repair the copy, and replace `data/HRvest.json` (or its symbolic-link target) with the repaired copy. If a companion role backup exists, restore it to `data/roles.json` as well. If the warning points to a catalogue-only backup, restore it to `data/roles.json`. Keep both backups until you have verified your candidates and roles are restored. HRvest does not automatically repair or merge records.<br>
-Files containing candidates with the same email, ignoring case, are invalid even if the candidates have different names. This also applies to older files created before email uniqueness was enforced. Such files use the same backup and recovery process. Missing files still start with sample candidates; a successfully recovered empty file stays empty on later launches.
+Invalid edits can cause HRvest to start with an empty candidate list and the default role catalogue. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
 
-Furthermore, certain edits can cause HRvest to behave in unexpected ways (e.g., if a value entered is outside of the acceptable range). Therefore, edit the data file only if you are confident that you can update it correctly.
+1. Close HRvest and copy the backups shown in the warning.
+1. Repair the copies and restore the corresponding candidate and role files together.
+1. Restart HRvest and verify your data before deleting any backups.
 
-The `persons` array must contain candidate objects, and each candidate's `tags` array must contain tag strings. Null entries in either array are invalid and are reported as a data loading failure instead of crashing startup. An empty array is valid; a null JSON root or a missing/null `persons` array is invalid.
+HRvest does not repair or merge records automatically. See the [Developer Guide](DeveloperGuide.md#storage-component) for storage and recovery details.
+
 </box>
 
 ### Archiving data files `[coming in v2.0]`
@@ -336,7 +409,11 @@ _Details coming soon ..._
 ## FAQ
 
 **Q**: How do I transfer my data to another computer?<br>
-**A**: Install HRvest on the other computer, then close HRvest on both computers. Copy both `data/HRvest.json` and `data/roles.json` from your previous HRvest home folder into the new HRvest home folder, replacing the corresponding files together. The role catalogue is required to preserve unused roles and load candidates assigned custom roles. If you configured a different candidate data path, copy that candidate file and its sibling `roles.json` instead. If `roles-transaction.json` exists, restart HRvest on the source computer to finish recovery, then close it before copying the files.
+**A**: Install HRvest on the new computer, then:
+
+1. If `roles-transaction.json` exists on the old computer, restart HRvest there to complete recovery first. If recovery fails, follow the reported instructions before transferring.
+1. Close HRvest on both computers.
+1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together. For a custom candidate path, copy that file and its neighbouring `roles.json` instead.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -359,7 +436,8 @@ Action     | Format, Examples
 **Clear**  | `clear`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
-**Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
+**Export** | `export`
+**Filter** | `filter s/STATUS [s/MORE_STATUS]...`<br> e.g., `filter s/Interviewing s/Offered`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear

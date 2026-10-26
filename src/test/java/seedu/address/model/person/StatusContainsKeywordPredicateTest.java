@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.testutil.PersonBuilder;
@@ -13,7 +15,7 @@ public class StatusContainsKeywordPredicateTest {
 
     @Test
     public void constructor_nullStatus_throwsNullPointerException() {
-        assertThrows(NullPointerException.class, () -> new StatusContainsKeywordPredicate(null));
+        assertThrows(NullPointerException.class, () -> new StatusContainsKeywordPredicate((Status) null));
     }
 
     @Test
@@ -51,9 +53,39 @@ public class StatusContainsKeywordPredicateTest {
     }
 
     @Test
-    public void getStatus_returnsStoredStatus() {
-        StatusContainsKeywordPredicate predicate = new StatusContainsKeywordPredicate(Status.OFFERED);
-        assertEquals(Status.OFFERED, predicate.getStatus());
+    public void constructor_nullStatuses_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new StatusContainsKeywordPredicate((List<Status>) null));
+    }
+
+    @Test
+    public void constructor_noStatuses_throwsIllegalArgumentException() {
+        assertThrows(IllegalArgumentException.class, () -> new StatusContainsKeywordPredicate(List.of()));
+    }
+
+    @Test
+    public void test_anyOfSeveralStatuses_returnsTrue() {
+        StatusContainsKeywordPredicate predicate =
+                new StatusContainsKeywordPredicate(List.of(Status.OFFERED, Status.INTERVIEWING));
+        assertTrue(predicate.test(new PersonBuilder().withStatus(Status.INTERVIEWING).build()));
+        assertTrue(predicate.test(new PersonBuilder().withStatus(Status.OFFERED).build()));
+        assertFalse(predicate.test(new PersonBuilder().withStatus(Status.APPLIED).build()));
+    }
+
+    @Test
+    public void getStatuses_returnsStoredStatusesInPipelineOrder() {
+        StatusContainsKeywordPredicate predicate =
+                new StatusContainsKeywordPredicate(List.of(Status.OFFERED, Status.APPLIED, Status.OFFERED));
+        assertEquals(List.of(Status.APPLIED, Status.OFFERED), List.copyOf(predicate.getStatuses()));
+    }
+
+    @Test
+    public void equals_sameStatusesInDifferentOrder_returnsTrue() {
+        StatusContainsKeywordPredicate predicate =
+                new StatusContainsKeywordPredicate(List.of(Status.OFFERED, Status.APPLIED));
+        assertEquals(new StatusContainsKeywordPredicate(List.of(Status.APPLIED, Status.OFFERED)), predicate);
+        assertEquals(new StatusContainsKeywordPredicate(Status.APPLIED),
+                new StatusContainsKeywordPredicate(List.of(Status.APPLIED)));
+        assertFalse(predicate.equals(new StatusContainsKeywordPredicate(Status.APPLIED)));
     }
 
     @Test
@@ -66,7 +98,8 @@ public class StatusContainsKeywordPredicateTest {
     @Test
     public void toStringMethod() {
         StatusContainsKeywordPredicate predicate = new StatusContainsKeywordPredicate(Status.APPLIED);
-        String expected = StatusContainsKeywordPredicate.class.getCanonicalName() + "{status=" + Status.APPLIED + "}";
+        String expected = StatusContainsKeywordPredicate.class.getCanonicalName()
+                + "{statuses=[" + Status.APPLIED + "]}";
         assertEquals(expected, predicate.toString());
     }
 }

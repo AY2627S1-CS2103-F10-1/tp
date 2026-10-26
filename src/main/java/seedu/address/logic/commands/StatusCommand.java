@@ -2,7 +2,6 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
-import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 
 import java.util.List;
 import java.util.Objects;
@@ -48,7 +47,6 @@ public class StatusCommand extends Command {
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
                 candidate.getAddress(), candidate.getTags(), status, candidate.getNote(), candidate.getRoles());
         model.setPerson(candidate, updatedCandidate);
-        model.updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         return new CommandResult(String.format(MESSAGE_SUCCESS, candidate.getName(), candidate.getStatus(), status));
     }
 

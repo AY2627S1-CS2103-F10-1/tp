@@ -102,7 +102,19 @@ public class ModelManager implements Model {
     public void setPerson(Person target, Person editedPerson) {
         requireAllNonNull(target, editedPerson);
 
+        boolean isEditingExpandedCandidate = isExpandedView.get() && filteredPersons.contains(target);
         addressBook.setPerson(target, editedPerson);
+        if (isEditingExpandedCandidate) {
+            expandPersonAfterEdit(editedPerson);
+        }
+    }
+
+    /**
+     * Keeps the expanded candidate selected when its immutable record is replaced.
+     */
+    private void expandPersonAfterEdit(Person editedPerson) {
+        filteredPersons.setPredicate(editedPerson::equals);
+        isExpandedView.set(true);
     }
 
     @Override

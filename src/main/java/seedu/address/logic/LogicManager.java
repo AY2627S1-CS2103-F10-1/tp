@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Path;
 import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -50,6 +51,10 @@ public class LogicManager implements Logic {
         Runnable restore = model.createRestorePoint();
         commandResult = command.execute(model);
 
+        if (commandResult.isExport()) {
+            return exportAddressBook();
+        }
+
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
@@ -63,6 +68,18 @@ public class LogicManager implements Logic {
         return commandResult;
     }
 
+    /** Completes export before reporting success and deliberately bypasses unrelated JSON saving. */
+    private CommandResult exportAddressBook() throws CommandException {
+        // CH: The export command's logic and execution is here
+        final String messageSuccess = "Exported successfully to %s.";
+        try {
+            Path destination = storage.exportAddressBook(model.getAddressBook());
+            return new CommandResult(String.format(messageSuccess, destination));
+        } catch (IOException e) {
+            throw new CommandException("Export failed: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     public ReadOnlyBooleanProperty isExpandedViewProperty() {
         return model.isExpandedViewProperty();
@@ -71,6 +88,11 @@ public class LogicManager implements Logic {
     @Override
     public ObservableList<Person> getFilteredPersonList() {
         return model.getFilteredPersonList();
+    }
+
+    @Override
+    public ObservableList<Person> getAllPersonList() {
+        return model.getAddressBook().getPersonList();
     }
 
     @Override

@@ -1,0 +1,41 @@
+@startuml
+skin rose
+skinparam ActivityFontSize 15
+skinparam ArrowFontSize 12
+
+start
+:Read and validate saved candidate data;
+
+'Keep guards on the outgoing edges, as in CommitActivityDiagram.
+switch ()
+case ([valid file])
+    :Start with loaded candidates;
+    stop
+case ([missing file])
+    :Start with sample candidates;
+    stop
+case ([load failure])
+    :Back up original bytes to a unique
+timestamped file beside the data file;
+    if () then ([backup succeeds])
+    else ([backup fails])
+        :Report error and abort startup
+before UI or commands;
+        stop
+    endif
+
+    :Save empty candidate data atomically;
+    if () then ([save succeeds])
+    else ([save fails])
+        :Report error with backup path and abort
+startup before UI or commands;
+        stop
+    endif
+
+    :Start UI and command logic
+with empty candidate data;
+    :Show recovery warning with backup path
+and restoration instructions;
+    stop
+endswitch
+@enduml

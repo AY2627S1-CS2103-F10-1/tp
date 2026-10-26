@@ -96,6 +96,7 @@ public class EditCommandTest {
         Person editedPerson = new PersonBuilder(notedPerson).withStatus(Status.INTERVIEWING).build();
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withStatus(Status.INTERVIEWING).build();
         Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
         expectedModel.setPerson(notedPerson, editedPerson);
 
         assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
@@ -129,15 +130,45 @@ public class EditCommandTest {
     }
 
     @Test
-    public void execute_noFieldSpecifiedUnfilteredList_success() {
+    public void execute_noFieldSpecifiedUnfilteredList_reportsNoChange() {
         EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, new EditPersonDescriptor());
         Person editedPerson = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
 
-        String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
+        String expectedMessage = String.format(EditCommand.MESSAGE_NOT_CHANGED, editedPerson.getName());
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_sameValuesFilteredList_reportsNoChangeAndKeepsView() {
+        showPersonAtIndex(model, INDEX_FIRST_PERSON);
+        Person personInFilteredList = model.getFilteredPersonList().get(INDEX_FIRST_PERSON.getZeroBased());
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder(personInFilteredList).build();
+        EditCommand editCommand = new EditCommand(INDEX_FIRST_PERSON, descriptor);
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_NOT_CHANGED, personInFilteredList.getName());
+
+        Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
+
+        assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);
+    }
+
+    @Test
+    public void execute_onlyTagOrderDiffers_reportsNoChange() {
+        Person person = new PersonBuilder().withTags("backend", "java").build();
+        Model singlePersonModel = new ModelManager(new AddressBook(), new UserPrefs());
+        singlePersonModel.addPerson(person);
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withTags("java", "backend").build();
+
+        String expectedMessage = String.format(EditCommand.MESSAGE_NOT_CHANGED, person.getName());
+
+        Model expectedModel = new ModelManager(new AddressBook(singlePersonModel.getAddressBook()), new UserPrefs());
+
+        assertCommandSuccess(new EditCommand(INDEX_FIRST_PERSON, descriptor), singlePersonModel,
+                expectedMessage, expectedModel);
     }
 
     @Test
@@ -152,6 +183,7 @@ public class EditCommandTest {
         String expectedMessage = String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson));
 
         Model expectedModel = new ModelManager(new AddressBook(model.getAddressBook()), new UserPrefs());
+        showPersonAtIndex(expectedModel, INDEX_FIRST_PERSON);
         expectedModel.setPerson(model.getFilteredPersonList().get(0), editedPerson);
 
         assertCommandSuccess(editCommand, model, expectedMessage, expectedModel);

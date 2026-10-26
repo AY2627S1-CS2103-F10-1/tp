@@ -75,7 +75,21 @@ public class LogicManagerTest {
     @Test
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
-        assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+        // The model starts empty, so list reports that there are no candidates.
+        assertCommandSuccess(listCommand, ListCommand.MESSAGE_NO_CANDIDATES, model);
+    }
+
+    @Test
+    public void getAllPersonList_filteredView_includesHiddenPersons() throws Exception {
+        Person hidden = new PersonBuilder().withName("Hidden Person").withEmail("hidden@example.com").build();
+        model.addPerson(AMY);
+        model.addPerson(hidden);
+
+        logic.execute("find " + AMY.getName().fullName.split(" ")[0]);
+
+        assertEquals(List.of(AMY), logic.getFilteredPersonList());
+        assertEquals(List.of(AMY, hidden), logic.getAllPersonList());
+        assertThrows(UnsupportedOperationException.class, () -> logic.getAllPersonList().remove(0));
     }
 
     @Test

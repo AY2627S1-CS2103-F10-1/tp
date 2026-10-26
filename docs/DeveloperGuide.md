@@ -105,7 +105,7 @@ How the `Logic` component works:
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a candidate).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
+   For `delete 1`, the command first gets the displayed list from the `Model`, then deletes the candidate `p` at index `1` of that list. Other commands may need different interactions with the `Model`.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
@@ -116,26 +116,24 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
-Role-management commands identify catalogue entries by name rather than by their position in the sorted catalogue, so creating or renaming another role does not change the target of an existing command. `RoleCommandParser` handles command syntax; catalogue uniqueness, protected-role checks, and assignment updates remain in the model.
+For role-management commands, `AddressBookParser` selects `RoleCommandParser` to parse role names and create the corresponding `Command`. During execution, the command delegates catalogue validation and assignment updates to the `Model`.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
-<puml src="diagrams/ModelClassDiagram.puml" width="450" />
+<puml src="diagrams/ModelClassDiagram.puml" width="600" />
 
 
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores a role catalogue in `AddressBook`, independently of candidate assignments, so unused roles remain available and clearing candidates preserves the catalogue. Each candidate has a nonempty, immutable set of roles from this catalogue; the protected `No role` entry supplies the fallback when deleting a candidate's last assigned role.
+* stores a shared role catalogue in `AddressBook`, separately from candidate assignments.
 * enforces email-only uniqueness through `Person.isSamePerson`, using case-insensitive comparison. `ParserUtil.parseEmail` trims command input, while `Email` validates stored values and preserves case. Full `Person.equals` and `Email.equals` remain case-sensitive. Add, edit, bulk replacement and JSON loading share this identity rule. Edit permits unchanged identity because the list already enforces uniqueness; a changed identity is checked against the entire address book, not only the displayed list.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * tracks whether the displayed list is in expanded view as transient state. The `Logic` API exposes this read-only property to the `UI`; it is not persisted.
 * stores a `UserPrefs` object that represents the user’s preferences (currently, just the GUI settings). This is exposed to the outside as a `ReadOnlyUserPrefs` object.
 * does not depend on any of the other three components (as the `Model` represents data entities of the domain, they should make sense on their own without depending on other components)
 
-
-Roles retain their IDs across renames, but `Role.equals` compares both ID and name. Renaming therefore requires replacing the role values held by candidates as well as the catalogue entry. `ModelManager` validates a replacement address book before applying a rename or deletion, preventing stale role references or partially applied validation failures. These operations also reset an expanded view to the full list because its filter captures the candidate's previous value.
 
 <box type="info" seamless>
 
@@ -144,12 +142,19 @@ Roles retain their IDs across renames, but `Role.equals` compares both ID and na
 <puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
 </box>
 
+#### Role catalogue design
+
+The catalogue stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position, so catalogue sorting does not change their targets.
+
+* Each candidate has at least one role from the catalogue. The protected `No role` entry provides a fallback when deleting the candidate's last role.
+* Roles keep a stable identity across renames. A rename updates the catalogue and all assigned candidates together, including candidates outside the displayed list.
+* The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates.
 
 ### Storage component
 
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
-<puml src="diagrams/StorageClassDiagram.puml" width="550" />
+<puml src="diagrams/StorageClassDiagram.puml" width="700" />
 
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
@@ -164,11 +169,20 @@ During startup, `MainApp` uses the storage component's `CandidateDataInitializer
 
 Both backup and replacement saving must finish before commands become available. Otherwise startup aborts with an actionable terminal error, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
 
-The catalogue is persisted separately in `data/roles.json`; candidate records contain role IDs. `StorageManager` coordinates both through `RoleDataStorage`, loading the catalogue before resolving assignments. Missing legacy assignments migrate to `No role`; explicitly empty, duplicate, null-element, or unknown references are invalid. Missing catalogues are accepted only when candidates can resolve against the built-in role.
+The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data, and null entries rejected during deserialization or validation.
 
-Before loading, backing up, or saving, `RoleDataStorage` rejects collisions between candidate, catalogue, and journal destinations, resolving symbolic links and checking existing file identity. This prevents recovery and writes from overwriting another member of the transaction. Saving two files cannot use a single filesystem rename. Before either replacement, a versioned `roles-transaction.json` rollback journal stores the exact previous bytes and whether each file existed. A successful save replaces each file atomically in sequence, then removes the journal; the pair is not replaced in one atomic operation. A failure restores both previous files; if rollback cannot finish, the journal remains and further saves are blocked. Startup restores an interrupted transaction before reading references. Invalid journals block replacement recovery so their before-images are never silently discarded. This protocol assumes one running HRvest instance; concurrent writers are unsupported.
+<puml src="diagrams/DataRecoveryActivityDiagram.puml" alt="Startup candidate data loading and recovery, including backup and replacement save failures" />
 
-Invalid candidate/catalogue data uses the existing backup-before-replacement recovery. Both originals must be preserved before saving an empty candidate list and default catalogue. The companion role backup is named after the candidate backup with `.roles.json` appended; when only the catalogue exists, its backup is the primary recovery path. `LogicManager` uses `Model.createRestorePoint()` to restore the pre-command address book, filter, and expanded view after save failure.
+#### Coordinating candidate and role storage
+
+Candidates store role IDs, while `roles.json` stores the catalogue. `RoleDataStorage` loads the catalogue first so that it can validate candidate assignments. Older candidates without role assignments receive `No role`; invalid assignments use the data-recovery process described above.
+
+The two files must stay consistent, but a filesystem rename can replace only one file at a time. To support recovery:
+
+* A rollback journal, `roles-transaction.json`, preserves the previous files before either is replaced. Failed or interrupted saves restore that pair before data is loaded again.
+* Invalid journals or incomplete rollback block further saves, preserving the recovery data. Candidate, catalogue, and journal paths must identify different files, and concurrent HRvest instances are unsupported.
+* Recovery from invalid candidate or catalogue data backs up both originals before saving an empty candidate list and the built-in catalogue. The catalogue backup uses the candidate backup name with `.roles.json` appended; a catalogue-only backup is used when no candidate file exists.
+* If saving a command fails, `LogicManager` restores the previous model data, filter, and expanded view so that memory and saved data remain consistent after successful rollback.
 
 ### Common classes
 
@@ -179,6 +193,42 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Command history navigation
+
+The command history feature lets a user walk through commands they submitted earlier in the current session, using the `Up` and `Down` arrow keys. It is implemented as a single collaborator (`CommandHistory`) owned by `CommandBox`.
+
+#### How it fits in
+
+`CommandBox` already owns the JavaFX `TextField` and runs user input through `CommandExecutor` on Enter. The new field reuses that path:
+
+1. On Enter, `CommandBox#handleCommandEntered` records the raw text with `CommandHistory#add` **before** dispatching to the executor. Rejected commands are recorded too so the user can press Up and fix a typo. The text field is cleared on both success and failure so the next Up press shows the command from history instead of appearing to do nothing.
+2. A `KEY_PRESSED` event filter on `commandTextField` catches `UP` and `DOWN` presses, calls `history.previous()` or `history.next()`, and swaps the text field's contents with the result. The event is consumed so the caret does not move within the text field.
+3. When the user presses `Up` while composing a fresh command, `CommandBox` captures the current text as a `draft` before replacing the field with a past entry. Pressing `Down` back past the newest entry restores that draft.
+
+#### `CommandHistory` design
+
+`CommandHistory` is a small helper class in the `ui` package. It stores submitted commands in insertion order and tracks a `cursor` that sits at `entries.size()` when the user is composing a fresh command (the "past-the-end" position).
+
+* `add(String)` appends and resets the cursor to the past-the-end position. Blank commands are ignored, and a command identical to the most recent entry is also skipped so repeated submissions do not take up extra slots.
+* `previous()` moves the cursor one step back and returns the command there, or `Optional.empty()` when already at the oldest entry.
+* `next()` moves the cursor forward. On reaching the past-the-end position it returns an empty string so the UI knows to clear or restore the field.
+* Entries are capped at `MAX_ENTRIES` (100) to bound memory for long-running sessions. The oldest entry is dropped when the cap is reached.
+
+The class diagram below shows the collaborator relationship:
+
+<puml src="diagrams/CommandHistoryClassDiagram.puml" alt="CommandHistoryClassDiagram" />
+
+The sequence diagram below shows the flow for a user pressing `Up` twice then `Down` once:
+
+<puml src="diagrams/CommandHistorySequenceDiagram.puml" alt="CommandHistorySequenceDiagram" />
+
+#### Design considerations
+
+* **Session-only, no persistence.** Keeping history in memory avoids a storage format change for a quality-of-life feature. Users who want cross-session recall can re-type the few commands they care about or wait for a persisted variant later.
+* **Record failed commands too.** The whole point of Up/Down is to iterate faster; forcing users to retype a mistyped `filtwr s/Interviewing` would defeat that.
+* **Hard cap at 100 entries.** Prevents unbounded growth in long sessions. 100 is chosen to be well above the dozen or so commands a typical session uses while still being cheap.
+* **Event filter, not handler.** A filter runs before the `TextField`'s own key-handling, so the arrow keys do not also move the caret while cycling.
 
 ### \[Proposed\] Undo/redo feature
 
@@ -269,9 +319,23 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
-### \[Proposed\] Data archiving
+### CSV export
 
-_{Explain here how the data archiving feature will be implemented}_
+The `export` command creates a CSV copy of all candidate records, regardless of the current search or filter. It leaves the application's data and current view unchanged.
+
+`ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
+
+You can refer to the diagram below as a reference.
+
+<puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
+
+The writer exports one row per candidate to `export.csv` inside the configured data directory, alongside the JSON data file, with a header and all candidate fields. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
+
+**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, and spreadsheet auto-detection can alter values.
+
+HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. It is non-destructive to HRvest's stored records: the CSV is a separate copy of data that remains available in the application. For this reason, export uses direct writing with failure reporting rather than rollback or deletion of a failed output file; the user can retry after resolving the problem. This differs from saving HRvest's source data, where atomic replacement protects the existing records. The non-destructive guarantee does not extend to an earlier CSV: each export directly overwrites it, so an interrupted or failed write may destroy the previous export and leave an empty or incomplete file.
+
+Failures display `Export failed:` with the reason and destination when available. Check that the file/folder is writable. Directories, symbolic links (including dangling links), and other non-regular destinations are rejected without deleting them. A missing data directory is created first, as JSON saving does. If the required parent directory cannot be determined or created, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged; a failure after opening the destination warns that the export may be incomplete and the previous export may be lost.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -520,20 +584,20 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User requests to filter candidates by candidate status.
-1. HRvest shows candidates with the specified status.
+1. User requests to filter candidates by one or more candidate statuses.
+1. HRvest shows candidates with any of the specified statuses.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. The specified status is not a valid candidate status.
+* 1a. A specified status is not a valid candidate status.
 
     * 1a1. HRvest shows an error message listing the valid candidate statuses.
 
       Use case ends.
 
-* 2a. No candidates match the specified status.
+* 2a. No candidates match any of the specified statuses.
 
     * 2a1. HRvest informs the user that no candidates match.
 
@@ -579,7 +643,29 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-*{More to be added}*
+**Use case: UC10 - Export candidate data**
+
+**MSS**
+
+1. User requests to export candidate data.
+1. HRvest exports the candidate data to a file on the user's computer.
+1. HRvest shows a confirmation message.
+
+   Use case ends.
+
+**Extensions**
+
+* 2a. There are no candidates.
+
+    * 2a1. HRvest still exports a file with no candidate data.
+
+      Use case resumes at step 3.
+
+* 2b. The data cannot be exported.
+
+    * 2b1. HRvest shows an error message.
+
+      Use case ends.
 
 ### Non-Functional Requirements
 
@@ -596,6 +682,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * **Candidate**: A person being considered for an open role.
 * **Open role**: A position for which the startup is currently recruiting.
+* **Role catalogue**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
@@ -660,6 +747,13 @@ testers are expected to do more *exploratory* testing.
 
 1. _{ more test cases … }_
 
+### Preserving filters after candidate updates
+
+1. Run `find Betsy` (use a candidate name in your test data), then `note 1 no/Follow up`. Expected: Only the matching candidates remain displayed. `delete 1` deletes the displayed candidate.
+1. Run `filter s/Applied`, then `status 1 s/Offered`. Expected: The updated candidate disappears, and only remaining Applied candidates are shown. The line above the list reads `Showing N of M candidates (filtered). Type list to show all.`, where `M` still counts the updated candidate. Repeat with `edit 1 s/Offered`.
+1. Run `find Betsy`, then change that candidate's name with `edit 1 n/Other Name`. Expected: The candidate disappears if the new name does not match.
+1. Run `filter s/Applied`, `expand 1`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded at index `1` after each update, including the Offered status change. Expansion replaces the earlier status filter with a selection of the candidate. Run `list` to show all candidates again.
+
 ### Candidate note indicator
 
 1. Clearing a note
@@ -674,6 +768,17 @@ testers are expected to do more *exploratory* testing.
 1. Hover over the icon. Expected: The tooltip reads `Note available`.
 1. Narrow the window until the long name is truncated. Expected: The sticky note icon remains visible, and the candidate's status still appears below the contact details.
 1. Run `expand INDEX` for the candidate with a note. Expected: The full note appears and the sticky note icon remains visible. Run `list`, then expand the candidate without a note. Expected: `No note recorded.` appears and no icon space is reserved. Run `list` again. Expected: All candidates return to collapsed cards with note contents hidden.
+
+### Managing roles
+
+Use a separate test folder and keep a matching backup of candidate and catalogue files.
+
+1. Run `create_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
+1. Run `create_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalogue.
+1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
+1. To check global assignment updates, close HRvest. In a test copy, assign the new role ID to two candidates' `roles` arrays; give one candidate another valid role too. Restart, filter so one candidate is hidden, and rename the role again. Close HRvest and inspect both files. Expected: The catalogue name changes, both candidates retain the same role ID, and their other fields and assignments remain unchanged.
+1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalogue entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.
+1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear`, then `list_role`. Expected: Candidates are removed while remaining catalogue entries survive. Restore both test files together after testing.
 
 ### Saving data
 
