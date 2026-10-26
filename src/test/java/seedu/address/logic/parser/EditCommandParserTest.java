@@ -33,6 +33,8 @@ import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
@@ -71,10 +73,13 @@ public class EditCommandParserTest {
     @Test
     public void parse_invalidPreamble_failure() {
         // negative index
-        assertParseFailure(parser, "-5" + NAME_DESC_AMY, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "-5" + NAME_DESC_AMY, ParserUtil.MESSAGE_INVALID_INDEX);
 
         // zero index
-        assertParseFailure(parser, "0" + NAME_DESC_AMY, MESSAGE_INVALID_FORMAT);
+        assertParseFailure(parser, "0" + NAME_DESC_AMY, ParserUtil.MESSAGE_INVALID_INDEX);
+
+        // index too large for any displayed list
+        assertParseFailure(parser, "99999999999" + NAME_DESC_AMY, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
 
         // invalid arguments being parsed as preamble
         assertParseFailure(parser, "1 some random string", MESSAGE_INVALID_FORMAT);
@@ -221,6 +226,38 @@ public class EditCommandParserTest {
     public void parse_repeatedStatus_failure() {
         assertParseFailure(parser, "1 " + PREFIX_STATUS + "Applied " + PREFIX_STATUS + "invalid",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STATUS));
+    }
+
+    @Test
+    public void parse_uppercasePrefixes_success() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress("12 Kent Ridge Drive")
+                .withStatus(Status.OFFERED).withEmail(VALID_EMAIL_AMY).build();
+
+        assertParseSuccess(parser, "1 A/12 Kent Ridge Drive S/Offered E/" + VALID_EMAIL_AMY,
+                new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_uppercaseRepeatedPrefix_failure() {
+        assertParseFailure(parser, "1 s/Applied S/Offered",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STATUS));
+    }
+
+    @Test
+    public void parse_notePrefix_failure() {
+        for (String args : List.of("1 no/Strong candidate", "1 no/", "1 NO/Strong candidate",
+                "1" + ADDRESS_DESC_AMY + " no/hello", "1" + ADDRESS_DESC_AMY + "\tno/hello",
+                "no/Strong candidate")) {
+            assertParseFailure(parser, args, EditCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        }
+    }
+
+    @Test
+    public void parse_notePrefixInsideWord_preservesLiteralAddress() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder()
+                .withAddress("Blk 1 yes/no/feedback").build();
+
+        assertParseSuccess(parser, "1 a/Blk 1 yes/no/feedback", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test
