@@ -18,12 +18,14 @@ import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
-import seedu.address.model.role.RoleCatalogue;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.model.util.SampleDataUtil;
 
-/** Coordinates candidate and catalogue files using a rollback journal with fixed local destinations. */
+/** Coordinates candidate and catalog files using a rollback journal with fixed local destinations. */
 class RoleDataStorage {
     private static final int JOURNAL_VERSION = 1;
+    private static final String ROLES_FILE_NAME = "roles.json";
+    private static final String JOURNAL_FILE_NAME = "roles-transaction.json";
     private final JsonAddressBookStorage candidates;
     private final Path rolesPath;
     private final Path journalPath;
@@ -31,20 +33,20 @@ class RoleDataStorage {
 
     RoleDataStorage(JsonAddressBookStorage candidates) {
         this.candidates = candidates;
-        rolesPath = candidates.getAddressBookFilePath().resolveSibling("roles.json");
-        journalPath = candidates.getAddressBookFilePath().resolveSibling("roles-transaction.json");
+        rolesPath = candidates.getAddressBookFilePath().resolveSibling(ROLES_FILE_NAME);
+        journalPath = candidates.getAddressBookFilePath().resolveSibling(JOURNAL_FILE_NAME);
     }
 
     Optional<ReadOnlyAddressBook> read() throws DataLoadingException {
         try {
             validateDestinations();
             recover();
-            RoleCatalogue catalogue = readCatalogue();
+            RoleCatalog catalog = readCatalog();
             Optional<ReadOnlyAddressBook> loaded = candidates.readAddressBook(candidates.getAddressBookFilePath(),
-                    catalogue);
+                    catalog);
             if (loaded.isEmpty() && exists(rolesPath)) {
                 AddressBook sample = new AddressBook(SampleDataUtil.getSampleAddressBook());
-                sample.setRoleCatalogue(catalogue);
+                sample.setRoleCatalog(catalog);
                 return Optional.of(sample);
             }
             return loaded;
@@ -53,15 +55,15 @@ class RoleDataStorage {
         }
     }
 
-    private RoleCatalogue readCatalogue() throws DataLoadingException, IllegalValueException, IOException {
+    private RoleCatalog readCatalog() throws DataLoadingException, IllegalValueException, IOException {
         if (!exists(rolesPath)) {
-            return new RoleCatalogue();
+            return new RoleCatalog();
         }
         if (!Files.isRegularFile(rolesPath)) {
-            throw new IOException("The role catalogue path must be a readable regular file.");
+            throw new IOException("The role catalog path must be a readable regular file.");
         }
-        JsonRoleCatalogue stored = JsonUtil.readJsonFile(rolesPath, JsonRoleCatalogue.class)
-                .orElseThrow(() -> new IOException("The role catalogue could not be read."));
+        JsonRoleCatalog stored = JsonUtil.readJsonFile(rolesPath, JsonRoleCatalog.class)
+                .orElseThrow(() -> new IOException("The role catalog could not be read."));
         return stored.toModelType();
     }
 
@@ -80,7 +82,7 @@ class RoleDataStorage {
                 journalPath, permissions);
         try {
             candidates.saveAddressBook(data);
-            writeCatalogue(data.getRoleCatalogue());
+            writeCatalog(data.getRoleCatalog());
             Files.delete(journalPath);
         } catch (IOException e) {
             try {
@@ -94,8 +96,8 @@ class RoleDataStorage {
     }
 
     /** Provides a narrow fault-injection seam for testing a failure between the two file commits. */
-    void writeCatalogue(RoleCatalogue catalogue) throws IOException {
-        JsonAddressBookStorage.writeJson(new JsonRoleCatalogue(catalogue), rolesPath);
+    void writeCatalog(RoleCatalog catalog) throws IOException {
+        JsonAddressBookStorage.writeJson(new JsonRoleCatalog(catalog), rolesPath);
     }
 
     private void recover() throws IOException {
@@ -160,7 +162,7 @@ class RoleDataStorage {
             for (int j = i + 1; j < paths.length; j++) {
                 if (resolveDestination(paths[i]).equals(resolveDestination(paths[j]))
                         || (exists(paths[i]) && exists(paths[j]) && Files.isSameFile(paths[i], paths[j]))) {
-                    throw new IOException("Candidate, role catalogue, and transaction journal paths must refer "
+                    throw new IOException("Candidate, role catalog, and transaction journal paths must refer "
                             + "to different files. Change the candidate data path or conflicting symbolic links.");
                 }
             }

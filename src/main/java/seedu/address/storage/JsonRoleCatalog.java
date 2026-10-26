@@ -8,33 +8,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.model.role.Role;
-import seedu.address.model.role.RoleCatalogue;
+import seedu.address.model.role.RoleCatalog;
 
 /** Jackson representation kept separate from the validated role model. */
-class JsonRoleCatalogue {
+class JsonRoleCatalog {
     private final List<Entry> roles;
 
     @JsonCreator
-    JsonRoleCatalogue(@JsonProperty("roles") List<Entry> roles) {
+    JsonRoleCatalog(@JsonProperty("roles") List<Entry> roles) {
         this.roles = roles;
     }
 
-    JsonRoleCatalogue(RoleCatalogue catalogue) {
-        roles = catalogue.getRoles().stream().map(role -> new Entry(role.getId(), role.getName())).toList();
+    JsonRoleCatalog(RoleCatalog catalog) {
+        roles = catalog.getRoles().stream().map(role -> new Entry(role.getId(), role.getName())).toList();
     }
 
-    RoleCatalogue toModelType() throws IllegalValueException {
+    RoleCatalog toModelType() throws IllegalValueException {
         try {
             if (roles == null || roles.stream().anyMatch(Objects::isNull)) {
-                throw new IllegalArgumentException("The role catalogue must contain a non-null roles list.");
+                throw new IllegalArgumentException("The role catalog must contain a non-null roles list.");
             }
-            return new RoleCatalogue(roles.stream().map(entry -> new Role(entry.id, entry.name)).toList());
+            return new RoleCatalog(roles.stream().map(entry -> new Role(entry.id, entry.name)).toList());
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new IllegalValueException(e.getMessage());
         }
     }
 
-    /** Represents one persisted catalogue entry. */
+    /** Represents one persisted catalog entry. */
     static class Entry {
         private final String id;
         private final String name;

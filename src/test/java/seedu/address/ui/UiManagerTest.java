@@ -35,7 +35,7 @@ public class UiManagerTest {
     }
 
     @Test
-    public void showRecoveryWarning_catalogueOnlyBackup_explainsCatalogueDestination() {
+    public void showRecoveryWarning_catalogOnlyBackup_explainsCatalogDestination() {
         Path dataFile = temporaryFolder.resolve("candidates.json");
         Path backup = temporaryFolder.resolve("HRvest-example-corrupt.json.roles.json");
         CapturingUiManager ui = new CapturingUiManager(dataFile);

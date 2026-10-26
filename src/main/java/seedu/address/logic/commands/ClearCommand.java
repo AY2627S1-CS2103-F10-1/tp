@@ -18,7 +18,7 @@ public class ClearCommand extends Command {
     public CommandResult execute(Model model) {
         requireNonNull(model);
         AddressBook empty = new AddressBook();
-        empty.setRoleCatalogue(model.getRoleCatalogue());
+        empty.setRoleCatalog(model.getRoleCatalog());
         model.setAddressBook(empty);
         return new CommandResult(MESSAGE_SUCCESS);
     }

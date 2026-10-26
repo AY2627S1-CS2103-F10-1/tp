@@ -7,7 +7,7 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
-import seedu.address.model.role.RoleCatalogue;
+import seedu.address.model.role.RoleCatalog;
 
 /**
  * The API of the Model component.
@@ -88,9 +88,9 @@ public interface Model {
         return () -> setAddressBook(snapshot);
     }
 
-    /** Returns the shared immutable role catalogue. */
-    default RoleCatalogue getRoleCatalogue() {
-        return getAddressBook().getRoleCatalogue();
+    /** Returns the shared immutable role catalog. */
+    default RoleCatalog getRoleCatalog() {
+        return getAddressBook().getRoleCatalog();
     }
 
     /** Creates an unused role after checking name uniqueness. */
@@ -104,6 +104,6 @@ public interface Model {
 
     /** Resolves and replaces a person's assignments atomically. */
     default void replacePersonRoles(Person person, Collection<String> names) {
-        setPerson(person, person.withRoles(getRoleCatalogue().resolve(names)));
+        setPerson(person, person.withRoles(getRoleCatalog().resolve(names)));
     }
 }

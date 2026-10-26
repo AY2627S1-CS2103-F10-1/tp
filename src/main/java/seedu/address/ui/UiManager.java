@@ -63,7 +63,7 @@ public class UiManager implements Ui {
         Path rolesFile = dataFilePath.toAbsolutePath().resolveSibling("roles.json");
         String instructions;
         if (backup.getFileName().toString().endsWith(".roles.json")) {
-            instructions = "Close HRvest, make a copy of the catalogue backup, repair that copy, and replace "
+            instructions = "Close HRvest, make a copy of the catalog backup, repair that copy, and replace "
                     + rolesFile + " with it. The candidate file was absent when recovery started.";
         } else {
             instructions = "Close HRvest, make a copy of the backup, repair that copy, and replace "
@@ -72,7 +72,7 @@ public class UiManager implements Ui {
         }
         showAlertDialogAndWait(AlertType.WARNING, "Candidate data recovery",
                 "Candidate or role data could not be loaded", "HRvest preserved the original data at:\n" + backup
-                        + "\n\nAn empty candidate list has been saved with the built-in role catalogue. "
+                        + "\n\nAn empty candidate list has been saved with the built-in role catalog. "
                         + instructions + " Keep the backup until recovery is complete.");
     }
 

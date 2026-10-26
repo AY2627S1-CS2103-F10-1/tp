@@ -32,20 +32,20 @@ class RoleCommandIntegrationTest {
     Path directory;
 
     @Test
-    void execute_manageRolesAcrossRestarts_preservesCatalogueAndAssignments() throws Exception {
+    void execute_manageRolesAcrossRestarts_preservesCatalogAndAssignments() throws Exception {
         ModelManager model = new ModelManager();
         LogicManager logic = new LogicManager(model, storage());
         logic.execute("create_role n/Engineer");
         logic.execute("create_role n/Unused");
-        assertTrue(storage().readAddressBook().orElseThrow().getRoleCatalogue().find("Unused").isPresent());
+        assertTrue(storage().readAddressBook().orElseThrow().getRoleCatalog().find("Unused").isPresent());
         Person person = new PersonBuilder().build();
         model.addPerson(person);
         model.replacePersonRoles(person, List.of("Engineer", "No role"));
-        String id = model.getRoleCatalogue().requireRole("Engineer").getId();
+        String id = model.getRoleCatalog().requireRole("Engineer").getId();
         logic.execute("edit_role r/engineer n/Senior Engineer");
 
         ModelManager restarted = new ModelManager(storage().readAddressBook().orElseThrow(), new UserPrefs());
-        assertEquals(id, restarted.getRoleCatalogue().requireRole("Senior Engineer").getId());
+        assertEquals(id, restarted.getRoleCatalog().requireRole("Senior Engineer").getId());
         assertEquals(2, restarted.getAddressBook().getPersonList().getFirst().getRoles().size());
         LogicManager restartedLogic = new LogicManager(restarted, storage());
         assertEquals("Roles:\nNo role\nSenior Engineer\nUnused",
@@ -53,7 +53,7 @@ class RoleCommandIntegrationTest {
         restartedLogic.execute("delete_role r/Senior Engineer");
         assertEquals(Set.of(Role.NO_ROLE), storage().readAddressBook().orElseThrow()
                 .getPersonList().getFirst().getRoles());
-        assertFalse(storage().readAddressBook().orElseThrow().getRoleCatalogue().find("Senior Engineer").isPresent());
+        assertFalse(storage().readAddressBook().orElseThrow().getRoleCatalog().find("Senior Engineer").isPresent());
     }
 
     @Test
@@ -62,7 +62,7 @@ class RoleCommandIntegrationTest {
         LogicManager logic = new LogicManager(model, storage());
         logic.execute("create_role n/Engineer");
         String candidates = Files.readString(directory.resolve("HRvest.json"));
-        String catalogue = Files.readString(directory.resolve("roles.json"));
+        String catalog = Files.readString(directory.resolve("roles.json"));
         AddressBook before = new AddressBook(model.getAddressBook());
 
         assertThrows(CommandException.class, () -> logic.execute("create_role n/ ENGINEER "));
@@ -72,7 +72,7 @@ class RoleCommandIntegrationTest {
 
         assertEquals(before, model.getAddressBook());
         assertEquals(candidates, Files.readString(directory.resolve("HRvest.json")));
-        assertEquals(catalogue, Files.readString(directory.resolve("roles.json")));
+        assertEquals(catalog, Files.readString(directory.resolve("roles.json")));
     }
 
     @Test
@@ -95,10 +95,10 @@ class RoleCommandIntegrationTest {
     }
 
     @Test
-    void execute_createRoleSaveFails_restoresModelAndPreviouslySavedCatalogue() throws Exception {
+    void execute_createRoleSaveFails_restoresModelAndPreviouslySavedCatalog() throws Exception {
         ModelManager model = new ModelManager();
         storage().saveAddressBook(model.getAddressBook());
-        String catalogue = Files.readString(directory.resolve("roles.json"));
+        String catalog = Files.readString(directory.resolve("roles.json"));
         JsonAddressBookStorage failingCandidates = new JsonAddressBookStorage(directory.resolve("HRvest.json")) {
             @Override
             public void saveAddressBook(ReadOnlyAddressBook data) throws IOException {
@@ -111,8 +111,8 @@ class RoleCommandIntegrationTest {
 
         assertThrows(CommandException.class, () -> logic.execute("create_role n/Engineer"));
 
-        assertEquals(List.of(Role.NO_ROLE), model.getRoleCatalogue().getRoles());
-        assertEquals(catalogue, Files.readString(directory.resolve("roles.json")));
+        assertEquals(List.of(Role.NO_ROLE), model.getRoleCatalog().getRoles());
+        assertEquals(catalog, Files.readString(directory.resolve("roles.json")));
         assertEquals(model.getAddressBook(), storage().readAddressBook().orElseThrow());
     }
 

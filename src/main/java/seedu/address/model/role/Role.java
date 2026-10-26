@@ -8,7 +8,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-/** Represents an immutable catalogue entry with a stable identity across renames. */
+/** Represents an immutable catalog entry with a stable identity across renames. */
 public final class Role {
     public static final String MESSAGE_CONSTRAINTS =
             "Role names must not be blank or contain control characters (e.g. tabs, newlines, or carriage returns).";
@@ -27,7 +27,7 @@ public final class Role {
     private final String id;
     private final String name;
 
-    /** Creates a catalogue entry, validating stored identities as well as names. */
+    /** Creates a catalog entry, validating stored identities as well as names. */
     public Role(String id, String name) {
         requireNonNull(id);
         requireNonNull(name);

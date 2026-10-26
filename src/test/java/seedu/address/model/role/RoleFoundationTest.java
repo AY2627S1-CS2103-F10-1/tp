@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalRoleAssignments.getAssignedModel;
 
 import java.util.List;
 import java.util.Set;
@@ -25,18 +26,18 @@ import seedu.address.testutil.PersonBuilder;
 
 class RoleFoundationTest {
     @Test
-    void createRole_caseAndWhitespaceConflict_leavesCatalogueUnchanged() {
+    void createRole_caseAndWhitespaceConflict_leavesCatalogUnchanged() {
         ModelManager model = new ModelManager();
         model.createRole("  Software Engineer  ");
-        RoleCatalogue before = model.getRoleCatalogue();
+        RoleCatalog before = model.getRoleCatalog();
 
         assertThrows(IllegalArgumentException.class, () -> model.createRole("software engineer"));
         assertThrows(IllegalArgumentException.class, () -> model.createRole(" NO ROLE "));
         assertThrows(IllegalArgumentException.class, () -> model.createRole(" \t "));
-        assertEquals(before, model.getRoleCatalogue());
+        assertEquals(before, model.getRoleCatalog());
         assertEquals("Software Engineer", before.requireRole(" SOFTWARE ENGINEER ").getName());
         model.createRole("Software  Engineer");
-        assertEquals(3, model.getRoleCatalogue().getRoles().size());
+        assertEquals(3, model.getRoleCatalog().getRoles().size());
     }
 
     @Test
@@ -44,21 +45,21 @@ class RoleFoundationTest {
         ModelManager model = new ModelManager();
         assertThrows(IllegalArgumentException.class, () -> model.renameRole("no role", "Other"));
         assertThrows(IllegalArgumentException.class, () -> model.deleteRole(" No role "));
-        assertEquals(List.of(Role.NO_ROLE), model.getRoleCatalogue().getRoles());
+        assertEquals(List.of(Role.NO_ROLE), model.getRoleCatalog().getRoles());
     }
 
     @Test
     void renameRole_peopleOutsideFilter_updatesAllAndPreservesIdentity() {
-        ModelManager model = assignedModel();
-        Role original = model.getRoleCatalogue().requireRole("Engineer");
+        ModelManager model = getAssignedModel("Engineer");
+        Role original = model.getRoleCatalog().requireRole("Engineer");
         model.updateFilteredPersonList(person -> false);
 
         model.renameRole(" engineer ", "Senior Engineer");
 
-        Role renamed = model.getRoleCatalogue().requireRole("Senior Engineer");
+        Role renamed = model.getRoleCatalog().requireRole("Senior Engineer");
         assertEquals(original.getId(), renamed.getId());
         assertTrue(model.getAddressBook().getPersonList().getFirst().getRoles().contains(renamed));
-        assertFalse(model.getRoleCatalogue().find("Engineer").isPresent());
+        assertFalse(model.getRoleCatalog().find("Engineer").isPresent());
         assertTrue(model.getFilteredPersonList().isEmpty());
         model.renameRole("Senior Engineer", "SENIOR ENGINEER");
         assertEquals("SENIOR ENGINEER", model.getAddressBook().getPersonList().getFirst()
@@ -67,7 +68,7 @@ class RoleFoundationTest {
 
     @Test
     void renameRole_expandedAssignedPerson_restoresFullList() {
-        ModelManager model = assignedModel();
+        ModelManager model = getAssignedModel("Engineer");
         model.addPerson(new PersonBuilder().withName("Other Candidate")
                 .withPhone("81234567").withEmail("other@example.com").build());
         model.expandPerson(model.getFilteredPersonList().getFirst());
@@ -77,13 +78,13 @@ class RoleFoundationTest {
         assertFalse(model.isExpandedViewProperty().get());
         assertEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
         assertEquals(2, model.getFilteredPersonList().size());
-        assertEquals(Set.of(model.getRoleCatalogue().requireRole("Senior Engineer")),
+        assertEquals(Set.of(model.getRoleCatalog().requireRole("Senior Engineer")),
                 model.getFilteredPersonList().getFirst().getRoles());
     }
 
     @Test
     void deleteRole_expandedAssignedPerson_restoresFullList() {
-        ModelManager model = assignedModel();
+        ModelManager model = getAssignedModel("Engineer");
         model.addPerson(new PersonBuilder().withName("Other Candidate")
                 .withPhone("81234567").withEmail("other@example.com").build());
         model.expandPerson(model.getFilteredPersonList().getFirst());
@@ -98,13 +99,13 @@ class RoleFoundationTest {
 
     @Test
     void deleteRole_remainingAndLastAssignments_preservesOthersThenUsesFallback() {
-        ModelManager model = assignedModel();
+        ModelManager model = getAssignedModel("Engineer");
         model.createRole("Designer");
         Person person = model.getAddressBook().getPersonList().getFirst();
         model.replacePersonRoles(person, List.of("Engineer", "Designer"));
 
         model.deleteRole("Engineer");
-        assertEquals(Set.of(model.getRoleCatalogue().requireRole("Designer")),
+        assertEquals(Set.of(model.getRoleCatalog().requireRole("Designer")),
                 model.getAddressBook().getPersonList().getFirst().getRoles());
         model.deleteRole("Designer");
         assertEquals(Set.of(Role.NO_ROLE), model.getAddressBook().getPersonList().getFirst().getRoles());
@@ -112,7 +113,7 @@ class RoleFoundationTest {
 
     @Test
     void replaceRoles_noRoleAlongsideOtherRole_preservesBoth() {
-        ModelManager model = assignedModel();
+        ModelManager model = getAssignedModel("Engineer");
         model.replacePersonRoles(model.getAddressBook().getPersonList().getFirst(), List.of("No role", "Engineer"));
         assertEquals(2, model.getAddressBook().getPersonList().getFirst().getRoles().size());
         model.deleteRole("Engineer");
@@ -120,8 +121,8 @@ class RoleFoundationTest {
     }
 
     @Test
-    void manageRoles_invalidOperations_preservesPeopleAndCatalogue() {
-        ModelManager model = assignedModel();
+    void manageRoles_invalidOperations_preservesPeopleAndCatalog() {
+        ModelManager model = getAssignedModel("Engineer");
         model.createRole("Designer");
         AddressBook before = new AddressBook(model.getAddressBook());
         Person person = before.getPersonList().getFirst();
@@ -135,7 +136,7 @@ class RoleFoundationTest {
 
     @Test
     void existingCommands_personWithRoles_preservesAssignments() throws Exception {
-        ModelManager model = assignedModel();
+        ModelManager model = getAssignedModel("Engineer");
         Set<Role> roles = model.getAddressBook().getPersonList().getFirst().getRoles();
         new NoteCommand(Index.fromOneBased(1), new Note("Feedback")).execute(model);
         new StatusCommand(Index.fromOneBased(1), Status.ACCEPTED).execute(model);
@@ -146,14 +147,14 @@ class RoleFoundationTest {
     }
 
     @Test
-    void catalogue_invalidReferencesAndEntries_rejects() {
+    void catalog_invalidReferencesAndEntries_rejects() {
         Role role = Role.create("Engineer");
-        assertThrows(IllegalArgumentException.class, () -> new RoleCatalogue(List.of(role)));
-        assertThrows(IllegalArgumentException.class, () -> new RoleCatalogue(List.of(Role.NO_ROLE, role, role)));
+        assertThrows(IllegalArgumentException.class, () -> new RoleCatalog(List.of(role)));
+        assertThrows(IllegalArgumentException.class, () -> new RoleCatalog(List.of(Role.NO_ROLE, role, role)));
         assertThrows(IllegalArgumentException.class, () -> new Role("bad-id", "Engineer"));
         assertThrows(IllegalArgumentException.class, () -> Role.create("No role"));
         assertThrows(IllegalArgumentException.class, () -> Role.create("Line\nBreak"));
-        assertThrows(IllegalArgumentException.class, () -> new RoleCatalogue().validateReferences(Set.of(role)));
+        assertThrows(IllegalArgumentException.class, () -> new RoleCatalog().validateReferences(Set.of(role)));
         Person person = new PersonBuilder().build();
         assertEquals(Set.of(Role.NO_ROLE), person.getRoles());
         assertThrows(IllegalArgumentException.class, () -> person.withRoles(Set.of()));
@@ -177,9 +178,9 @@ class RoleFoundationTest {
 
     @Test
     void manageRole_reservedCommandSyntax_rejectsWithoutMutation() {
-        ModelManager model = assignedModel();
+        ModelManager model = getAssignedModel("Engineer");
         AddressBook before = new AddressBook(model.getAddressBook());
-        String id = model.getRoleCatalogue().requireRole("Engineer").getId();
+        String id = model.getRoleCatalog().requireRole("Engineer").getId();
         String message = Role.MESSAGE_RESERVED_SYNTAX;
         for (String prefix : List.of("n/", "r/", "p/", "e/", "a/", "t/", "no/", "s/", "N/", "NO/")) {
             String name = "Senior " + prefix + "Engineer";
@@ -200,27 +201,18 @@ class RoleFoundationTest {
         assertEquals("Engineer", role.toString());
         assertFalse(role.equals(role.renamed("Senior Engineer")));
         assertFalse(role.equals("Engineer"));
-        RoleCatalogue first = new RoleCatalogue(List.of(role, Role.NO_ROLE));
-        RoleCatalogue second = new RoleCatalogue(List.of(Role.NO_ROLE, copy));
+        RoleCatalog first = new RoleCatalog(List.of(role, Role.NO_ROLE));
+        RoleCatalog second = new RoleCatalog(List.of(Role.NO_ROLE, copy));
         assertEquals(first, second);
         assertEquals(first.hashCode(), second.hashCode());
     }
 
     @Test
-    void clear_peopleWithRoles_preservesUnusedCatalogueEntries() {
-        ModelManager model = assignedModel();
-        RoleCatalogue catalogue = model.getRoleCatalogue();
+    void clear_peopleWithRoles_preservesUnusedCatalogEntries() {
+        ModelManager model = getAssignedModel("Engineer");
+        RoleCatalog catalog = model.getRoleCatalog();
         new ClearCommand().execute(model);
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
-        assertEquals(catalogue, model.getRoleCatalogue());
-    }
-
-    private ModelManager assignedModel() {
-        ModelManager model = new ModelManager();
-        model.createRole("Engineer");
-        Person person = new PersonBuilder().build();
-        model.addPerson(person);
-        model.replacePersonRoles(person, List.of("Engineer"));
-        return model;
+        assertEquals(catalog, model.getRoleCatalog());
     }
 }

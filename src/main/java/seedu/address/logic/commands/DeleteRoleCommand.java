@@ -6,7 +6,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.role.Role;
 
-/** Removes a catalogue role and updates every affected candidate. */
+/** Removes a catalog role and updates every affected candidate. */
 public class DeleteRoleCommand extends Command {
     public static final String COMMAND_WORD = "delete_role";
     public static final String MESSAGE_USAGE = "delete_role r/NAME";

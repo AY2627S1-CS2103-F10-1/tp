@@ -27,7 +27,7 @@ import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.ReadOnlyAddressBook;
-import seedu.address.model.role.RoleCatalogue;
+import seedu.address.model.role.RoleCatalog;
 
 /**
  * A class to access AddressBook data stored as a JSON file on the hard disk.
@@ -74,11 +74,11 @@ public class JsonAddressBookStorage {
      * @throws DataLoadingException if loading the data from storage failed.
      */
     public Optional<ReadOnlyAddressBook> readAddressBook(Path filePath) throws DataLoadingException {
-        return readAddressBook(filePath, new RoleCatalogue());
+        return readAddressBook(filePath, new RoleCatalog());
     }
 
-    /** Reads candidate references against a separately loaded catalogue. */
-    public Optional<ReadOnlyAddressBook> readAddressBook(Path filePath, RoleCatalogue catalogue)
+    /** Reads candidate references against a separately loaded catalog. */
+    public Optional<ReadOnlyAddressBook> readAddressBook(Path filePath, RoleCatalog catalog)
             throws DataLoadingException {
         requireNonNull(filePath);
         if (!isExistingDataFile(filePath)) {
@@ -91,7 +91,7 @@ public class JsonAddressBookStorage {
         }
 
         try {
-            return Optional.of(jsonAddressBook.get().toModelType(catalogue));
+            return Optional.of(jsonAddressBook.get().toModelType(catalog));
         } catch (IllegalValueException ive) {
             logger.info("Illegal values found in " + filePath + ": " + ive.getMessage());
             throw new DataLoadingException(ive);

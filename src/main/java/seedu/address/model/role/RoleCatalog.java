@@ -10,17 +10,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/** Validates and exposes an immutable role catalogue, including unused roles. */
-public final class RoleCatalogue {
+/** Validates and exposes an immutable role catalog, including unused roles. */
+public final class RoleCatalog {
     private final List<Role> roles;
 
-    /** Creates the initial catalogue containing only the built-in role. */
-    public RoleCatalogue() {
+    /** Creates the initial catalog containing only the built-in role. */
+    public RoleCatalog() {
         this(List.of(Role.NO_ROLE));
     }
 
-    /** Creates a validated catalogue; duplicate names and identities are rejected. */
-    public RoleCatalogue(Collection<Role> roles) {
+    /** Creates a validated catalog; duplicate names and identities are rejected. */
+    public RoleCatalog(Collection<Role> roles) {
         requireNonNull(roles);
         Set<String> ids = new HashSet<>();
         Set<String> names = new HashSet<>();
@@ -29,7 +29,7 @@ public final class RoleCatalogue {
             checkArgument(ids.add(role.getId()), "Duplicate role identity.");
             checkArgument(names.add(Role.normalize(role.getName())), "A role with this name already exists.");
         }
-        checkArgument(roles.contains(Role.NO_ROLE), "The catalogue must contain No role.");
+        checkArgument(roles.contains(Role.NO_ROLE), "The catalog must contain No role.");
         this.roles = roles.stream().sorted(Comparator.comparing(role -> Role.normalize(role.getName()))).toList();
     }
 
@@ -66,7 +66,7 @@ public final class RoleCatalogue {
 
     @Override
     public boolean equals(Object other) {
-        return other == this || other instanceof RoleCatalogue catalogue && roles.equals(catalogue.roles);
+        return other == this || other instanceof RoleCatalog catalog && roles.equals(catalog.roles);
     }
 
     @Override

@@ -20,7 +20,7 @@ import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
 import seedu.address.model.role.Role;
-import seedu.address.model.role.RoleCatalogue;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -103,11 +103,11 @@ class JsonAdaptedPerson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted person.
      */
     public Person toModelType() throws IllegalValueException {
-        return toModelType(new RoleCatalogue());
+        return toModelType(new RoleCatalog());
     }
 
-    /** Resolves persisted IDs against the complete validated catalogue. */
-    public Person toModelType(RoleCatalogue catalogue) throws IllegalValueException {
+    /** Resolves persisted IDs against the complete validated catalog. */
+    public Person toModelType(RoleCatalog catalog) throws IllegalValueException {
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
             if (tag == null) {
@@ -157,10 +157,10 @@ class JsonAdaptedPerson {
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
         return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags, modelStatus,
-                toModelNote(), toModelRoles(catalogue));
+                toModelNote(), toModelRoles(catalog));
     }
 
-    private Set<Role> toModelRoles(RoleCatalogue catalogue) throws IllegalValueException {
+    private Set<Role> toModelRoles(RoleCatalog catalog) throws IllegalValueException {
         if (roles == null) {
             return Set.of(Role.NO_ROLE);
         }
@@ -170,7 +170,7 @@ class JsonAdaptedPerson {
         }
         Set<Role> resolved = new HashSet<>();
         for (String id : roles) {
-            Role role = catalogue.getRoles().stream().filter(entry -> entry.getId().equals(id))
+            Role role = catalog.getRoles().stream().filter(entry -> entry.getId().equals(id))
                     .findFirst().orElseThrow(() -> new IllegalValueException("Unknown role reference: " + id));
             resolved.add(role);
         }

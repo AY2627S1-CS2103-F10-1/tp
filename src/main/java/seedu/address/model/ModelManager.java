@@ -20,7 +20,7 @@ import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Person;
 import seedu.address.model.role.Role;
-import seedu.address.model.role.RoleCatalogue;
+import seedu.address.model.role.RoleCatalog;
 
 /**
  * Represents the in-memory model of the address book data.
@@ -131,34 +131,34 @@ public class ModelManager implements Model {
 
     @Override
     public void createRole(String name) {
-        List<Role> roles = new ArrayList<>(getRoleCatalogue().getRoles());
-        checkArgument(getRoleCatalogue().find(name).isEmpty(), "A role with this name already exists.");
+        List<Role> roles = new ArrayList<>(getRoleCatalog().getRoles());
+        checkArgument(getRoleCatalog().find(name).isEmpty(), "A role with this name already exists.");
         roles.add(Role.create(name));
-        addressBook.setRoleCatalogue(new RoleCatalogue(roles));
+        addressBook.setRoleCatalog(new RoleCatalog(roles));
     }
 
     @Override
     public void renameRole(String oldName, String newName) {
-        Role oldRole = getRoleCatalogue().requireRole(oldName);
+        Role oldRole = getRoleCatalog().requireRole(oldName);
         Role renamed = oldRole.renamed(newName);
-        List<Role> roles = getRoleCatalogue().getRoles().stream()
+        List<Role> roles = getRoleCatalog().getRoles().stream()
                 .map(role -> role.equals(oldRole) ? renamed : role).toList();
-        replaceRoleData(oldRole, renamed, new RoleCatalogue(roles));
+        replaceRoleData(oldRole, renamed, new RoleCatalog(roles));
     }
 
     @Override
     public void deleteRole(String name) {
-        Role role = getRoleCatalogue().requireRole(name);
+        Role role = getRoleCatalog().requireRole(name);
         checkArgument(!role.equals(Role.NO_ROLE), "No role cannot be renamed or deleted.");
-        List<Role> remaining = getRoleCatalogue().getRoles().stream()
+        List<Role> remaining = getRoleCatalog().getRoles().stream()
                 .filter(entry -> !entry.equals(role)).toList();
-        replaceRoleData(role, null, new RoleCatalogue(remaining));
+        replaceRoleData(role, null, new RoleCatalog(remaining));
     }
 
-    /** Validates a complete replacement before updating live catalogue and person references. */
-    private void replaceRoleData(Role oldRole, Role renamed, RoleCatalogue catalogue) {
+    /** Validates a complete replacement before updating live catalog and person references. */
+    private void replaceRoleData(Role oldRole, Role renamed, RoleCatalog catalog) {
         AddressBook replacement = new AddressBook();
-        replacement.setRoleCatalogue(catalogue);
+        replacement.setRoleCatalog(catalog);
         for (Person person : addressBook.getPersonList()) {
             Set<Role> assignments = new HashSet<>(person.getRoles());
             if (assignments.remove(oldRole) && renamed != null) {

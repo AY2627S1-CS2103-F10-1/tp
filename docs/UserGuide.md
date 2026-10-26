@@ -249,9 +249,9 @@ Examples:
 * `list` followed by `expand 1` shows the 1st candidate in HRvest.
 * `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the results of the `filter` command.
 
-### Managing the role catalogue
+### Managing the role catalog
 
-The role catalogue is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
+The role catalog is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
 * Each candidate has one or more roles. New candidates receive `No role`; `add` and `edit` do not assign other roles in this version.
 * `No role` cannot be renamed or deleted and may coexist with other roles.
@@ -291,7 +291,7 @@ Example: `edit_role r/Software Engineer n/Senior Software Engineer`
 
 #### Deleting a role globally: `delete_role`
 
-Removes a role from the catalogue and all assigned candidates.
+Removes a role from the catalog and all assigned candidates.
 
 Format: `delete_role r/NAME`
 
@@ -301,7 +301,7 @@ Format: `delete_role r/NAME`
 
 Example: `delete_role r/Senior Software Engineer`
 
-#### Listing the complete catalogue: `list_role`
+#### Listing the complete catalog: `list_role`
 
 Shows all role names in the command result, including unused roles and `No role`.
 
@@ -312,7 +312,7 @@ Format: `list_role`
 
 ### Clearing all entries: `clear`
 
-Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
+Clears all candidates from HRvest while preserving the role catalog, including unused roles.
 
 Format: `clear`
 
@@ -391,7 +391,7 @@ Advanced users may edit the JSON files. For a custom candidate data path, use th
 
 <box type="warning" seamless>
 
-Invalid edits can cause HRvest to start with an empty candidate list and the default role catalogue. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
+Invalid edits can cause HRvest to start with an empty candidate list and the default role catalog. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
 
 1. Close HRvest and copy the backups shown in the warning.
 1. Repair the copies and restore the corresponding candidate and role files together.

@@ -8,7 +8,7 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.role.Role;
 
-/** Renames a catalogue role globally without replacing candidate role assignments. */
+/** Renames a catalog role globally without replacing candidate role assignments. */
 public class EditRoleCommand extends Command {
     public static final String COMMAND_WORD = "edit_role";
     public static final String MESSAGE_USAGE = "edit_role r/EXISTING_NAME n/NEW_NAME";
