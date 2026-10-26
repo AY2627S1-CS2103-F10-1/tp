@@ -214,6 +214,155 @@ class RoleDataStorageTest {
     }
 
     @Test
+    void read_journalForDifferentCandidatePath_preservesBothFilesAndJournal() throws Exception {
+        ModelManager model = assignedModel();
+        storage().saveAddressBook(model.getAddressBook());
+        Path roles = directory.resolve("roles.json");
+        RoleDataStorage.Journal journal = new RoleDataStorage.Journal(1,
+                RoleDataStorage.Snapshot.capture(candidatePath()), RoleDataStorage.Snapshot.capture(roles));
+        Path journalPath = directory.resolve("roles-transaction.json");
+        JsonUtil.saveJsonFile(journal, journalPath);
+        Path otherPath = directory.resolve("other.json");
+        AddressBook other = new AddressBook();
+        other.addPerson(new PersonBuilder().withName("Other Candidate").withEmail("other@example.com").build());
+        new JsonAddressBookStorage(otherPath).saveAddressBook(other);
+        String originalCandidates = Files.readString(candidatePath());
+        String originalOther = Files.readString(otherPath);
+        String originalRoles = Files.readString(roles);
+        String originalJournal = Files.readString(journalPath);
+        Storage otherStorage = new StorageManager(new JsonAddressBookStorage(otherPath),
+                new JsonUserPrefsStorage(directory.resolve("preferences.json")));
+
+        assertThrows(IOException.class, () -> new CandidateDataInitializer(otherStorage).load());
+
+        assertEquals(originalCandidates, Files.readString(candidatePath()));
+        assertEquals(originalOther, Files.readString(otherPath));
+        assertEquals(originalRoles, Files.readString(roles));
+        assertEquals(originalJournal, Files.readString(journalPath));
+        assertThrows(IOException.class, () -> otherStorage.saveAddressBook(other));
+        assertEquals(model.getAddressBook(), storage().readAddressBook().orElseThrow());
+        assertFalse(Files.exists(journalPath));
+    }
+
+    @Test
+    void read_reservedSyntaxInCatalogue_preservesOriginalsForRecovery() throws Exception {
+        storage().saveAddressBook(assignedModel().getAddressBook());
+        Path roles = directory.resolve("roles.json");
+        String invalidRoles = Files.readString(roles).replace("Engineer", "Senior n/Engineer");
+        Files.writeString(roles, invalidRoles);
+        String candidates = Files.readString(candidatePath());
+
+        assertThrows(DataLoadingException.class, () -> storage().readAddressBook());
+
+        assertEquals(invalidRoles, Files.readString(roles));
+        assertEquals(candidates, Files.readString(candidatePath()));
+    }
+
+    @Test
+    void read_journalForPreviouslyAbsentCandidate_preservesOtherCandidateFile() throws Exception {
+        storage().saveAddressBook(assignedModel().getAddressBook());
+        RoleDataStorage.Journal journal = new RoleDataStorage.Journal(1,
+                RoleDataStorage.Snapshot.capture(directory.resolve("absent.json")),
+                RoleDataStorage.Snapshot.capture(directory.resolve("roles.json")));
+        Path journalPath = directory.resolve("roles-transaction.json");
+        JsonUtil.saveJsonFile(journal, journalPath);
+        String candidates = Files.readString(candidatePath());
+        String roles = Files.readString(directory.resolve("roles.json"));
+        String pending = Files.readString(journalPath);
+
+        assertThrows(DataLoadingException.class, () -> storage().readAddressBook());
+
+        assertEquals(candidates, Files.readString(candidatePath()));
+        assertEquals(roles, Files.readString(directory.resolve("roles.json")));
+        assertEquals(pending, Files.readString(journalPath));
+        assertFalse(Files.exists(directory.resolve("absent.json")));
+    }
+
+    @Test
+    void read_retargetedCatalogueLink_preservesCandidatesAndBothTargets() throws Exception {
+        ModelManager model = assignedModel();
+        storage().saveAddressBook(model.getAddressBook());
+        Path roles = directory.resolve("roles.json");
+        String originalRoles = Files.readString(roles);
+        Path originalTarget = Files.move(roles, directory.resolve("original-roles.json"));
+        Files.createSymbolicLink(roles, originalTarget);
+        RoleDataStorage.Journal journal = new RoleDataStorage.Journal(1,
+                RoleDataStorage.Snapshot.capture(candidatePath()), RoleDataStorage.Snapshot.capture(roles));
+        Path journalPath = directory.resolve("roles-transaction.json");
+        JsonUtil.saveJsonFile(journal, journalPath);
+        model.deleteRole("Engineer");
+        new JsonAddressBookStorage(candidatePath()).saveAddressBook(model.getAddressBook());
+        String candidates = Files.readString(candidatePath());
+        Path otherTarget = directory.resolve("other-roles.json");
+        Files.writeString(otherTarget, "other catalogue bytes");
+        Files.delete(roles);
+        Files.createSymbolicLink(roles, otherTarget);
+
+        assertThrows(DataLoadingException.class, () -> storage().readAddressBook());
+
+        assertEquals(candidates, Files.readString(candidatePath()));
+        assertEquals(originalRoles, Files.readString(originalTarget));
+        assertEquals("other catalogue bytes", Files.readString(otherTarget));
+        assertTrue(Files.isSymbolicLink(roles));
+        assertTrue(Files.exists(journalPath));
+    }
+
+    @Test
+    void read_candidateLinkToOriginalDestination_recoversAndPreservesLink() throws Exception {
+        ModelManager model = assignedModel();
+        storage().saveAddressBook(model.getAddressBook());
+        RoleDataStorage.Journal journal = new RoleDataStorage.Journal(1,
+                RoleDataStorage.Snapshot.capture(candidatePath()),
+                RoleDataStorage.Snapshot.capture(directory.resolve("roles.json")));
+        Path journalPath = directory.resolve("roles-transaction.json");
+        JsonUtil.saveJsonFile(journal, journalPath);
+        Path link = Files.createSymbolicLink(directory.resolve("candidate-link.json"), candidatePath());
+        RoleDataStorage storage = new RoleDataStorage(new JsonAddressBookStorage(link));
+
+        assertEquals(model.getAddressBook(), storage.read().orElseThrow());
+
+        assertTrue(Files.isSymbolicLink(link));
+        assertFalse(Files.exists(journalPath));
+    }
+
+    @Test
+    void read_journalWithoutDestinations_blocksRecoveryAndPreservesOriginals() throws Exception {
+        storage().saveAddressBook(assignedModel().getAddressBook());
+        String candidates = Files.readString(candidatePath());
+        String roles = Files.readString(directory.resolve("roles.json"));
+        String invalid = "{\"version\":1,\"candidates\":{\"present\":true,\"bytes\":\"\"},"
+                + "\"roles\":{\"present\":false,\"bytes\":null}}";
+        Path journalPath = directory.resolve("roles-transaction.json");
+        Files.writeString(journalPath, invalid);
+        Storage storage = storage();
+
+        assertThrows(IOException.class, () -> new CandidateDataInitializer(storage).load());
+
+        assertEquals(candidates, Files.readString(candidatePath()));
+        assertEquals(roles, Files.readString(directory.resolve("roles.json")));
+        assertEquals(invalid, Files.readString(journalPath));
+        assertThrows(IOException.class, () -> storage.saveAddressBook(new AddressBook()));
+    }
+
+    @Test
+    void read_invalidJournalDestination_reportsLoadFailureWithoutOverwriting() throws Exception {
+        storage().saveAddressBook(assignedModel().getAddressBook());
+        String candidates = Files.readString(candidatePath());
+        Path roles = directory.resolve("roles.json");
+        String catalogue = Files.readString(roles);
+        RoleDataStorage.Journal journal = new RoleDataStorage.Journal(1,
+                new RoleDataStorage.Snapshot("\u0000", true, new byte[0]), RoleDataStorage.Snapshot.capture(roles));
+        Path journalPath = directory.resolve("roles-transaction.json");
+        JsonUtil.saveJsonFile(journal, journalPath);
+
+        assertThrows(DataLoadingException.class, () -> storage().readAddressBook());
+
+        assertEquals(candidates, Files.readString(candidatePath()));
+        assertEquals(catalogue, Files.readString(roles));
+        assertTrue(Files.exists(journalPath));
+    }
+
+    @Test
     void read_invalidJournal_blocksRecoveryAndRetainsOriginals() throws Exception {
         storage().saveAddressBook(assignedModel().getAddressBook());
         String before = Files.readString(candidatePath());

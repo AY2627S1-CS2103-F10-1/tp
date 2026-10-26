@@ -6,14 +6,23 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 /** Represents an immutable catalogue entry with a stable identity across renames. */
 public final class Role {
     public static final String MESSAGE_CONSTRAINTS =
             "Role names must not be blank or contain control characters (e.g. tabs, newlines, or carriage returns).";
+    public static final String MESSAGE_RESERVED_SYNTAX =
+            "Role names must not contain whitespace followed by n/, r/, p/, e/, a/, t/, no/, or s/ (ignoring case).";
     public static final String NO_ROLE_ID = "no-role";
     public static final String NO_ROLE_NAME = "No role";
-    public static final Role NO_ROLE = new Role(NO_ROLE_ID, NO_ROLE_NAME);
+    public static final Role NO_ROLE;
+
+    private static final Pattern RESERVED_SYNTAX = Pattern.compile("(?i)\\s(?:n/|r/|p/|e/|a/|t/|no/|s/)");
+
+    static {
+        NO_ROLE = new Role(NO_ROLE_ID, NO_ROLE_NAME);
+    }
 
     private final String id;
     private final String name;
@@ -47,6 +56,7 @@ public final class Role {
         String trimmed = name.strip();
         checkArgument(!trimmed.isEmpty() && trimmed.codePoints().noneMatch(Character::isISOControl),
                 MESSAGE_CONSTRAINTS);
+        checkArgument(!RESERVED_SYNTAX.matcher(trimmed).find(), MESSAGE_RESERVED_SYNTAX);
         return trimmed;
     }
 

@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -22,6 +23,7 @@ import seedu.address.model.util.SampleDataUtil;
 
 /** Coordinates candidate and catalogue files using a rollback journal with fixed local destinations. */
 class RoleDataStorage {
+    private static final int JOURNAL_VERSION = 1;
     private final JsonAddressBookStorage candidates;
     private final Path rolesPath;
     private final Path journalPath;
@@ -70,7 +72,7 @@ class RoleDataStorage {
         }
         // Validate the complete pair before touching either destination.
         new AddressBook(data);
-        Journal journal = new Journal(1, Snapshot.capture(candidates.getAddressBookFilePath()),
+        Journal journal = new Journal(JOURNAL_VERSION, Snapshot.capture(candidates.getAddressBookFilePath()),
                 Snapshot.capture(rolesPath));
         Path permissions = exists(candidates.getAddressBookFilePath())
                 ? candidates.getAddressBookFilePath() : rolesPath;
@@ -107,7 +109,8 @@ class RoleDataStorage {
                 throw new IOException("Cannot recover the data transaction journal; retain it for repair.", e);
             }
             if (!journal.isValid()) {
-                throw new IOException("The data transaction journal is invalid; retain it for repair.");
+                throw new IOException("The data transaction journal is invalid or uses an unsupported version; "
+                        + "retain it for manual repair.");
             }
             restore(journal);
             recoveryRequired = false;
@@ -115,6 +118,11 @@ class RoleDataStorage {
     }
 
     private void restore(Journal journal) throws IOException {
+        if (!journal.candidates.matchesDestination(candidates.getAddressBookFilePath())
+                || !journal.roles.matchesDestination(rolesPath)) {
+            throw new IOException("The data transaction journal belongs to different destinations. "
+                    + "Retain it, restore the original data paths or symbolic-link targets, and restart HRvest.");
+        }
         journal.candidates.restore(candidates.getAddressBookFilePath());
         journal.roles.restore(rolesPath);
         Files.delete(journalPath);
@@ -124,7 +132,9 @@ class RoleDataStorage {
     Path backup() throws IOException {
         validateDestinations();
         if (recoveryRequired || exists(journalPath)) {
-            throw new IOException("Repair the interrupted transaction before replacing candidate or role data.");
+            throw new IOException("Cannot replace data while transaction recovery is blocked. Retain " + journalPath
+                    + ", restore the original data paths or symbolic-link targets, and restart HRvest. "
+                    + "Invalid journals need manual repair.");
         }
         Path candidateBackup = exists(candidates.getAddressBookFilePath()) ? candidates.backupAddressBook() : null;
         Path roleBackup = exists(rolesPath) ? new JsonAddressBookStorage(rolesPath).backupAddressBook() : null;
@@ -191,28 +201,43 @@ class RoleDataStorage {
         }
 
         boolean isValid() {
-            return Integer.valueOf(1).equals(version) && candidates != null && roles != null
+            return Integer.valueOf(JOURNAL_VERSION).equals(version) && candidates != null && roles != null
                     && candidates.isValid() && roles.isValid();
         }
     }
 
     /** Distinguishes a previously absent file from a present file containing any bytes. */
     static class Snapshot {
+        private final String destination;
         private final Boolean present;
         private final byte[] bytes;
 
         @JsonCreator
-        Snapshot(@JsonProperty("present") Boolean present, @JsonProperty("bytes") byte[] bytes) {
+        Snapshot(@JsonProperty("destination") String destination, @JsonProperty("present") Boolean present,
+                @JsonProperty("bytes") byte[] bytes) {
+            this.destination = destination;
             this.present = present;
             this.bytes = bytes == null ? null : bytes.clone();
         }
 
         static Snapshot capture(Path path) throws IOException {
-            return exists(path) ? new Snapshot(true, Files.readAllBytes(path)) : new Snapshot(false, null);
+            String destination = resolveDestination(path).toString();
+            return exists(path) ? new Snapshot(destination, true, Files.readAllBytes(path))
+                    : new Snapshot(destination, false, null);
         }
 
         boolean isValid() {
-            return present != null && (present ? bytes != null : bytes == null);
+            return destination != null && !destination.isBlank()
+                    && present != null && (present ? bytes != null : bytes == null);
+        }
+
+        /** Compares stored identities without following paths supplied by the journal. */
+        boolean matchesDestination(Path path) throws IOException {
+            try {
+                return resolveDestination(path).equals(Path.of(destination));
+            } catch (InvalidPathException e) {
+                return false;
+            }
         }
 
         void restore(Path path) throws IOException {

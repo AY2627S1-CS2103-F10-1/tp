@@ -76,6 +76,25 @@ class RoleCommandIntegrationTest {
     }
 
     @Test
+    void execute_rolesCreatedThroughSharedApi_canBeRenamedAndDeletedAfterRestart() throws Exception {
+        ModelManager model = new ModelManager();
+        model.addPerson(new PersonBuilder().build());
+        for (String name : List.of("n/Engineer", "C/C++ Engineer", "Engineer x/Tools", "Software  Engineer")) {
+            model.createRole(name);
+            model.replacePersonRoles(model.getAddressBook().getPersonList().getFirst(), List.of(name));
+            storage().saveAddressBook(model.getAddressBook());
+            model = new ModelManager(storage().readAddressBook().orElseThrow(), new UserPrefs());
+            LogicManager logic = new LogicManager(model, storage());
+
+            logic.execute("edit_role r/" + name + " n/Renamed role");
+            logic.execute("delete_role r/Renamed role");
+
+            assertEquals(Set.of(Role.NO_ROLE), model.getAddressBook().getPersonList().getFirst().getRoles());
+            assertEquals(model.getAddressBook(), storage().readAddressBook().orElseThrow());
+        }
+    }
+
+    @Test
     void execute_createRoleSaveFails_restoresModelAndPreviouslySavedCatalogue() throws Exception {
         ModelManager model = new ModelManager();
         storage().saveAddressBook(model.getAddressBook());

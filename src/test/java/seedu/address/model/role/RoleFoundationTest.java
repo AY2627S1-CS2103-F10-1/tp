@@ -176,6 +176,22 @@ class RoleFoundationTest {
     }
 
     @Test
+    void manageRole_reservedCommandSyntax_rejectsWithoutMutation() {
+        ModelManager model = assignedModel();
+        AddressBook before = new AddressBook(model.getAddressBook());
+        String id = model.getRoleCatalogue().requireRole("Engineer").getId();
+        String message = Role.MESSAGE_RESERVED_SYNTAX;
+        for (String prefix : List.of("n/", "r/", "p/", "e/", "a/", "t/", "no/", "s/", "N/", "NO/")) {
+            String name = "Senior " + prefix + "Engineer";
+
+            assertThrows(IllegalArgumentException.class, message, () -> model.createRole(name));
+            assertThrows(IllegalArgumentException.class, message, () -> model.renameRole("Engineer", name));
+            assertThrows(IllegalArgumentException.class, message, () -> new Role(id, name));
+            assertEquals(before, model.getAddressBook());
+        }
+    }
+
+    @Test
     void role_valueSemantics_preservesNameAndIdentity() {
         Role role = Role.create(" \tEngineer\t ");
         Role copy = new Role(role.getId(), "Engineer");
