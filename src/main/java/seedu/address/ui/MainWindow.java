@@ -117,9 +117,9 @@ public class MainWindow extends UiPart<Stage> {
      * Fills up all the placeholders of this window.
      */
     void fillInnerParts() {
-        CandidateSummaryHeader summaryHeader = new CandidateSummaryHeader(
-                logic.getFilteredPersonList(), logic.getAllPersonList());
-        summaryHeaderPlaceholder.getChildren().add(summaryHeader);
+        CandidateSummary summary = new CandidateSummary(logic.getFilteredPersonList(), logic.getAllPersonList());
+        CandidateSummaryHeader summaryHeader = new CandidateSummaryHeader(summary);
+        summaryHeaderPlaceholder.getChildren().add(summaryHeader.getRoot());
 
         personListPanel = new PersonListPanel(logic.getFilteredPersonList(), logic.getAllPersonList(),
                 logic.isExpandedViewProperty());

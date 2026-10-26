@@ -71,7 +71,7 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. These, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts. `MainWindow` also hosts `CandidateSummaryHeader`, a programmatically constructed JavaFX `Region` for the logo and enum-driven summary cards.
+The UI consists of a `MainWindow` and its parts, such as `CommandBox`, `ResultDisplay`, `PersonListPanel`, `CandidateSummaryHeader`, and `StatusBarFooter`. These, including `MainWindow`, the standalone `AppLogo`, and the reusable `CandidateSummaryCard`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -196,9 +196,11 @@ This section describes some noteworthy details on how certain features are imple
 
 ### Responsive candidate summary header
 
-`CandidateSummaryHeader` observes the filtered and full candidate lists exposed by `Logic`, without maintaining another candidate collection. It generates cards from `Status.values()` and binds each count separately to its corresponding list. Separate count bindings matter because the full list can notify observers before the filtered list has finished processing the same change; iterating both lists from that notification could read stale filtered indexes during deletion or replacement.
+`MainWindow` connects the filtered and full candidate lists exposed by `Logic` to `CandidateSummary`, a node-free provider of observable total and per-status counts. It passes that provider to `CandidateSummaryHeader`, which generates cards from `Status.values()`. The header composes a standalone `AppLogo` and the card group into an `HBox` row. The logo, header, and reusable `CandidateSummaryCard` use matching FXML files for their markup; the card only binds the supplied counts to its display text. This separation allows counting tests to run independently of FXML and layout.
 
-The header measures the complete row even while it is invisible and unmanaged. Its fit threshold includes the logo, padding, logo-to-card gap, card gaps, and each card's natural width with a minimum of 105 pixels. Natural widths include the current count text, so larger counts can raise the threshold. Below that threshold, the whole group is hidden and unmanaged; the header's minimum width depends only on the logo. This avoids forcing the window wider or creating a visibility feedback loop based on the currently managed children. Count changes explicitly request header layout because unmanaged children do not propagate layout requests to their parent.
+`CandidateSummary` binds each count separately to its corresponding list, without maintaining another candidate collection. Separate count bindings matter because the full list can notify observers before the filtered list has finished processing the same change; iterating both lists from that notification could read stale filtered indexes during deletion or replacement.
+
+The header's private `HeaderLayout` extends `HBox` and measures the complete card group even while the group is invisible and unmanaged. Only the card group participates in all-or-nothing visibility; the separately composed logo remains visible when the cards cannot fit. Its fit threshold includes the logo, padding, logo-to-card gap, card gaps, and each card's natural width with a minimum of 105 pixels. Natural widths include the current count text, so larger counts can raise the threshold. Below that threshold, the whole group is hidden and unmanaged; the header's minimum width depends only on the logo. This avoids forcing the window wider or creating a visibility feedback loop based on the currently managed children. Count changes explicitly request header layout because unmanaged children do not propagate layout requests to their parent.
 
 ### Command history navigation
 

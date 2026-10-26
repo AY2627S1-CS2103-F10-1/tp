@@ -13,28 +13,26 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.scene.Node;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.text.Text;
-import seedu.address.model.AddressBook;
-import seedu.address.model.ModelManager;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
 import seedu.address.testutil.PersonBuilder;
 
 public class CandidateSummaryHeaderTest {
     @Test
-    public void constructor_nullLists_throwsNullPointerException() {
-        ObservableList<Person> persons = FXCollections.observableArrayList();
-        assertThrows(NullPointerException.class, () -> new CandidateSummaryHeader(null, persons));
-        assertThrows(NullPointerException.class, () -> new CandidateSummaryHeader(persons, null));
+    public void constructor_nullSummary_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> new CandidateSummaryHeader(null));
     }
 
     @Test
     public void constructor_emptyLists_includesAllStatusesInEnumOrder() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        CandidateSummaryHeader header = new CandidateSummaryHeader(persons, persons);
+        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
         Region cards = cards(header);
 
+        assertEquals("HRVest", ((Text) header.lookup("#logo")).getText());
         assertEquals(Status.values().length + 1, cards.getChildrenUnmodifiable().size());
         assertEquals("totalSummaryCard", cards.getChildrenUnmodifiable().get(0).getId());
         assertCount(header, "total", "0 / 0");
@@ -46,32 +44,24 @@ public class CandidateSummaryHeaderTest {
     }
 
     @Test
-    public void counts_filterChanges_updatesShownAndRetainsOverallCounts() {
-        ObservableList<Person> allPersons = FXCollections.observableArrayList();
-        for (Status status : Status.values()) {
-            allPersons.add(new PersonBuilder().withStatus(status).build());
-        }
-        FilteredList<Person> shownPersons = new FilteredList<>(allPersons);
-        CandidateSummaryHeader header = new CandidateSummaryHeader(shownPersons, allPersons);
+    public void layout_onlyLogoFits_keepsLogoOutsideHiddenCardGroup() {
+        ObservableList<Person> persons = FXCollections.observableArrayList();
+        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
+        Region logoContainer = (Region) header.lookup("#logoPlaceholder");
+        Node logo = header.lookup("#logo");
 
-        assertCount(header, "total", allPersons.size() + " / " + allPersons.size());
-        for (Status status : Status.values()) {
-            assertCount(header, status.name().toLowerCase(Locale.ROOT), "1 / 1");
-        }
+        layout(header, header.minWidth(-1));
 
-        shownPersons.setPredicate(person -> person.getStatus() == Status.INTERVIEWING);
-        assertCount(header, "total", "1 / " + allPersons.size());
-        assertCount(header, "interviewing", "1 / 1");
-        assertCount(header, "applied", "0 / 1");
-
-        shownPersons.setPredicate(person -> false);
-        assertCount(header, "total", "0 / " + allPersons.size());
-        for (Status status : Status.values()) {
-            assertCount(header, status.name().toLowerCase(Locale.ROOT), "0 / 1");
-        }
-
-        shownPersons.setPredicate(person -> true);
-        assertCount(header, "total", allPersons.size() + " / " + allPersons.size());
+        assertTrue(header instanceof HBox);
+        assertEquals(header, logoContainer.getParent());
+        assertEquals(logoContainer, logo.getParent());
+        assertTrue(logoContainer.isVisible());
+        assertTrue(logoContainer.isManaged());
+        assertTrue(logo.isVisible());
+        assertFalse(cards(header).isVisible());
+        assertFalse(cards(header).isManaged());
+        assertTrue(logoContainer.getWidth() >= logo.getLayoutBounds().getWidth());
+        assertTrue(logoContainer.getLayoutX() + logoContainer.getWidth() <= header.getWidth());
     }
 
     @Test
@@ -79,7 +69,7 @@ public class CandidateSummaryHeaderTest {
         ObservableList<Person> allPersons = FXCollections.observableArrayList();
         FilteredList<Person> shownPersons = new FilteredList<>(allPersons,
                 person -> person.getStatus() == Status.INTERVIEWING);
-        CandidateSummaryHeader header = new CandidateSummaryHeader(shownPersons, allPersons);
+        Region header = new CandidateSummaryHeader(new CandidateSummary(shownPersons, allPersons)).getRoot();
         layout(header, header.minWidth(-1));
         assertFalse(cards(header).isVisible());
 
@@ -111,47 +101,16 @@ public class CandidateSummaryHeaderTest {
     }
 
     @Test
-    public void counts_modelLists_updatesAfterEditsExpansionAndReplacement() {
-        ModelManager model = new ModelManager();
-        CandidateSummaryHeader header = new CandidateSummaryHeader(
-                model.getFilteredPersonList(), model.getAddressBook().getPersonList());
-        Person applied = new PersonBuilder().withEmail("applied@example.com").build();
-        Person interviewing = new PersonBuilder().withEmail("interviewing@example.com")
-                .withStatus(Status.INTERVIEWING).build();
-        model.addPerson(applied);
-        model.addPerson(interviewing);
-        model.updateFilteredPersonList(person -> person.getStatus() == Status.INTERVIEWING);
-        assertCount(header, "total", "1 / 2");
-        assertCount(header, "applied", "0 / 1");
-
-        Person offered = new PersonBuilder(interviewing).withStatus(Status.OFFERED).build();
-        model.setPerson(interviewing, offered);
-        assertCount(header, "total", "0 / 2");
-        assertCount(header, "interviewing", "0 / 0");
-        assertCount(header, "offered", "0 / 1");
-
-        model.updateFilteredPersonList(person -> true);
-        model.expandPerson(offered);
-        assertCount(header, "total", "1 / 2");
-        assertCount(header, "offered", "1 / 1");
-        model.deletePerson(offered);
-        assertCount(header, "total", "0 / 1");
-        model.setAddressBook(new AddressBook());
-        assertCount(header, "total", "0 / 0");
-        assertCount(header, "applied", "0 / 0");
-    }
-
-    @Test
     public void layout_widthCrossesThreshold_showsAllOrNoneWithoutOscillation() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        CandidateSummaryHeader header = new CandidateSummaryHeader(persons, persons);
+        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
         double requiredWidth = header.prefWidth(-1);
         Region cards = cards(header);
 
         layout(header, requiredWidth - 1);
         assertFalse(cards.isVisible());
         assertFalse(cards.isManaged());
-        assertTrue(header.getChildrenUnmodifiable().get(0).isVisible());
+        assertTrue(header.lookup("#logo").isVisible());
         assertEquals(requiredWidth, header.prefWidth(-1));
 
         layout(header, requiredWidth);
@@ -174,7 +133,7 @@ public class CandidateSummaryHeaderTest {
     @Test
     public void layout_wideCountText_increasesRequiredWidthWithoutClipping() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        CandidateSummaryHeader header = new CandidateSummaryHeader(persons, persons);
+        Region header = new CandidateSummaryHeader(new CandidateSummary(persons, persons)).getRoot();
         Text count = (Text) header.lookup("#totalCount");
         double originalWidth = header.prefWidth(-1);
         layout(header, header.minWidth(-1));
@@ -199,15 +158,15 @@ public class CandidateSummaryHeaderTest {
         assertTrue(cards(header).isVisible());
     }
 
-    private static Region cards(CandidateSummaryHeader header) {
+    private static Region cards(Region header) {
         return (Region) header.lookup("#summaryCards");
     }
 
-    private static void assertCount(CandidateSummaryHeader header, String id, String expected) {
+    private static void assertCount(Region header, String id, String expected) {
         assertEquals(expected, ((Text) header.lookup("#" + id + "Count")).getText());
     }
 
-    private static void layout(CandidateSummaryHeader header, double width) {
+    private static void layout(Region header, double width) {
         header.resize(width, header.prefHeight(width));
         header.requestLayout();
         header.layout();
