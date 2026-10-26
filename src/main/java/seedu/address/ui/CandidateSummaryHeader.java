@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static java.util.Objects.requireNonNull;
 
+import javafx.beans.value.ObservableStringValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -34,16 +35,18 @@ public class CandidateSummaryHeader extends UiPart<Region> {
         logoPlaceholder.getChildren().add(logo.getRoot());
         HeaderLayout layout = (HeaderLayout) getRoot();
         layout.setContent(logoPlaceholder, summaryCards);
-        addCard(new CandidateSummaryCard(shownPersons, allPersons));
+        CandidateSummaryCard totalCard = new CandidateSummaryCard(shownPersons, allPersons);
+        addCard(totalCard.getRoot(), totalCard.countTextProperty());
         for (Status status : Status.values()) {
-            addCard(new CandidateSummaryCard(status, shownPersons, allPersons));
+            StatusSummaryCard statusCard = new StatusSummaryCard(status, shownPersons, allPersons);
+            addCard(statusCard.getRoot(), statusCard.countTextProperty());
         }
     }
 
-    private void addCard(CandidateSummaryCard card) {
+    private void addCard(Region card, ObservableStringValue countText) {
         // An unmanaged group does not propagate layout requests to this header.
-        card.countTextProperty().addListener(observable -> getRoot().requestLayout());
-        summaryCards.getChildren().add(card.getRoot());
+        countText.addListener(observable -> getRoot().requestLayout());
+        summaryCards.getChildren().add(card);
     }
 
     /**
