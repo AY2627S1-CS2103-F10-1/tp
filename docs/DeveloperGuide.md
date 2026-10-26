@@ -105,7 +105,7 @@ How the `Logic` component works:
 1. When `Logic` is called upon to execute a command, the command is passed to an `AddressBookParser` object, which in turn creates a parser that matches the command (e.g., `DeleteCommandParser`) and uses it to parse the command.
 1. This results in a `Command` object (more precisely, an object of one of its subclasses e.g., `DeleteCommand`) which is executed by the `LogicManager`.
 1. The command can communicate with the `Model` when it is executed (e.g. to delete a candidate).<br>
-   Note that although this is shown as a single step in the diagram above for simplicity, the code can require several interactions between the command object and the `Model` to complete the operation.
+   For `delete 1`, the command first gets the displayed list from the `Model`, then deletes the candidate `p` at index `1` of that list. Other commands may need different interactions with the `Model`.
 1. The result of the command execution is encapsulated as a `CommandResult` object which is returned from `Logic`.
 
 Here are the other classes in `Logic` (omitted from the class diagram above) that are used for parsing a user command:
@@ -584,20 +584,20 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User requests to filter candidates by candidate status.
-1. HRvest shows candidates with the specified status.
+1. User requests to filter candidates by one or more candidate statuses.
+1. HRvest shows candidates with any of the specified statuses.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. The specified status is not a valid candidate status.
+* 1a. A specified status is not a valid candidate status.
 
     * 1a1. HRvest shows an error message listing the valid candidate statuses.
 
       Use case ends.
 
-* 2a. No candidates match the specified status.
+* 2a. No candidates match any of the specified statuses.
 
     * 2a1. HRvest informs the user that no candidates match.
 

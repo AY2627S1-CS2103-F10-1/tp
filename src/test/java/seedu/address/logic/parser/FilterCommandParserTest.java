@@ -1,13 +1,13 @@
 package seedu.address.logic.parser;
 
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.model.person.Status;
 
@@ -59,9 +59,16 @@ public class FilterCommandParserTest {
     }
 
     @Test
-    public void parse_duplicateStatusPrefix_throwsParseException() {
-        assertParseFailure(parser, " s/APPLIED s/ACCEPTED",
-                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STATUS));
+    public void parse_multipleStatuses_returnsFilterCommandForAnyStatus() {
+        FilterCommand expected = new FilterCommand(List.of(Status.APPLIED, Status.ACCEPTED));
+        assertParseSuccess(parser, " s/APPLIED s/accepted", expected);
+        assertParseSuccess(parser, " s/accepted s/Applied s/applied", expected);
+    }
+
+    @Test
+    public void parse_multipleStatusesWithOneInvalid_throwsParseException() {
+        assertParseFailure(parser, " s/Applied s/Hired", INVALID_STATUS_MESSAGE);
+        assertParseFailure(parser, " s/Applied s/", INVALID_STATUS_MESSAGE);
     }
 
 }

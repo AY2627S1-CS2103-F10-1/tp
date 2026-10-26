@@ -74,7 +74,8 @@ public class LogicManagerTest {
     @Test
     public void execute_validCommand_success() throws Exception {
         String listCommand = ListCommand.COMMAND_WORD;
-        assertCommandSuccess(listCommand, ListCommand.MESSAGE_SUCCESS, model);
+        // The model starts empty, so list reports that there are no candidates.
+        assertCommandSuccess(listCommand, ListCommand.MESSAGE_NO_CANDIDATES, model);
     }
 
     @Test

@@ -112,6 +112,8 @@ Shows a list of all persons in HRvest.
 
 Format: `list`
 
+* If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
+
 ### Editing a candidate: `edit`
 
 The success message shows the candidate's updated details, including their current status.
@@ -123,6 +125,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values. The current filter is kept; candidates that no longer match disappear from the displayed list.
+* If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This person already exists in the address book.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
@@ -200,16 +203,19 @@ Examples:
 
 Filters candidates by their hiring status.
 
-Format: `filter s/STATUS`
+Format: `filter s/STATUS [s/MORE_STATUS]...`
 
-* Displays all candidates with the specified status.
+* Displays all candidates whose status is any of the specified statuses.
+* Repeat `s/` to display candidates in any of several statuses (an `OR` filter). Repeating a status has no extra effect.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
-* The status is case-insensitive.
+* Statuses are case-insensitive.
+* If any given status is invalid, nothing is filtered and the valid statuses are listed.
 
 Examples:
 
 * `filter s/Interviewing` displays all candidates currently in the interviewing stage.
 * `filter s/Offered` displays all candidates who have been made offers.
+* `filter s/Interviewing s/Offered` displays all candidates who are interviewing or have been made offers.
 
 ### Deleting a candidate: `delete`
 
@@ -431,7 +437,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`
-**Filter** | `filter s/STATUS`<br> e.g., `filter s/Interviewing`
+**Filter** | `filter s/STATUS [s/MORE_STATUS]...`<br> e.g., `filter s/Interviewing s/Offered`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear
