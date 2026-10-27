@@ -126,6 +126,29 @@ public class CsvImportReaderTest {
         }
     }
 
+    @Test
+    public void read_rootDataPath_reportsMissingDirectory() {
+        Path root = directory.toAbsolutePath().getRoot();
+        assertThrows(IOException.class,
+                "The import directory could not be determined from the configured data file.", () ->
+                reader().read(root));
+    }
+
+    @Test
+    public void read_failureWithoutMessage_reportsFallbackAndClosesChannel() throws Exception {
+        Path input = Files.writeString(directory.resolve("import.csv"), "content");
+        for (IOException failure : List.of(new IOException(), new IOException("   "))) {
+            TrackingReader failingReader = new TrackingReader();
+            failingReader.failure = failure;
+
+            assertThrows(IOException.class, "Could not read " + input
+                    + ": The file could not be safely opened or read on this filesystem.", () ->
+                    failingReader.read(dataFile()));
+            assertFalse(failingReader.channel.isOpen());
+            assertArrayEquals("content".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(input));
+        }
+    }
+
     private CsvImportReader reader() {
         return new CsvImportReader();
     }

@@ -3,6 +3,7 @@ package seedu.address.logic;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
@@ -12,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -271,6 +273,99 @@ public class ImportOperationTest {
         assertThrows(CommandException.class, () -> failingLogic.execute("import"));
         assertEquals(List.of(existing), failingModel.getAddressBook().getPersonList());
         assertTrue(failingModel.isExpandedViewProperty().get());
+    }
+
+    @Test
+    public void execute_nullOriginalFilter_restoresShowAllFilter() throws Exception {
+        writeInput(incoming);
+        ModelManager nullFilterModel = new ModelManager(model.getAddressBook(), model.getUserPrefs()) {
+            @Override
+            public Predicate<? super Person> getPersonFilter() {
+                return null;
+            }
+        };
+        storage.failure = new IOException("Injected save failure");
+
+        assertThrows(CommandException.class, () -> new ImportOperation(nullFilterModel, storage).execute());
+
+        assertEquals(List.of(existing), nullFilterModel.getAddressBook().getPersonList());
+        nullFilterModel.addPerson(incoming);
+        assertEquals(List.of(existing, incoming), nullFilterModel.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_rollbackDoesNotRestoreCandidates_reportsVerificationFailure() throws Exception {
+        writeInput(incoming);
+        ModelManager failingModel = new ModelManager(model.getAddressBook(), model.getUserPrefs()) {
+            private int applications;
+
+            @Override
+            public void setAddressBook(ReadOnlyAddressBook book) {
+                applications++;
+                if (applications == 1) {
+                    super.setAddressBook(book);
+                }
+            }
+        };
+        storage.failure = new IOException("Injected save failure");
+
+        assertRollbackVerificationFailure(failingModel);
+        assertEquals(List.of(existing, incoming), failingModel.getAddressBook().getPersonList());
+    }
+
+    @Test
+    public void execute_rollbackDoesNotRestoreExpandedView_reportsVerificationFailure() throws Exception {
+        writeInput(incoming);
+        ModelManager failingModel = new ModelManager(model.getAddressBook(), model.getUserPrefs()) {
+            private int expansions;
+
+            @Override
+            public void expandPerson(Person person) {
+                expansions++;
+                if (expansions == 1) {
+                    super.expandPerson(person);
+                }
+            }
+        };
+        failingModel.expandPerson(existing);
+        storage.failure = new IOException("Injected save failure");
+
+        assertRollbackVerificationFailure(failingModel);
+        assertEquals(List.of(existing), failingModel.getAddressBook().getPersonList());
+        assertFalse(failingModel.isExpandedViewProperty().get());
+    }
+
+    @Test
+    public void execute_sameApplicationAndRollbackException_skipsSelfSuppression() throws Exception {
+        writeInput(incoming);
+        IllegalStateException failure = new IllegalStateException("Injected persistent failure");
+        ModelManager failingModel = new ModelManager(model.getAddressBook(), model.getUserPrefs()) {
+            @Override
+            public void setAddressBook(ReadOnlyAddressBook book) {
+                throw failure;
+            }
+        };
+
+        CommandException thrown = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, () ->
+                new ImportOperation(failingModel, storage).execute());
+
+        assertEquals("Import failed and rollback failed. State could not be restored; "
+                + "stop using HRvest and check the saved data before restarting.", thrown.getMessage());
+        assertSame(failure, thrown.getCause());
+        assertEquals(0, failure.getSuppressed().length);
+    }
+
+    private void assertRollbackVerificationFailure(Model failingModel) throws Exception {
+        byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
+        CommandException thrown = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, () ->
+                new ImportOperation(failingModel, storage).execute());
+
+        assertEquals("Import failed and rollback failed. State could not be restored; "
+                + "stop using HRvest and check the saved data before restarting.", thrown.getMessage());
+        assertTrue(thrown.getCause() instanceof IllegalStateException);
+        assertEquals("Rollback verification failed.", thrown.getCause().getMessage());
+        assertEquals(1, thrown.getCause().getSuppressed().length);
+        assertArrayEquals(disk, Files.readAllBytes(storage.getAddressBookFilePath()));
     }
 
     private void writeInput(Person... persons) throws IOException {
