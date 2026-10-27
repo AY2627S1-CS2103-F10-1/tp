@@ -97,7 +97,7 @@ public class ExpandCommandTest {
         ModelManager emptyModel = new ModelManager(new AddressBook(), new UserPrefs());
 
         assertCommandFailure(new ExpandCommand(Index.fromOneBased(1)), emptyModel,
-                "There are no candidates yet. Use add to add one.");
+                ListCommand.MESSAGE_NO_CANDIDATES);
         assertTrue(emptyModel.getAddressBook().getPersonList().isEmpty());
         assertTrue(emptyModel.getFilteredPersonList().isEmpty());
         assertFalse(emptyModel.isExpandedViewProperty().get());
