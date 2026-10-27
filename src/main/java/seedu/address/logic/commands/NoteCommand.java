@@ -67,7 +67,7 @@ public class NoteCommand extends Command {
                 candidate.getAddress(), candidate.getTags(), candidate.getStatus(), note, candidate.getRoles());
         model.setPerson(candidate, updatedCandidate);
         // Logs the position only, as notes and names are personal data.
-        String action = note.isPresent() ? "Replaced" : "Cleared";
+        String action = note.isPresent() ? "Updated" : "Cleared";
         logger.info(action + " the note of the candidate at displayed index " + index.getOneBased());
         String message = note.map(value -> String.format(MESSAGE_SUCCESS, candidate.getName(), value))
                 .orElseGet(() -> String.format(MESSAGE_CLEAR_SUCCESS, candidate.getName()));
