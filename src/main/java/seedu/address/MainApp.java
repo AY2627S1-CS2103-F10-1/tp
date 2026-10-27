@@ -73,10 +73,14 @@ public class MainApp extends Application {
             logic = new LogicManager(model, storage);
             ui = new UiManager(logic, storage.getAddressBookFilePath());
         } catch (IOException | RuntimeException e) {
-            releaseDataDirectoryLock();
             System.err.println("HRvest could not start: " + e.getMessage()
                     + " Check folder permissions if no other instance is running.");
-            throw e;
+            // Resource cleanup retains the startup error if closing also fails.
+            try (DataDirectoryLock lock = dataDirectoryLock) {
+                throw e;
+            } finally {
+                dataDirectoryLock = null;
+            }
         }
     }
 
@@ -146,29 +150,18 @@ public class MainApp extends Application {
     }
 
     @Override
-    public void stop() {
+    public void stop() throws IOException {
         logger.info("============================ [ Stopping HRvest ] =============================");
-        try {
-            if (storage != null && model != null) {
-                storage.saveUserPrefs(model.getUserPrefs());
-            }
-        } catch (IOException e) {
-            logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
-        } finally {
-            releaseDataDirectoryLock();
-        }
-    }
-
-    /** Releases the lock after shutdown or failed startup, without removing the shared lock file. */
-    private void releaseDataDirectoryLock() {
-        if (dataDirectoryLock != null) {
+        try (DataDirectoryLock lock = dataDirectoryLock) {
             try {
-                dataDirectoryLock.close();
+                if (storage != null && model != null) {
+                    storage.saveUserPrefs(model.getUserPrefs());
+                }
             } catch (IOException e) {
-                logger.severe("Failed to release the data-directory lock: " + StringUtil.getDetails(e));
-            } finally {
-                dataDirectoryLock = null;
+                logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
             }
+        } finally {
+            dataDirectoryLock = null;
         }
     }
 }

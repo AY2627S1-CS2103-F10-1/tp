@@ -40,12 +40,10 @@ public final class DataDirectoryLock implements AutoCloseable {
             }
             return new DataDirectoryLock(channel);
         } catch (IOException | RuntimeException e) {
-            try {
-                channel.close();
-            } catch (IOException closeFailure) {
-                e.addSuppressed(closeFailure);
+            // Retain the acquisition error if releasing the channel also fails.
+            try (DataDirectoryLock failedLock = new DataDirectoryLock(channel)) {
+                throw e;
             }
-            throw e;
         }
     }
 
