@@ -160,20 +160,26 @@ public class ModelManager implements Model {
         AddressBook replacement = new AddressBook();
         replacement.setRoleCatalog(catalog);
         for (Person person : addressBook.getPersonList()) {
-            Set<Role> assignments = new HashSet<>(person.getRoles());
-            if (assignments.remove(oldRole) && renamed != null) {
-                assignments.add(renamed);
-            }
-            if (assignments.isEmpty()) {
-                assignments.add(Role.NO_ROLE);
-            }
-            replacement.addPerson(person.withRoles(assignments));
+            replacement.addPerson(createPersonWithUpdatedRoles(person, oldRole, renamed));
         }
         boolean wasExpanded = isExpandedView.get();
         addressBook.resetData(replacement);
         if (wasExpanded) {
             updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
         }
+    }
+
+    /** Returns a person with the old role removed, or replaced when renamed is non-null. */
+    private static Person createPersonWithUpdatedRoles(Person person, Role oldRole, Role renamed) {
+        Set<Role> assignments = new HashSet<>(person.getRoles());
+        boolean hasOldRole = assignments.remove(oldRole);
+        if (hasOldRole && renamed != null) {
+            assignments.add(renamed);
+        }
+        if (assignments.isEmpty()) {
+            assignments.add(Role.NO_ROLE);
+        }
+        return person.withRoles(assignments);
     }
 
     //=========== Filtered Person List Accessors =============================================================
