@@ -53,7 +53,7 @@ final class ImportOperation {
 
     private List<Person> readCandidates() throws CommandException {
         try {
-            return new CandidateCsvParser().parse(storage.readImport());
+            return CandidateCsvParser.parse(storage.readImport());
         } catch (IOException | ParseException e) {
             throw new CommandException("Import failed: " + e.getMessage(), e);
         }

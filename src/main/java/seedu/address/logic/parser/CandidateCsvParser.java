@@ -20,13 +20,16 @@ import seedu.address.model.person.Person;
 import seedu.address.model.tag.Tag;
 
 /** Converts the strict exported CSV format into validated candidates without touching live data. */
-public class CandidateCsvParser {
+public final class CandidateCsvParser {
     private static final List<String> HEADERS = List.of("name", "phone", "email", "address", "status", "tags", "note");
     private static final int MAX_TAGS = 100;
     private static final int MAX_TAG_LENGTH = 256;
 
+    private CandidateCsvParser() {
+    }
+
     /** Decodes strict UTF-8 and validates every record, accepting zero bytes as a zero-candidate import. */
-    public List<Person> parse(byte[] bytes) throws ParseException {
+    public static List<Person> parse(byte[] bytes) throws ParseException {
         String text;
         try {
             text = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
@@ -55,17 +58,18 @@ public class CandidateCsvParser {
         return persons;
     }
 
-    private Person parsePerson(List<String> fields, int record) throws ParseException {
+    private static Person parsePerson(List<String> fields, int record) throws ParseException {
         return new Person(parseField(fields, record, 0, ParserUtil::parseName),
                 parseField(fields, record, 1, ParserUtil::parsePhone),
                 parseField(fields, record, 2, ParserUtil::parseEmail),
                 parseField(fields, record, 3, ParserUtil::parseAddress),
-                parseField(fields, record, 5, this::parseTags),
+                parseField(fields, record, 5, CandidateCsvParser::parseTags),
                 parseField(fields, record, 4, ParserUtil::parseStatus),
-                parseField(fields, record, 6, this::parseNote));
+                parseField(fields, record, 6, CandidateCsvParser::parseNote));
     }
 
-    private <T> T parseField(List<String> fields, int record, int column, FieldParser<T> parser) throws ParseException {
+    private static <T> T parseField(List<String> fields, int record, int column, FieldParser<T> parser)
+            throws ParseException {
         try {
             return parser.parse(fields.get(column));
         } catch (ParseException | IllegalArgumentException e) {
@@ -73,11 +77,11 @@ public class CandidateCsvParser {
         }
     }
 
-    private Optional<Note> parseNote(String value) {
+    private static Optional<Note> parseNote(String value) {
         return value.isBlank() ? Optional.empty() : Optional.of(new Note(value));
     }
 
-    private Set<Tag> parseTags(String value) throws ParseException {
+    private static Set<Tag> parseTags(String value) throws ParseException {
         List<String> names = new ArrayList<>();
         try (JsonParser parser = new JsonFactory().createParser(value)) {
             if (parser.nextToken() != JsonToken.START_ARRAY) {

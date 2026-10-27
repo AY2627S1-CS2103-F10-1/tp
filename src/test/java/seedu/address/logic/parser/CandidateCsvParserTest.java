@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.logic.parser.CandidateCsvParser.parse;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.charset.StandardCharsets;
@@ -16,7 +17,6 @@ import seedu.address.model.person.Status;
 
 public class CandidateCsvParserTest {
     private static final String HEADER = record(List.of("name", "phone", "email", "address", "status", "tags", "note"));
-    private final CandidateCsvParser parser = new CandidateCsvParser();
 
     @Test
     public void parse_exportFormat_preservesLiteralValuesAndNormalizesTagsAndStatus() throws Exception {
@@ -30,8 +30,8 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_emptyAndHeaderOnly_returnsNoCandidates() throws Exception {
-        assertEquals(List.of(), parser.parse(new byte[0]));
-        assertEquals(List.of(), parser.parse(HEADER.getBytes(StandardCharsets.UTF_8)));
+        assertEquals(List.of(), parse(new byte[0]));
+        assertEquals(List.of(), parse(HEADER.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test
@@ -39,21 +39,21 @@ public class CandidateCsvParserTest {
         String note = "Unicode \u4e2d\u6587, \"quoted\"\r\nliteral \ufeff marker";
         String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com", "Address",
                 "Applied", "[]", note));
-        assertEquals(parser.parse(input.getBytes(StandardCharsets.UTF_8)),
-                parser.parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8)));
-        assertEquals(note, parser.parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8))
+        assertEquals(parse(input.getBytes(StandardCharsets.UTF_8)),
+                parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8)));
+        assertEquals(note, parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8))
                 .getFirst().getNote().orElseThrow().value);
-        assertEquals(List.of(), parser.parse(("\ufeff" + HEADER).getBytes(StandardCharsets.UTF_8)));
+        assertEquals(List.of(), parse(("\ufeff" + HEADER).getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test
     public void parse_invalidEncodingOrDialect_rejects() {
-        assertThrows(ParseException.class, () -> parser.parse(new byte[] {(byte) 0xc3, 0x28}));
+        assertThrows(ParseException.class, () -> parse(new byte[] {(byte) 0xc3, 0x28}));
         for (String input : List.of(" ", "\ufeff", "\ufeff\ufeff" + HEADER, " \ufeff" + HEADER,
                 "\ufeff" + HEADER.replace("\r\n", "\n"), HEADER.replace("\r\n", "\n"),
                 HEADER.stripTrailing(), HEADER.replace("\"name\"", "name"), HEADER + "\r\n",
                 HEADER.replace("name", "Name"), HEADER + "trailing", HEADER + "\"unterminated")) {
-            assertThrows(ParseException.class, () -> parser.parse(input.getBytes(StandardCharsets.UTF_8)));
+            assertThrows(ParseException.class, () -> parse(input.getBytes(StandardCharsets.UTF_8)));
         }
     }
 
@@ -90,20 +90,20 @@ public class CandidateCsvParserTest {
         String input = HEADER + record(List.of("Candidate", "invalid", "candidate@example.com", "Address",
                 "Applied", "[]", ""));
         assertThrows(ParseException.class, "CSV record 2, field phone: Phone numbers should only contain digits, "
-                + "and should be at least 3 digits long", () -> parser.parse(input.getBytes(StandardCharsets.UTF_8)));
+                + "and should be at least 3 digits long", () -> parse(input.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test
     public void parse_longEmail_handlesWithoutCrashing() throws Exception {
         String email = "a.".repeat(10_000) + "a@example.com";
         String input = HEADER + record(List.of("Candidate", "12345", email, "Address", "Applied", "[]", ""));
-        assertEquals(email, parser.parse(input.getBytes(StandardCharsets.UTF_8)).getFirst().getEmail().value);
+        assertEquals(email, parse(input.getBytes(StandardCharsets.UTF_8)).getFirst().getEmail().value);
     }
 
     private Person parseRow(String tags, String status, String note) throws ParseException {
         String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com", "Address",
                 status, tags, note));
-        return parser.parse(input.getBytes(StandardCharsets.UTF_8)).getFirst();
+        return parse(input.getBytes(StandardCharsets.UTF_8)).getFirst();
     }
 
     private static String record(List<String> fields) {
