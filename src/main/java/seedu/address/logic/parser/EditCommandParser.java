@@ -38,7 +38,9 @@ public class EditCommandParser implements Parser<EditCommand> {
         ParserUtil.verifyNoNotePrefix(args, MESSAGE_UNSUPPORTED_NOTE);
 
         ArgumentMultimap argMultimap =
-                ArgumentTokenizer.tokenize(args, PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
+                ArgumentTokenizer.tokenizeWithValidation(args,
+                        Set.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG),
+                        PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                         PREFIX_STATUS, PREFIX_TAG);
 
         Index index = ParserUtil.parseDisplayedIndex(argMultimap.getPreamble(),

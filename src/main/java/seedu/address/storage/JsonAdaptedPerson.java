@@ -185,7 +185,7 @@ class JsonAdaptedPerson {
             return Optional.empty();
         }
         try {
-            return Optional.of(new Note(note));
+            return Optional.of(new Note(note.strip()));
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException(e.getMessage());
         }
