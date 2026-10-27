@@ -101,11 +101,14 @@ public class ParserUtil {
      */
     public static Note parseNote(String note) throws ParseException {
         requireNonNull(note);
-        try {
-            return new Note(note);
-        } catch (IllegalArgumentException e) {
-            throw new ParseException(e.getMessage(), e);
+        String strippedNote = note.strip();
+        if (strippedNote.isBlank()) {
+            throw new ParseException(Note.MESSAGE_BLANK);
         }
+        if (!Note.isValidNote(strippedNote)) {
+            throw new ParseException(Note.MESSAGE_TOO_LONG);
+        }
+        return new Note(strippedNote);
     }
 
     /**
