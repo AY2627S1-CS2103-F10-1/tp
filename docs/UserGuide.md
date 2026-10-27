@@ -155,7 +155,7 @@ Adds a note to the specified candidate, such as interview feedback or follow-up 
 Format: `note INDEX no/[NOTE_TEXT]`
 
 * Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
-* Zero or negative whole-number indexes report `Index must be a positive integer.` Positive indexes above `2147483647` report `The candidate index provided is invalid.` Note-index errors also include note-command usage; a missing `no/` is reported first.
+* Zero or negative whole-number indexes report `Index must be a positive integer.` Positive indexes above `2147483647` report `The candidate index provided is invalid.` Missing or malformed indexes show an invalid-command-format error with note-command usage; numeric index errors do not append usage. A missing `no/` is reported before index validation.
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
 * To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
 * Non-empty `NOTE_TEXT` can contain at most 500 printable-ASCII characters. Leading and trailing ordinary spaces are removed; spacing, capitalisation, and ASCII punctuation within the note are kept. Tabs, line breaks, and non-ASCII characters are rejected.
@@ -428,6 +428,8 @@ Advanced users may edit the JSON files in the `data` folder.
 * Keep candidate emails unique, ignoring case.
 * Each candidate needs at least one valid role ID from `roles.json`, without duplicates. Use `no-role` for `No role`, rather than its display name.
 * Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
+* One invalid value in **any** candidate, such as a space between the digits of a phone number, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
+* Save the file as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
 
 **If data cannot be loaded:**
 
