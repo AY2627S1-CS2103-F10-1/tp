@@ -7,6 +7,7 @@ import java.util.Set;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 
 /** Resolves command role names before any model changes are applied. */
 final class RoleCommandUtil {
@@ -20,7 +21,7 @@ final class RoleCommandUtil {
         for (String name : names) {
             try {
                 roles.add(model.getRoleCatalog().find(name).orElseThrow(() ->
-                        new CommandException("Role does not exist: " + name.strip()
+                        new CommandException(String.format(RoleCatalog.MESSAGE_UNKNOWN_ROLE, name.strip())
                                 + ". Use " + suggestion + ".")));
             } catch (IllegalArgumentException e) {
                 throw new CommandException(e.getMessage(), e);
