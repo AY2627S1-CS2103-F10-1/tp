@@ -13,7 +13,8 @@ import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
 
 /**
- * Displays the text logo and an all-or-nothing row of live candidate summary cards.
+ * Displays the text logo and an all-or-nothing row of live candidate summary
+ * cards.
  */
 public class CandidateSummaryHeader extends UiPart<Region> {
     private static final String FXML = "CandidateSummaryHeader.fxml";
@@ -25,7 +26,8 @@ public class CandidateSummaryHeader extends UiPart<Region> {
     private HBox summaryCards;
 
     /**
-     * Creates a header observing the displayed candidates and all candidates loaded in memory.
+     * Creates a header observing the displayed candidates and all candidates loaded
+     * in memory.
      */
     public CandidateSummaryHeader(ObservableList<Person> shownPersons, ObservableList<Person> allPersons) {
         super(FXML, new HeaderLayout());
@@ -50,7 +52,8 @@ public class CandidateSummaryHeader extends UiPart<Region> {
     }
 
     /**
-     * Arranges the FXML nodes without allowing the card row to force the window wider.
+     * Arranges the FXML nodes without allowing the card row to force the window
+     * wider.
      */
     private static class HeaderLayout extends HBox {
         private Region logo;
@@ -62,7 +65,8 @@ public class CandidateSummaryHeader extends UiPart<Region> {
         }
 
         /**
-         * Measures every card explicitly, even when the card group is unmanaged and invisible.
+         * Measures every card explicitly, even when the card group is unmanaged and
+         * invisible.
          */
         private double computeCardsWidth() {
             double width = Math.max(0, cards.getChildren().size() - 1) * cards.getSpacing();
@@ -85,8 +89,10 @@ public class CandidateSummaryHeader extends UiPart<Region> {
 
         @Override
         protected double computePrefHeight(double width) {
-            return snappedTopInset() + Math.max(logo.prefHeight(-1), cards.prefHeight(-1))
+            double cardsHeight = cards.isManaged() ? cards.prefHeight(-1) : 0;
+            return snappedTopInset() + Math.max(logo.prefHeight(-1), cardsHeight)
                     + snappedBottomInset();
+
         }
 
         @Override
@@ -95,7 +101,8 @@ public class CandidateSummaryHeader extends UiPart<Region> {
         }
 
         /**
-         * Keeps the decision independent of the group's visibility to prevent resize oscillation.
+         * Keeps the decision independent of the group's visibility to prevent resize
+         * oscillation.
          */
         @Override
         protected void layoutChildren() {

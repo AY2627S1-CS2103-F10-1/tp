@@ -194,14 +194,6 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
-### Responsive candidate summary header
-
-`CandidateSummaryHeader` is the top-level header component, composing a standalone `AppLogo` and the card group into an `HBox` row. `MainWindow` supplies it with the filtered and full candidate lists exposed by `Logic`. The header creates one total-only `CandidateSummaryCard` and generates a `StatusSummaryCard` for each value in `Status.values()`. The header, logo, and cards use matching FXML files for their markup. `CandidateSummaryCard` counts all candidates using list sizes, while each `StatusSummaryCard` counts only candidates matching its required status. Each card owns its counting and display bindings; no separate count provider, nullable status mode, or copied candidate collection is needed.
-
-Both card types bind each count separately to its corresponding list. Separate count bindings matter because the full list can notify observers before the filtered list has finished processing the same change; iterating both lists from that notification could read stale filtered indexes during deletion or replacement.
-
-The header's private `HeaderLayout` extends `HBox` and measures the complete card group even while the group is invisible and unmanaged. Only the card group participates in all-or-nothing visibility; the separately composed logo remains visible when the cards cannot fit. Its fit threshold includes the logo, padding, logo-to-card gap, card gaps, and each card's natural width with a minimum of 105 pixels. Natural widths include the current count text, so larger counts can raise the threshold. Below that threshold, the whole group is hidden and unmanaged; the header's minimum width depends only on the logo. This avoids forcing the window wider or creating a visibility feedback loop based on the currently managed children. Count changes explicitly request header layout because unmanaged children do not propagate layout requests to their parent.
-
 ### Command history navigation
 
 The command history feature lets a user walk through commands they submitted earlier in the current session, using the `Up` and `Down` arrow keys. It is implemented as a single collaborator (`CommandHistory`) owned by `CommandBox`.
