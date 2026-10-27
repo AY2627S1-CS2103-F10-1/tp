@@ -15,6 +15,7 @@ public final class RoleCatalog {
     public static final String MESSAGE_ROLES_REQUIRED = "Every person must have at least one role.";
     public static final String MESSAGE_DUPLICATE_NAME = "A role with this name already exists.";
     public static final String MESSAGE_UNKNOWN_ROLE = "Role does not exist: %1$s";
+    public static final String MESSAGE_INVALID_REFERENCE = "Person references an unknown or stale role.";
 
     private final List<Role> roles;
 
@@ -69,7 +70,7 @@ public final class RoleCatalog {
     public void validateReferences(Collection<Role> references) {
         requireNonNull(references);
         checkArgument(!references.isEmpty(), MESSAGE_ROLES_REQUIRED);
-        checkArgument(roles.containsAll(references), "Person references an unknown or stale role.");
+        checkArgument(roles.containsAll(references), MESSAGE_INVALID_REFERENCE);
     }
 
     @Override
