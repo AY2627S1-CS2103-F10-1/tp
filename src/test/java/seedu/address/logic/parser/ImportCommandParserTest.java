@@ -2,9 +2,9 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
-import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -23,8 +23,10 @@ public class ImportCommandParserTest {
     }
 
     @Test
-    public void parse_arguments_rejects() {
-        assertParseFailure(parser, " other.csv", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
-                ImportCommand.MESSAGE_USAGE));
+    public void parse_extraArguments_ignoresArguments() throws Exception {
+        for (String args : List.of(" other.csv", " ../../other.csv", " n/ignored p/123", " extra\narguments")) {
+            assertParseSuccess(parser, args, new ImportCommand());
+            assertEquals(new ImportCommand(), new AddressBookParser().parseCommand("import" + args));
+        }
     }
 }

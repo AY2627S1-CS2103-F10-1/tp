@@ -321,7 +321,7 @@ _{more aspects and alternatives to be added}_
 
 ### Atomic CSV import
 
-Import is a batch operation over the complete in-memory address book, not the displayed list. `AddressBookParser` rejects arguments through `ImportCommandParser`. `LogicManager` routes `ImportCommand` to `ImportOperation`, which stages and validates the batch before publication. This coordinator is needed because ordinary add/edit saving does not restore model state on save failure.
+Import is a batch operation over the complete in-memory address book, not the displayed list. `AddressBookParser` delegates to `ImportCommandParser`, which ignores extra arguments like export; they never select a different input file. `LogicManager` routes `ImportCommand` to `ImportOperation`, which stages and validates the batch before publication. This coordinator is needed because ordinary add/edit saving does not restore model state on save failure.
 
 `StorageManager.readImport` delegates to `CsvImportReader`. For `/app/data/HRvest.json`, it reads only `/app/data/import.csv`, alongside the JSON data file and `export.csv`. The reader checks that the input is a regular file, rejects symbolic links, opens without following links, and buffers at most 10 MiB, enforcing the limit during reading as well as checking the initial size. The channel closes on success or failure. Parsing uses only the buffered copy, so edits after reading cannot affect the parsed data.
 

@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
-import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -185,16 +184,32 @@ public class ImportOperationTest {
     }
 
     @Test
-    public void execute_missingInvalidOrArguments_doesNotSaveOrChangeState() throws Exception {
+    public void execute_missingOrInvalidInput_doesNotSaveOrChangeState() throws Exception {
         model.expandPerson(existing);
         int saves = storage.saves;
         assertThrows(CommandException.class, () -> logic.execute("import"));
         Files.writeString(inputPath(), "invalid CSV");
         assertThrows(CommandException.class, () -> logic.execute("import"));
-        assertThrows(ParseException.class, () -> logic.execute("import other.csv"));
+        assertThrows(CommandException.class, () -> logic.execute("import other.csv"));
         assertEquals(saves, storage.saves);
         assertEquals(List.of(existing), model.getFilteredPersonList());
         assertTrue(model.isExpandedViewProperty().get());
+    }
+
+    @Test
+    public void execute_extraArguments_usesFixedInputAndSavesNormally() throws Exception {
+        writeInput(incoming);
+        Path ignored = directory.resolve("other.csv");
+        Files.writeString(ignored, "invalid CSV that must not be read");
+        byte[] source = Files.readAllBytes(inputPath());
+
+        assertEquals("Imported 1 candidates successfully.",
+                logic.execute("import " + ignored + " ignored arguments").getFeedbackToUser());
+
+        assertEquals(List.of(existing, incoming), model.getFilteredPersonList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        assertArrayEquals(source, Files.readAllBytes(inputPath()));
+        assertEquals("invalid CSV that must not be read", Files.readString(ignored));
     }
 
     @Test
