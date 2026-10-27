@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+
+<fx:root type="javafx.scene.layout.HBox" xmlns="http://javafx.com/javafx/17"
+         xmlns:fx="http://javafx.com/fxml/1" alignment="CENTER_LEFT" spacing="24"
+         styleClass="candidate-summary-header">
+  <StackPane fx:id="logoPlaceholder" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS" />
+  <HBox fx:id="summaryCards" spacing="8">
+    <minWidth>
+      <Region fx:constant="USE_PREF_SIZE" />
+    </minWidth>
+  </HBox>
+</fx:root>
