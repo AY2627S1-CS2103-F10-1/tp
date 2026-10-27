@@ -209,7 +209,7 @@ The sequence diagram below shows how `note 2 no/Strong on SQL` is executed. `p` 
 
 <puml src="diagrams/NoteSequenceDiagram.puml" alt="Interactions inside the Logic and Model components for the note 2 no/Strong on SQL command" />
 
-After the command returns, `LogicManager` saves the address book, as it does after every successful command.
+After the note command returns, `LogicManager` saves the address book.
 
 #### Design considerations
 
