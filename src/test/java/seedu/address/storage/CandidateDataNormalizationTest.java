@@ -70,7 +70,8 @@ public class CandidateDataNormalizationTest {
         // Notepad's "UTF-8 with BOM" option starts the file with this mark.
         Files.writeString(path, "\uFEFF" + json);
 
-        AddressBook loaded = new AddressBook(new JsonAddressBookStorage(path).readAddressBook().orElseThrow());
+        AddressBook loaded = new AddressBook(
+                new JsonAddressBookStorage(path).readAddressBook().orElseThrow());
 
         assertEquals(List.of(ALICE, BENSON), loaded.getPersonList());
     }
