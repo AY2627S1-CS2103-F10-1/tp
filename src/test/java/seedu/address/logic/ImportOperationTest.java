@@ -238,7 +238,7 @@ public class ImportOperationTest {
     }
 
     private Path inputPath() {
-        return directory.resolve("import.csv");
+        return directory.resolve("data/import.csv");
     }
 
     private class TestStorage extends StorageManager {

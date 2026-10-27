@@ -17,13 +17,13 @@ public class CsvImportReader {
     public static final int MAX_BYTES = 10 * 1024 * 1024;
     private static final int BUFFER_SIZE = 8192;
 
-    /** Reads the import beside the configured data directory. */
+    /** Reads the import beside the configured JSON data file. */
     public byte[] read(Path dataFile) throws IOException {
         Path dataDirectory = dataFile.toAbsolutePath().normalize().getParent();
-        if (dataDirectory == null || dataDirectory.getParent() == null) {
+        if (dataDirectory == null) {
             throw new IOException("The import directory could not be determined from the configured data file.");
         }
-        Path source = dataDirectory.getParent().resolve("import.csv");
+        Path source = dataDirectory.resolve("import.csv");
         try {
             checkInput(source);
             try (FileChannel channel = FileChannel.open(source, StandardOpenOption.READ, LinkOption.NOFOLLOW_LINKS)) {

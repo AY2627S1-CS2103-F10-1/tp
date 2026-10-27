@@ -33,6 +33,20 @@ public class CsvImportReaderTest {
     }
 
     @Test
+    public void read_nestedDataDirectory_usesJsonAndExportDirectoryWithoutFallback() throws Exception {
+        Path data = Files.createDirectories(directory.resolve("app/data"));
+        Path configuredFile = data.resolve("HRvest.json");
+        Files.writeString(directory.resolve("app/import.csv"), "wrong location");
+        String expected = "Could not read " + data.resolve("import.csv") + ": File not found.";
+        assertThrows(IOException.class, expected, () -> reader().read(configuredFile));
+
+        byte[] bytes = "correct location".getBytes(StandardCharsets.UTF_8);
+        Path source = CsvExportWriter.resolveDestination(configuredFile).resolveSibling("import.csv");
+        Files.write(source, bytes);
+        assertArrayEquals(bytes, reader().read(configuredFile));
+    }
+
+    @Test
     public void read_missingInput_reportsExpectedPathAndCause() {
         String expected = "Could not read " + directory.resolve("import.csv") + ": File not found.";
         assertThrows(IOException.class, expected, () -> reader().read(dataFile()));
@@ -117,7 +131,7 @@ public class CsvImportReaderTest {
     }
 
     private Path dataFile() {
-        return directory.resolve("data/HRvest.json");
+        return directory.resolve("HRvest.json");
     }
 
     private static class TrackingReader extends CsvImportReader {

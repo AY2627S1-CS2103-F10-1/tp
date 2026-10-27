@@ -62,7 +62,7 @@ public interface Storage {
      */
     void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException;
 
-    /** Reads a bounded snapshot of import.csv beside the configured data directory. */
+    /** Reads a bounded copy of import.csv beside the configured JSON data file. */
     byte[] readImport() throws IOException;
 
     /** Exports the complete address book as CSV and returns the absolute destination after successful close. */
