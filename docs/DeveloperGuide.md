@@ -144,11 +144,11 @@ The `Model` component,
 
 #### Role catalog design
 
-The catalog stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position, so catalog sorting does not change their targets.
+The catalog stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position.
 
 * Each candidate has at least one role from the catalog. The protected `No role` entry provides a fallback when deleting the candidate's last role.
 * Roles keep a stable identity across renames. A rename updates the catalog and all assigned candidates together, including candidates outside the displayed list.
-* The model validates catalog and assignment changes together before applying them, preventing inconsistent references or partial updates. Shared role-name validation keeps API-created and loaded roles addressable by commands.
+* Before applying a change, the model checks that every candidate's roles exist in the updated catalog; if validation fails, neither is changed. Roles created programmatically or loaded from files follow the same naming rules as command input, so commands can still identify them by name.
 
 ### Storage component
 
@@ -394,7 +394,7 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | `* *`    | familiar user     | create roles before adding candidates                             | prepare the catalog for upcoming hiring                             |
 | `* *`    | familiar user     | list all available roles, including unused ones                   | reuse an existing role instead of creating a duplicate                |
 | `* *`    | familiar user     | rename a role across all assigned candidates                      | correct a job title consistently                                      |
-| `* *`    | familiar user     | remove an obsolete role while retaining other assignments         | keep the catalog relevant without losing unrelated hiring details   |
+| `* *`    | familiar user     | remove an obsolete role while keeping candidates' other roles     | keep the catalog relevant without losing unrelated hiring details   |
 | `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
 | `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
@@ -676,7 +676,8 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to create a role, giving its name.
-1. HRvest adds the unused role to the catalog and confirms creation.
+1. HRvest makes the new role available for assigning to candidates.
+1. HRvest shows a success message identifying the created role.
 
    Use case ends.
 
@@ -693,7 +694,8 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to rename an existing role, giving the role and its new name.
-1. HRvest renames the role in the catalog and for all candidates assigned to it, preserving their other roles, and confirms the change.
+1. HRvest changes the role's name for all candidates who have it, leaving their other roles unchanged.
+1. HRvest shows a success message identifying the renamed role.
 
    Use case ends.
 
@@ -722,8 +724,8 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to delete an existing role.
-1. HRvest removes the role from the catalog and all candidates assigned to it, preserves their other roles, and assigns `No role` to candidates left without a role.
-1. HRvest confirms deletion.
+1. HRvest removes the role from the available roles and from all candidates who have it, leaving their other roles unchanged. Candidates left without a role receive `No role`.
+1. HRvest shows a success message identifying the deleted role.
 
    Use case ends.
 
@@ -760,6 +762,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Candidate**: A person being considered for an open role.
 * **Open role**: A position for which the startup is currently recruiting.
 * **Role catalog**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
+* **Rollback journal**: A file containing the previous contents and destinations of the candidate and role files, used to restore both if a save fails or is interrupted. HRvest uses `roles-transaction.json` for this journal.
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
