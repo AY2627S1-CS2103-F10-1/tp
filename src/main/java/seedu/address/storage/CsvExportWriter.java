@@ -22,8 +22,11 @@ import seedu.address.commons.util.FileUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 
-/** Writes raw candidate data as UTF-8 CSV, directly to the fixed export destination. */
+/** Writes raw candidate data as UTF-8 CSV with a byte order mark, directly to the fixed export destination. */
 public class CsvExportWriter {
+    /** Lets spreadsheet programs such as Excel detect UTF-8, so that non-ASCII text is not garbled. */
+    static final char BYTE_ORDER_MARK = '\uFEFF';
+
     private static final List<String> HEADERS = List.of("name", "phone", "email", "address", "status", "tags", "note");
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
@@ -47,6 +50,7 @@ public class CsvExportWriter {
             checkDestination(destination);
             try (Writer writer = openWriter(destination)) {
                 opened = true;
+                writer.write(BYTE_ORDER_MARK);
                 writeCsv(addressBook, writer);
             }
             return destination;

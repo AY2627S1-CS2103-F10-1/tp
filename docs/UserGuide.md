@@ -35,7 +35,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
    * `delete 3` : Deletes the 3rd candidate shown in the current list.
 
-   * `clear` : Deletes all candidates.
+   * `clear confirm` : Deletes all candidates. `clear` on its own only asks you to confirm.
 
    * `exit` : Exits the app.
 
@@ -64,8 +64,8 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list_role` command is an exception: it rejects all arguments.
+* Extraneous parameters for `help`, `list`, `exit`, and `export` are ignored.<br>
+  For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -319,21 +319,42 @@ Format: `list_role`
 
 Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
 
-Format: `clear`
+Format: `clear confirm`
+
+* `clear` on its own deletes nothing. It shows how many candidates would be deleted and asks you to enter `clear confirm`.
+* `clear confirm` deletes every candidate, including those hidden by the current `find` or `filter`. The message is `All candidates have been cleared.`
+* `confirm` ignores letter case. Any other text after `clear` is rejected.
+* If there are no candidates, both forms reply `There are no candidates to clear.`
+
+<box type="warning" seamless>
+
+**Caution:** Clearing cannot be undone. Use `export` first if you may need the candidates again.
+</box>
 
 ### Exporting candidates: `export`
 
-Exports every candidate to `export.csv` inside the application's data folder, alongside the configured JSON data file (for example, `./data/data.json` gives `./data/export.csv`). Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
+Exports every candidate to `data/export.csv`, next to the candidate data file `data/HRvest.json` in the folder you run HRvest from. Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
 
 Format: `export`
 
 * Use the lowercase command; surrounding whitespace is accepted.
-* The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
+* The destination is always `data/export.csv`. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* The file is UTF-8 with a byte order mark, so spreadsheet programs such as Excel show accented and non-Latin text correctly.
 * For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
 * If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
+
+<box type="warning" seamless>
+
+**Opening the CSV in a spreadsheet:** The CSV holds your data exactly as stored, but spreadsheet programs change some values when you double-click to open the file:
+
+* Phone numbers lose their leading zeroes, for example `007` becomes `7`.
+* Text that starts with `=`, `+`, `-` or `@`, such as an address `=1+2`, is treated as a formula and calculated.
+
+To keep every value as stored, import the file instead. In Excel, use **Data > From Text/CSV**, choose **Transform Data**, and set the columns to **Text** before loading. Do not open exports from untrusted data with formulas enabled.
+</box>
 
 **Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
 
@@ -377,7 +398,7 @@ HRvest automatically saves data after every successful command. Use [`export`](#
 
 ### Editing the data file
 
-Advanced users may edit the JSON files. For a custom candidate data path, use that file and the `roles.json` beside it.
+Advanced users may edit the JSON files in the `data` folder.
 
 **Before editing:**
 
@@ -418,7 +439,7 @@ _Details coming soon ..._
 
 1. If `roles-transaction.json` exists on the old computer, restart HRvest there to complete recovery first. If recovery fails, follow the reported instructions before transferring.
 1. Close HRvest on both computers.
-1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together. For a custom candidate path, copy that file and its neighbouring `roles.json` instead.
+1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -438,7 +459,7 @@ Action     | Format, Examples
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`
-**Clear**  | `clear`
+**Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`

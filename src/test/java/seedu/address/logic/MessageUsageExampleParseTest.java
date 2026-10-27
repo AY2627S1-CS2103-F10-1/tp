@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ExpandCommand;
@@ -35,6 +36,7 @@ public class MessageUsageExampleParseTest {
     Stream<DynamicTest> exampleFromEachUsage_parses() {
         List<CommandUsage> usages = List.of(
                 new CommandUsage("add", AddCommand.MESSAGE_USAGE),
+                new CommandUsage("clear", ClearCommand.MESSAGE_USAGE),
                 new CommandUsage("delete", DeleteCommand.MESSAGE_USAGE),
                 new CommandUsage("edit", EditCommand.MESSAGE_USAGE),
                 new CommandUsage("expand", ExpandCommand.MESSAGE_USAGE),
