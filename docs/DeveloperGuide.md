@@ -659,7 +659,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-* 1c. No status or role is supplied.
+* 1c. Neither a status nor a role is supplied.
 
     * 1c1. HRvest shows an error message describing the required criteria.
 
