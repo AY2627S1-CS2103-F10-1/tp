@@ -1,5 +1,6 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -30,12 +31,29 @@ public class PhoneTest {
         assertFalse(Phone.isValidPhone("91")); // less than 3 numbers
         assertFalse(Phone.isValidPhone("phone")); // non-numeric
         assertFalse(Phone.isValidPhone("9011p041")); // alphabets within digits
-        assertFalse(Phone.isValidPhone("9312 1534")); // spaces within digits
+        assertTrue(Phone.isValidPhone("9312 1534")); // formatted number
 
         // valid phone numbers
         assertTrue(Phone.isValidPhone("911")); // exactly 3 numbers
         assertTrue(Phone.isValidPhone("93121534"));
         assertTrue(Phone.isValidPhone("124293842033123")); // long phone numbers
+    }
+
+    @Test
+    public void constructor_formattedNumbers_preservesFormatting() {
+        for (String value : new String[] {"+65 9123 4567", "9123-4567", "+1-202-555-0123", "0 0-7",
+            "123456789012345678901234567890"}) {
+            assertTrue(Phone.isValidPhone(value), value);
+            assertEquals(value, new Phone(value).value);
+        }
+    }
+
+    @Test
+    public void isValidPhone_malformedFormatting_returnsFalse() {
+        for (String value : new String[] {"+", "+1-2", "1 - 2", "-123", "123-", "123 ", " 123",
+            "12+34", "++123", "123/456", "123(456)", "123\t456", "123\n456", "\uFF11\uFF12\uFF13"}) {
+            assertFalse(Phone.isValidPhone(value), value);
+        }
     }
 
     @Test

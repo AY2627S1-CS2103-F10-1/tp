@@ -35,6 +35,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -64,6 +65,25 @@ public class LogicManagerTest {
     public void execute_invalidCommandFormat_throwsParseException() {
         String invalidCommand = "uicfhmowqewca";
         assertParseException(invalidCommand, MESSAGE_UNKNOWN_COMMAND);
+    }
+
+    @Test
+    public void execute_formattedPhoneAddAndEdit_preservesSavedAndExportedValues() throws Exception {
+        logic.execute("add n/Phone Test p/+65 9123 4567 e/phone@example.com a/Block 1");
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals("+65 9123 4567",
+                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+
+        logic.execute("edit 1 p/001-234 567");
+        assertEquals("001-234 567", model.getFilteredPersonList().getFirst().getPhone().value);
+        assertEquals("001-234 567", saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+        logic.execute("export");
+        assertTrue(Files.readString(temporaryFolder.resolve("export.csv")).contains("\"001-234 567\""));
+
+        String before = Files.readString(saved.getAddressBookFilePath());
+        assertParseException("edit 1 p/12+34", Phone.MESSAGE_CONSTRAINTS);
+        assertEquals(before, Files.readString(saved.getAddressBookFilePath()));
+        assertEquals("001-234 567", model.getFilteredPersonList().getFirst().getPhone().value);
     }
 
     @Test
