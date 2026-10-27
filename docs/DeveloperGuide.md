@@ -194,6 +194,45 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 
 This section describes some noteworthy details on how certain features are implemented.
 
+### Candidate notes
+
+Each candidate has at most one note, such as interview feedback. `note INDEX no/NOTE_TEXT` replaces the note of a candidate in the displayed list, and `note INDEX no/` clears it.
+
+#### How it fits in
+
+* `Person` holds the note as an `Optional<Note>`. `Note` is an immutable value that rejects blank text and text longer than `Note.MAX_LENGTH` (500) characters after trimming, so a candidate either has a valid note or none.
+* `NoteCommandParser` tokenizes the arguments with `no/` as its only prefix, so text such as `n/A` inside a note stays part of the note. It rejects a missing or repeated `no/`. Blank note text creates a `NoteCommand` that clears the note.
+* `NoteCommand#execute` finds the candidate in the displayed list and builds a new `Person` with the same details and the new note, because `Person` is immutable. It then calls `Model#setPerson`, which keeps the current filter and keeps the candidate expanded if it was.
+* `add` and `edit` reject `no/` through `ParserUtil#verifyNoNotePrefix`, so `note` is the only command that changes a note.
+* `JsonAdaptedPerson` stores the note text in a `note` field. On loading, a missing, `null` or blank `note` means no note, so data files from before notes existed still load.
+* `PersonCard` shows a sticky-note icon when `Person#hasNote()` is true and shows the note text only in expanded view.
+
+The sequence diagram below shows how `note 2 no/Strong on SQL` is executed. `p` is the candidate at index 2 of the displayed list.
+
+<puml src="diagrams/NoteSequenceDiagram.puml" alt="Interactions inside the Logic and Model components for the note 2 no/Strong on SQL command" />
+
+After the command returns, `LogicManager` saves the address book, as it does after every successful command.
+
+#### Design considerations
+
+**Aspect: One note or a list of notes**
+
+* **Alternative 1 (current choice):** One note per candidate, replaced by each `note` command.
+  * Pros: Simple to use and display. No extra commands or indexes are needed to correct or remove one entry.
+  * Cons: Replacing a note loses the earlier text, so the User Guide tells users to include anything they want to keep.
+* **Alternative 2:** A list of notes that `note` appends to.
+  * Pros: Keeps a full history of interactions with the candidate.
+  * Cons: Needs commands to edit or delete a single entry, and makes the expanded view longer.
+
+**Aspect: A separate command or a field of `add` and `edit`**
+
+* **Alternative 1 (current choice):** A separate `note` command.
+  * Pros: The note can contain text that looks like a prefix, because `no/` is the only prefix `note` recognises. An `edit` cannot replace a note by accident.
+  * Cons: Users learn one more command.
+* **Alternative 2:** A `no/` field in `add` and `edit`.
+  * Pros: Fewer commands.
+  * Cons: Any other prefix inside the note, such as the `a/` in "follow up on a/b test", would start a new field.
+
 ### Command history navigation
 
 The command history feature lets a user walk through commands they submitted earlier in the current session, using the `Up` and `Down` arrow keys. It is implemented as a single collaborator (`CommandHistory`) owned by `CommandBox`.
