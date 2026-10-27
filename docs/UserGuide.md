@@ -390,6 +390,8 @@ Advanced users may edit the JSON files. For a custom candidate data path, use th
 * Keep candidate emails unique, ignoring case.
 * Each candidate needs at least one valid role ID from `roles.json`, without duplicates. Use `no-role` for `No role`, rather than its display name.
 * Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
+* One invalid value in **any** candidate, such as a phone number with a space, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
+* Save the file as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
 
 **If data cannot be loaded:**
 
