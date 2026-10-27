@@ -31,8 +31,7 @@ public class Phone {
      * Returns true if a given string is a valid phone number.
      */
     public static boolean isValidPhone(String test) {
-        return test.matches(VALIDATION_REGEX) && test.chars().filter(character -> character >= '0'
-                && character <= '9').count() >= 3;
+        return test.matches(VALIDATION_REGEX) && test.chars().filter(Character::isDigit).count() >= 3;
     }
 
     @Override
