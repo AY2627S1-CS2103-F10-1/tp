@@ -83,8 +83,8 @@ public class JsonAdaptedPersonTest {
     @Test
     public void toModelType_blankNote_returnsCandidateWithoutNote() throws Exception {
         for (String text : List.of("", " \t ", "\u2003\r\n")) {
-            JsonAdaptedPerson candidate =
-                    new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS, text);
+            JsonAdaptedPerson candidate = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    VALID_ADDRESS, VALID_TAGS, text);
             assertEquals(BENSON, candidate.toModelType());
         }
     }
