@@ -52,11 +52,35 @@ public class CandidateCsvParserTest {
     public void parse_invalidEncodingOrDialect_rejects() {
         assertThrows(ParseException.class, () -> parse(new byte[] {(byte) 0xc3, 0x28}));
         for (String input : List.of(" ", "\ufeff", "\ufeff\ufeff" + HEADER, " \ufeff" + HEADER,
-                "\ufeff" + HEADER.replace("\r\n", "\n"), HEADER.replace("\r\n", "\n"),
-                HEADER.stripTrailing(), HEADER.replace("\"name\"", "name"), HEADER + "\r\n",
                 HEADER.replace("name", "Name"), HEADER + "trailing", HEADER + "\"unterminated")) {
             assertThrows(ParseException.class, () -> parse(input.getBytes(StandardCharsets.UTF_8)));
         }
+    }
+
+    @Test
+    public void parse_commonCsvFormats_acceptsEquivalentCandidates() throws Exception {
+        String header = "name,phone,email,address,status,tags,note";
+        String row = "Candidate,12345,candidate@example.com,Address,Applied,[],Follow up";
+        Person expected = parseRow("[]", "Applied", "Follow up");
+        for (String separator : List.of("\n", "\r\n")) {
+            for (String ending : List.of("", separator, separator.repeat(3))) {
+                String input = header + separator + row + ending;
+                assertEquals(List.of(expected), parse(input.getBytes(StandardCharsets.UTF_8)));
+                assertEquals(List.of(expected), parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8)));
+            }
+        }
+        for (String input : List.of(HEADER.stripTrailing(), HEADER + "\n", HEADER.replace("\r\n", "\n"))) {
+            assertEquals(List.of(), parse(input.getBytes(StandardCharsets.UTF_8)));
+        }
+    }
+
+    @Test
+    public void parse_unquotedInvalidNote_keepsFieldValidation() {
+        String input = "name,phone,email,address,status,tags,note\n"
+                + "Candidate,12345,candidate@example.com,Address,Applied,[],Unicode \u4e2d";
+        assertThrows(ParseException.class, "CSV record 2, field note: "
+                + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", 0x4e2d), () ->
+                parse(input.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test

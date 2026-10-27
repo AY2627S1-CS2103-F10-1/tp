@@ -1,5 +1,7 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.commons.core.CandidateCsvFormat.HEADERS;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -21,7 +23,6 @@ import seedu.address.model.tag.Tag;
 
 /** Converts the strict exported CSV format into validated candidates without touching live data. */
 public final class CandidateCsvParser {
-    private static final List<String> HEADERS = List.of("name", "phone", "email", "address", "status", "tags", "note");
     private static final int MAX_TAGS = 100;
     private static final int MAX_TAG_LENGTH = 256;
 
@@ -49,7 +50,7 @@ public final class CandidateCsvParser {
             return List.of();
         }
         if (!records.getFirst().equals(HEADERS)) {
-            throw new ParseException("CSV header must be name,phone,email,address,status,tags,note in that order.");
+            throw new ParseException("CSV header must be " + String.join(",", HEADERS) + " in that order.");
         }
         List<Person> persons = new ArrayList<>();
         for (int index = 1; index < records.size(); index++) {
