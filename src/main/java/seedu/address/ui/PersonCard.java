@@ -79,14 +79,22 @@ public class PersonCard extends UiPart<Region> {
         configureBadgePane(roles);
         person.getRoles().stream()
                 .sorted(Comparator.comparing(role -> Role.toLookupKey(role.getName())))
-                .forEach(role -> addBadge(roles, role.getName(), true));
+                .forEach(this::addRoleBadge);
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
                 .forEach(tag -> addBadge(tags, tag.tagName, isExpanded));
     }
 
-    /** Adds a badge using the same styling for roles and tags. */
-    private void addBadge(FlowPane pane, String text, boolean shouldWrapText) {
+    /** Adds a role badge, highlighting the built-in fallback separately. */
+    private void addRoleBadge(Role role) {
+        Label label = addBadge(roles, role.getName(), true);
+        if (role.equals(Role.NO_ROLE)) {
+            label.getStyleClass().add("no-role");
+        }
+    }
+
+    /** Adds a badge using the shared layout and returns it for further styling. */
+    private Label addBadge(FlowPane pane, String text, boolean shouldWrapText) {
         Label label = new Label(text);
         if (shouldWrapText) {
             label.setWrapText(true);
@@ -98,6 +106,7 @@ public class PersonCard extends UiPart<Region> {
                     label.fontProperty(), label.insetsProperty()));
         }
         pane.getChildren().add(label);
+        return label;
     }
 
     /** Remeasures wrapped badges when their available width changes. */

@@ -2,6 +2,7 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CompletableFuture;
@@ -21,6 +22,7 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
 import seedu.address.model.role.Role;
@@ -137,7 +139,7 @@ public class PersonCardTest {
     }
 
     @Test
-    public void constructor_multipleRoles_displaysSortedBadgesLikeTags() throws Exception {
+    public void constructor_multipleRoles_displaysSortedDistinctBadges() throws Exception {
         runOnFxThread(() -> {
             Role developer = new Role("00000000-0000-0000-0000-000000000001", "Developer");
             Role designer = new Role("00000000-0000-0000-0000-000000000002", "Designer");
@@ -151,7 +153,8 @@ public class PersonCardTest {
             assertEquals("Designer", firstRole.getText());
             assertEquals("Developer", ((Label) roles.getChildren().getLast()).getText());
             Label tag = (Label) ((FlowPane) card.lookup("#tags")).getChildren().getFirst();
-            assertEquals(tag.getBackground(), firstRole.getBackground());
+            assertNotEquals(tag.getBackground(), firstRole.getBackground());
+            assertEquals(tag.getPadding(), firstRole.getPadding());
         });
     }
 
@@ -162,7 +165,9 @@ public class PersonCardTest {
             layoutCard(card);
             FlowPane roles = (FlowPane) card.lookup("#roles");
             assertEquals(1, roles.getChildren().size());
-            assertEquals("No role", ((Label) roles.getChildren().getFirst()).getText());
+            Label badge = (Label) roles.getChildren().getFirst();
+            assertEquals("No role", badge.getText());
+            assertEquals(Color.web("#b23b48"), badge.getBackground().getFills().getFirst().getFill());
         });
     }
 

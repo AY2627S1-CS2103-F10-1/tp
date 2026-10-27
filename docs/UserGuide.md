@@ -273,7 +273,7 @@ The role catalogue is the shared collection of roles available in HRvest, includ
 
 * Each candidate has one or more roles. `add` requires explicit roles; create named roles before assigning them, or use `r/No role`.
 * `No role` cannot be renamed or deleted. Assigning any named role removes `No role`, even if both are supplied. It remains the fallback when deleting a candidate's last named role.
-* Assigned roles appear as badges like tags on each candidate card. Long role names wrap.
+* Named roles appear as purple badges, `No role` as a red badge, and tags as blue badges. Long role names wrap.
 * Unused roles remain available, including after `clear` and restarts.
 * Role command words and prefixes are case-insensitive. Put whitespace before each prefix and supply each required prefix exactly once.
 * Changes save automatically. Invalid commands report an error without changing candidates or roles.

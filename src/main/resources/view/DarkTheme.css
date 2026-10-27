@@ -357,6 +357,14 @@
     -fx-font-size: 11;
 }
 
+#roles .label {
+    -fx-background-color: #7356a6;
+}
+
+#roles .label.no-role {
+    -fx-background-color: #b23b48;
+}
+
 .candidate-summary-header {
     -fx-padding: 12 10 12 10;
 }
