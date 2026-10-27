@@ -19,7 +19,6 @@ import org.junit.jupiter.api.io.TempDir;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.NoteCommandParser;
-import seedu.address.logic.parser.ParserUtil;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -145,7 +144,7 @@ public class NoteIntegrationTest {
         String[] commands = {"note 1", "note abc no/hi",
             "note 1 no/" + "x".repeat(501), "note 1 no/first no/second"};
         String[] messages = {NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE,
-            ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE,
+            String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE),
             Note.MESSAGE_TOO_LONG,
             Messages.MESSAGE_DUPLICATE_FIELDS + "no/"};
         for (int i = 0; i < commands.length; i++) {
