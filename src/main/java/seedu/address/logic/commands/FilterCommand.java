@@ -71,7 +71,7 @@ public class FilterCommand extends Command {
         requireNonNull(statuses);
         requireNonNull(roleNames);
         checkArgument(!statuses.isEmpty() || !roleNames.isEmpty(),
-                "At least one filter criterion is required.");
+                CandidateMatchesFilterPredicate.MESSAGE_CRITERIA_REQUIRED);
         this.statuses = statuses.isEmpty() ? Set.of()
                 : Collections.unmodifiableSet(EnumSet.copyOf(statuses));
         this.roleNames = Set.copyOf(roleNames);

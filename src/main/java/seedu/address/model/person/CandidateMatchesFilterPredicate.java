@@ -12,13 +12,15 @@ import seedu.address.model.role.Role;
 
 /** Matches any status and any role within each supplied group, requiring both groups when supplied. */
 public class CandidateMatchesFilterPredicate implements Predicate<Person> {
+    public static final String MESSAGE_CRITERIA_REQUIRED = "At least one filter criterion is required.";
+
     private final Set<Status> statuses;
     private final Set<String> roleIds;
 
     /** Creates a filter with at least one criterion, retaining role identities across renames. */
     public CandidateMatchesFilterPredicate(Collection<Status> statuses, Collection<Role> roles) {
         requireAllNonNull(statuses, roles);
-        checkArgument(!statuses.isEmpty() || !roles.isEmpty(), "At least one filter criterion is required.");
+        checkArgument(!statuses.isEmpty() || !roles.isEmpty(), MESSAGE_CRITERIA_REQUIRED);
         this.statuses = Set.copyOf(statuses);
         this.roleIds = roles.stream().map(Role::getId).collect(Collectors.toUnmodifiableSet());
     }
