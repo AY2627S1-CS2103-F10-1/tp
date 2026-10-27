@@ -19,7 +19,7 @@ Class Email
 Class Name
 Class Phone
 Class Note
-Class Status
+Enum Status
 Class Tag
 Class RoleCatalog
 Class Role
@@ -54,7 +54,7 @@ Person *--> Phone
 Person *--> Email
 Person *--> Address
 Person *--> "0..1" Note
-Person *--> Status
+Person --> Status
 Person *--> "*" Tag
 
 Person -[hidden]up--> I

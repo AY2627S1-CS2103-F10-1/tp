@@ -142,6 +142,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 * `edit` does not change notes. Like `add`, it rejects `no/` anywhere, in any letter case, with `The edit command does not support no/. Use note INDEX no/NOTE_TEXT to add, replace or clear a note.` Use the `note` command instead.
 
 Examples:
+
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
 *  `edit 3 s/Interviewing` Updates the status of the 3rd candidate to `Interviewing`.
@@ -241,6 +242,7 @@ Format: `delete INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 
 Examples:
+
 * `list` followed by `delete 2` deletes the 2nd candidate in HRvest.
 * `find Betsy` followed by `delete 1` deletes the 1st candidate in the results of the `find` command.
 
