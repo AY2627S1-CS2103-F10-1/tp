@@ -193,6 +193,45 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_rejectedIndexes_preservesDataAndAllViewModes() throws Exception {
+        Person first = new PersonBuilder().withNote("Keep this note").build();
+        model.addPerson(first);
+        model.addPerson(new PersonBuilder().withEmail("other@example.com").build());
+        logic.execute("list");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        Path savedPath = temporaryFolder.resolve("addressBook.json");
+        String saved = Files.readString(savedPath);
+
+        for (int view = 0; view < 3; view++) {
+            model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
+            if (view == 1) {
+                model.updateFilteredPersonList(first::equals);
+            } else if (view == 2) {
+                model.expandPerson(first);
+            }
+            List<Person> displayed = List.copyOf(model.getFilteredPersonList());
+            boolean expanded = model.isExpandedViewProperty().get();
+            for (String command : List.of("status 0 s/Offered", "status -1 s/Offered",
+                    "status 99999999999 s/Offered", "note 0 no/replacement", "note 99999999999 no/replacement",
+                    "expand 0", "expand 99999999999")) {
+                assertThrows(ParseException.class, () -> logic.execute(command));
+                assertEquals(before, model.getAddressBook());
+                assertEquals(displayed, model.getFilteredPersonList());
+                assertEquals(expanded, model.isExpandedViewProperty().get());
+                assertEquals(saved, Files.readString(savedPath));
+            }
+            for (String command : List.of("status 2147483647 s/Offered", "note 2147483647 no/replacement",
+                    "expand 2147483647")) {
+                assertThrows(CommandException.class, () -> logic.execute(command));
+                assertEquals(before, model.getAddressBook());
+                assertEquals(displayed, model.getFilteredPersonList());
+                assertEquals(expanded, model.isExpandedViewProperty().get());
+                assertEquals(saved, Files.readString(savedPath));
+            }
+        }
+    }
+
+    @Test
     public void execute_invalidStatus_doesNotChangeOrSaveData() throws Exception {
         model.addPerson(new PersonBuilder().build());
 

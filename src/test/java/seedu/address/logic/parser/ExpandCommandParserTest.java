@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -19,6 +20,7 @@ public class ExpandCommandParserTest {
     public void parse_validIndex_acceptsSurroundingWhitespace() {
         assertParseSuccess(parser, " \t2 ", new ExpandCommand(Index.fromOneBased(2)));
         assertParseSuccess(parser, "2147483647", new ExpandCommand(Index.fromOneBased(Integer.MAX_VALUE)));
+        assertParseSuccess(parser, "01", new ExpandCommand(Index.fromOneBased(1)));
     }
 
     @Test
@@ -30,9 +32,22 @@ public class ExpandCommandParserTest {
 
     @Test
     public void parse_invalidIndex_reportsPositiveIntegerRequirement() {
-        for (String input : new String[] {"0", "-1", "1.5", "abc", "1 2", "1 n/Alice",
-            "2147483648", "999999999999999999999"}) {
+        for (String input : new String[] {"1.5", "abc", "+1", "1 2", "1 n/Alice"}) {
             assertParseFailure(parser, input, ExpandCommandParser.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_nonPositiveIndex_reportsPositiveIntegerRequirement() {
+        for (String input : new String[] {"0", "000", "-0", "-1", "-99999999999"}) {
+            assertParseFailure(parser, input, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_positiveOverflow_reportsInvalidDisplayedIndex() {
+        for (String input : new String[] {"2147483648", "99999999999", "9".repeat(100)}) {
+            assertParseFailure(parser, input, MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
     }
 

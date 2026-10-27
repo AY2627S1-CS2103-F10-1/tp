@@ -26,6 +26,7 @@ public class NoteCommandParserTest {
         String note = "Strong on system design,  weak on SQL. [Round 2] n/A p/B e/C a/D t/E /expand";
         assertParseSuccess(parser, " \t 1   no/  " + note + "   ",
                 new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
+        assertParseSuccess(parser, " 01 no/x", new NoteCommand(INDEX_FIRST_PERSON, new Note("x")));
         assertParseSuccess(parser, " 2147483647 no/x",
                 new NoteCommand(Index.fromOneBased(Integer.MAX_VALUE), new Note("x")));
     }
@@ -38,7 +39,7 @@ public class NoteCommandParserTest {
     @Test
     public void parse_missingPrefix_throwsParseException() {
         String message = NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE;
-        for (String args : new String[] {"", " 1", " 1 n/hi", " 1 hi", " 1no/hi"}) {
+        for (String args : new String[] {"", " 1", " 1 n/hi", " 1 hi", " 1no/hi", " 0", " 99999999999"}) {
             assertParseFailure(parser, args, message);
         }
     }
@@ -52,9 +53,26 @@ public class NoteCommandParserTest {
     @Test
     public void parse_invalidIndex_throwsParseException() {
         String message = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE;
-        for (String index : new String[] {"abc", "0", "-1", "+1", "1.5", "1 2", "2147483648"}) {
+        for (String index : new String[] {"abc", "0", "000", "-0", "-1", "-99999999999", "+1", "1.5", "1 2"}) {
             assertParseFailure(parser, " " + index + " no/hi", message);
         }
+    }
+
+    @Test
+    public void parse_positiveOverflow_reportsInvalidDisplayedIndex() {
+        String message = Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX + "\n" + NoteCommand.MESSAGE_USAGE;
+        for (String index : new String[] {"2147483648", "99999999999", "9".repeat(100)}) {
+            assertParseFailure(parser, " " + index + " no/hi", message);
+        }
+    }
+
+    @Test
+    public void parse_mixedErrors_preservesCharacterAndPrefixPrecedence() {
+        assertParseFailure(parser, " 0 no/\t", String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "no/", 9));
+        assertParseFailure(parser, " 0 no/first no/second",
+                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, " 99999999999 no/first no/second",
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX + "\n" + NoteCommand.MESSAGE_USAGE);
     }
 
     @Test

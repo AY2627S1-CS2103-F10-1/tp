@@ -27,7 +27,7 @@ public class NoteCommandParser implements Parser<NoteCommand> {
 
         Index index;
         try {
-            index = ParserUtil.parseIndex(arguments.getPreamble());
+            index = ParserUtil.parseDisplayedIndex(arguments.getPreamble(), ParserUtil.MESSAGE_INVALID_INDEX);
         } catch (ParseException e) {
             throw new ParseException(e.getMessage() + "\n" + NoteCommand.MESSAGE_USAGE, e);
         }
