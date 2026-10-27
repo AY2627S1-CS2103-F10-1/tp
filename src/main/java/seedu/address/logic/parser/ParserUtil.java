@@ -27,9 +27,10 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
-    // ArgumentTokenizer only recognises prefixes after a space, so a tab before no/ must be caught separately.
-    private static final Pattern NOTE_PREFIX_PATTERN =
-            Pattern.compile("(^|\\s)" + Pattern.quote(PREFIX_NOTE.getPrefix()), Pattern.CASE_INSENSITIVE);
+    // Matches no/ after the same whitespace that ArgumentTokenizer accepts before a prefix:
+    // characters up to a space, and Unicode spaces such as the no-break space.
+    private static final Pattern NOTE_PREFIX_PATTERN = Pattern.compile(
+            "(^|[\\x00-\\x20\\p{Z}])" + Pattern.quote(PREFIX_NOTE.getPrefix()), Pattern.CASE_INSENSITIVE);
 
     /**
      * Rejects {@code args} if it contains the note prefix, so that commands without a note field

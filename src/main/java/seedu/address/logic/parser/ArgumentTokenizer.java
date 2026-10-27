@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
  * Tokenizes arguments string of the form: {@code preamble <prefix>value <prefix>value ...}<br>
  *     e.g. {@code some preamble text t/ 11.00 t/12.00 k/ m/ July}  where prefixes are {@code t/ k/ m/}.<br>
  * 1. An argument's value can be an empty string e.g. the value of {@code k/} in the above example.<br>
- * 2. Leading and trailing whitespaces of an argument value will be discarded.<br>
+ * 2. Leading and trailing whitespaces of an argument value will be discarded, including no-break spaces.<br>
  * 3. An argument may be repeated and all its values will be accumulated e.g. the value of {@code t/}
  *    in the above example.<br>
  * 4. Prefixes are recognised regardless of letter case e.g. {@code T/} is treated as {@code t/}.<br>
@@ -60,26 +60,50 @@ public class ArgumentTokenizer {
 
     /**
      * Returns the index of the first occurrence of {@code prefix} in
-     * {@code argsString} starting from index {@code fromIndex}. An occurrence
-     * is valid if there is a whitespace before {@code prefix}. Letter case is
-     * ignored, so "P/" is an occurrence of "p/". Returns -1 if no such
-     * occurrence can be found.
+     * {@code argsString} after index {@code fromIndex}. An occurrence
+     * is valid if there is a whitespace before {@code prefix}, as defined by
+     * {@link #isWhitespace(char)}. Letter case is ignored, so "P/" is an
+     * occurrence of "p/". Returns -1 if no such occurrence can be found.
      *
      * E.g if {@code argsString} = "e/hip/900", {@code prefix} = "p/" and
      * {@code fromIndex} = 0, this method returns -1 as there are no valid
      * occurrences of "p/" with whitespace before it. However, if
-     * {@code argsString} = "e/hi p/900", {@code prefix} = "p/" and
+     * {@code argsString} = "e/hi p/900" or "e/hi\tp/900", {@code prefix} = "p/" and
      * {@code fromIndex} = 0, this method returns 5.
      */
     private static int findPrefixPosition(String argsString, String prefix, int fromIndex) {
-        String whitespaceAndPrefix = " " + prefix;
-        int lastStart = argsString.length() - whitespaceAndPrefix.length();
-        for (int start = fromIndex; start <= lastStart; start++) {
-            if (argsString.regionMatches(true, start, whitespaceAndPrefix, 0, whitespaceAndPrefix.length())) {
-                return start + 1; // +1 as offset for whitespace
+        int lastStart = argsString.length() - prefix.length();
+        for (int start = fromIndex + 1; start <= lastStart; start++) {
+            if (isWhitespace(argsString.charAt(start - 1))
+                    && argsString.regionMatches(true, start, prefix, 0, prefix.length())) {
+                return start;
             }
         }
         return -1;
+    }
+
+    /**
+     * Returns true if {@code c} is whitespace that can come before a prefix: a character that
+     * {@link String#trim()} removes, such as a space or tab, or a Unicode space such as the
+     * no-break space in text pasted from a web page or document.
+     */
+    private static boolean isWhitespace(char c) {
+        return c <= ' ' || Character.isSpaceChar(c);
+    }
+
+    /**
+     * Returns {@code value} without leading and trailing whitespace, as defined by {@link #isWhitespace(char)}.
+     */
+    private static String trimWhitespace(String value) {
+        int start = 0;
+        int end = value.length();
+        while (start < end && isWhitespace(value.charAt(start))) {
+            start++;
+        }
+        while (end > start && isWhitespace(value.charAt(end - 1))) {
+            end--;
+        }
+        return value.substring(start, end);
     }
 
     /**
@@ -128,7 +152,7 @@ public class ArgumentTokenizer {
         int valueStartPos = currentPrefixPosition.getStartPosition() + prefix.getPrefix().length();
         String value = argsString.substring(valueStartPos, nextPrefixPosition.getStartPosition());
 
-        return value.trim();
+        return trimWhitespace(value);
     }
 
     /**
