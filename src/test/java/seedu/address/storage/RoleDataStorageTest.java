@@ -1,5 +1,6 @@
 package seedu.address.storage;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -17,10 +18,13 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.util.JsonUtil;
+import seedu.address.logic.LogicManager;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Person;
 import seedu.address.model.role.Role;
 import seedu.address.model.role.RoleCatalog;
 import seedu.address.testutil.PersonBuilder;
@@ -195,6 +199,46 @@ class RoleDataStorageTest {
         assertFalse(Files.exists(candidatePath()));
         assertFalse(Files.exists(directory.resolve("roles.json")));
         assertFalse(Files.exists(directory.resolve("roles-transaction.json")));
+    }
+
+    @Test
+    void execute_roleChangeCatalogWriteFails_restoresFilesAssignmentsAndExpandedView() throws Exception {
+        ModelManager model = getAssignedModel("Engineer");
+        model.addPerson(new PersonBuilder().withEmail("other@example.com").build());
+        model.expandPerson(model.getFilteredPersonList().getFirst());
+        storage().saveAddressBook(model.getAddressBook());
+        AddressBook before = new AddressBook(model.getAddressBook());
+        List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
+        byte[] candidatesBefore = Files.readAllBytes(candidatePath());
+        byte[] rolesBefore = Files.readAllBytes(directory.resolve("roles.json"));
+        RoleDataStorage failing = new RoleDataStorage(new JsonAddressBookStorage(candidatePath())) {
+            @Override
+            void writeCatalog(RoleCatalog catalog) throws IOException {
+                Files.writeString(directory.resolve("roles.json"), "partial catalog write");
+                throw new IOException("Injected catalog failure");
+            }
+        };
+        StorageManager failingStorage = new StorageManager(new JsonAddressBookStorage(candidatePath()),
+                new JsonUserPrefsStorage(directory.resolve("preferences.json"))) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook data) throws IOException {
+                failing.save(data);
+            }
+        };
+        LogicManager logic = new LogicManager(model, failingStorage);
+        String expectedMessage = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Injected catalog failure");
+
+        for (String command : List.of("edit_role r/Engineer n/Senior Engineer", "delete_role r/Engineer")) {
+            assertThrows(CommandException.class, expectedMessage, () -> logic.execute(command));
+
+            assertEquals(before, model.getAddressBook());
+            assertEquals(displayedBefore, model.getFilteredPersonList());
+            assertTrue(model.isExpandedViewProperty().get());
+            assertArrayEquals(candidatesBefore, Files.readAllBytes(candidatePath()));
+            assertArrayEquals(rolesBefore, Files.readAllBytes(directory.resolve("roles.json")));
+            assertFalse(Files.exists(directory.resolve("roles-transaction.json")));
+            assertEquals(before, storage().readAddressBook().orElseThrow());
+        }
     }
 
     @Test
