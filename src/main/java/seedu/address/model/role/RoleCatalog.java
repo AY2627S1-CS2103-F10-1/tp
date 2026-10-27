@@ -12,6 +12,9 @@ import java.util.Set;
 
 /** Validates and exposes an immutable role catalog, including unused roles. */
 public final class RoleCatalog {
+    public static final String MESSAGE_DUPLICATE_NAME = "A role with this name already exists.";
+    public static final String MESSAGE_UNKNOWN_ROLE = "Role does not exist: %1$s";
+
     private final List<Role> roles;
 
     /** Creates the initial catalog containing only the built-in role. */
@@ -27,7 +30,7 @@ public final class RoleCatalog {
         for (Role role : roles) {
             requireNonNull(role);
             checkArgument(ids.add(role.getId()), "Duplicate role identity.");
-            checkArgument(names.add(Role.toLookupKey(role.getName())), "A role with this name already exists.");
+            checkArgument(names.add(Role.toLookupKey(role.getName())), MESSAGE_DUPLICATE_NAME);
         }
         checkArgument(roles.contains(Role.NO_ROLE), "The catalog must contain No role.");
         this.roles = roles.stream().sorted(Comparator.comparing(role -> Role.toLookupKey(role.getName()))).toList();
@@ -48,7 +51,8 @@ public final class RoleCatalog {
 
     /** Resolves an existing name, rejecting unknown assignments. */
     public Role requireRole(String name) {
-        return find(name).orElseThrow(() -> new IllegalArgumentException("Role does not exist: " + name.strip()));
+        return find(name).orElseThrow(() ->
+                new IllegalArgumentException(String.format(MESSAGE_UNKNOWN_ROLE, name.strip())));
     }
 
     /** Resolves a nonempty set of names through the same lookup used by management commands. */
