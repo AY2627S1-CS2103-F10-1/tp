@@ -165,8 +165,6 @@ The catalogue stores roles independently of candidates so that unused roles rema
 
 ### Storage component
 
-Before loading preferences, recovering files or constructing storage, `MainApp` acquires a `DataDirectoryLock` on `data/.hrvest.lock`. The OS lock is held through preference saving at shutdown and released on failed initialization. This prevents a second process from loading stale candidates and later overwriting newer data, even through a read command that triggers saving. The lock file stays in place after release: deleting it could let two processes lock different files with the same path. Separate data folders remain independent, and process termination releases the OS lock automatically.
-
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="700" />
@@ -178,9 +176,11 @@ The `Storage` component,
 
 `JsonAddressBookStorage` never overwrites the data file in place, so a failed or interrupted save leaves the previous file intact. It writes the JSON to a uniquely named `HRvest-<random>.tmp` file in the same folder, gives it the existing file's access permissions, and then atomically replaces the data file with it. Filesystems that cannot replace a file atomically reject the save, and permission errors abort it; `LogicManager` reports either error. A symbolic link to the data file is kept, and its target is replaced. The temporary file is deleted if the save fails, but a crash or power loss can leave it behind; later saves ignore such files, and they can be deleted once HRvest is closed.
 
+Before loading preferences, recovering files or constructing storage, `MainApp` acquires a `DataDirectoryLock` on `data/.hrvest.lock`. The OS lock is held through preference saving at shutdown and released on failed initialization. This prevents a second process from loading stale candidates and later overwriting newer data, even through a read command that triggers saving. The lock file stays in place after release: deleting it could let two processes lock different files with the same path. Separate data folders remain independent, and process termination releases the OS lock automatically.
+
 During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalogue. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
 
-Both backup and replacement saving must finish before commands become available. Otherwise startup aborts with an actionable terminal error, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
+Both backup and replacement saving must finish before commands become available. Otherwise startup shows an actionable error dialog and exits after dismissal, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
 
 The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data, and null entries rejected during deserialization or validation.
 
@@ -844,6 +844,14 @@ testers are expected to do more *exploratory* testing.
 
    1. Double-click the JAR file.<br>
       Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+
+1. Launching a second instance
+
+   1. Keep HRvest running and double-click the same JAR again.<br>
+      Expected: An error dialog asks you to close the first instance. Dismissing it exits the second instance; the first remains usable and its data is unchanged.
+
+   1. Close the first instance and launch the JAR again.<br>
+      Expected: HRvest opens normally with the saved data.
 
 1. Saving window preferences
 

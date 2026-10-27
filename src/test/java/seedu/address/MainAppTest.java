@@ -4,12 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static seedu.address.testutil.Assert.assertThrows;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -44,9 +40,13 @@ public class MainAppTest {
             first.logic.execute("add n/Protected Candidate p/123 e/protected@example.com a/Block 1");
             String beforeCandidates = Files.readString(candidates);
             String beforePreferences = Files.readString(preferences);
-            MainApp second = new MainApp(preferences, candidates);
+            StartupErrorApp second = new StartupErrorApp(preferences, candidates);
 
-            assertThrows(IOException.class, second::init);
+            second.init();
+            second.start(null);
+            assertTrue(second.error.contains("Another HRvest instance is already using"));
+            assertFalse(second.error.contains("Check folder permissions"));
+            second.stop();
 
             assertEquals(beforeCandidates, Files.readString(candidates));
             assertEquals(beforePreferences, Files.readString(preferences));
@@ -72,16 +72,18 @@ public class MainAppTest {
     @Test
     public void init_failedInitialization_releasesDirectoryLock() throws Exception {
         Path candidates = temporaryFolder.resolve("data/HRvest.json");
-        MainApp failing = new MainApp(temporaryFolder.resolve("preferences.json"), candidates) {
+        StartupErrorApp failing = new StartupErrorApp(temporaryFolder.resolve("preferences.json"), candidates) {
             @Override
             protected UserPrefs initPrefs(JsonUserPrefsStorage storage) {
                 throw new IllegalStateException("Initialization failed");
             }
         };
-        assertThrows(IllegalStateException.class, "Initialization failed", failing::init);
+        failing.init();
+        failing.start(null);
+        assertEquals("HRvest could not start: Initialization failed", failing.error);
 
         try (DataDirectoryLock lock = DataDirectoryLock.acquire(candidates.getParent())) {
-            assertTrue(Files.exists(candidates.getParent().resolve(".hrvest.lock")));
+            assertTrue(Files.exists(candidates.getParent().resolve(DataDirectoryLock.LOCK_FILE_NAME)));
         }
         failing.stop();
     }
@@ -105,20 +107,22 @@ public class MainAppTest {
     @Test
     public void init_modelLoadingFails_releasesLockAndAllowsSafeStop() throws Exception {
         Path candidates = temporaryFolder.resolve("data/HRvest.json");
-        MainApp failing = new MainApp(temporaryFolder.resolve("preferences.json"), candidates) {
+        StartupErrorApp failing = new StartupErrorApp(temporaryFolder.resolve("preferences.json"), candidates) {
             @Override
             Model initModelManager(Storage storage, ReadOnlyUserPrefs preferences) throws IOException {
                 throw new IOException("Data loading failed");
             }
         };
 
-        assertThrows(IOException.class, "Data loading failed", failing::init);
+        failing.init();
+        failing.start(null);
+        assertEquals("HRvest could not start: Data loading failed", failing.error);
         failing.stop();
 
         assertNull(failing.model);
         assertNull(failing.logic);
         try (DataDirectoryLock lock = DataDirectoryLock.acquire(candidates.getParent())) {
-            assertTrue(Files.isRegularFile(candidates.getParent().resolve(".hrvest.lock")));
+            assertTrue(Files.isRegularFile(candidates.getParent().resolve(DataDirectoryLock.LOCK_FILE_NAME)));
         }
     }
 
@@ -161,7 +165,7 @@ public class MainAppTest {
     }
 
     @Test
-    public void initModelManager_failedRecovery_printsActionableErrorBeforeUiOrLogicExists() throws Exception {
+    public void initModelManager_failedRecovery_throwsActionableErrorBeforeUiOrLogicExists() throws Exception {
         Path dataFile = temporaryFolder.resolve("candidates.json");
         Files.writeString(dataFile, "invalid original");
         JsonAddressBookStorage failing = new JsonAddressBookStorage(dataFile) {
@@ -173,17 +177,11 @@ public class MainAppTest {
         StorageManager storage = new StorageManager(failing,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json")));
         MainApp app = new MainApp();
-        ByteArrayOutputStream capturedError = new ByteArrayOutputStream();
-        PrintStream originalError = System.err;
+        IOException failure = org.junit.jupiter.api.Assertions.assertThrows(IOException.class, () ->
+                 app.initModelManager(storage, new UserPrefs()));
 
-        try (PrintStream redirectedError = new PrintStream(capturedError, true, StandardCharsets.UTF_8)) {
-            System.setErr(redirectedError);
-            assertThrows(IOException.class, "Save failed", () -> app.initModelManager(storage, new UserPrefs()));
-        } finally {
-            System.setErr(originalError);
-        }
-
-        String message = capturedError.toString(StandardCharsets.UTF_8);
+        String message = failure.getMessage();
+        assertEquals("Save failed", failure.getCause().getMessage());
         assertTrue(message.contains(dataFile.toString()));
         assertTrue(message.contains("Startup stopped"));
         assertTrue(message.contains("Check file and folder permissions"));
@@ -192,6 +190,19 @@ public class MainAppTest {
         assertEquals("invalid original", Files.readString(dataFile));
         assertNull(app.logic);
         assertNull(app.ui);
+    }
+
+    private static class StartupErrorApp extends MainApp {
+        private String error;
+
+        StartupErrorApp(Path preferences, Path candidates) {
+            super(preferences, candidates);
+        }
+
+        @Override
+        void showStartupError(String message) {
+            error = message;
+        }
     }
 
     /**

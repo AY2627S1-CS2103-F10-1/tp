@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -47,6 +49,7 @@ public class MainApp extends Application {
     private final Path candidatesPath;
     private Optional<Path> recoveryBackup = Optional.empty();
     private DataDirectoryLock dataDirectoryLock;
+    private String startupError;
 
     /** Creates the application using its standard data and preference locations. */
     public MainApp() {
@@ -73,13 +76,17 @@ public class MainApp extends Application {
             logic = new LogicManager(model, storage);
             ui = new UiManager(logic, storage.getAddressBookFilePath());
         } catch (IOException | RuntimeException e) {
-            System.err.println("HRvest could not start: " + e.getMessage()
-                    + " Check folder permissions if no other instance is running.");
-            // Resource cleanup retains the startup error if closing also fails.
-            try (DataDirectoryLock lock = dataDirectoryLock) {
-                throw e;
-            } finally {
-                dataDirectoryLock = null;
+            startupError = "HRvest could not start: " + e.getMessage();
+            logger.severe(startupError);
+            System.err.println(startupError);
+            if (dataDirectoryLock != null) {
+                try {
+                    dataDirectoryLock.close();
+                } catch (IOException closeError) {
+                    logger.warning("Failed to release startup lock: " + StringUtil.getDetails(closeError));
+                } finally {
+                    dataDirectoryLock = null;
+                }
             }
         }
     }
@@ -104,9 +111,7 @@ public class MainApp extends Application {
                     + ". Startup stopped; no commands can overwrite the original file."
                     + " Check file and folder permissions, repair the data file, and restart."
                     + initializer.getRecoveryBackup().map(path -> " Backup retained at: " + path).orElse("");
-            logger.severe(message);
-            System.err.println(message);
-            throw e;
+            throw new IOException(message, e);
         }
     }
 
@@ -145,8 +150,25 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         logger.info("Starting HRvest " + MainApp.VERSION);
+        if (startupError != null) {
+            showStartupError(startupError);
+            return;
+        }
         ui.start(primaryStage);
         recoveryBackup.ifPresent(ui::showRecoveryWarning);
+    }
+
+    /** Shows a startup failure on the JavaFX thread and exits after it is dismissed. */
+    void showStartupError(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("HRvest could not start");
+        alert.setHeaderText("HRvest could not start");
+        alert.setContentText(message);
+        try {
+            alert.showAndWait();
+        } finally {
+            Platform.exit();
+        }
     }
 
     @Override
