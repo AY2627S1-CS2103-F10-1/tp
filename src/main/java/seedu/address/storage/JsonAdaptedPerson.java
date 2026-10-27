@@ -3,6 +3,7 @@ package seedu.address.storage;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -18,6 +19,8 @@ import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -33,6 +36,7 @@ class JsonAdaptedPerson {
     private final String address;
     private final String status;
     private final String note;
+    private final List<String> roles;
     private final List<JsonAdaptedTag> tags = new ArrayList<>();
 
     /**
@@ -42,7 +46,8 @@ class JsonAdaptedPerson {
     public JsonAdaptedPerson(@JsonProperty("name") String name, @JsonProperty("phone") String phone,
             @JsonProperty("email") String email, @JsonProperty("address") String address,
             @JsonProperty("tags") List<JsonAdaptedTag> tags, @JsonProperty("status") String status,
-            @JsonProperty("note") String note) {
+            @JsonProperty("note") String note, @JsonProperty("roles") List<String> roles) {
+        this.roles = roles;
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -52,6 +57,12 @@ class JsonAdaptedPerson {
         if (tags != null) {
             this.tags.addAll(tags);
         }
+    }
+
+    /** Constructs a legacy record without role references. */
+    public JsonAdaptedPerson(String name, String phone, String email, String address,
+            List<JsonAdaptedTag> tags, String status, String note) {
+        this(name, phone, email, address, tags, status, note, null);
     }
 
     /**
@@ -74,6 +85,7 @@ class JsonAdaptedPerson {
      * Converts a given {@code Person} into this class for Jackson use.
      */
     public JsonAdaptedPerson(Person source) {
+        roles = source.getRoles().stream().map(Role::getId).sorted().toList();
         name = source.getName().fullName;
         phone = source.getPhone().value;
         email = source.getEmail().value;
@@ -91,6 +103,11 @@ class JsonAdaptedPerson {
      * @throws IllegalValueException if there were any data constraints violated in the adapted person.
      */
     public Person toModelType() throws IllegalValueException {
+        return toModelType(new RoleCatalog());
+    }
+
+    /** Resolves persisted IDs against the complete validated catalog. */
+    public Person toModelType(RoleCatalog catalog) throws IllegalValueException {
         final List<Tag> personTags = new ArrayList<>();
         for (JsonAdaptedTag tag : tags) {
             if (tag == null) {
@@ -139,7 +156,25 @@ class JsonAdaptedPerson {
         }
 
         final Set<Tag> modelTags = new HashSet<>(personTags);
-        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags, modelStatus, toModelNote());
+        return new Person(modelName, modelPhone, modelEmail, modelAddress, modelTags, modelStatus,
+                toModelNote(), toModelRoles(catalog));
+    }
+
+    private Set<Role> toModelRoles(RoleCatalog catalog) throws IllegalValueException {
+        if (roles == null) {
+            return Set.of(Role.NO_ROLE);
+        }
+        if (roles.isEmpty() || roles.stream().anyMatch(Objects::isNull)
+                || new HashSet<>(roles).size() != roles.size()) {
+            throw new IllegalValueException("Candidate roles must contain distinct, non-null role IDs.");
+        }
+        Set<Role> resolved = new HashSet<>();
+        for (String id : roles) {
+            Role role = catalog.getRoles().stream().filter(entry -> entry.getId().equals(id))
+                    .findFirst().orElseThrow(() -> new IllegalValueException("Unknown role reference: " + id));
+            resolved.add(role);
+        }
+        return resolved;
     }
 
     /**
@@ -150,7 +185,7 @@ class JsonAdaptedPerson {
             return Optional.empty();
         }
         try {
-            return Optional.of(new Note(note));
+            return Optional.of(new Note(note.strip()));
         } catch (IllegalArgumentException e) {
             throw new IllegalValueException(e.getMessage());
         }

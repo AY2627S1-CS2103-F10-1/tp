@@ -8,7 +8,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import seedu.address.commons.util.AppUtil;
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.model.role.Role;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -21,6 +23,7 @@ public class Person {
     private final Email email;
 
     // Data fields
+    private final Set<Role> roles;
     private final Name name;
     private final Phone phone;
     private final Address address;
@@ -51,12 +54,22 @@ public class Person {
     }
 
     /**
-     * Constructs a person with a recruitment status and an optional note.
+     * Constructs a legacy person with a recruitment status, optional note, and No role.
+     * This compatibility overload does not enforce the future explicit-role add-command rule.
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
             Optional<Note> note) {
-        requireAllNonNull(name, phone, email, address, tags, status, note);
+        this(name, phone, email, address, tags, status, note, Set.of(Role.NO_ROLE));
+    }
+
+    /** Creates a person with explicit nonempty role assignments. */
+    public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
+            Optional<Note> note, Set<Role> roles) {
+        requireAllNonNull(name, phone, email, address, tags, status, note, roles);
+        AppUtil.checkArgument(!roles.isEmpty(),
+                "Every person must have at least one role.");
+        this.roles = Set.copyOf(roles);
         this.name = name;
         this.phone = phone;
         this.email = email;
@@ -64,6 +77,16 @@ public class Person {
         this.status = status;
         this.note = note;
         this.tags.addAll(tags);
+    }
+
+    /** Returns immutable role assignments. */
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    /** Copies this person with replacement role assignments, preserving all other fields. */
+    public Person withRoles(Set<Role> replacement) {
+        return new Person(name, phone, email, address, tags, status, note, replacement);
     }
 
     public Name getName() {
@@ -143,13 +166,14 @@ public class Person {
                 && address.equals(otherPerson.address)
                 && status.equals(otherPerson.status)
                 && note.equals(otherPerson.note)
-                && tags.equals(otherPerson.tags);
+                && tags.equals(otherPerson.tags)
+                && roles.equals(otherPerson.roles);
     }
 
     @Override
     public int hashCode() {
         // use this method for custom fields hashing instead of implementing your own
-        return Objects.hash(name, phone, email, address, tags, status, note);
+        return Objects.hash(name, phone, email, address, tags, status, note, roles);
     }
 
     @Override

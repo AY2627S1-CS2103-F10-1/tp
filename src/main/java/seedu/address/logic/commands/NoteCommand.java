@@ -60,7 +60,7 @@ public class NoteCommand extends Command {
 
         Person candidate = displayedCandidates.get(index.getZeroBased());
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
-                candidate.getAddress(), candidate.getTags(), candidate.getStatus(), note);
+                candidate.getAddress(), candidate.getTags(), candidate.getStatus(), note, candidate.getRoles());
         model.setPerson(candidate, updatedCandidate);
         String message = note.map(value -> String.format(MESSAGE_SUCCESS, candidate.getName(), value))
                 .orElseGet(() -> String.format(MESSAGE_CLEAR_SUCCESS, candidate.getName()));

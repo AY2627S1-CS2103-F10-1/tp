@@ -27,12 +27,7 @@ public class StatusCommandParser implements Parser<StatusCommand> {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
         }
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_STATUS);
-        Status status;
-        try {
-            status = Status.fromString(arguments.getValue(PREFIX_STATUS).get());
-        } catch (IllegalArgumentException e) {
-            throw new ParseException(Status.MESSAGE_CONSTRAINTS, e);
-        }
+        Status status = ParserUtil.parseStatus(arguments.getValue(PREFIX_STATUS).get());
         return new StatusCommand(index, status);
     }
 }

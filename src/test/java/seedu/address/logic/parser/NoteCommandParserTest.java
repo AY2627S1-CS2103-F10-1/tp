@@ -25,7 +25,7 @@ public class NoteCommandParserTest {
     @Test
     public void parse_validArguments_preservesNoteContents() {
         String note = "Strong on system design,  weak on SQL. [Round 2] n/A p/B e/C a/D t/E /expand";
-        assertParseSuccess(parser, " \t 1   no/  " + note + " \t ",
+        assertParseSuccess(parser, " \t 1   no/  " + note + "   ",
                 new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
         assertParseSuccess(parser, " 2147483647 no/x",
                 new NoteCommand(Index.fromOneBased(Integer.MAX_VALUE), new Note("x")));
@@ -73,18 +73,26 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_blankNote_returnsClearCommand() {
-        for (String args : new String[] {" 1 no/", " 1 no/ \t ", " 1 no/\u2003"}) {
+        for (String args : new String[] {" 1 no/", " 1 no/   "}) {
             assertParseSuccess(parser, args, new NoteCommand(INDEX_FIRST_PERSON));
         }
     }
 
     @Test
     public void parse_noteLengthBoundaries_validatesTrimmedLength() {
-        for (String character : new String[] {"x", "\uD83D\uDE00"}) {
+        for (String character : new String[] {"x", "~"}) {
             String note = character.repeat(Note.MAX_LENGTH);
             assertParseSuccess(parser, " 1 no/ " + note + " ",
                     new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
             assertParseFailure(parser, " 1 no/" + note + character, Note.MESSAGE_TOO_LONG);
+        }
+    }
+
+    @Test
+    public void parse_invisibleOrUnicodeNote_throwsParseException() {
+        for (String text : new String[] {"\t", "\u2003", "\u00A0", "\u200B", "\uD83D\uDE00"}) {
+            String message = String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "no/", text.codePointAt(0));
+            assertParseFailure(parser, " 1 no/" + text, message);
         }
     }
 
