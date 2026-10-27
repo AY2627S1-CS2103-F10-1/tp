@@ -46,7 +46,8 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_missingIndex_throwsParseException() {
-        assertParseFailure(parser, " no/hi", String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, " no/hi",
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE));
     }
 
     @Test
@@ -67,7 +68,8 @@ public class NoteCommandParserTest {
     @Test
     public void parse_indexTooLargeForAnyList_throwsInvalidDisplayedIndex() {
         for (String index : new String[] {"2147483648", "99999999999"}) {
-            assertParseFailure(parser, " " + index + " no/hi", Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+            assertParseFailure(parser, " " + index + " no/hi",
+                    Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
     }
 
