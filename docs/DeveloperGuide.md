@@ -126,7 +126,7 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 
 * Tabs, line breaks, accented letters, emoji, curly quotes, non-breaking spaces (`U+00A0`), and zero-width spaces (`U+200B`) are rejected, even when copied text looks normal. Use ordinary spaces and straight quotes instead.
 * Unsupported characters are checked before surrounding spaces are trimmed or empty values are interpreted as clearing a field. They are not silently removed or replaced.
-* Errors identify the field prefix or search input and the first unsupported code point, for example: `a/ contains unsupported character U+00A0. Use printable ASCII only (U+0020-U+007E).` Remove or replace that character and retry. Rejected commands leave candidate data unchanged.
+* Errors identify the field prefix or search input for the unsupported code point, for example: `a/ contains unsupported character U+00A0. Use printable ASCII only (U+0020-U+007E).` Remove or replace that character and retry. Rejected commands leave candidate data unchanged.
 * Ordinary spaces around field values are still trimmed. Empty notes and tags can still be cleared as described in the User Guide.
 * Status values, candidate indexes, and `clear confirm` retain their own validation rules rather than this character check. Command words and prefix syntax are unchanged; use ordinary spaces before prefixes.
 * This restriction applies only to new command input, not loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export retain their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
