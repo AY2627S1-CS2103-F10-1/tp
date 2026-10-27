@@ -64,7 +64,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for `help`, `list`, `exit`, and `export` are ignored.<br>
+* Extraneous parameters for `help`, `list`, `exit`, `export`, and `import` are ignored.<br>
   For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
@@ -377,6 +377,43 @@ To keep every value as stored, import the file instead. In Excel, use **Data > F
 
 **For more technical details, you can refer to the** [Developer Guide](./DeveloperGuide.md)
 
+### Importing candidates: `import`
+
+Appends candidates from `import.csv` to all candidates currently loaded in HRvest, preserving existing order and appending new candidates in file order.
+
+Format: `import`
+
+* Extra arguments are ignored, just like `export`. Place `import.csv` in the same directory as the JSON data file and `export.csv`: normally `data/import.csv`. For a configured data file `/app/data/HRvest.json`, the input is `/app/data/import.csv`. No other location is tried.
+* The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
+* Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view.
+* An empty (zero-byte) file or valid header-only file runs the same pipeline, saves normally, resets the view, and reports 0 imported candidates. Whitespace-only files are invalid.
+* Only readable regular files are accepted; symbolic links, directories, and special files are rejected.
+* Finish saving `import.csv` before running import and leave it unchanged until import finishes. Editing, replacing, or deleting it during import is unsupported usage with unpredictable results.
+* `import.csv` is never modified. On failure, HRvest reports the error and restores the pre-import in-memory data, filter, and expanded view, including any pre-existing unsaved changes.
+
+Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the header unchanged, and replace the example row with your candidate's details. An empty note means no note; use `[]` for no tags.
+
+```csv
+"name","phone","email","address","status","tags","note"
+"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[]",""
+```
+
+**For more import details, including CSV formatting and validation rules, see the** [Developer Guide](DeveloperGuide.md#import-csv-format-and-validation).
+
+**Import limits:** Limits are enforced while reading/parsing; exceeding any limit rejects the whole import with an error.
+
+| Resource | Maximum |
+|------|------|
+| File | 10 MiB (10,485,760 bytes) |
+| Candidates in one import | 10,000, excluding the header |
+| Decoded field | 65,536 Unicode characters before trimming |
+| Note | 500 printable-ASCII characters after trimming |
+| Tags per candidate | 100 array entries before deduplication |
+| Each tag name | 256 Unicode characters before trimming |
+| Tag JSON structure | One flat array of strings only |
+
+These are import limits, not new add/edit restrictions. Files exceeding them cannot be imported even if their contents originated in HRvest.
+
 ### Exiting the program: `exit`
 
 Exits the program.
@@ -491,6 +528,7 @@ Action     | Format, Examples
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`
+**Import** | `import`
 **Filter** | `filter [s/STATUS]... [r/ROLE]...`<br> e.g., `filter s/Interviewing s/Offered`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`

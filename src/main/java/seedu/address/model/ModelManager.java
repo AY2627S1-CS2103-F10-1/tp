@@ -133,7 +133,7 @@ public class ModelManager implements Model {
     @Override
     public void createRole(String name) {
         List<Role> roles = new ArrayList<>(getRoleCatalog().getRoles());
-        checkArgument(getRoleCatalog().find(name).isEmpty(), "A role with this name already exists.");
+        checkArgument(getRoleCatalog().find(name).isEmpty(), RoleCatalog.MESSAGE_DUPLICATE_NAME);
         roles.add(Role.create(name));
         addressBook.setRoleCatalog(new RoleCatalog(roles));
     }
@@ -150,7 +150,7 @@ public class ModelManager implements Model {
     @Override
     public void deleteRole(String name) {
         Role role = getRoleCatalog().requireRole(name);
-        checkArgument(!role.equals(Role.NO_ROLE), "No role cannot be renamed or deleted.");
+        checkArgument(!role.equals(Role.NO_ROLE), Role.MESSAGE_PROTECTED_ROLE);
         List<Role> remaining = getRoleCatalog().getRoles().stream()
                 .filter(entry -> !entry.equals(role)).toList();
         replaceRoleData(role, null, new RoleCatalog(remaining));
@@ -205,6 +205,11 @@ public class ModelManager implements Model {
         checkArgument(filteredPersons.contains(person), "Person must be in the displayed list.");
         updateFilteredPersonList(person::equals);
         isExpandedView.set(true);
+    }
+
+    @Override
+    public Predicate<? super Person> getPersonFilter() {
+        return filteredPersons.getPredicate();
     }
 
     @Override
