@@ -18,8 +18,10 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Note;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -37,6 +39,58 @@ public class ParserUtilTest {
     private static final String VALID_TAG_2 = "neighbour";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void parseRoleName_paddedDisplayName_preservesCapitalizationAndInternalSpaces() throws Exception {
+        assertEquals("Software  Engineer", ParserUtil.parseRoleName("\u2003 Software  Engineer \t"));
+    }
+
+    @Test
+    public void parseRoleName_invalidName_throwsSpecificError() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseRoleName(null));
+        for (String name : List.of("", " ", "Software\tEngineer", "Line\nBreak")) {
+            assertThrows(ParseException.class, Role.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseRoleName(name));
+        }
+        assertThrows(ParseException.class, Role.MESSAGE_RESERVED_SYNTAX, () ->
+                ParserUtil.parseRoleName("Senior N/Engineer"));
+    }
+
+    @Test
+    public void parseNote_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseNote(null));
+    }
+
+    @Test
+    public void parseNote_blank_throwsParseException() {
+        for (String note : List.of("", " ", "   ")) {
+            assertThrows(ParseException.class, Note.MESSAGE_BLANK, () -> ParserUtil.parseNote(note));
+        }
+    }
+
+    @Test
+    public void parseNote_surroundingWhitespace_preservesInternalContents() throws Exception {
+        String contents = "Strong on C++,  weak on SQL; [round 2] / follow-up YES";
+        assertEquals(new Note(contents), ParserUtil.parseNote("   " + contents + "   "));
+    }
+
+    @Test
+    public void parseNote_lengthBoundaries_validatesStrippedCodePointCount() throws Exception {
+        String contents = "a".repeat(Note.MAX_LENGTH);
+        assertEquals(new Note(contents), ParserUtil.parseNote("   " + contents + "   "));
+        assertThrows(ParseException.class, Note.MESSAGE_TOO_LONG, () ->
+                ParserUtil.parseNote("   " + contents + "a   "));
+    }
+
+    @Test
+    public void parseNote_unsupportedCharacters_throwsParseException() {
+        for (String character : List.of("\t", "\r", "\n", "\u2003", "\u4e2d", "\ud83d\ude00")) {
+            String message = String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER,
+                    "Note", character.codePointAt(0));
+            for (String note : List.of(character, character + "text", "text" + character, "a" + character + "b")) {
+                assertThrows(ParseException.class, message, () -> ParserUtil.parseNote(note));
+            }
+        }
+    }
 
     @Test
     public void parseStatus_null_throwsNullPointerException() {
@@ -158,7 +212,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseName_validValueWithWhitespace_returnsTrimmedName() throws Exception {
-        String nameWithWhitespace = WHITESPACE + VALID_NAME + WHITESPACE;
+        String nameWithWhitespace = "  " + VALID_NAME + "  ";
         Name expectedName = new Name(VALID_NAME);
         assertEquals(expectedName, ParserUtil.parseName(nameWithWhitespace));
     }
@@ -181,7 +235,7 @@ public class ParserUtilTest {
 
     @Test
     public void parsePhone_validValueWithWhitespace_returnsTrimmedPhone() throws Exception {
-        String phoneWithWhitespace = WHITESPACE + VALID_PHONE + WHITESPACE;
+        String phoneWithWhitespace = "  " + VALID_PHONE + "  ";
         Phone expectedPhone = new Phone(VALID_PHONE);
         assertEquals(expectedPhone, ParserUtil.parsePhone(phoneWithWhitespace));
     }
@@ -204,7 +258,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseAddress_validValueWithWhitespace_returnsTrimmedAddress() throws Exception {
-        String addressWithWhitespace = WHITESPACE + VALID_ADDRESS + WHITESPACE;
+        String addressWithWhitespace = "  " + VALID_ADDRESS + "  ";
         Address expectedAddress = new Address(VALID_ADDRESS);
         assertEquals(expectedAddress, ParserUtil.parseAddress(addressWithWhitespace));
     }
@@ -227,7 +281,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseEmail_validValueWithWhitespace_returnsTrimmedEmail() throws Exception {
-        String emailWithWhitespace = WHITESPACE + VALID_EMAIL + WHITESPACE;
+        String emailWithWhitespace = "  " + VALID_EMAIL + "  ";
         Email expectedEmail = new Email(VALID_EMAIL);
         assertEquals(expectedEmail, ParserUtil.parseEmail(emailWithWhitespace));
     }
@@ -250,7 +304,7 @@ public class ParserUtilTest {
 
     @Test
     public void parseTag_validValueWithWhitespace_returnsTrimmedTag() throws Exception {
-        String tagWithWhitespace = WHITESPACE + VALID_TAG_1 + WHITESPACE;
+        String tagWithWhitespace = "  " + VALID_TAG_1 + "  ";
         Tag expectedTag = new Tag(VALID_TAG_1);
         assertEquals(expectedTag, ParserUtil.parseTag(tagWithWhitespace));
     }

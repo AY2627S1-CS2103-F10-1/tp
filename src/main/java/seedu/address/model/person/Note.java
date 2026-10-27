@@ -4,7 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
 /**
- * Represents a candidate's single note. Instances are immutable and contain trimmed, non-blank text.
+ * Represents a candidate's single note. Instances are immutable and contain non-blank text.
  */
 public class Note {
 
@@ -15,26 +15,23 @@ public class Note {
     public final String value;
 
     /**
-     * Constructs a note, trimming leading and trailing whitespace while preserving its contents.
+     * Constructs a note, validating and storing the supplied text without modification.
      *
-     * @param note Text containing between 1 and 500 characters after trimming.
+     * @param note Non-blank text containing at most 500 Unicode code points.
      */
     public Note(String note) {
         requireNonNull(note);
-        String trimmedNote = note.strip();
-        checkArgument(!trimmedNote.isBlank(), MESSAGE_BLANK);
-        checkArgument(trimmedNote.codePointCount(0, trimmedNote.length()) <= MAX_LENGTH, MESSAGE_TOO_LONG);
-        value = trimmedNote;
+        checkArgument(!note.isBlank(), MESSAGE_BLANK);
+        checkArgument(isValidNote(note), MESSAGE_TOO_LONG);
+        value = note;
     }
 
     /**
-     * Returns whether the given text is non-blank and within the length limit after trimming.
+     * Returns whether the supplied text is non-blank and contains at most 500 Unicode code points.
      */
     public static boolean isValidNote(String note) {
         requireNonNull(note);
-        String trimmedNote = note.strip();
-        return !trimmedNote.isBlank()
-                && trimmedNote.codePointCount(0, trimmedNote.length()) <= MAX_LENGTH;
+        return !note.isBlank() && note.codePointCount(0, note.length()) <= MAX_LENGTH;
     }
 
     @Override

@@ -116,7 +116,20 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
-For role-management commands, `AddressBookParser` selects `RoleCommandParser` to parse role names and create the corresponding `Command`. During execution, the command delegates catalogue validation and assignment updates to the `Model`.
+Role-management commands use dedicated parsers and delegate catalogue validation and assignment updates to the `Model`.
+
+#### Command input character validation
+
+Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAscii` before their existing validation. This policy is deliberately parser-only: placing it in model constructors would also reject existing valid non-ASCII addresses or notes during JSON loading. Status values, indexes, and confirmation keywords retain their dedicated checks.
+
+`ArgumentTokenizer.tokenizeWithValidation` checks selected raw prefix values before trimming; otherwise trailing control characters could disappear, and invisible-only notes or tags could be mistaken for clearing requests. `AddressBookParser` preserves trailing argument characters for the same reason. The regular tokenizer remains available for commands outside this policy. Character errors take precedence over duplicate-prefix and field validation after tokenisation; command-specific unsupported-prefix checks can still run first. JSON and CSV serialization continue to escape values independently of this input policy.
+
+* Tabs, line breaks, accented letters, emoji, curly quotes, non-breaking spaces (`U+00A0`), and zero-width spaces (`U+200B`) are rejected, even when copied text looks normal. Use ordinary spaces and straight quotes instead.
+* Unsupported characters are checked before surrounding spaces are trimmed or empty values are interpreted as clearing a field. They are not silently removed or replaced.
+* Errors identify the field prefix or search input for the unsupported code point, for example: `a/ contains unsupported character U+00A0. Use printable ASCII only (U+0020-U+007E).` Remove or replace that character and retry. Rejected commands leave candidate data unchanged.
+* Ordinary spaces around field values are still trimmed. Empty notes and tags can still be cleared as described in the User Guide.
+* Status values, candidate indexes, and `clear confirm` retain their own validation rules rather than this character check. Command words and prefix syntax are unchanged; use ordinary spaces before prefixes.
+* This restriction applies only to new command input, not loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export retain their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
@@ -161,9 +174,7 @@ The `Storage` component,
 * is implemented by `StorageManager`, which coordinates candidate and role files through `RoleDataStorage` and delegates preference storage to `JsonUserPrefsStorage`.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
-`JsonAddressBookStorage` writes UTF-8 JSON to a temporary file in the destination directory, then atomically replaces the saved file after writing completes. Symbolic-link destinations are resolved to their existing targets before creating the temporary file and replacing the target, preserving the links. Dangling links cause an `IOException` without changing the links or creating files. On filesystems supporting `AclFileAttributeView`, the existing destination's ACL is applied to the temporary file before writing JSON. POSIX permissions are also copied before writing on filesystems supporting `PosixFileAttributeView`. New destinations retain default ACLs and POSIX permissions. ACL or POSIX permission errors, including `AccessDeniedException`, abort the save and trigger temporary-file cleanup. The existing file's access restrictions are not replaced with default permissions when access is denied; `LogicManager` reports the permission error. Failed writes leave the previous saved file intact. Filesystems that cannot perform atomic replacement reject the save instead of attempting a potentially partial overwrite. A filesystem root is rejected as a destination with an `IOException`.
-
-Temporary files use unique names of the form `HRvest-<random>.tmp`, so a later save does not reuse or overwrite an existing temporary file. The `finally` block attempts to remove the current save's temporary file when execution unwinds normally, including after an `IOException` or an unchecked exception. A forced JVM termination or power loss can prevent this cleanup and leave an orphaned temporary file. Subsequent saves ignore these files. After closing all HRvest instances, leftover `HRvest-*.tmp` files can be removed manually; keep the configured JSON data file and any symbolic-link target.
+`JsonAddressBookStorage` never overwrites the data file in place, so a failed or interrupted save leaves the previous file intact. It writes the JSON to a uniquely named `HRvest-<random>.tmp` file in the same folder, gives it the existing file's access permissions, and then atomically replaces the data file with it. Filesystems that cannot replace a file atomically reject the save, and permission errors abort it; `LogicManager` reports either error. A symbolic link to the data file is kept, and its target is replaced. The temporary file is deleted if the save fails, but a crash or power loss can leave it behind; later saves ignore such files, and they can be deleted once HRvest is closed.
 
 During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalogue. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
 
@@ -193,6 +204,45 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Candidate notes
+
+Each candidate has at most one note, such as interview feedback. `note INDEX no/NOTE_TEXT` replaces the note of a candidate in the displayed list, and `note INDEX no/` clears it.
+
+#### How it fits in
+
+* `Person` holds the note as an `Optional<Note>`. `Note` is an immutable value that rejects blank text and text longer than `Note.MAX_LENGTH` (500) characters, so a candidate either has a valid note or none. `ParserUtil#parseNote` and `JsonAdaptedPerson` trim the text before creating a `Note`.
+* `NoteCommandParser` tokenizes the arguments with `no/` as its only prefix, so text such as `n/A` inside a note stays part of the note. It rejects a missing or repeated `no/`. Blank note text creates a `NoteCommand` that clears the note.
+* `NoteCommand#execute` finds the candidate in the displayed list and builds a new `Person` with the same details and the new note, because `Person` is immutable. It then calls `Model#setPerson`, which keeps the current filter and keeps the candidate expanded if it was.
+* `add` and `edit` reject `no/` through `ParserUtil#verifyNoNotePrefix`, so `note` is the only command that changes a note.
+* `JsonAdaptedPerson` stores the note text in a `note` field. On loading, a missing, `null` or blank `note` means no note, so data files from before notes existed still load.
+* `PersonCard` shows a sticky-note icon when `Person#hasNote()` is true and shows the note text only in expanded view.
+
+The sequence diagram below shows how `note 2 no/Strong on SQL` is executed. `p` is the candidate at index 2 of the displayed list.
+
+<puml src="diagrams/NoteSequenceDiagram.puml" alt="Interactions inside the Logic and Model components for the note 2 no/Strong on SQL command" />
+
+After the note command returns, `LogicManager` saves the address book.
+
+#### Design considerations
+
+**Aspect: One note or a list of notes**
+
+* **Alternative 1 (current choice):** One note per candidate, replaced by each `note` command.
+  * Pros: Simple to use and display. No extra commands or indexes are needed to correct or remove one entry.
+  * Cons: Replacing a note loses the earlier text, so the User Guide tells users to include anything they want to keep.
+* **Alternative 2:** A list of notes that `note` appends to.
+  * Pros: Keeps a full history of interactions with the candidate.
+  * Cons: Needs commands to edit or delete a single entry, and makes the expanded view longer.
+
+**Aspect: A separate command or a field of `add` and `edit`**
+
+* **Alternative 1 (current choice):** A separate `note` command.
+  * Pros: The note can contain text that looks like a prefix, because `no/` is the only prefix `note` recognises. An `edit` cannot replace a note by accident.
+  * Cons: Users learn one more command.
+* **Alternative 2:** A `no/` field in `add` and `edit`.
+  * Pros: Fewer commands.
+  * Cons: Any other prefix inside the note, such as the `a/` in "follow up on a/b test", would start a new field.
 
 ### Command history navigation
 
@@ -329,9 +379,9 @@ You can refer to the diagram below as a reference.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
 
-The writer exports one row per candidate to `export.csv` inside the configured data directory, alongside the JSON data file, with a header and all candidate fields. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
+The writer exports one row per candidate, with a header and all candidate fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. A future CSV import must skip the mark before reading the header. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
 
-**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, and spreadsheet auto-detection can alter values.
+**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users instead. Spreadsheet auto-detection can still alter values when the file is opened directly.
 
 HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. It is non-destructive to HRvest's stored records: the CSV is a separate copy of data that remains available in the application. For this reason, export uses direct writing with failure reporting rather than rollback or deletion of a failed output file; the user can retry after resolving the problem. This differs from saving HRvest's source data, where atomic replacement protects the existing records. The non-destructive guarantee does not extend to an earlier CSV: each export directly overwrites it, so an interrupted or failed write may destroy the previous export and leave an empty or incomplete file.
 
@@ -382,7 +432,7 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | `* * *`  | user              | list every candidate currently in the app             | see every candidate in my pipeline in one view                      |
 | `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
 | `* * *`  | user              | update a candidate's status after an interview        | keep the pipeline accurate as candidates move through stages        |
-| `* * *`  | user              | view a candidate's full details including all notes   | prepare for the next conversation with them                         |
+| `* * *`  | user              | view a candidate's full details including their note  | prepare for the next conversation with them                         |
 | `* * *`  | user              | see a confirmation when an action succeeds            | confirm that the command did what I intended                        |
 
 #### Nice-to-have (`* *`)
@@ -391,6 +441,10 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 |----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
 | `* *`    | familiar user     | find a candidate by a partial keyword of their name               | find a candidate whose full name I do not remember                    |
 | `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a complete history of my interactions with that candidate        |
+| `* *`    | familiar user     | create roles before adding candidates                             | prepare the catalog for upcoming hiring                             |
+| `* *`    | familiar user     | list all available roles, including unused ones                   | reuse an existing role instead of creating a duplicate                |
+| `* *`    | familiar user     | rename a role across all assigned candidates                      | correct a job title consistently                                      |
+| `* *`    | familiar user     | remove an obsolete role while keeping candidates' other roles     | keep the catalog relevant without losing unrelated hiring details   |
 | `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
 | `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
@@ -541,7 +595,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to delete a specific candidate in the list.
-1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
+1. HRvest deletes the candidate, together with the candidate's note, and shows the deleted candidate.
 
    Use case ends.
 
@@ -608,7 +662,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to view the full details of a candidate profile.
-1. HRvest shows the candidate's full details, including all notes.
+1. HRvest shows the candidate's full details, including their note.
 
    Use case ends.
 
@@ -620,18 +674,18 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC09 - Add a note to a candidate**
+**Use case: UC09 - Add or replace a candidate's note**
 
 **MSS**
 
-1. User requests to add a note to a specific candidate.
-1. HRvest adds the note without overwriting earlier notes and shows the updated candidate profile.
+1. User requests to save a note for a specific candidate in the list.
+1. HRvest replaces the candidate's earlier note, if any, with the new note and confirms the update.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. The specified candidate is not found.
+* 1a. The specified candidate is not in the list, or the note is longer than 500 characters.
 
     * 1a1. HRvest shows an error message.
 
@@ -639,7 +693,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * 1b. The note is empty.
 
-    * 1b1. HRvest shows an error message.
+    * 1b1. HRvest clears the candidate's note and confirms that it was cleared.
 
       Use case ends.
 
@@ -666,6 +720,81 @@ The terms candidate details, candidate status, duplicate candidate and note are 
     * 2b1. HRvest shows an error message.
 
       Use case ends.
+
+**Use case: UC11 - Create a role**
+
+**MSS**
+
+1. User requests to create a role, giving its name.
+1. HRvest makes the new role available for assigning to candidates.
+1. HRvest shows a success message identifying the created role.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The name is invalid or matches an existing role, including `No role`.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC12 - Rename a role globally**
+
+**MSS**
+
+1. User requests to rename an existing role, giving the role and its new name.
+1. HRvest changes the role's name for all candidates who have it, leaving their other roles unchanged.
+1. HRvest shows a success message identifying the renamed role.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The role does not exist or is the protected `No role` entry.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1b. The new name is invalid or matches another role, including `No role`.
+
+    * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1c. The new name is unchanged or differs only in capitalisation.
+
+    * 1c1. HRvest accepts the name and confirms the change, updating the capitalisation if needed.
+
+      Use case ends.
+
+**Use case: UC13 - Delete a role globally**
+
+**MSS**
+
+1. User requests to delete an existing role.
+1. HRvest removes the role from the available roles and from all candidates who have it, leaving their other roles unchanged. Candidates left without a role receive `No role`.
+1. HRvest shows a success message identifying the deleted role.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The role does not exist or is the protected `No role` entry.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC14 - List the role catalog**
+
+**MSS**
+
+1. User requests to list available roles.
+1. HRvest shows all catalog entries, including unused roles and `No role`, in alphabetical order ignoring case.
+
+   Use case ends.
 
 ### Non-Functional Requirements
 
@@ -778,7 +907,7 @@ Use a separate test folder and keep a matching backup of candidate and catalogue
 1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
 1. To check global assignment updates, close HRvest. In a test copy, assign the new role ID to two candidates' `roles` arrays; give one candidate another valid role too. Restart, filter so one candidate is hidden, and rename the role again. Close HRvest and inspect both files. Expected: The catalogue name changes, both candidates retain the same role ID, and their other fields and assignments remain unchanged.
 1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalogue entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.
-1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear`, then `list_role`. Expected: Candidates are removed while remaining catalogue entries survive. Restore both test files together after testing.
+1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear confirm`, then `list_role`. Expected: Candidates are removed while remaining catalogue entries survive. Restore both test files together after testing.
 
 ### Saving data
 

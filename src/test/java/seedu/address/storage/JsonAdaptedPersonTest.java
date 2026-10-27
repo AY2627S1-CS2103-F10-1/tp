@@ -82,21 +82,35 @@ public class JsonAdaptedPersonTest {
 
     @Test
     public void toModelType_blankNote_returnsCandidateWithoutNote() throws Exception {
-        JsonAdaptedPerson candidate =
-                new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS, " \t ");
-        assertEquals(BENSON, candidate.toModelType());
+        for (String text : List.of("", " \t ", "\u2003\r\n")) {
+            JsonAdaptedPerson candidate = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    VALID_ADDRESS, VALID_TAGS, text);
+            assertEquals(BENSON, candidate.toModelType());
+        }
     }
 
     @Test
-    public void toModelType_noteLengthBoundaries_validatesTrimmedLength() throws Exception {
-        String text = "x".repeat(500);
-        JsonAdaptedPerson valid =
-                new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS,
-                        " " + text + " ");
-        assertEquals(new Note(text), valid.toModelType().getNote().orElseThrow());
-        JsonAdaptedPerson invalid =
-                new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS, text + "x");
-        assertThrows(IllegalValueException.class, Note.MESSAGE_TOO_LONG, invalid::toModelType);
+    public void toModelType_noteSurroundingWhitespace_preservesInternalContents() throws Exception {
+        String contents = "Round 2: [C++],  SQL; \u4e2d\u6587\tYES\nNext: follow-up";
+        JsonAdaptedPerson candidate = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_TAGS, "\t\u2003" + contents + "\u2003\r\n");
+
+        assertEquals(new Note(contents), candidate.toModelType().getNote().orElseThrow());
+    }
+
+    @Test
+    public void toModelType_noteLengthBoundaries_validatesStrippedCodePointCount() throws Exception {
+        for (String character : List.of("x", "\ud83d\ude00")) {
+            String text = character.repeat(Note.MAX_LENGTH);
+            JsonAdaptedPerson valid =
+                    new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS,
+                            "\u2003 " + text + " \u2003");
+            assertEquals(new Note(text), valid.toModelType().getNote().orElseThrow());
+            JsonAdaptedPerson invalid =
+                    new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS,
+                            "\u2003 " + text + character + " \u2003");
+            assertThrows(IllegalValueException.class, Note.MESSAGE_TOO_LONG, invalid::toModelType);
+        }
     }
 
     @Test

@@ -110,7 +110,7 @@ public class PersonBuilder {
      * Sets the note of the person being built.
      */
     public PersonBuilder withNote(String note) {
-        this.note = Optional.of(new Note(note));
+        this.note = Optional.of(new Note(note.strip()));
         return this;
     }
 

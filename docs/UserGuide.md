@@ -35,7 +35,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
    * `delete 3` : Deletes the 3rd candidate shown in the current list.
 
-   * `clear` : Deletes all candidates.
+   * `clear confirm` : Deletes all candidates. `clear` on its own only asks you to confirm.
 
    * `exit` : Exits the app.
 
@@ -64,11 +64,17 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list_role` command is an exception: it rejects all arguments.
+* Extraneous parameters for `help`, `list`, `exit`, and `export` are ignored.<br>
+  For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
+
+### Accepted characters in candidate inputs
+
+Names, phone numbers, emails, addresses, tags, notes, and `find` keywords accept only **printable ASCII (`U+0020–U+007E`)**: English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces, and ASCII punctuation. This keeps command input within a single, explicit character set. Existing field rules still apply afterward: for example, phone numbers accept only digits, and names do not accept punctuation.
+
+For more information about rejected characters, error messages, and validation scope, see [Command input character validation in the Developer Guide](DeveloperGuide.md#command-input-character-validation).
 
 ### Viewing help: `help`
 
@@ -92,7 +98,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 | `n/NAME` | Yes | A non-blank name containing only letters, digits, and spaces, e.g. `n/John Doe`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. Punctuation such as apostrophes and hyphens is not accepted. |
 | `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/john.doe@example.com`. The local part allows letters, digits, and `+`, `_`, `.`, or `-` between alphanumeric groups; it must start and end with a letter or digit. Domain labels allow letters, digits, and internal hyphens; the final label must contain at least two characters. Spaces are not accepted. |
-| `a/ADDRESS` | Yes | Any non-blank, single-line address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
+| `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
 | `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
 | `t/TAG` | No | A non-blank label containing only letters and digits, e.g. `t/backend`. Spaces and punctuation are not accepted. Repeat the prefix for multiple tags: `t/backend t/Java`. Identical tags are removed, but tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. |
 
@@ -151,7 +157,7 @@ Format: `note INDEX no/[NOTE_TEXT]`
 * Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
 * To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
-* Non-empty `NOTE_TEXT` can contain at most 500 characters. Leading and trailing spaces are removed; spacing, capitalisation, and punctuation within the note are kept.
+* Non-empty `NOTE_TEXT` can contain at most 500 printable-ASCII characters. Leading and trailing ordinary spaces are removed; spacing, capitalisation, and ASCII punctuation within the note are kept. Tabs, line breaks, and non-ASCII characters are rejected.
 * Supply `no/` only once. Because prefixes ignore letter case, a later ` NO/` in the text also counts as a second `no/`. Other prefixes, such as `n/`, are treated as part of the note.
 * After the note is updated or cleared, the current filter is kept. When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
 * Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
@@ -319,21 +325,42 @@ Format: `list_role`
 
 Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
 
-Format: `clear`
+Format: `clear confirm`
+
+* `clear` on its own deletes nothing. It shows how many candidates would be deleted and asks you to enter `clear confirm`.
+* `clear confirm` deletes every candidate, including those hidden by the current `find` or `filter`. The message is `All candidates have been cleared.`
+* `confirm` ignores letter case. Any other text after `clear` is rejected.
+* If there are no candidates, both forms reply `There are no candidates to clear.`
+
+<box type="warning" seamless>
+
+**Caution:** Clearing cannot be undone. Use `export` first if you may need the candidates again.
+</box>
 
 ### Exporting candidates: `export`
 
-Exports every candidate to `export.csv` inside the application's data folder, alongside the configured JSON data file (for example, `./data/data.json` gives `./data/export.csv`). Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
+Exports every candidate to `data/export.csv`, next to the candidate data file `data/HRvest.json` in the folder you run HRvest from. Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
 
 Format: `export`
 
 * Use the lowercase command; surrounding whitespace is accepted.
-* The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
+* The destination is always `data/export.csv`. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* The file is UTF-8 with a byte order mark, so spreadsheet programs such as Excel show accented and non-Latin text correctly.
 * For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
 * If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
+
+<box type="warning" seamless>
+
+**Opening the CSV in a spreadsheet:** The CSV holds your data exactly as stored, but spreadsheet programs change some values when you double-click to open the file:
+
+* Phone numbers lose their leading zeroes, for example `007` becomes `7`.
+* Text that starts with `=`, `+`, `-` or `@`, such as an address `=1+2`, is treated as a formula and calculated.
+
+To keep every value as stored, import the file instead. In Excel, use **Data > From Text/CSV**, choose **Transform Data**, and set the columns to **Text** before loading. Do not open exports from untrusted data with formulas enabled.
+</box>
 
 **Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
 
@@ -377,7 +404,7 @@ HRvest automatically saves data after every successful command. Use [`export`](#
 
 ### Editing the data file
 
-Advanced users may edit the JSON files. For a custom candidate data path, use that file and the `roles.json` beside it.
+Advanced users may edit the JSON files in the `data` folder.
 
 **Before editing:**
 
@@ -420,7 +447,7 @@ _Details coming soon ..._
 
 1. If `roles-transaction.json` exists on the old computer, restart HRvest there to complete recovery first. If recovery fails, follow the reported instructions before transferring.
 1. Close HRvest on both computers.
-1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together. For a custom candidate path, copy that file and its neighbouring `roles.json` instead.
+1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -440,7 +467,7 @@ Action     | Format, Examples
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`
-**Clear**  | `clear`
+**Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`

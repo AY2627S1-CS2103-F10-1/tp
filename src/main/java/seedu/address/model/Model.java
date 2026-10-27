@@ -1,11 +1,13 @@
 package seedu.address.model;
 
+import java.util.Collection;
 import java.util.function.Predicate;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.RoleCatalog;
 
 /**
  * The API of the Model component.
@@ -79,4 +81,29 @@ public interface Model {
      * @throws NullPointerException if {@code predicate} is null.
      */
     void updateFilteredPersonList(Predicate<Person> predicate);
+
+    /** Captures a rollback action for a command whose subsequent save may fail. */
+    default Runnable createRestorePoint() {
+        AddressBook snapshot = new AddressBook(getAddressBook());
+        return () -> setAddressBook(snapshot);
+    }
+
+    /** Returns the shared immutable role catalog. */
+    default RoleCatalog getRoleCatalog() {
+        return getAddressBook().getRoleCatalog();
+    }
+
+    /** Creates an unused role after checking name uniqueness. */
+    void createRole(String name);
+
+    /** Renames a role globally without replacing any person's assignments. */
+    void renameRole(String oldName, String newName);
+
+    /** Removes a role globally, falling back to No role only for empty assignments. */
+    void deleteRole(String name);
+
+    /** Resolves and replaces a person's assignments atomically. */
+    default void replacePersonRoles(Person person, Collection<String> names) {
+        setPerson(person, person.withRoles(getRoleCatalog().resolve(names)));
+    }
 }

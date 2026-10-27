@@ -3,7 +3,10 @@ package seedu.address.logic.parser;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import seedu.address.logic.parser.exceptions.ParseException;
 
 /**
  * Tokenizes arguments string of the form: {@code preamble <prefix>value <prefix>value ...}<br>
@@ -26,7 +29,38 @@ public class ArgumentTokenizer {
      */
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
-        return extractArguments(argsString, positions);
+        return trimArguments(extractArguments(argsString, positions), prefixes);
+    }
+
+    /**
+     * Tokenizes arguments, validating selected prefix values before trimming can discard unsupported characters.
+     * Preambles and unselected prefixes retain their existing validation rules.
+     *
+     * @throws ParseException If a selected value contains a character outside printable ASCII.
+     */
+    public static ArgumentMultimap tokenizeWithValidation(String argsString, Set<Prefix> validatedPrefixes,
+            Prefix... prefixes) throws ParseException {
+        ArgumentMultimap rawArguments = extractArguments(argsString, findAllPrefixPositions(argsString, prefixes));
+        for (Prefix prefix : prefixes) {
+            if (validatedPrefixes.contains(prefix)) {
+                for (String value : rawArguments.getAllValues(prefix)) {
+                    ParserUtil.verifyPrintableAscii(value, prefix.getPrefix());
+                }
+            }
+        }
+        return trimArguments(rawArguments, prefixes);
+    }
+
+    /** Returns a copy with surrounding whitespace removed, preserving the existing tokenizer contract. */
+    private static ArgumentMultimap trimArguments(ArgumentMultimap rawArguments, Prefix... prefixes) {
+        ArgumentMultimap trimmedArguments = new ArgumentMultimap();
+        trimmedArguments.put(new Prefix(""), rawArguments.getPreamble().trim());
+        for (Prefix prefix : Arrays.stream(prefixes).distinct().toList()) {
+            for (String value : rawArguments.getAllValues(prefix)) {
+                trimmedArguments.put(prefix, value.trim());
+            }
+        }
+        return trimmedArguments;
     }
 
     /**
@@ -117,7 +151,7 @@ public class ArgumentTokenizer {
     }
 
     /**
-     * Returns the trimmed value of the argument in the arguments string specified by {@code currentPrefixPosition}.
+     * Returns the untrimmed value of the argument in the arguments string specified by {@code currentPrefixPosition}.
      * The end position of the value is determined by {@code nextPrefixPosition}.
      */
     private static String extractArgumentValue(String argsString,
@@ -128,7 +162,7 @@ public class ArgumentTokenizer {
         int valueStartPos = currentPrefixPosition.getStartPosition() + prefix.getPrefix().length();
         String value = argsString.substring(valueStartPos, nextPrefixPosition.getStartPosition());
 
-        return value.trim();
+        return value;
     }
 
     /**
