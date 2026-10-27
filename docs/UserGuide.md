@@ -405,6 +405,8 @@ The command box remembers every command you submit in the current session so you
 
 ### Saving the data
 
+If HRvest cannot create its log file, it prints a warning and continues logging to the terminal. This does not grant access to candidate files: any data-file permission errors still need to be resolved.
+
 HRvest automatically saves data after every successful command. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
