@@ -78,7 +78,7 @@ public class FilterCommandTest {
         expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(
                 List.of(Status.APPLIED, Status.INTERVIEWING, Status.OFFERED)));
         String expectedMessage = expectedModel.getFilteredPersonList().size()
-                + " candidate(s) listed with status(es): Applied, Interviewing or Offered";
+                + " candidate(s) filtered with status(es): Applied, Interviewing or Offered";
 
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
     }
