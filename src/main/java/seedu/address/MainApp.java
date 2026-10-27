@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
@@ -160,14 +161,19 @@ public class MainApp extends Application {
 
     /** Shows a startup failure on the JavaFX thread and exits after it is dismissed. */
     void showStartupError(String message) {
+        showStartupError(message, Alert::showAndWait, Platform::exit);
+    }
+
+    /** Displays the startup alert and always requests exit, even if displaying it fails. */
+    void showStartupError(String message, Consumer<Alert> display, Runnable exit) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("HRvest could not start");
         alert.setHeaderText("HRvest could not start");
         alert.setContentText(message);
         try {
-            alert.showAndWait();
+            display.accept(alert);
         } finally {
-            Platform.exit();
+            exit.run();
         }
     }
 

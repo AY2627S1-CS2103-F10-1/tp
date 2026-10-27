@@ -4,11 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -22,6 +20,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
+import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -37,14 +36,7 @@ public class PersonCardTest {
 
     @BeforeAll
     public static void setUpToolkit() throws Exception {
-        CompletableFuture<Void> ready = new CompletableFuture<>();
-        Platform.startup(() -> ready.complete(null));
-        ready.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    }
-
-    @AfterAll
-    public static void tearDownToolkit() {
-        Platform.exit();
+        JavaFxTestUtil.initializeToolkit();
     }
 
     @Test
