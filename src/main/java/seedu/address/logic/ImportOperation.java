@@ -47,8 +47,9 @@ final class ImportOperation {
                     failure);
         }
         model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
-        logger.info("Import completed: " + imported.size() + " candidates.");
-        return new CommandResult("Imported " + imported.size() + " candidates successfully.");
+        String importedSummary = imported.size() + (imported.size() == 1 ? " candidate" : " candidates");
+        logger.info("Import completed: " + importedSummary + ".");
+        return new CommandResult("Imported " + importedSummary + " successfully.");
     }
 
     private List<Person> readCandidates() throws CommandException {

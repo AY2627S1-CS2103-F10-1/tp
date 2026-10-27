@@ -60,7 +60,7 @@ public class ImportOperationTest {
         byte[] input = Files.readAllBytes(inputPath());
         model.expandPerson(existing);
 
-        assertEquals("Imported 1 candidates successfully.", logic.execute("import").getFeedbackToUser());
+        assertEquals("Imported 1 candidate successfully.", logic.execute("import").getFeedbackToUser());
 
         assertEquals(List.of(existing, incoming), model.getAddressBook().getPersonList());
         assertEquals(List.of(existing, incoming), model.getFilteredPersonList());
@@ -219,7 +219,7 @@ public class ImportOperationTest {
         Files.writeString(ignored, "invalid CSV that must not be read");
         byte[] source = Files.readAllBytes(inputPath());
 
-        assertEquals("Imported 1 candidates successfully.",
+        assertEquals("Imported 1 candidate successfully.",
                 logic.execute("import " + ignored + " ignored arguments").getFeedbackToUser());
 
         assertEquals(List.of(existing, incoming), model.getFilteredPersonList());
