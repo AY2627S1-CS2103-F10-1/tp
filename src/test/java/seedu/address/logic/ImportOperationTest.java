@@ -38,7 +38,7 @@ public class ImportOperationTest {
 
     private final Person existing = new PersonBuilder().withEmail("existing@example.com").build();
     private final Person incoming = new PersonBuilder().withName("Incoming Candidate")
-            .withEmail("incoming@example.com").withTags("java", "Java").withNote("Comma, quote \" and\nline").build();
+            .withEmail("incoming@example.com").withTags("java", "Java").withNote("Comma, quote \" and text").build();
     private Model model;
     private TestStorage storage;
     private Logic logic;
@@ -68,10 +68,8 @@ public class ImportOperationTest {
     }
 
     @Test
-    public void execute_exportClearConfirmImport_preservesCandidatesWithBomAndUnicode() throws Exception {
-        Person unicodeIncoming = new PersonBuilder(incoming).withNote("Unicode \u4e2d\u6587, \"quoted\"\r\nnext line")
-                .build();
-        model.addPerson(unicodeIncoming);
+    public void execute_exportClearConfirmImport_preservesCandidatesWithBom() throws Exception {
+        model.addPerson(incoming);
         List<Person> expected = List.copyOf(model.getAddressBook().getPersonList());
         logic.execute("export");
         Files.copy(directory.resolve("data/export.csv"), inputPath());
@@ -89,6 +87,22 @@ public class ImportOperationTest {
         assertEquals(expected, model.getFilteredPersonList());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
         assertArrayEquals(source, Files.readAllBytes(inputPath()));
+    }
+
+    @Test
+    public void execute_invalidNote_rejectsWithoutChangingSavedData() throws Exception {
+        byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
+        model.expandPerson(existing);
+        for (String note : List.of("Unicode \u4e2d\u6587", "First\r\nsecond", "Tab\there")) {
+            writeInput(new PersonBuilder(incoming).withNote(note).build());
+
+            assertThrows(CommandException.class, () -> logic.execute("import"));
+
+            assertEquals(List.of(existing), model.getAddressBook().getPersonList());
+            assertEquals(List.of(existing), model.getFilteredPersonList());
+            assertTrue(model.isExpandedViewProperty().get());
+            assertArrayEquals(disk, Files.readAllBytes(storage.getAddressBookFilePath()));
+        }
     }
 
     @Test

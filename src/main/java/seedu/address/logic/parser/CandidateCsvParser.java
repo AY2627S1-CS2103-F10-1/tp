@@ -77,8 +77,8 @@ public final class CandidateCsvParser {
         }
     }
 
-    private static Optional<Note> parseNote(String value) {
-        return value.isBlank() ? Optional.empty() : Optional.of(new Note(value));
+    private static Optional<Note> parseNote(String value) throws ParseException {
+        return value.isBlank() ? Optional.empty() : Optional.of(ParserUtil.parseNote(value));
     }
 
     private static Set<Tag> parseTags(String value) throws ParseException {

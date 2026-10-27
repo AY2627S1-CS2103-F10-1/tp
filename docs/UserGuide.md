@@ -389,7 +389,7 @@ Format: `import`
 
 Configure your editor to save the example with CRLF line endings and UTF-8. HRvest accepts the leading BOM written by `export`, so you can copy or rename `data/export.csv` to `data/import.csv` without removing it. The file must still meet validation, duplicate, and resource-limit rules. A BOM-only file or repeated leading BOMs are rejected. Only one encoding marker immediately before the header is ignored; markers inside quoted fields are literal data subject to field validation.
 
-Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. An empty or whitespace-only note means no note. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
+Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. An empty or whitespace-only note means no note. Nonblank notes follow the same validation as the `note` command: only printable ASCII is accepted, surrounding ordinary spaces are trimmed, and the trimmed text must not exceed 500 characters. Tabs, line breaks, and non-ASCII characters in nonblank notes are rejected. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
 
 **Import limits:** Limits are enforced while reading/parsing; exceeding any limit rejects the whole import with an error.
 
@@ -398,7 +398,7 @@ Existing field rules apply, including trimming as in commands. Status accepts de
 | File | 10 MiB (10,485,760 bytes) |
 | Candidates in one import | 10,000, excluding the header |
 | Decoded field | 65,536 Unicode characters before trimming |
-| Note | Existing 500 Unicode characters after trimming |
+| Note | 500 printable-ASCII characters after trimming |
 | Tags per candidate | 100 array entries before deduplication |
 | Each tag name | 256 Unicode characters before trimming |
 | Tag JSON structure | One flat array of strings only |

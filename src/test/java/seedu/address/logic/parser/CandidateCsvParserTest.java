@@ -7,11 +7,13 @@ import static seedu.address.testutil.Assert.assertThrows;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
 
@@ -21,11 +23,11 @@ public class CandidateCsvParserTest {
     @Test
     public void parse_exportFormat_preservesLiteralValuesAndNormalizesTagsAndStatus() throws Exception {
         Person person = parseRow("[\"java\",\" Java \",\"java\"]", "  iNtErViEwInG ",
-                "Unicode \u4e2d\u6587, \"quoted\"\r\nsecond line");
+                "Follow up, \"quoted\" feedback");
 
         assertEquals(Status.INTERVIEWING, person.getStatus());
         assertEquals(2, person.getTags().size());
-        assertEquals("Unicode \u4e2d\u6587, \"quoted\"\r\nsecond line", person.getNote().orElseThrow().value);
+        assertEquals("Follow up, \"quoted\" feedback", person.getNote().orElseThrow().value);
     }
 
     @Test
@@ -36,7 +38,7 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_leadingBom_acceptsHeaderAndPreservesLiteralFieldContents() throws Exception {
-        String note = "Unicode \u4e2d\u6587, \"quoted\"\r\nliteral \ufeff marker";
+        String note = "Follow up, \"quoted\" feedback";
         String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com", "Address",
                 "Applied", "[]", note));
         assertEquals(parse(input.getBytes(StandardCharsets.UTF_8)),
@@ -82,6 +84,32 @@ public class CandidateCsvParserTest {
         assertThrows(ParseException.class, () -> parseRow("[]", "Hired", ""));
         for (Status status : Status.values()) {
             assertEquals(status, parseRow("[]", status.toString(), "").getStatus());
+        }
+    }
+
+    @Test
+    public void parse_noteWithSurroundingSpaces_trimsBeforeLengthValidation() throws Exception {
+        String note = "a".repeat(500);
+        assertEquals(note, parseRow("[]", "Applied", "  " + note + "  ").getNote().orElseThrow().value);
+        assertEquals("Follow  up", parseRow("[]", "Applied", "  Follow  up  ").getNote().orElseThrow().value);
+        String tooLongNote = " " + "a".repeat(501) + " ";
+        assertThrows(ParseException.class, "CSV record 2, field note: " + Note.MESSAGE_TOO_LONG, () ->
+                parseRow("[]", "Applied", tooLongNote));
+    }
+
+    @Test
+    public void parse_blankNote_returnsNoNote() throws Exception {
+        for (String note : List.of("", "   ", "\t\r\n")) {
+            assertEquals(Optional.empty(), parseRow("[]", "Applied", note).getNote());
+        }
+    }
+
+    @Test
+    public void parse_nonPrintableAsciiNote_rejectsWithRecordAndField() {
+        for (String character : List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f")) {
+            String message = "CSV record 2, field note: "
+                    + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", character.codePointAt(0));
+            assertThrows(ParseException.class, message, () -> parseRow("[]", "Applied", "Note" + character));
         }
     }
 
