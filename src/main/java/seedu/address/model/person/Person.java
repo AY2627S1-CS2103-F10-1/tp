@@ -19,8 +19,6 @@ import seedu.address.model.tag.Tag;
  */
 public class Person {
 
-    public static final String MESSAGE_ROLES_REQUIRED = "Every person must have at least one role.";
-
     // Identity field for duplicate detection
     private final Email email;
 
@@ -69,7 +67,8 @@ public class Person {
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
             Optional<Note> note, Set<Role> roles) {
         requireAllNonNull(name, phone, email, address, tags, status, note, roles);
-        AppUtil.checkArgument(!roles.isEmpty(), MESSAGE_ROLES_REQUIRED);
+        AppUtil.checkArgument(!roles.isEmpty(),
+                "Every person must have at least one role.");
         this.roles = Set.copyOf(roles);
         this.name = name;
         this.phone = phone;
