@@ -1,5 +1,7 @@
 package seedu.address;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -41,18 +43,26 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private final Path preferencesPath;
+    private final Path candidatesPath;
     private Optional<Path> recoveryBackup = Optional.empty();
     private DataDirectoryLock dataDirectoryLock;
+
+    /** Creates the application using its standard data and preference locations. */
+    public MainApp() {
+        this(USER_PREFS_FILE_PATH, ADDRESS_BOOK_FILE_PATH);
+    }
+
+    /** Creates an application with isolated storage locations for lifecycle tests. */
+    MainApp(Path preferencesPath, Path candidatesPath) {
+        this.preferencesPath = requireNonNull(preferencesPath);
+        this.candidatesPath = requireNonNull(candidatesPath);
+    }
 
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing HRvest ]===========================");
         super.init();
-        initialize(USER_PREFS_FILE_PATH, ADDRESS_BOOK_FILE_PATH);
-    }
-
-    /** Initializes storage and application components only while holding exclusive access to the data folder. */
-    void initialize(Path preferencesPath, Path candidatesPath) throws IOException {
         try {
             dataDirectoryLock = DataDirectoryLock.acquire(candidatesPath.toAbsolutePath().getParent());
             JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(preferencesPath);
