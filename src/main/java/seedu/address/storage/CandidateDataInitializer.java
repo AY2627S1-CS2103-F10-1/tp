@@ -40,10 +40,11 @@ public class CandidateDataInitializer {
             }
             return savedData.orElseGet(SampleDataUtil::getSampleAddressBook);
         } catch (DataLoadingException e) {
-            logger.warning("Candidate data at " + storage.getAddressBookFilePath() + " could not be loaded."
-                    + " Backing it up and starting with an empty candidate list.");
+            // The failure may come from the role catalog, so neither file is singled out.
+            logger.warning("Could not load the candidate data at " + storage.getAddressBookFilePath()
+                    + " or the role catalog beside it. Backing them up and starting with no candidates or roles.");
             recoveryBackup = storage.backupAddressBook();
-            logger.info("Backed up the rejected candidate data to " + recoveryBackup);
+            logger.info("Backed up the data that could not be loaded to " + recoveryBackup);
             AddressBook replacement = new AddressBook();
             storage.saveAddressBook(replacement);
             return replacement;
