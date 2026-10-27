@@ -67,6 +67,7 @@
         "rejecting-note-input-in-add": "Rejecting note input in add",
         "deleting-a-candidate": "Deleting a candidate",
         "preserving-filters-after-candidate-updates": "Preserving filters after candidate updates",
+        "header-summary-cards": "Header summary cards",
         "candidate-note-indicator": "Candidate note indicator",
         "managing-roles": "Managing roles",
         "saving-data": "Saving data"
@@ -132,6 +133,7 @@
         "exporting-candidates-export": "Exporting candidates: export",
         "exiting-the-program-exit": "Exiting the program: exit",
         "candidate-note-indicator": "Candidate note indicator",
+        "header-summary-cards": "Header summary cards",
         "displayed-candidate-count": "Displayed candidate count",
         "navigating-command-history": "Navigating command history",
         "saving-the-data": "Saving the data",
