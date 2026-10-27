@@ -39,7 +39,7 @@ ModelManager -right-> "1" UserPrefs
 UserPrefs .up.|> ReadOnlyUserPrefs
 
 AddressBook *--> "1" RoleCatalog
-RoleCatalog --> "1..*" Role : catalogue
+RoleCatalog --> "1..*" Role : catalog
 note right of RoleCatalog
   Always contains the protected
   "No role" entry.

@@ -99,15 +99,15 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 | `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/john.doe@example.com`. The local part allows letters, digits, and `+`, `_`, `.`, or `-` between alphanumeric groups; it must start and end with a letter or digit. Domain labels allow letters, digits, and internal hyphens; the final label must contain at least two characters. Spaces are not accepted. |
 | `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
-| `r/ROLE` | Yes | An existing [role name](#managing-the-role-catalogue). Repeat `r/` to assign multiple roles. Matching ignores case and surrounding whitespace; repeated references have no extra effect. Use `r/No role` if no role applies. |
+| `r/ROLE` | Yes | An existing [role name](#managing-the-role-catalog). Repeat `r/` to assign multiple roles. Matching ignores case and surrounding whitespace. Use `r/No role` if no role applies. |
 | `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
 | `t/TAG` | No | A non-blank label containing only letters and digits, e.g. `t/backend`. Spaces and punctuation are not accepted. Repeat the prefix for multiple tags: `t/backend t/Java`. Identical tags are removed, but tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. |
 
 **Input and results:**
 
 * Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Both `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
-* Supply valid `n/`, `p/`, `e/`, `a/`, and `r/` values. Missing contact details or text before the first prefix produces an invalid-command-format message. Missing `r/` reports `Specify at least one role. Use r/No role if no role applies.`
-* A bare `r/` reports `Role name cannot be empty. Use r/No role if no role applies.` An unknown role reports its name and suggests `create_role n/NAME`. All roles must be valid before the candidate is added.
+* Supply valid `n/`, `p/`, `e/`, `a/`, and `r/` values. Missing contact details or text before the first prefix produces an invalid-command-format message.
+* Create named roles with `create_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
 * Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This person already exists in the address book.` Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
 * Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix.
 * `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
@@ -115,7 +115,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 Examples:
 
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 r/No role`
-* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison r/No role s/Interviewing t/backend`
+* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison r/Developer s/Interviewing t/backend` (create `Developer` first with `create_role n/Developer`).
 
 ### Listing all candidates: `list`
 
@@ -127,7 +127,7 @@ Format: `list`
 
 ### Editing a candidate: `edit`
 
-The success message shows the candidate's updated details, including their current status and roles.
+The success message shows the candidate's updated details.
 
 Edits an existing person in HRvest.
 
@@ -221,12 +221,15 @@ Filters candidates by hiring status, assigned roles, or both.
 
 Format: `filter [s/STATUS]... [r/ROLE]...`
 
-* Supply at least one status or role. Repeat either prefix to match any value within that field (`OR`). If both fields are supplied, a candidate must match both groups (`AND`).
+* Supply at least one status or role.
+* Repeat `s/` or `r/` to match any value within that field (`OR`). Repeated values have no extra effect.
+* If both fields are supplied, candidates must match a specified status and a specified role (`AND`).
 * Each `filter` replaces the previous search or filter and considers all candidates.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
-* Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalogue; repeated values have no extra effect.
-* An invalid status lists valid statuses. A blank role reports `Role name cannot be empty. Use r/No role if no role applies.` An unknown role identifies the name and suggests `list_role`. Invalid input leaves the current view unchanged.
-* An existing role with no matching candidates gives a zero-results response. Renaming a role keeps an active filter following that role; deleting it removes that role's matches.
+* Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalog.
+* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`.
+* If no candidates match, the result count is zero.
+* Renaming a role keeps an active filter following that role. Deleting it removes that role's matches.
 
 Examples (create `Developer` and `Designer` first):
 
@@ -267,9 +270,9 @@ Examples:
 * `list` followed by `expand 1` shows the 1st candidate in HRvest.
 * `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the results of the `filter` command.
 
-### Managing the role catalogue
+### Managing the role catalog
 
-The role catalogue is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
+The role catalog is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
 * Each candidate has one or more roles. `add` requires explicit roles; create named roles before assigning them, or use `r/No role`.
 * `No role` cannot be renamed or deleted. Assigning any named role removes `No role`, even if both are supplied. It remains the fallback when deleting a candidate's last named role.
@@ -304,23 +307,23 @@ Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
 * The role must exist and must not be `No role`.
 * The new name must not match another role. Changing only capitalisation is allowed.
 * Other role assignments stay unchanged.
-* Exits expanded view and shows all candidates; other candidate filters remain active.
+* If a candidate is expanded, returns to the full candidate list. Otherwise, the current filter remains active.
 
 Example: `edit_role r/Software Engineer n/Senior Software Engineer`
 
 #### Deleting a role globally: `delete_role`
 
-Removes a role from the catalogue and all assigned candidates.
+Removes a role from the catalog and all assigned candidates.
 
 Format: `delete_role r/NAME`
 
 * The role must exist and must not be `No role`.
 * Candidates keep their other roles. Those losing their last role receive `No role`.
-* Exits expanded view and shows all candidates; other candidate filters remain active.
+* If a candidate is expanded, returns to the full candidate list. Otherwise, the current filter remains active.
 
 Example: `delete_role r/Senior Software Engineer`
 
-#### Listing the complete catalogue: `list_role`
+#### Listing the complete catalog: `list_role`
 
 Shows all role names in the command result, including unused roles and `No role`.
 
@@ -331,7 +334,7 @@ Format: `list_role`
 
 ### Clearing all entries: `clear`
 
-Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
+Clears all candidates from HRvest while preserving the role catalog, including unused roles.
 
 Format: `clear confirm`
 
@@ -354,7 +357,7 @@ Format: `export`
 * Use the lowercase command; surrounding whitespace is accepted.
 * The destination is always `data/export.csv`. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
-* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Role assignments and the role catalog are not exported; back up both JSON files to preserve them.
 * The file is UTF-8 with a byte order mark, so spreadsheet programs such as Excel show accented and non-Latin text correctly.
 * For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
@@ -441,7 +444,7 @@ Advanced users may edit the JSON files in the `data` folder.
 
 <box type="warning" seamless>
 
-Invalid edits can cause HRvest to start with an empty candidate list and the default role catalogue. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
+Invalid edits can cause HRvest to start with an empty candidate list and the default role catalog. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
 
 1. Close HRvest and copy the backups shown in the warning.
 1. Repair the copies and restore the corresponding candidate and role files together.

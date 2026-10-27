@@ -54,7 +54,7 @@ public class ParserUtil {
         return preparedName;
     }
 
-    /** Parses repeated role names without resolving catalogue membership. */
+    /** Parses repeated role names without resolving catalog membership. */
     public static Set<String> parseRoleNames(Collection<String> names) throws ParseException {
         requireNonNull(names);
         Set<String> roles = new HashSet<>();
