@@ -1,17 +1,18 @@
 package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.FileTime;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -60,70 +61,55 @@ public class CsvImportReaderTest {
     }
 
     @Test
-    public void read_contendedLock_rejectsWithoutWaiting() throws Exception {
-        Path input = Files.writeString(directory.resolve("import.csv"), "content");
-        try (FileChannel channel = FileChannel.open(input, StandardOpenOption.WRITE);
-                FileLock lock = channel.lock()) {
-            assertTrue(lock.isValid());
-            assertThrows(IOException.class, () -> reader().read(dataFile()));
-        }
-        assertArrayEquals("content".getBytes(StandardCharsets.UTF_8), reader().read(dataFile()));
+    public void read_success_closesChannel() throws Exception {
+        Files.writeString(directory.resolve("import.csv"), "content");
+        TrackingReader trackingReader = new TrackingReader();
+
+        assertArrayEquals("content".getBytes(StandardCharsets.UTF_8), trackingReader.read(dataFile()));
+        assertFalse(trackingReader.channel.isOpen());
     }
 
     @Test
-    public void read_detectedChange_rejectsAndReleasesLock() throws Exception {
-        Path input = Files.writeString(directory.resolve("import.csv"), "content");
-        CsvImportReader changingReader = new CsvImportReader() {
-            @Override
-            protected byte[] readBytes(FileChannel channel) throws IOException {
-                byte[] result = super.readBytes(channel);
-                Files.setLastModifiedTime(input, FileTime.fromMillis(1));
-                return result;
-            }
-        };
-        assertThrows(IOException.class, () -> changingReader.read(dataFile()));
-        assertArrayEquals(Files.readAllBytes(input), reader().read(dataFile()));
+    public void read_laterEditsOrDeletion_doNotChangeBufferedCopy() throws Exception {
+        Path input = Files.writeString(directory.resolve("import.csv"), "original content");
+        byte[] buffered = reader().read(dataFile());
+
+        Files.writeString(input, "replacement content");
+        assertArrayEquals("original content".getBytes(StandardCharsets.UTF_8), buffered);
+        Files.delete(input);
+        assertArrayEquals("original content".getBytes(StandardCharsets.UTF_8), buffered);
     }
 
     @Test
     public void read_growthAfterPrecheck_enforcesLimitWhileReading() throws Exception {
         Path input = Files.writeString(directory.resolve("import.csv"), "content");
-        CsvImportReader growingReader = new CsvImportReader() {
+        TrackingReader growingReader = new TrackingReader() {
             @Override
             protected byte[] readBytes(FileChannel channel) throws IOException {
                 Files.write(input, new byte[CsvImportReader.MAX_BYTES + 1]);
                 return super.readBytes(channel);
             }
         };
-        assertThrows(IOException.class, () -> growingReader.read(dataFile()));
+        assertThrows(IOException.class, "Could not read " + input + ": Input exceeds the 10 MiB file limit.", () ->
+                growingReader.read(dataFile()));
+        assertFalse(growingReader.channel.isOpen());
     }
 
     @Test
-    public void read_replacedFile_rejects() throws Exception {
+    public void read_readOrPermissionFailure_reportsCauseAndClosesChannel() throws Exception {
         Path input = Files.writeString(directory.resolve("import.csv"), "content");
-        CsvImportReader replacingReader = new CsvImportReader() {
-            @Override
-            protected byte[] readBytes(FileChannel channel) throws IOException {
-                byte[] result = super.readBytes(channel);
-                Files.delete(input);
-                Files.writeString(input, "replacement");
-                return result;
-            }
-        };
-        assertThrows(IOException.class, () -> replacingReader.read(dataFile()));
-    }
+        List<IOException> failures = List.of(new IOException("Injected read failure"),
+                new AccessDeniedException("input"));
+        for (IOException failure : failures) {
+            TrackingReader failingReader = new TrackingReader();
+            failingReader.failure = failure;
+            String reason = failure instanceof AccessDeniedException ? "Read permission denied." : failure.getMessage();
 
-    @Test
-    public void read_readFailure_releasesLock() throws Exception {
-        Path input = Files.writeString(directory.resolve("import.csv"), "content");
-        CsvImportReader failingReader = new CsvImportReader() {
-            @Override
-            protected byte[] readBytes(FileChannel channel) throws IOException {
-                throw new IOException("Injected read failure");
-            }
-        };
-        assertThrows(IOException.class, () -> failingReader.read(dataFile()));
-        assertArrayEquals(Files.readAllBytes(input), reader().read(dataFile()));
+            assertThrows(IOException.class, "Could not read " + input + ": " + reason, () ->
+                    failingReader.read(dataFile()));
+            assertFalse(failingReader.channel.isOpen());
+            assertArrayEquals("content".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(input));
+        }
     }
 
     private CsvImportReader reader() {
@@ -132,5 +118,19 @@ public class CsvImportReaderTest {
 
     private Path dataFile() {
         return directory.resolve("data/HRvest.json");
+    }
+
+    private static class TrackingReader extends CsvImportReader {
+        private FileChannel channel;
+        private IOException failure;
+
+        @Override
+        protected byte[] readBytes(FileChannel channel) throws IOException {
+            this.channel = channel;
+            if (failure != null) {
+                throw failure;
+            }
+            return super.readBytes(channel);
+        }
     }
 }
