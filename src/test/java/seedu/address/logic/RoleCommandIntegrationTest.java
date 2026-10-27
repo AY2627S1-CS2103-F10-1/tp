@@ -46,7 +46,8 @@ class RoleCommandIntegrationTest {
 
         ModelManager restarted = new ModelManager(storage().readAddressBook().orElseThrow(), new UserPrefs());
         assertEquals(id, restarted.getRoleCatalog().requireRole("Senior Engineer").getId());
-        assertEquals(2, restarted.getAddressBook().getPersonList().getFirst().getRoles().size());
+        assertEquals(Set.of(restarted.getRoleCatalog().requireRole("Senior Engineer")),
+                restarted.getAddressBook().getPersonList().getFirst().getRoles());
         LogicManager restartedLogic = new LogicManager(restarted, storage());
         assertEquals("Roles:\nNo role\nSenior Engineer\nUnused",
                 restartedLogic.execute("list_role").getFeedbackToUser());

@@ -63,13 +63,17 @@ public class Person {
         this(name, phone, email, address, tags, status, note, Set.of(Role.NO_ROLE));
     }
 
-    /** Creates a person with explicit nonempty role assignments. */
+    /** Creates a person with nonempty role assignments, removing No role when named roles are present. */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
             Optional<Note> note, Set<Role> roles) {
         requireAllNonNull(name, phone, email, address, tags, status, note, roles);
         AppUtil.checkArgument(!roles.isEmpty(),
                 "Every person must have at least one role.");
-        this.roles = Set.copyOf(roles);
+        Set<Role> assignedRoles = new HashSet<>(roles);
+        if (assignedRoles.size() > 1) {
+            assignedRoles.remove(Role.NO_ROLE);
+        }
+        this.roles = Set.copyOf(assignedRoles);
         this.name = name;
         this.phone = phone;
         this.email = email;

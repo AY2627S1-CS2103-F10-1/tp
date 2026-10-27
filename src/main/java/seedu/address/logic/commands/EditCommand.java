@@ -1,10 +1,12 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -44,6 +46,7 @@ public class EditCommand extends Command {
             + "[" + PREFIX_PHONE + "PHONE] "
             + "[" + PREFIX_EMAIL + "EMAIL] "
             + "[" + PREFIX_ADDRESS + "ADDRESS] "
+            + "[" + PREFIX_ROLE + "ROLE]... "
             + "[" + PREFIX_STATUS + "STATUS] "
             + "[" + PREFIX_TAG + "TAG]...\n"
             + "Example: " + COMMAND_WORD + " 1 "
@@ -81,6 +84,10 @@ public class EditCommand extends Command {
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        if (editPersonDescriptor.getRoleNames().isPresent()) {
+            editedPerson = editedPerson.withRoles(RoleCommandUtil.resolveRoles(model,
+                    editPersonDescriptor.getRoleNames().get(), "create_role n/NAME"));
+        }
 
         if (editedPerson.equals(personToEdit)) {
             return new CommandResult(String.format(MESSAGE_NOT_CHANGED, personToEdit.getName()));
@@ -146,12 +153,13 @@ public class EditCommand extends Command {
         private Address address;
         private Status status;
         private Set<Tag> tags;
+        private Set<String> roleNames;
 
         public EditPersonDescriptor() {}
 
         /**
          * Copy constructor.
-         * A defensive copy of {@code tags} is used internally.
+         * Defensive copies of {@code tags} and role names are used internally.
          */
         public EditPersonDescriptor(EditPersonDescriptor toCopy) {
             setName(toCopy.name);
@@ -160,13 +168,14 @@ public class EditCommand extends Command {
             setAddress(toCopy.address);
             setStatus(toCopy.status);
             setTags(toCopy.tags);
+            setRoleNames(toCopy.roleNames);
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, address, status, tags);
+            return CollectionUtil.isAnyNonNull(name, phone, email, address, status, tags, roleNames);
         }
 
         public void setName(Name name) {
@@ -211,7 +220,7 @@ public class EditCommand extends Command {
 
         /**
          * Sets {@code tags} to this object's {@code tags}.
-         * A defensive copy of {@code tags} is used internally.
+         * Defensive copies of {@code tags} and role names are used internally.
          */
         public void setTags(Set<Tag> tags) {
             this.tags = (tags != null) ? new HashSet<>(tags) : null;
@@ -224,6 +233,19 @@ public class EditCommand extends Command {
          */
         public Optional<Set<Tag>> getTags() {
             return (tags != null) ? Optional.of(Collections.unmodifiableSet(tags)) : Optional.empty();
+        }
+
+        /** Sets replacement role names using a defensive copy; null preserves existing assignments. */
+        public void setRoleNames(Set<String> roleNames) {
+            if (roleNames != null) {
+                checkArgument(!roleNames.isEmpty(), AddCommand.MESSAGE_MISSING_ROLE);
+            }
+            this.roleNames = roleNames == null ? null : Set.copyOf(roleNames);
+        }
+
+        /** Returns immutable replacement names, or an empty optional if roles are unchanged. */
+        public Optional<Set<String>> getRoleNames() {
+            return Optional.ofNullable(roleNames);
         }
 
         @Override
@@ -242,7 +264,8 @@ public class EditCommand extends Command {
                     && Objects.equals(email, otherEditPersonDescriptor.email)
                     && Objects.equals(address, otherEditPersonDescriptor.address)
                     && Objects.equals(status, otherEditPersonDescriptor.status)
-                    && Objects.equals(tags, otherEditPersonDescriptor.tags);
+                    && Objects.equals(tags, otherEditPersonDescriptor.tags)
+                    && Objects.equals(roleNames, otherEditPersonDescriptor.roleNames);
         }
 
         @Override
@@ -254,6 +277,7 @@ public class EditCommand extends Command {
                     .add("address", address)
                     .add("status", status)
                     .add("tags", tags)
+                    .add("roleNames", roleNames)
                     .toString();
         }
     }

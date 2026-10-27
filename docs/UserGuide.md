@@ -31,7 +31,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
    * `list` : Lists all candidates.
 
-   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01` : Adds a candidate named `John Doe` to HRvest.
+   * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 r/No role` : Adds a candidate named `John Doe` to HRvest.
 
    * `delete 3` : Deletes the 3rd candidate shown in the current list.
 
@@ -89,7 +89,7 @@ Format: `help`
 
 Adds a candidate to HRvest.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/STATUS] [t/TAG]... `
 
 **Parameters:**
 
@@ -98,22 +98,24 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 | `n/NAME` | Yes | A non-blank name containing only letters, digits, and spaces, e.g. `n/John Doe`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. Punctuation such as apostrophes and hyphens is not accepted. |
 | `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/john.doe@example.com`. The local part allows letters, digits, and `+`, `_`, `.`, or `-` between alphanumeric groups; it must start and end with a letter or digit. Domain labels allow letters, digits, and internal hyphens; the final label must contain at least two characters. Spaces are not accepted. |
-| `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
+| `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01 r/No role`. Spaces and punctuation are allowed. |
+| `r/ROLE` | Yes | An existing [role name](#managing-the-role-catalogue). Repeat `r/` to assign multiple roles. Matching ignores case and surrounding whitespace; repeated references have no extra effect. Use `r/No role` if no role applies. |
 | `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
 | `t/TAG` | No | A non-blank label containing only letters and digits, e.g. `t/backend`. Spaces and punctuation are not accepted. Repeat the prefix for multiple tags: `t/backend t/Java`. Identical tags are removed, but tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. |
 
 **Input and results:**
 
-* Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Only `t/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
-* All four required prefixes must have valid values. Missing required prefixes or text before the first prefix produces an invalid-command-format message.
-* Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This person already exists in the address book.` Names, phones, addresses, statuses, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
+* Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Both `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
+* Supply valid `n/`, `p/`, `e/`, `a/`, and `r/` values. Missing contact details or text before the first prefix produces an invalid-command-format message. Missing `r/` reports `Specify at least one role. Use r/No role if no role applies.`
+* A bare `r/` reports `Role name cannot be empty. Use r/No role if no role applies.` An unknown role reports its name and suggests `create_role n/NAME`. All roles must be valid before the candidate is added.
+* Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This person already exists in the address book.` Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
 * Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix.
 * `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
 
 Examples:
 
-* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01`
-* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison s/Interviewing t/backend`
+* `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 r/No role`
+* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison r/No role s/Interviewing t/backend`
 
 ### Listing all candidates: `list`
 
@@ -125,17 +127,18 @@ Format: `list`
 
 ### Editing a candidate: `edit`
 
-The success message shows the candidate's updated details, including their current status.
+The success message shows the candidate's updated details, including their current status and roles.
 
 Edits an existing person in HRvest.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]...`
+Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`
 
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values. The current filter is kept; candidates that no longer match disappear from the displayed list.
 * If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This person already exists in the address book.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
+* Supplied `r/` values replace all existing roles; omitting `r/` preserves them. A bare `r/` is invalid; use `r/No role` to remove named roles. Unknown roles suggest `create_role n/NAME`, and an invalid role leaves all details unchanged.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
 * As in `add`, a recognised prefix in any letter case after a space starts a new field. For example, `edit 1 a/Unit N/A` changes the address to `Unit` and the name to `A`. Check the success message, which shows the updated details.
@@ -145,8 +148,9 @@ Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
 *  `edit 3 s/Interviewing` Updates the status of the 3rd candidate to `Interviewing`.
+* `edit 1 r/Developer r/Designer` Replaces the 1st candidate's roles with Developer and Designer, which must already exist.
 
-After an ordinary `edit`, `note`, or `status` update, the current name or status filter remains active. Displayed indexes may change when a candidate stops matching. Expanding a candidate replaces that filter with a selection of the candidate: an update keeps them expanded at index `1`, even if their new name or status would not match the earlier filter. Check the displayed list before the next index command; use `list` to show all candidates.
+After an ordinary `edit`, `note`, or `status` update, the current name, status, or role filter remains active. Displayed indexes may change when a candidate stops matching. Expanding a candidate replaces that filter with a selection of the candidate: an update keeps them expanded at index `1`, even if their new name, status, or roles would not match the earlier filter. Check the displayed list before the next index command; use `list` to show all candidates.
 
 ### Adding, replacing, or clearing a candidate's note: `note`
 
@@ -210,23 +214,25 @@ Examples:
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
 
-### Filtering candidates by status: `filter`
+### Filtering candidates by status or role: `filter`
 
-Filters candidates by their hiring status.
+Filters candidates by hiring status, assigned roles, or both.
 
-Format: `filter s/STATUS [s/MORE_STATUS]...`
+Format: `filter [s/STATUS]... [r/ROLE]...`
 
-* Displays all candidates whose status is any of the specified statuses.
-* Repeat `s/` to display candidates in any of several statuses (an `OR` filter). Repeating a status has no extra effect.
+* Supply at least one status or role. Repeat either prefix to match any value within that field (`OR`). If both fields are supplied, a candidate must match both groups (`AND`).
+* Each `filter` replaces the previous search or filter and considers all candidates.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
-* Statuses are case-insensitive.
-* If any given status is invalid, nothing is filtered and the valid statuses are listed.
+* Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalogue; repeated values have no extra effect.
+* An invalid status lists valid statuses. A blank role reports `Role name cannot be empty. Use r/No role if no role applies.` An unknown role identifies the name and suggests `list_role`. Invalid input leaves the current view unchanged.
+* An existing role with no matching candidates gives a zero-results response. Renaming a role keeps an active filter following that role; deleting it removes that role's matches.
 
-Examples:
+Examples (create `Developer` and `Designer` first):
 
-* `filter s/Interviewing` displays all candidates currently in the interviewing stage.
-* `filter s/Offered` displays all candidates who have been made offers.
-* `filter s/Interviewing s/Offered` displays all candidates who are interviewing or have been made offers.
+* `filter s/Interviewing s/Offered` shows candidates who are interviewing or have been offered a job.
+* `filter r/Developer r/Designer` shows candidates assigned to either role.
+* `filter r/Developer s/Interviewing s/Offered` shows Developers who are interviewing or have been offered a job.
+* `filter r/No role` shows candidates with no named role.
 
 ### Deleting a candidate: `delete`
 
@@ -264,8 +270,9 @@ Examples:
 
 The role catalogue is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
-* Each candidate has one or more roles. New candidates receive `No role`; `add` and `edit` do not assign other roles in this version.
-* `No role` cannot be renamed or deleted and may coexist with other roles.
+* Each candidate has one or more roles. `add` requires explicit roles; create named roles before assigning them, or use `r/No role`.
+* `No role` cannot be renamed or deleted. Assigning any named role removes `No role`, even if both are supplied. It remains the fallback when deleting a candidate's last named role.
+* Assigned roles appear as badges like tags on each candidate card. Long role names wrap.
 * Unused roles remain available, including after `clear` and restarts.
 * Role command words and prefixes are case-insensitive. Put whitespace before each prefix and supply each required prefix exactly once.
 * Changes save automatically. Invalid commands report an error without changing candidates or roles.
@@ -424,7 +431,7 @@ Advanced users may edit the JSON files in the `data` folder.
 **When editing records:**
 
 * Keep candidate emails unique, ignoring case.
-* Each candidate needs at least one valid role ID from `roles.json`, without duplicates. Use `no-role` for `No role`, rather than its display name.
+* Each candidate needs at least one valid role ID from `roles.json`, without duplicates. Loading a mix of `no-role` and named role IDs removes `no-role`. Use `no-role` for `No role`, rather than its display name.
 * Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
 * One invalid value in **any** candidate, such as a space between the digits of a phone number, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
 * Save the file as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
@@ -471,16 +478,16 @@ _Details coming soon ..._
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 r/No role t/friend t/colleague`
 **Create role** | `create_role n/NAME`<br> e.g., `create_role n/Software Engineer`
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`
 **Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`
-**Filter** | `filter s/STATUS [s/MORE_STATUS]...`<br> e.g., `filter s/Interviewing s/Offered`
+**Filter** | `filter [s/STATUS]... [r/ROLE]...`<br> e.g., `filter s/Interviewing s/Offered`
 **Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
 **List**   | `list`
 **Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear

@@ -38,7 +38,7 @@ class RoleCommandsTest {
 
         assertEquals(id, model.getRoleCatalog().requireRole("Senior Engineer").getId());
         Set<Role> assignments = model.getAddressBook().getPersonList().getFirst().getRoles();
-        assertEquals(Set.of(Role.NO_ROLE, model.getRoleCatalog().requireRole("Senior Engineer")), assignments);
+        assertEquals(Set.of(model.getRoleCatalog().requireRole("Senior Engineer")), assignments);
         assertTrue(model.getFilteredPersonList().isEmpty());
     }
 

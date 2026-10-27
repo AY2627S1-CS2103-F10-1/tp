@@ -159,8 +159,10 @@ The `Model` component,
 
 The catalogue stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position, so catalogue sorting does not change their targets.
 
-* Each candidate has at least one role from the catalogue. The protected `No role` entry provides a fallback when deleting the candidate's last role.
+* Each candidate has at least one role from the catalogue. `Person` removes `No role` whenever named roles are assigned, including when loading older mixed assignments. The protected `No role` entry provides a fallback when deleting the candidate's last role.
 * Roles keep a stable identity across renames. A rename updates the catalogue and all assigned candidates together, including candidates outside the displayed list.
+* Parsers validate role names through `ParserUtil.parseRoleName`; commands resolve membership through `RoleCatalog` before changing any data. Person edits replace all assignments in one `setPerson` call.
+* Role filters retain IDs rather than `Role` objects because role equality includes the display name. A rename therefore keeps matching the same role; a newly created role with a deleted role's name does not inherit its filter. Status and role groups combine with `AND`, with `OR` within each group.
 * The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates.
 
 ### Storage component
@@ -425,9 +427,9 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | Priority | As a …           | I want to …                                          | So that I can…                                                     |
 |----------|-------------------|-------------------------------------------------------|---------------------------------------------------------------------|
 | `* * *`  | new user          | launch HRvest and see usage instructions on screen    | start using the app without reading external docs                   |
-| `* * *`  | new user          | add a new candidate with contact details              | keep a record of every candidate I am considering                   |
+| `* * *`  | new user          | add a new candidate with contact details and roles    | keep a record of every candidate I am considering                   |
 | `* * *`  | new user          | search for a candidate by name                        | view their details without scrolling through the whole list         |
-| `* * *`  | new user          | edit a candidate's contact details                    | correct mistakes or outdated details without re-adding them         |
+| `* * *`  | new user          | edit a candidate's details and role assignments      | correct mistakes or outdated details without re-adding them         |
 | `* * *`  | user              | delete a candidate from the list                      | keep my list focused on candidates still under consideration        |
 | `* * *`  | user              | list every candidate currently in the app             | see every candidate in my pipeline in one view                      |
 | `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
@@ -473,14 +475,14 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User requests to add a candidate, giving the candidate's details.
+1. User requests to add a candidate, giving their contact details and one or more existing roles (or No role).
 1. HRvest adds the candidate with status Applied by default (or the specified status, if provided) and shows the added candidate.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. A required detail is missing, or a given detail is invalid.
+* 1a. A required detail is missing, a given detail is invalid, or a role does not exist.
 
     * 1a1. HRvest shows an error message describing the problem.
 
@@ -549,7 +551,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to change one or more of the candidate details of a specific candidate in the list.
-1. HRvest updates the candidate's details and shows the updated candidate.
+1. HRvest updates the candidate's details, replacing role assignments if supplied, and shows the updated candidate.
 
    Use case ends.
 
@@ -571,7 +573,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-* 2c. A new detail is invalid.
+* 2c. A new detail is invalid or a role does not exist.
 
     * 2c1. HRvest shows an error message describing the problem.
 
@@ -634,12 +636,12 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC07 - Filter candidates by status**
+**Use case: UC07 - Filter candidates by status or role**
 
 **MSS**
 
-1. User requests to filter candidates by one or more candidate statuses.
-1. HRvest shows candidates with any of the specified statuses.
+1. User requests to filter candidates by statuses, roles, or both.
+1. HRvest replaces the current view with candidates matching any value within each supplied field and both fields when supplied.
 
    Use case ends.
 
@@ -651,7 +653,13 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-* 2a. No candidates match any of the specified statuses.
+* 1b. A role name is blank or does not exist.
+
+    * 1b1. HRvest reports the problem and keeps the current view unchanged.
+
+      Use case ends.
+
+* 2a. No candidates match the specified criteria.
 
     * 2a1. HRvest informs the user that no candidates match.
 
@@ -815,9 +823,9 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
-* **Candidate details**: A candidate's name, phone number, email address, address, status and tags.
+* **Candidate details**: A candidate's name, phone number, email address, address, status, roles and tags.
 * **Candidate status**: One of Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, or Withdrawn.
-* **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, tags or notes, affect duplicate detection.
+* **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, roles, tags or notes, affect duplicate detection.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
 * **Private contact detail**: A contact detail that is not meant to be shared with others
@@ -857,7 +865,7 @@ testers are expected to do more *exploratory* testing.
 1. Run `add n/A p/123 e/a@x.com a/Blk 1 no/great candidate`. Expected: The error explains that `add` does not support `no/` and directs you to `note`. No candidate is added and existing data stays unchanged.
 1. Run `add n/A p/123 e/a@x.com a/Blk 1 no/` (empty note). Expected: The same error, with no candidate or file changes.
 1. Repeat with `no/` before the required fields, or after a tag/status field. Expected: The same error, with no candidate or file changes.
-1. Run `add n/A p/123 e/a@x.com a/Blk 1 yes/no/feedback` with an unused email. Expected: The candidate is added with the literal address `Blk 1 yes/no/feedback`.
+1. Run `add n/A p/123 e/a@x.com a/Blk 1 yes/no/feedback r/No role` with an unused email. Expected: The candidate is added with the literal address `Blk 1 yes/no/feedback`.
 
 ### Deleting a candidate
 
@@ -906,6 +914,16 @@ testers are expected to do more *exploratory* testing.
 1. Narrow the window until the long name is truncated. Expected: The sticky note icon remains visible, and the candidate's status still appears below the contact details.
 1. Run `expand INDEX` for the candidate with a note. Expected: The full note appears and the sticky note icon remains visible. Run `list`, then expand the candidate without a note. Expected: `No note recorded.` appears and no icon space is reserved. Run `list` again. Expected: All candidates return to collapsed cards with note contents hidden.
 
+### Assigning and filtering candidate roles
+
+1. Run `create_role n/Developer` and `create_role n/Designer` in a test copy. Add a candidate with `r/Developer r/developer r/No role`. Expected: Only one Developer badge appears, with no No role badge. Restart; the assignment remains.
+1. Run `edit 1 r/Developer r/Designer`, then `edit 1 p/91234567`. Expected: Both roles remain after the phone edit. Run `edit 1 r/No role`; only No role remains.
+1. Try an `add` without `r/`, `edit 1 r/`, and `edit 1 p/98765432 r/Missing`. Expected: Specific errors leave all candidates unchanged; the missing-role error suggests `r/No role`.
+1. Assign Developer and Interviewing to one candidate and Designer and Applied to another. Run `filter r/Developer r/Designer s/Interviewing`. Expected: Only the Interviewing candidate appears. Run `filter r/Designer`; the Applied candidate appears because each filter starts from all candidates.
+1. Run `filter r/Missing`. Expected: An error suggests `list_role` and preserves the displayed list. Filter by an unused existing role; expect zero results.
+1. Filter by Developer, then rename Developer. Expected: The same candidate still matches. Change their assignments so they no longer have that role; they disappear. In expanded view, an assignment edit keeps the candidate expanded instead.
+1. Create and assign a long multiword role. Resize the window and expand the candidate. Expected: All role badges remain readable and wrap within the card.
+
 ### Managing roles
 
 Use a separate test folder and keep a matching backup of candidate and catalogue files.
@@ -913,7 +931,7 @@ Use a separate test folder and keep a matching backup of candidate and catalogue
 1. Run `create_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
 1. Run `create_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalogue.
 1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
-1. To check global assignment updates, close HRvest. In a test copy, assign the new role ID to two candidates' `roles` arrays; give one candidate another valid role too. Restart, filter so one candidate is hidden, and rename the role again. Close HRvest and inspect both files. Expected: The catalogue name changes, both candidates retain the same role ID, and their other fields and assignments remain unchanged.
+1. Assign `Senior Documentation Tester` to two candidates with `edit INDEX r/Senior Documentation Tester`; give one another existing role using a second `r/` in the same edit. Filter so one candidate is hidden, then rename the role again. Expected: Both assignments update, their role IDs stay unchanged, and other fields and assignments are preserved.
 1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalogue entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.
 1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear confirm`, then `list_role`. Expected: Candidates are removed while remaining catalogue entries survive. Restore both test files together after testing.
 

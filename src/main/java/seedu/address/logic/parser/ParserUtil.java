@@ -26,6 +26,9 @@ import seedu.address.model.tag.Tag;
  */
 public class ParserUtil {
 
+    public static final String MESSAGE_EMPTY_ROLE =
+            "Role name cannot be empty. Use r/No role if no role applies.";
+
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
     public static final String MESSAGE_UNSUPPORTED_CHARACTER =
@@ -48,6 +51,19 @@ public class ParserUtil {
             throw new ParseException(Role.MESSAGE_RESERVED_SYNTAX);
         }
         return preparedName;
+    }
+
+    /** Parses repeated role names without resolving catalogue membership. */
+    public static Set<String> parseRoleNames(Collection<String> names) throws ParseException {
+        requireNonNull(names);
+        Set<String> roles = new HashSet<>();
+        for (String name : names) {
+            if (Role.prepareName(name).isEmpty()) {
+                throw new ParseException(MESSAGE_EMPTY_ROLE);
+            }
+            roles.add(parseRoleName(name));
+        }
+        return roles;
     }
 
     /**

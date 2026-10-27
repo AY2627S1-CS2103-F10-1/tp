@@ -45,6 +45,9 @@ public class Messages {
                 .append(person.getAddress())
                 .append("; Status: ")
                 .append(person.getStatus())
+                .append("; Roles: ")
+                .append(person.getRoles().stream().map(role -> role.getName()).sorted()
+                        .collect(Collectors.joining(", ")))
                 .append("; Tags: ");
         person.getTags().forEach(builder::append);
         return builder.toString();

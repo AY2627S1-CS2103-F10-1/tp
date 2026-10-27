@@ -140,10 +140,11 @@ class RoleFoundationTest {
     }
 
     @Test
-    void replaceRoles_noRoleAlongsideOtherRole_preservesBoth() {
+    void replaceRoles_noRoleAlongsideOtherRole_removesNoRole() {
         ModelManager model = getAssignedModel("Engineer");
         model.replacePersonRoles(model.getAddressBook().getPersonList().getFirst(), List.of("No role", "Engineer"));
-        assertEquals(2, model.getAddressBook().getPersonList().getFirst().getRoles().size());
+        assertEquals(Set.of(model.getRoleCatalog().requireRole("Engineer")),
+                model.getAddressBook().getPersonList().getFirst().getRoles());
         model.deleteRole("Engineer");
         assertEquals(Set.of(Role.NO_ROLE), model.getAddressBook().getPersonList().getFirst().getRoles());
     }

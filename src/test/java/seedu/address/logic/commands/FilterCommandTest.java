@@ -115,8 +115,8 @@ public class FilterCommandTest {
     @Test
     public void toStringMethod() {
         FilterCommand filterCommand = new FilterCommand(Status.APPLIED);
-        StatusContainsKeywordPredicate predicate = new StatusContainsKeywordPredicate(Status.APPLIED);
-        String expected = FilterCommand.class.getCanonicalName() + "{predicate=" + predicate + "}";
+        String expected = FilterCommand.class.getCanonicalName()
+                + "{statuses=[Applied], roleNames=[]}";
         assertEquals(expected, filterCommand.toString());
     }
 

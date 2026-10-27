@@ -14,7 +14,8 @@ public class MessagesTest {
         Person person = new PersonBuilder().withTags().build();
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Address: 123, Jurong West Ave 6, #08-111; Status: Applied; Tags: ", Messages.format(person));
+                + "Address: 123, Jurong West Ave 6, #08-111; Status: Applied; Roles: No role; Tags: ",
+                Messages.format(person));
     }
 
     @Test
@@ -22,7 +23,8 @@ public class MessagesTest {
         Person person = new PersonBuilder().withStatus(Status.INTERVIEWING).withTags("backend").build();
 
         assertEquals("Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; Tags: [backend]",
+                + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; "
+                + "Roles: No role; Tags: [backend]",
                 Messages.format(person));
     }
 }
