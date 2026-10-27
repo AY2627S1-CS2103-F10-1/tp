@@ -22,6 +22,7 @@ public class StatusCommand extends Command {
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_STATUS + "STATUS\n"
             + "Example: status 3 s/Interviewing";
     public static final String MESSAGE_SUCCESS = "Updated status of %s: %s -> %s";
+    public static final String MESSAGE_UNCHANGED = "No change: %s is already %s.";
     public static final String MESSAGE_INVALID_INDEX = "The candidate index provided is invalid.";
 
     private final Index index;
@@ -44,6 +45,9 @@ public class StatusCommand extends Command {
         }
 
         Person candidate = displayedPersons.get(index.getZeroBased());
+        if (candidate.getStatus() == status) {
+            return new CommandResult(String.format(MESSAGE_UNCHANGED, candidate.getName(), status));
+        }
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
                 candidate.getAddress(), candidate.getTags(), status, candidate.getNote(), candidate.getRoles());
         model.setPerson(candidate, updatedCandidate);
