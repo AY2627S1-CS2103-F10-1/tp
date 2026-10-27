@@ -35,9 +35,22 @@ public class CandidateCsvParserTest {
     }
 
     @Test
+    public void parse_leadingBom_acceptsHeaderAndPreservesLiteralFieldContents() throws Exception {
+        String note = "Unicode \u4e2d\u6587, \"quoted\"\r\nliteral \ufeff marker";
+        String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com", "Address",
+                "Applied", "[]", note));
+        assertEquals(parser.parse(input.getBytes(StandardCharsets.UTF_8)),
+                parser.parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8)));
+        assertEquals(note, parser.parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8))
+                .getFirst().getNote().orElseThrow().value);
+        assertEquals(List.of(), parser.parse(("\ufeff" + HEADER).getBytes(StandardCharsets.UTF_8)));
+    }
+
+    @Test
     public void parse_invalidEncodingOrDialect_rejects() {
         assertThrows(ParseException.class, () -> parser.parse(new byte[] {(byte) 0xc3, 0x28}));
-        for (String input : List.of(" ", "\ufeff" + HEADER, HEADER.replace("\r\n", "\n"),
+        for (String input : List.of(" ", "\ufeff", "\ufeff\ufeff" + HEADER, " \ufeff" + HEADER,
+                "\ufeff" + HEADER.replace("\r\n", "\n"), HEADER.replace("\r\n", "\n"),
                 HEADER.stripTrailing(), HEADER.replace("\"name\"", "name"), HEADER + "\r\n",
                 HEADER.replace("name", "Name"), HEADER + "trailing", HEADER + "\"unterminated")) {
             assertThrows(ParseException.class, () -> parser.parse(input.getBytes(StandardCharsets.UTF_8)));

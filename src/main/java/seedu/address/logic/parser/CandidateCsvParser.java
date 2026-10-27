@@ -32,10 +32,14 @@ public class CandidateCsvParser {
             text = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
                     .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(bytes)).toString();
         } catch (CharacterCodingException e) {
-            throw new ParseException("Input must be valid UTF-8 without a BOM.");
+            throw new ParseException("Input must be valid UTF-8.");
         }
         if (text.startsWith("\ufeff")) {
-            throw new ParseException("Input must be UTF-8 without a BOM.");
+            // Export includes this encoding marker for spreadsheet compatibility; strip only the leading marker.
+            text = text.substring(1);
+            if (text.isEmpty()) {
+                throw new ParseException("CSV header is required after the UTF-8 BOM.");
+            }
         }
         List<List<String>> records = new StrictCsvParser(text).parse();
         if (records.isEmpty()) {

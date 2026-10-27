@@ -374,14 +374,14 @@ Format: `import`
 * Finish saving `import.csv` before running import and leave it unchanged until import finishes. Editing, replacing, or deleting it during import is unsupported usage with unpredictable results. HRvest does not lock the file or check for concurrent changes: these may cause a normal read/validation error or go undetected and import valid-looking altered data. HRvest does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify saved JSON or run another HRvest instance against the same saved data during import.
 * `import.csv` is never modified. On failure, HRvest reports the error and restores the pre-import in-memory data, filter, and expanded view, including any pre-existing unsaved changes. Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash/power-loss recovery is not an in-memory rollback guarantee.
 
-**Required CSV template:** UTF-8 **without a BOM**, exact lowercase headers in the order below, every field double-quoted, and CRLF (`\r\n`) record endings, including the final record. Double embedded quotes. Commas and line breaks are allowed inside quoted fields where the field's existing validation permits them. No extra blank records, unquoted fields, alternate delimiters, or trailing content are accepted.
+**Required CSV template:** UTF-8 with or without a single leading byte order mark (BOM), exact lowercase headers in the order below, every field double-quoted, and CRLF (`\r\n`) record endings, including the final record. Double embedded quotes. Commas and line breaks are allowed inside quoted fields where the field's existing validation permits them. No extra blank records, unquoted fields, alternate delimiters, or trailing content are accepted.
 
 ```csv
 "name","phone","email","address","status","tags","note"
 "Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[""Java"",""backend""]",""
 ```
 
-Configure your editor to save the example with CRLF line endings and UTF-8 without a BOM. Import has its own fixed location and encoding requirements; do not assume a renamed export is directly accepted.
+Configure your editor to save the example with CRLF line endings and UTF-8. HRvest accepts the leading BOM written by `export`, so you can copy or rename `data/export.csv` to `data/import.csv` without removing it. The file must still meet validation, duplicate, and resource-limit rules. A BOM-only file or repeated leading BOMs are rejected. Only one encoding marker immediately before the header is ignored; markers inside quoted fields are literal data subject to field validation.
 
 Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. An empty or whitespace-only note means no note. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
 

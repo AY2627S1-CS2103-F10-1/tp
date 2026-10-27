@@ -20,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -65,6 +66,30 @@ public class ImportOperationTest {
         assertFalse(model.isExpandedViewProperty().get());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
         assertArrayEquals(input, Files.readAllBytes(inputPath()));
+    }
+
+    @Test
+    public void execute_exportClearConfirmImport_preservesCandidatesWithBomAndUnicode() throws Exception {
+        Person unicodeIncoming = new PersonBuilder(incoming).withNote("Unicode \u4e2d\u6587, \"quoted\"\r\nnext line")
+                .build();
+        model.addPerson(unicodeIncoming);
+        List<Person> expected = List.copyOf(model.getAddressBook().getPersonList());
+        logic.execute("export");
+        Files.copy(directory.resolve("data/export.csv"), inputPath());
+        byte[] source = Files.readAllBytes(inputPath());
+        assertEquals((byte) 0xef, source[0]);
+        assertEquals((byte) 0xbb, source[1]);
+        assertEquals((byte) 0xbf, source[2]);
+
+        logic.execute("clear");
+        assertEquals(expected, model.getAddressBook().getPersonList());
+        assertEquals(ClearCommand.MESSAGE_SUCCESS, logic.execute("clear confirm").getFeedbackToUser());
+        assertTrue(model.getAddressBook().getPersonList().isEmpty());
+        assertEquals("Imported 2 candidates successfully.", logic.execute("import").getFeedbackToUser());
+
+        assertEquals(expected, model.getFilteredPersonList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        assertArrayEquals(source, Files.readAllBytes(inputPath()));
     }
 
     @Test
