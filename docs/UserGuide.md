@@ -372,26 +372,22 @@ Appends candidates from `import.csv` to all candidates currently loaded in HRves
 
 Format: `import`
 
-* Extra arguments are ignored, just like `export`: `import other.csv` still reads only `import.csv`. Place `import.csv` in the same directory as the JSON data file and `export.csv`: normally `data/import.csv`. For a configured data file `/app/data/HRvest.json`, the input is `/app/data/import.csv`. No other location is tried.
+* Extra arguments are ignored, just like `export`. Place `import.csv` in the same directory as the JSON data file and `export.csv`: normally `data/import.csv`. For a configured data file `/app/data/HRvest.json`, the input is `/app/data/import.csv`. No other location is tried.
 * The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
 * Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view.
 * An empty (zero-byte) file or valid header-only file runs the same pipeline, saves normally, resets the view, and reports 0 imported candidates. Whitespace-only files are invalid.
-* Only readable regular files are accepted; symbolic links, directories, and special files are rejected. Missing files and read failures produce an error explaining the problem and expected path. HRvest reads the file into a bounded buffer and parses only that copy; later edits do not affect the buffered data.
-* Finish saving `import.csv` before running import and leave it unchanged until import finishes. Editing, replacing, or deleting it during import is unsupported usage with unpredictable results. HRvest does not lock the file or check for concurrent changes: these may cause a normal read/validation error or go undetected and import valid-looking altered data. HRvest does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify saved JSON or run another HRvest instance against the same saved data during import.
-* `import.csv` is never modified. On failure, HRvest reports the error and restores the pre-import in-memory data, filter, and expanded view, including any pre-existing unsaved changes. Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash/power-loss recovery is not an in-memory rollback guarantee.
+* Only readable regular files are accepted; symbolic links, directories, and special files are rejected.
+* Finish saving `import.csv` before running import and leave it unchanged until import finishes. Editing, replacing, or deleting it during import is unsupported usage with unpredictable results.
+* `import.csv` is never modified. On failure, HRvest reports the error and restores the pre-import in-memory data, filter, and expanded view, including any pre-existing unsaved changes.
 
-**Required CSV template:** UTF-8 with or without a single leading byte order mark (BOM), and exact lowercase headers in the order below. Fields may be unquoted or double-quoted. Fields containing commas, quotes, or line breaks must be double-quoted; double any embedded quotes. Quotes must enclose the entire field, with no extra text or spaces outside the closing quote. Commas and line breaks inside quoted fields remain subject to the field's existing validation. LF (`\n`) and CRLF (`\r\n`) record endings are accepted, and the last record need not end with a newline. Empty trailing lines are allowed, but blank lines before the header or between records, whitespace-only trailing lines, bare CR separators, alternate delimiters, and incorrect column counts are rejected.
+Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the header unchanged, and replace the example row with your candidate's details. An empty note means no note; use `[]` for no tags.
 
 ```csv
 "name","phone","email","address","status","tags","note"
-"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[""Java"",""backend""]",""
+"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[]",""
 ```
 
-Configure your editor to save the example as UTF-8 with LF or CRLF line endings. Excel's optional quoting is accepted when saving as comma-delimited UTF-8 CSV; other encodings or delimiters are not. HRvest accepts the leading BOM written by `export`, so you can copy or rename `data/export.csv` to `data/import.csv` without removing it. The file must still meet validation, duplicate, and resource-limit rules. A BOM-only file or repeated leading BOMs are rejected. Only one encoding marker immediately before the header is ignored; markers inside quoted fields are literal data subject to field validation.
-
-Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. An empty or whitespace-only note means no note. Nonblank notes follow the same validation as the `note` command: only printable ASCII is accepted, surrounding ordinary spaces are trimmed, and the trimmed text must not exceed 500 characters. Tabs, line breaks, and non-ASCII characters in nonblank notes are rejected. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
-
-CSV syntax errors identify the record (the header is record 1) and, for field-specific syntax errors, the one-based field number and name. Messages distinguish missing or extra columns, misplaced or unclosed quotes, content after a closing quote, and unsupported bare CR endings, with guidance on correcting the file. Record numbers count CSV records, not physical lines inside quoted fields.
+**For more import details, including CSV formatting and validation rules, see the** [Developer Guide](DeveloperGuide.md#import-csv-format-and-validation).
 
 **Import limits:** Limits are enforced while reading/parsing; exceeding any limit rejects the whole import with an error.
 

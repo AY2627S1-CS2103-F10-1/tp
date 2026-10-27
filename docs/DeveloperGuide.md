@@ -369,21 +369,34 @@ The following activity diagram summarizes what happens when a user executes a ne
 
 _{more aspects and alternatives to be added}_
 
-### Atomic CSV import
+### CSV import
 
-Import is a batch operation over the complete in-memory address book, not the displayed list. `AddressBookParser` delegates to `ImportCommandParser`, which ignores extra arguments like export; they never select a different input file. `LogicManager` routes `ImportCommand` to `ImportOperation`, which stages and validates the batch before publication. This coordinator is needed because ordinary add/edit saving does not restore model state on save failure.
+Import adds a batch of candidates to the complete address book, regardless of the current filter. `AddressBookParser` uses `ImportCommandParser` to create an `ImportCommand`, and `LogicManager` delegates the operation to `ImportOperation`.
 
-`StorageManager.readImport` delegates to `CsvImportReader`. For `/app/data/HRvest.json`, it reads only `/app/data/import.csv`, alongside the JSON data file and `export.csv`. The reader checks that the input is a regular file, rejects symbolic links, opens without following links, and buffers at most 10 MiB, enforcing the limit during reading as well as checking the initial size. The channel closes on success or failure. Parsing uses only the buffered copy, so edits after reading cannot affect the parsed data.
+`StorageManager` delegates reading `import.csv` to `CsvImportReader`. Missing files and read failures produce an error explaining the problem and expected path. HRvest reads the file into a bounded buffer and parses only that copy; later edits do not affect the buffered data. `CandidateCsvParser` uses `StrictCsvParser` to parse the buffered CSV and validates candidate fields through the existing command/model rules. Import and export share their headers through `CandidateCsvFormat`.
 
-Import deliberately does not lock files or compare file identity, size, or modification time around reading. Users must finish saving the input before import, leave it unchanged until completion, and neither externally modify saved JSON nor run another HRvest instance against that data. Concurrent modification is unsupported usage: it may produce a normal read/validation error or import valid-looking altered data without detection. The buffer is not a guarantee of a consistent file version during an external edit. Preflight file-type checks also do not eliminate replacement races. No external-writer coordination, retries, or repair mechanisms are introduced; normal validation and atomic in-memory rollback remain unchanged.
+HRvest does not lock the file or check for concurrent changes: these may cause a normal read/validation error or go undetected and import valid-looking altered data. HRvest does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify saved JSON or run another HRvest instance against the same saved data during import.
 
-Import and export share the immutable header list in `commons.core.CandidateCsvFormat`, keeping their schema aligned without coupling the logic parser to storage.
+`ImportOperation` checks for duplicates within the batch and against existing candidates before updating the model and saving through storage. It manages its own rollback because import bypasses `LogicManager`'s ordinary save path. Reading or validation failures leave the model unchanged; application or save failures trigger restoration of the previous data and view. Success shows the full candidate list and exits expanded view.
 
-`StrictCsvParser` accepts seven-column CSV with quoted or unquoted fields and LF or CRLF record endings. A final newline is optional, and empty trailing lines are ignored. Blank lines before or between records, bare CR separators, quotes within unquoted fields, and text after closing quotes are rejected. Quoted fields preserve embedded separators and decode doubled quotes; field-length and candidate-count limits apply equally to both forms. `CandidateCsvParser` requires strict UTF-8 and exact headers, accepts one optional leading BOM for compatibility with export, and preserves literal BOM characters inside quoted field values. A BOM-only file or repeated leading BOMs are rejected. It validates fields through existing command/model rules, and uses Jackson's existing streaming parser only for a flat tags array of strings. No dependencies are added. A copied or renamed export can be imported without changing its BOM or CSV encoding, subject to candidate validation, duplicates, and the import limits. Empty bytes are an explicit header exception; both empty and header-only inputs run the complete save pipeline. The [User Guide](UserGuide.md#importing-candidates-import) lists the template and hard limits: 10 MiB, 10,000 candidates, 65,536 code points per decoded field, 100 tag entries, 256 code points per tag, and the existing 500-code-point note cap. Limits apply before unbounded accumulation; tag count is checked before deduplication. Tags and statuses retain existing parsing semantics.
+Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash/power-loss recovery is not an in-memory rollback guarantee.
 
-Before mutation, `ImportOperation` copies the address book and retains the filter predicate and expanded candidate. Candidate value objects are immutable, so the independent address-book collection can share those values safely. A case-insensitive email index detects conflicts both within the batch and against all existing candidates. Only after validation succeeds is the combined collection applied, then persisted through normal JSON saving with its existing atomic-replacement protections. Success clears the filter and exits expanded view. Existing order is preserved and imported records are appended in CSV order.
+See the [User Guide](UserGuide.md#importing-candidates-import) for import limits and usage restrictions.
 
-If reading or validation fails, live state remains untouched. If model application or saving fails, the coordinator restores the in-memory snapshot and view before returning the error; pre-existing unsaved changes are preserved. It never reloads JSON for rollback or modifies the input. Save errors use the normal error format. A rollback failure is reported separately without claiming restoration. This is ordinary exception recovery, not a promise of rollback following JVM termination or power loss; a successfully persisted import remains saved after a later crash.
+#### Import CSV format and validation
+
+**Required CSV template:** UTF-8 with or without a single leading byte order mark (BOM), and exact lowercase headers in the order below. Fields may be unquoted or double-quoted. Fields containing commas or quotes must be double-quoted; double any embedded quotes. Quotes must enclose the entire field, with no extra text or spaces outside the closing quote. Quoting does not bypass field validation. LF (`\n`) and CRLF (`\r\n`) record endings are accepted, and the last record need not end with a newline. Empty trailing lines are allowed, but blank lines before the header or between records, whitespace-only trailing lines, bare CR separators, alternate delimiters, and incorrect column counts are rejected.
+
+```csv
+"name","phone","email","address","status","tags","note"
+"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[""Java"",""backend""]",""
+```
+
+Configure your editor to save the example as UTF-8 with LF or CRLF line endings. Excel's optional quoting is accepted when saving as comma-delimited UTF-8 CSV; other encodings or delimiters are not. HRvest accepts the leading BOM written by `export`, so you can copy or rename `data/export.csv` to `data/import.csv` without removing it. The file must still meet validation, duplicate, and resource-limit rules. A BOM-only file or repeated leading BOMs are rejected. Only one encoding marker immediately before the header is ignored; markers inside quoted fields are literal data subject to field validation.
+
+Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. An empty or whitespace-only note means no note. Nonblank notes follow the same validation as the `note` command: only printable ASCII is accepted, surrounding ordinary spaces are trimmed, and the trimmed text must not exceed 500 characters. Tabs, line breaks, and non-ASCII characters in nonblank notes are rejected. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
+
+CSV syntax errors identify the record (the header is record 1) and, for field-specific syntax errors, the one-based field number and name. Messages distinguish missing or extra columns, misplaced or unclosed quotes, content after a closing quote, and unsupported bare CR endings, with guidance on correcting the file. Record numbers count CSV records, not physical lines inside quoted fields.
 
 ### CSV export
 
@@ -713,12 +726,12 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC11 - Import candidates**
+**Use case: UC10 - Import candidates**
 
 **MSS**
 
 1. User prepares `import.csv` in the required location and enters `import`.
-1. HRvest reads and validates the complete batch, checking email conflicts against all candidates and within the file.
+1. HRvest reads and validates the complete file import.
 1. HRvest appends and saves the candidates, then shows the default list view with all candidates and the imported count.
 
    Use case ends.
@@ -737,7 +750,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
     Use case ends.
 
-**Use case: UC10 - Export candidate data**
+**Use case: UC11 - Export candidate data**
 
 **MSS**
 
@@ -761,7 +774,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC11 - Create a role**
+**Use case: UC12 - Create a role**
 
 **MSS**
 
@@ -779,7 +792,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC12 - Rename a role globally**
+**Use case: UC13 - Rename a role globally**
 
 **MSS**
 
@@ -809,7 +822,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC13 - Delete a role globally**
+**Use case: UC14 - Delete a role globally**
 
 **MSS**
 
@@ -827,7 +840,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC14 - List the role catalog**
+**Use case: UC15 - List the role catalog**
 
 **MSS**
 
