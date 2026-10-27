@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
@@ -11,7 +12,9 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +25,7 @@ import seedu.address.commons.util.FileUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
 
-/** Writes raw candidate data as UTF-8 CSV with a byte order mark, directly to the fixed export destination. */
+/** Writes raw candidate data as UTF-8 CSV with a byte order mark using atomic replacement. */
 public class CsvExportWriter {
     /** Lets spreadsheet programs such as Excel detect UTF-8, so that non-ASCII text is not garbled. */
     static final char BYTE_ORDER_MARK = '\uFEFF';
@@ -43,22 +46,43 @@ public class CsvExportWriter {
     public Path export(ReadOnlyAddressBook addressBook, Path destination) throws IOException {
         requireNonNull(addressBook);
         requireNonNull(destination);
-        boolean opened = false;
         try {
             // The data folder may not exist yet, e.g. when sample data has not been saved.
             FileUtil.createParentDirsOfFile(destination);
             checkDestination(destination);
-            try (Writer writer = openWriter(destination)) {
-                opened = true;
-                writer.write(BYTE_ORDER_MARK);
-                writeCsv(addressBook, writer);
-            }
+            writeReplacement(addressBook, destination);
             return destination;
         } catch (IOException | UnsupportedOperationException | SecurityException e) {
             String reason = describeFailure(e);
-            String warning = opened ? " The export may be empty or incomplete; the previous export may be lost." : "";
-            throw new IOException("Could not export to " + destination + ": " + reason + warning, e);
+            throw new IOException("Could not export to " + destination + ": " + reason, e);
         }
+    }
+
+    /** Keeps the previous export intact until the replacement has been written and closed successfully. */
+    private void writeReplacement(ReadOnlyAddressBook addressBook, Path destination) throws IOException {
+        Path temporary = Files.createTempFile(destination.toAbsolutePath().getParent(), "HRvest-export-", ".tmp");
+        try {
+            JsonAddressBookStorage.copyExistingAcl(
+                    Files.getFileAttributeView(destination, AclFileAttributeView.class, LinkOption.NOFOLLOW_LINKS),
+                    Files.getFileAttributeView(temporary, AclFileAttributeView.class));
+            JsonAddressBookStorage.copyExistingPosixPermissions(destination, temporary);
+            try (Writer writer = openWriter(temporary)) {
+                writer.write(BYTE_ORDER_MARK);
+                writeCsv(addressBook, writer);
+            }
+            try (FileChannel channel = FileChannel.open(temporary, StandardOpenOption.WRITE)) {
+                channel.force(true);
+            }
+            checkDestination(destination);
+            replaceFile(temporary, destination);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
+    }
+
+    /** Replaces the completed export atomically, failing safely if the filesystem cannot do so. */
+    protected void replaceFile(Path temporary, Path destination) throws IOException {
+        Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
@@ -92,7 +116,7 @@ public class CsvExportWriter {
         }
     }
 
-    /** Opens directly without custom permissions or a link-following fallback. Overridable for I/O failure tests. */
+    /** Opens the temporary export without following links. Overridable for I/O failure tests. */
     protected Writer openWriter(Path destination) throws IOException {
         return Files.newBufferedWriter(destination, StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE,

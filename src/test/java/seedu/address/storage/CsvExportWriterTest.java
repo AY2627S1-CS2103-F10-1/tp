@@ -194,7 +194,7 @@ public class CsvExportWriterTest {
     @Test
     public void export_permissions_defaultsAndExistingModeRetained() throws Exception {
         assumeTrue(directory.getFileSystem().supportedFileAttributeViews().contains("posix"));
-        Path ordinary = Files.createFile(directory.resolve("ordinary"));
+        Path ordinary = Files.createTempFile(directory, "permissions-", ".tmp");
         Path destination = directory.resolve("export.csv");
         CsvExportWriter exporter = new CsvExportWriter();
         exporter.export(new AddressBook(), destination);
@@ -251,9 +251,10 @@ public class CsvExportWriterTest {
     }
 
     @Test
-    public void export_writeOrCloseFailure_reportsPossibleDataLoss() {
+    public void export_writeOrCloseFailure_preservesPreviousExportAndCleansTemporaryFile() throws Exception {
         for (boolean failOnWrite : new boolean[] {true, false}) {
             Path destination = directory.resolve("export.csv");
+            Files.writeString(destination, "previous successful export");
             CsvExportWriter exporter = new CsvExportWriter() {
                 @Override
                 protected Writer openWriter(Path path) throws IOException {
@@ -277,9 +278,50 @@ public class CsvExportWriterTest {
                 }
             };
             String reason = failOnWrite ? "write failed" : "close failed";
-            assertThrows(IOException.class, "Could not export to " + destination + ": " + reason
-                    + " The export may be empty or incomplete; the previous export may be lost.", () ->
+            assertThrows(IOException.class, "Could not export to " + destination + ": " + reason, () ->
                     exporter.export(new AddressBook(), destination));
+            assertEquals("previous successful export", Files.readString(destination));
+            try (var entries = Files.list(directory)) {
+                assertEquals(List.of(destination), entries.toList());
+            }
+        }
+    }
+
+    @Test
+    public void export_replacementFailure_preservesPreviousExportAndCleansTemporaryFile() throws Exception {
+        Path destination = Files.writeString(directory.resolve("export.csv"), "previous successful export");
+        CsvExportWriter exporter = new CsvExportWriter() {
+            @Override
+            protected void replaceFile(Path temporary, Path target) throws IOException {
+                assertTrue(Files.readString(temporary).startsWith(CsvExportWriter.BYTE_ORDER_MARK + HEADER));
+                throw new IOException("replacement failed");
+            }
+        };
+
+        assertThrows(IOException.class, "Could not export to " + destination + ": replacement failed", () ->
+                exporter.export(new AddressBook(), destination));
+
+        assertEquals("previous successful export", Files.readString(destination));
+        try (var entries = Files.list(directory)) {
+            assertEquals(List.of(destination), entries.toList());
+        }
+    }
+
+    @Test
+    public void export_writeFailureWithoutPreviousExport_leavesNoOutput() throws Exception {
+        Path destination = directory.resolve("export.csv");
+        CsvExportWriter exporter = new CsvExportWriter() {
+            @Override
+            protected Writer openWriter(Path temporary) throws IOException {
+                throw new IOException("write failed");
+            }
+        };
+
+        assertThrows(IOException.class, () -> exporter.export(new AddressBook(), destination));
+
+        assertFalse(Files.exists(destination));
+        try (var entries = Files.list(directory)) {
+            assertEquals(0, entries.count());
         }
     }
 }

@@ -362,7 +362,7 @@ Format: `export`
 To keep every value as stored, import the file instead. In Excel, use **Data > From Text/CSV**, choose **Transform Data**, and set the columns to **Text** before loading. Do not open exports from untrusted data with formulas enabled.
 </box>
 
-**Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
+**Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. Copy or rename the CSV before exporting again if you need to retain that snapshot. HRvest writes and closes a temporary file before atomically replacing the destination. A failed write or replacement leaves the previous CSV intact; a filesystem that cannot replace files atomically reports an export error. An interrupted export may leave a `HRvest-export-*.tmp` file in the data folder; after closing HRvest, you may delete that temporary file.
 
 **For more technical details, you can refer to the** [Developer Guide](./DeveloperGuide.md)
 
