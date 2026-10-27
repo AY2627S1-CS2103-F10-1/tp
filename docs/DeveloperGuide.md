@@ -165,6 +165,8 @@ The catalogue stores roles independently of candidates so that unused roles rema
 
 ### Storage component
 
+Before loading preferences, recovering files or constructing storage, `MainApp` acquires a `DataDirectoryLock` on `data/.hrvest.lock`. The OS lock is held through preference saving at shutdown and released on failed initialization. This prevents a second process from loading stale candidates and later overwriting newer data, even through a read command that triggers saving. The lock file stays in place after release: deleting it could let two processes lock different files with the same path. Separate data folders remain independent, and process termination releases the OS lock automatically.
+
 **API** : [`Storage.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/storage/Storage.java)
 
 <puml src="diagrams/StorageClassDiagram.puml" width="700" />

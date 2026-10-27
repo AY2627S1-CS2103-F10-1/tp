@@ -18,6 +18,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.CandidateDataInitializer;
+import seedu.address.storage.DataDirectoryLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
@@ -41,22 +42,32 @@ public class MainApp extends Application {
     protected Storage storage;
     protected Model model;
     private Optional<Path> recoveryBackup = Optional.empty();
+    private DataDirectoryLock dataDirectoryLock;
 
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing HRvest ]===========================");
         super.init();
+        initialize(USER_PREFS_FILE_PATH, ADDRESS_BOOK_FILE_PATH);
+    }
 
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
-        UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(ADDRESS_BOOK_FILE_PATH);
-        storage = new StorageManager(addressBookStorage, userPrefsStorage);
-
-        model = initModelManager(storage, userPrefs);
-
-        logic = new LogicManager(model, storage);
-
-        ui = new UiManager(logic, storage.getAddressBookFilePath());
+    /** Initializes storage and application components only while holding exclusive access to the data folder. */
+    void initialize(Path preferencesPath, Path candidatesPath) throws IOException {
+        try {
+            dataDirectoryLock = DataDirectoryLock.acquire(candidatesPath.toAbsolutePath().getParent());
+            JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(preferencesPath);
+            UserPrefs userPrefs = initPrefs(userPrefsStorage);
+            JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(candidatesPath);
+            storage = new StorageManager(addressBookStorage, userPrefsStorage);
+            model = initModelManager(storage, userPrefs);
+            logic = new LogicManager(model, storage);
+            ui = new UiManager(logic, storage.getAddressBookFilePath());
+        } catch (IOException | RuntimeException e) {
+            releaseDataDirectoryLock();
+            System.err.println("HRvest could not start: " + e.getMessage()
+                    + " Check folder permissions if no other instance is running.");
+            throw e;
+        }
     }
 
     /**
@@ -128,9 +139,26 @@ public class MainApp extends Application {
     public void stop() {
         logger.info("============================ [ Stopping HRvest ] =============================");
         try {
-            storage.saveUserPrefs(model.getUserPrefs());
+            if (storage != null && model != null) {
+                storage.saveUserPrefs(model.getUserPrefs());
+            }
         } catch (IOException e) {
             logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
+        } finally {
+            releaseDataDirectoryLock();
+        }
+    }
+
+    /** Releases the lock after shutdown or failed startup, without removing the shared lock file. */
+    private void releaseDataDirectoryLock() {
+        if (dataDirectoryLock != null) {
+            try {
+                dataDirectoryLock.close();
+            } catch (IOException e) {
+                logger.severe("Failed to release the data-directory lock: " + StringUtil.getDetails(e));
+            } finally {
+                dataDirectoryLock = null;
+            }
         }
     }
 }

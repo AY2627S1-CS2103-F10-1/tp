@@ -22,6 +22,7 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
+import seedu.address.storage.DataDirectoryLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -30,6 +31,75 @@ import seedu.address.ui.Ui;
 public class MainAppTest {
     @TempDir
     Path temporaryFolder;
+
+    @Test
+    public void initialize_secondInstance_doesNotTouchPreferencesOrCandidateData() throws Exception {
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        Path candidates = temporaryFolder.resolve("data/HRvest.json");
+        MainApp first = new MainApp();
+        first.initialize(preferences, candidates);
+        try {
+            first.logic.execute("add n/Protected Candidate p/123 e/protected@example.com a/Block 1");
+            String beforeCandidates = Files.readString(candidates);
+            String beforePreferences = Files.readString(preferences);
+            MainApp second = new MainApp();
+
+            assertThrows(IOException.class, () -> second.initialize(preferences, candidates));
+
+            assertEquals(beforeCandidates, Files.readString(candidates));
+            assertEquals(beforePreferences, Files.readString(preferences));
+            assertNull(second.storage);
+            assertNull(second.model);
+            assertNull(second.logic);
+            assertNull(second.ui);
+            first.logic.execute("list");
+            assertTrue(Files.readString(candidates).contains("protected@example.com"));
+        } finally {
+            first.stop();
+        }
+        MainApp restarted = new MainApp();
+        try {
+            restarted.initialize(preferences, candidates);
+            assertTrue(restarted.model.getAddressBook().getPersonList().stream()
+                    .anyMatch(person -> person.getEmail().value.equals("protected@example.com")));
+        } finally {
+            restarted.stop();
+        }
+    }
+
+    @Test
+    public void initialize_failedInitialization_releasesDirectoryLock() throws Exception {
+        MainApp failing = new MainApp() {
+            @Override
+            protected UserPrefs initPrefs(JsonUserPrefsStorage storage) {
+                throw new IllegalStateException("Initialization failed");
+            }
+        };
+        Path candidates = temporaryFolder.resolve("data/HRvest.json");
+        assertThrows(IllegalStateException.class, "Initialization failed", () ->
+                failing.initialize(temporaryFolder.resolve("preferences.json"), candidates));
+
+        try (DataDirectoryLock lock = DataDirectoryLock.acquire(candidates.getParent())) {
+            assertTrue(Files.exists(candidates.getParent().resolve(".hrvest.lock")));
+        }
+        failing.stop();
+    }
+
+    @Test
+    public void stop_preferenceSaveFailure_stillReleasesDirectoryLock() throws Exception {
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        Path candidates = temporaryFolder.resolve("data/HRvest.json");
+        MainApp app = new MainApp();
+        app.initialize(preferences, candidates);
+        Files.delete(preferences);
+        Files.createDirectory(preferences);
+
+        app.stop();
+
+        try (DataDirectoryLock lock = DataDirectoryLock.acquire(candidates.getParent())) {
+            assertTrue(Files.isDirectory(preferences));
+        }
+    }
 
     @Test
     public void initModelManager_successfulRecovery_notifiesUiAfterStartingWithSavedEmptyData() throws Exception {
