@@ -55,7 +55,7 @@ public class Person {
 
     /**
      * Constructs a legacy person with a recruitment status, optional note, and No role.
-     * This compatibility overload does not enforce the future explicit-role add-command rule.
+     * This compatibility overload supports legacy data; the add parser requires explicit role input.
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,

@@ -1,11 +1,13 @@
 package seedu.address.logic;
 
+import java.util.Comparator;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import seedu.address.logic.parser.Prefix;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.Role;
 
 /**
  * Container for user visible messages.
@@ -46,7 +48,8 @@ public class Messages {
                 .append("; Status: ")
                 .append(person.getStatus())
                 .append("; Roles: ")
-                .append(person.getRoles().stream().map(role -> role.getName()).sorted()
+                .append(person.getRoles().stream().map(Role::getName)
+                        .sorted(Comparator.comparing(Role::toLookupKey))
                         .collect(Collectors.joining(", ")))
                 .append("; Tags: ");
         person.getTags().forEach(builder::append);

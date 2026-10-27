@@ -80,7 +80,7 @@ public class FilterCommand extends Command {
     @Override
     public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        Set<Role> roles = RoleCommandUtil.resolveRoles(model, roleNames, "list_role");
+        Set<Role> roles = RoleCommandUtil.resolveRoles(model, roleNames, ListRoleCommand.COMMAND_WORD);
         model.updateFilteredPersonList(new CandidateMatchesFilterPredicate(statuses, roles));
         int count = model.getFilteredPersonList().size();
         if (roles.isEmpty()) {

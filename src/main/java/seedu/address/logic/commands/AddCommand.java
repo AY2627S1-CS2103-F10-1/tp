@@ -42,7 +42,7 @@ public class AddCommand extends Command {
             + PREFIX_PHONE + "98765432 "
             + PREFIX_EMAIL + "johnd@example.com "
             + PREFIX_ADDRESS + "311, Clementi Ave 2, #02-25 "
-            + PREFIX_ROLE + "No role "
+            + PREFIX_ROLE + Role.NO_ROLE_NAME + " "
             + PREFIX_STATUS + "Interviewing "
             + PREFIX_TAG + "friends "
             + PREFIX_TAG + "owesMoney";
@@ -51,7 +51,7 @@ public class AddCommand extends Command {
     public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
 
     public static final String MESSAGE_MISSING_ROLE =
-            "Specify at least one role. Use r/No role if no role applies.";
+            "Specify at least one role. Use " + PREFIX_ROLE + Role.NO_ROLE_NAME + " if no role applies.";
 
     private final Person toAdd;
     private final Set<String> roleNames;
@@ -77,7 +77,7 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         Person candidate = toAdd.withRoles(
-                RoleCommandUtil.resolveRoles(model, roleNames, "create_role n/NAME"));
+                RoleCommandUtil.resolveRoles(model, roleNames, CreateRoleCommand.MESSAGE_USAGE));
         if (model.hasPerson(candidate)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
