@@ -51,6 +51,7 @@
         "storage-component": "Storage component",
         "common-classes": "Common classes",
         "implementation": "Implementation",
+        "candidate-notes": "Candidate notes",
         "command-history-navigation": "Command history navigation",
         "proposed-undo-redo-feature": "[Proposed] Undo/redo feature",
         "csv-export": "CSV export",
