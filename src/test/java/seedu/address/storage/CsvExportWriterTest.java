@@ -15,9 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -49,6 +51,37 @@ public class CsvExportWriterTest {
         assertEquals(HEADER + "\"Alice\",\"00123\",\"alice@example.com\",\"=1+1, \"\"街\"\"\","
                 + "\"Applied\",\"[\"\"Java\"\",\"\"backend\"\",\"\"java\"\"]\","
                 + "\"@literal\r\nnext, \"\"quoted\"\"\"\r\n", output.toString());
+    }
+
+    @Test
+    public void writeCsv_printableAsciiAndLegacyUnicode_parsedValuesPreserved() throws Exception {
+        StringBuilder printable = new StringBuilder("Block ");
+        for (int codePoint = 0x20; codePoint <= 0x7E; codePoint++) {
+            printable.appendCodePoint(codePoint);
+        }
+        String ascii = printable.toString();
+        String legacy = "Zürich\u00A0街\u200B\nNext line";
+        AddressBook book = new AddressBook();
+        book.addPerson(new PersonBuilder().withName("Alice").withPhone("123").withEmail("alice@example.com")
+                .withAddress(ascii).withNote(ascii).withTags().build());
+        book.addPerson(new PersonBuilder().withName("Bob").withPhone("456").withEmail("bob@example.com")
+                .withAddress("Legacy").withNote(legacy).withTags().build());
+        StringWriter output = new StringWriter();
+
+        new CsvExportWriter().writeCsv(book, output);
+
+        String records = output.toString().substring(HEADER.length());
+        var matcher = Pattern.compile("\"((?:[^\"]|\"\")*)\"(?:,|\\r\\n)").matcher(records);
+        List<String> fields = new ArrayList<>();
+        int consumed = 0;
+        while (matcher.find()) {
+            assertEquals(consumed, matcher.start());
+            fields.add(matcher.group(1).replace("\"\"", "\""));
+            consumed = matcher.end();
+        }
+        assertEquals(records.length(), consumed);
+        assertEquals(List.of("Alice", "123", "alice@example.com", ascii, "Applied", "[]", ascii,
+                "Bob", "456", "bob@example.com", "Legacy", "Applied", "[]", legacy), fields);
     }
 
     @Test

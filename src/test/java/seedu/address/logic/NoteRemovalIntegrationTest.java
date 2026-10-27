@@ -66,7 +66,7 @@ public class NoteRemovalIntegrationTest {
         assertEquals(Status.INTERVIEWING, reloaded.getPersonList().get(1).getStatus());
         assertEquals(address, reloaded.getPersonList().get(1).getAddress().value);
         logic.execute("list");
-        logic.execute("note 2 no/ \t ");
+        logic.execute("note 2 no/   ");
         assertEquals(reloaded, storage.readAddressBook().orElseThrow());
     }
 

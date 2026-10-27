@@ -27,9 +27,33 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
+    public static final String MESSAGE_UNSUPPORTED_CHARACTER =
+            "%s contains unsupported character U+%04X. Use printable ASCII only (U+0020-U+007E).";
+
+    private static final int FIRST_PRINTABLE_ASCII = 0x20;
+    private static final int LAST_PRINTABLE_ASCII = 0x7E;
+
     // ArgumentTokenizer only recognises prefixes after a space, so a tab before no/ must be caught separately.
     private static final Pattern NOTE_PREFIX_PATTERN =
             Pattern.compile("(^|\\s)" + Pattern.quote(PREFIX_NOTE.getPrefix()), Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Rejects the first non-printable-ASCII code point without modifying the supplied value.
+     * Empty values are left to the existing command-specific validation.
+     *
+     * @throws ParseException If the value contains an unsupported character.
+     */
+    public static void verifyPrintableAscii(String value, String field) throws ParseException {
+        requireNonNull(value);
+        requireNonNull(field);
+        for (int offset = 0; offset < value.length();) {
+            int codePoint = value.codePointAt(offset);
+            if (codePoint < FIRST_PRINTABLE_ASCII || codePoint > LAST_PRINTABLE_ASCII) {
+                throw new ParseException(String.format(MESSAGE_UNSUPPORTED_CHARACTER, field, codePoint));
+            }
+            offset += Character.charCount(codePoint);
+        }
+    }
 
     /**
      * Rejects {@code args} if it contains the note prefix, so that commands without a note field
@@ -100,7 +124,7 @@ public class ParserUtil {
      * @throws ParseException If the note is blank or exceeds the length limit.
      */
     public static Note parseNote(String note) throws ParseException {
-        requireNonNull(note);
+        verifyPrintableAscii(note, "Note");
         try {
             return new Note(note);
         } catch (IllegalArgumentException e) {
@@ -115,7 +139,7 @@ public class ParserUtil {
      * @throws ParseException if the given {@code name} is invalid.
      */
     public static Name parseName(String name) throws ParseException {
-        requireNonNull(name);
+        verifyPrintableAscii(name, "Name");
         String trimmedName = name.trim();
         if (!Name.isValidName(trimmedName)) {
             throw new ParseException(Name.MESSAGE_CONSTRAINTS);
@@ -130,7 +154,7 @@ public class ParserUtil {
      * @throws ParseException if the given {@code phone} is invalid.
      */
     public static Phone parsePhone(String phone) throws ParseException {
-        requireNonNull(phone);
+        verifyPrintableAscii(phone, "Phone");
         String trimmedPhone = phone.trim();
         if (!Phone.isValidPhone(trimmedPhone)) {
             throw new ParseException(Phone.MESSAGE_CONSTRAINTS);
@@ -145,7 +169,7 @@ public class ParserUtil {
      * @throws ParseException if the given {@code address} is invalid.
      */
     public static Address parseAddress(String address) throws ParseException {
-        requireNonNull(address);
+        verifyPrintableAscii(address, "Address");
         String trimmedAddress = address.trim();
         if (!Address.isValidAddress(trimmedAddress)) {
             throw new ParseException(Address.MESSAGE_CONSTRAINTS);
@@ -160,7 +184,7 @@ public class ParserUtil {
      * @throws ParseException if the given {@code email} is invalid.
      */
     public static Email parseEmail(String email) throws ParseException {
-        requireNonNull(email);
+        verifyPrintableAscii(email, "Email");
         String trimmedEmail = email.trim();
         if (!Email.isValidEmail(trimmedEmail)) {
             throw new ParseException(Email.MESSAGE_CONSTRAINTS);
@@ -191,7 +215,7 @@ public class ParserUtil {
      * @throws ParseException if the given {@code tag} is invalid.
      */
     public static Tag parseTag(String tag) throws ParseException {
-        requireNonNull(tag);
+        verifyPrintableAscii(tag, "Tag");
         String trimmedTag = tag.trim();
         if (!Tag.isValidTagName(trimmedTag)) {
             throw new ParseException(Tag.MESSAGE_CONSTRAINTS);
