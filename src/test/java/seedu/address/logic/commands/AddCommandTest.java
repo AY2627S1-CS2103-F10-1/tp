@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -63,7 +64,8 @@ public class AddCommandTest {
         AddCommand addCommand = new AddCommand(validPerson);
         ModelStub modelStub = new ModelStubWithPerson(validPerson);
 
-        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_PERSON, () -> addCommand.execute(modelStub));
+        String expected = String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, validPerson.getName());
+        assertThrows(CommandException.class, expected, () -> addCommand.execute(modelStub));
     }
 
     @Test
@@ -152,6 +154,11 @@ public class AddCommandTest {
         }
 
         @Override
+        public Optional<Person> findSamePerson(Person person) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public void deletePerson(Person target) {
             throw new AssertionError("This method should not be called.");
         }
@@ -194,9 +201,9 @@ public class AddCommandTest {
         }
 
         @Override
-        public boolean hasPerson(Person person) {
+        public Optional<Person> findSamePerson(Person person) {
             requireNonNull(person);
-            return this.person.isSamePerson(person);
+            return this.person.isSamePerson(person) ? Optional.of(this.person) : Optional.empty();
         }
     }
 
@@ -207,9 +214,9 @@ public class AddCommandTest {
         final ArrayList<Person> personsAdded = new ArrayList<>();
 
         @Override
-        public boolean hasPerson(Person person) {
+        public Optional<Person> findSamePerson(Person person) {
             requireNonNull(person);
-            return personsAdded.stream().anyMatch(person::isSamePerson);
+            return personsAdded.stream().filter(person::isSamePerson).findFirst();
         }
 
         @Override

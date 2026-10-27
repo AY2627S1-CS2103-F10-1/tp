@@ -1,6 +1,7 @@
 package seedu.address.model;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -43,6 +44,9 @@ public interface Model {
      * Returns true if a person with the same identity as {@code person} exists in the address book.
      */
     boolean hasPerson(Person person);
+
+    /** Returns the candidate with the same identity from the complete address book, regardless of filters. */
+    Optional<Person> findSamePerson(Person person);
 
     /**
      * Deletes the given person.

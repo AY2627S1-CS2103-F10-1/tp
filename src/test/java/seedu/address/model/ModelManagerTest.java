@@ -9,6 +9,8 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -69,6 +71,30 @@ public class ModelManagerTest {
     public void hasPerson_personInAddressBook_returnsTrue() {
         modelManager.addPerson(ALICE);
         assertTrue(modelManager.hasPerson(ALICE));
+    }
+
+    @Test
+    public void findSamePerson_nullCandidate_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> modelManager.findSamePerson(null));
+    }
+
+    @Test
+    public void findSamePerson_distinctEmail_returnsEmpty() {
+        modelManager.addPerson(ALICE);
+        assertEquals(Optional.empty(), modelManager.findSamePerson(BENSON));
+    }
+
+    @Test
+    public void findSamePerson_hiddenCaseInsensitiveMatch_returnsExistingRecordWithoutChangingView() {
+        modelManager.addPerson(ALICE);
+        modelManager.addPerson(BENSON);
+        modelManager.expandPerson(BENSON);
+        Person candidate = new PersonBuilder(ALICE).withName("Different Name")
+                .withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertEquals(Optional.of(ALICE), modelManager.findSamePerson(candidate));
+        assertEquals(List.of(BENSON), modelManager.getFilteredPersonList());
+        assertTrue(modelManager.isExpandedViewProperty().get());
     }
 
     @Test
