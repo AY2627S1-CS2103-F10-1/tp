@@ -186,6 +186,28 @@ class CandidateRolesIntegrationTest {
     }
 
     @Test
+    void execute_globalRoleUpdates_preservesExpandedCandidateAndIndex() throws Exception {
+        logic.execute(ALICE + " r/Developer");
+        logic.execute(BOB + " r/Designer");
+        logic.execute("expand 1");
+
+        logic.execute("edit_role r/Developer n/Senior Developer");
+
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(getFirstPerson()), model.getFilteredPersonList());
+        assertEquals(Set.of(getRole("Senior Developer")), getFirstPerson().getRoles());
+
+        logic.execute("delete_role r/Senior Developer");
+        logic.execute("edit 1 p/789");
+
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(getFirstPerson()), model.getFilteredPersonList());
+        assertEquals(Set.of(Role.NO_ROLE), getFirstPerson().getRoles());
+        assertEquals("789", getFirstPerson().getPhone().value);
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
     void execute_saveFailure_restoresAssignmentFilterAndExpandedView() throws Exception {
         logic.execute(ALICE + " r/Developer");
         logic.execute("expand 1");

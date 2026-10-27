@@ -95,7 +95,7 @@ class RoleFoundationTest {
     }
 
     @Test
-    void renameRole_expandedAssignedPerson_restoresFullList() {
+    void renameRole_expandedAssignedPerson_preservesExpandedSelection() {
         ModelManager model = getAssignedModel("Engineer");
         model.addPerson(new PersonBuilder().withName("Other Candidate")
                 .withPhone("81234567").withEmail("other@example.com").build());
@@ -103,15 +103,14 @@ class RoleFoundationTest {
 
         model.renameRole("Engineer", "Senior Engineer");
 
-        assertFalse(model.isExpandedViewProperty().get());
-        assertEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
-        assertEquals(2, model.getFilteredPersonList().size());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(model.getAddressBook().getPersonList().getFirst()), model.getFilteredPersonList());
         assertEquals(Set.of(model.getRoleCatalog().requireRole("Senior Engineer")),
                 model.getFilteredPersonList().getFirst().getRoles());
     }
 
     @Test
-    void deleteRole_expandedAssignedPerson_restoresFullList() {
+    void deleteRole_expandedAssignedPerson_preservesExpandedSelection() {
         ModelManager model = getAssignedModel("Engineer");
         model.addPerson(new PersonBuilder().withName("Other Candidate")
                 .withPhone("81234567").withEmail("other@example.com").build());
@@ -119,10 +118,28 @@ class RoleFoundationTest {
 
         model.deleteRole("Engineer");
 
-        assertFalse(model.isExpandedViewProperty().get());
-        assertEquals(model.getAddressBook().getPersonList(), model.getFilteredPersonList());
-        assertEquals(2, model.getFilteredPersonList().size());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(model.getAddressBook().getPersonList().getFirst()), model.getFilteredPersonList());
         assertEquals(Set.of(Role.NO_ROLE), model.getFilteredPersonList().getFirst().getRoles());
+    }
+
+    @Test
+    void roleUpdates_expandedUnassignedPerson_preservesExpandedSelection() {
+        ModelManager model = getAssignedModel("Engineer");
+        Person unassignedPerson = new PersonBuilder().withName("Other Candidate")
+                .withPhone("81234567").withEmail("other@example.com").build();
+        model.addPerson(unassignedPerson);
+        model.expandPerson(unassignedPerson);
+
+        model.renameRole("Engineer", "Senior Engineer");
+
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(unassignedPerson), model.getFilteredPersonList());
+
+        model.deleteRole("Senior Engineer");
+
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(unassignedPerson), model.getFilteredPersonList());
     }
 
     @Test

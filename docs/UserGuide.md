@@ -307,7 +307,7 @@ Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
 * The role must exist and must not be `No role`.
 * The new name must not match another role. Changing only capitalisation is allowed.
 * Other role assignments stay unchanged.
-* If a candidate is expanded, returns to the full candidate list. Otherwise, the current filter remains active.
+* Keeps the current filter or expanded candidate.
 
 Example: `edit_role r/Software Engineer n/Senior Software Engineer`
 
@@ -319,7 +319,7 @@ Format: `delete_role r/NAME`
 
 * The role must exist and must not be `No role`.
 * Candidates keep their other roles. Those losing their last role receive `No role`.
-* If a candidate is expanded, returns to the full candidate list. Otherwise, the current filter remains active.
+* Keeps the current filter or expanded candidate.
 
 Example: `delete_role r/Senior Software Engineer`
 
