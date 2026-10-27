@@ -18,6 +18,7 @@ import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
 import seedu.address.model.tag.Tag;
 
 public class ParserUtilTest {
@@ -35,6 +36,21 @@ public class ParserUtilTest {
     private static final String VALID_TAG_2 = "neighbour";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void parseRoleName_paddedDisplayName_preservesCapitalizationAndInternalSpaces() throws Exception {
+        assertEquals("Software  Engineer", ParserUtil.parseRoleName("\u2003 Software  Engineer \t"));
+    }
+
+    @Test
+    public void parseRoleName_invalidName_throwsSpecificError() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseRoleName(null));
+        for (String name : List.of("", " ", "Software\tEngineer", "Line\nBreak")) {
+            assertThrows(ParseException.class, Role.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseRoleName(name));
+        }
+        assertThrows(ParseException.class, Role.MESSAGE_RESERVED_SYNTAX, () ->
+                ParserUtil.parseRoleName("Senior N/Engineer"));
+    }
 
     @Test
     public void parseStatus_null_throwsNullPointerException() {

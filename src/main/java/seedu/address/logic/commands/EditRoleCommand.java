@@ -6,7 +6,6 @@ import java.util.Objects;
 
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.role.Role;
 
 /** Renames a catalog role globally without replacing candidate role assignments. */
 public class EditRoleCommand extends Command {
@@ -16,12 +15,10 @@ public class EditRoleCommand extends Command {
     private final String oldName;
     private final String newName;
 
-    /** Creates a command to rename an existing role. */
+    /** Creates a command to rename an existing role using prepared display names. */
     public EditRoleCommand(String oldName, String newName) {
-        Role.normalize(oldName);
-        Role.normalize(newName);
-        this.oldName = oldName.strip();
-        this.newName = newName.strip();
+        this.oldName = requireNonNull(oldName);
+        this.newName = requireNonNull(newName);
     }
 
     @Override

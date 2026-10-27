@@ -15,6 +15,7 @@ import seedu.address.model.person.Name;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
 import seedu.address.model.tag.Tag;
 
 /**
@@ -23,6 +24,18 @@ import seedu.address.model.tag.Tag;
 public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
+
+    /** Parses a role display name using the model's shared validation rules. */
+    public static String parseRoleName(String name) throws ParseException {
+        String preparedName = Role.prepareName(name);
+        if (!Role.isValidName(preparedName)) {
+            throw new ParseException(Role.MESSAGE_CONSTRAINTS);
+        }
+        if (!Role.hasNoReservedSyntax(preparedName)) {
+            throw new ParseException(Role.MESSAGE_RESERVED_SYNTAX);
+        }
+        return preparedName;
+    }
 
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be

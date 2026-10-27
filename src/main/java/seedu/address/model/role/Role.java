@@ -27,37 +27,54 @@ public final class Role {
     private final String id;
     private final String name;
 
-    /** Creates a catalog entry, validating stored identities as well as names. */
+    /**
+     * Creates a catalog entry with a prepared display name, validating identities and names.
+     *
+     * @param id A valid custom UUID or the built-in role identity.
+     * @param name A valid display name without surrounding whitespace.
+     */
     public Role(String id, String name) {
         requireNonNull(id);
         requireNonNull(name);
         boolean isBuiltIn = id.equals(NO_ROLE_ID);
         checkArgument(isBuiltIn || isUuid(id), "Invalid role identity.");
-        this.name = validateName(name);
-        checkArgument(isBuiltIn == normalize(this.name).equals(normalize(NO_ROLE_NAME)),
-                "The built-in " + NO_ROLE_NAME + " identity and name are reserved.");
-        checkArgument(!isBuiltIn || this.name.equals(NO_ROLE_NAME),
-                "The built-in role must be named " + NO_ROLE_NAME + ".");
+        checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
+        checkArgument(hasNoReservedSyntax(name), MESSAGE_RESERVED_SYNTAX);
+        boolean hasReservedName = toLookupKey(name).equals(toLookupKey(NO_ROLE_NAME));
+        if (isBuiltIn) {
+            checkArgument(hasReservedName, "The built-in " + NO_ROLE_NAME + " identity and name are reserved.");
+            checkArgument(name.equals(NO_ROLE_NAME), "The built-in role must be named " + NO_ROLE_NAME + ".");
+        } else {
+            checkArgument(!hasReservedName, "The built-in " + NO_ROLE_NAME + " identity and name are reserved.");
+        }
+        this.name = name;
         this.id = id;
     }
 
     /** Creates a new role with a generated identity. */
     public static Role create(String name) {
-        return new Role(UUID.randomUUID().toString(), name);
+        return new Role(UUID.randomUUID().toString(), prepareName(name));
     }
 
-    /** Returns the shared lookup key; internal whitespace remains significant. */
-    public static String normalize(String name) {
-        return validateName(name).toLowerCase(Locale.ROOT);
+    /** Returns a stripped display name, preserving capitalization and internal whitespace. */
+    public static String prepareName(String name) {
+        return requireNonNull(name).strip();
     }
 
-    private static String validateName(String name) {
-        requireNonNull(name);
-        String trimmed = name.strip();
-        checkArgument(!trimmed.isEmpty() && trimmed.codePoints().noneMatch(Character::isISOControl),
-                MESSAGE_CONSTRAINTS);
-        checkArgument(!RESERVED_SYNTAX.matcher(trimmed).find(), MESSAGE_RESERVED_SYNTAX);
-        return trimmed;
+    /** Returns the case-insensitive lookup key; internal whitespace remains significant. */
+    public static String toLookupKey(String name) {
+        return prepareName(name).toLowerCase(Locale.ROOT);
+    }
+
+    /** Returns whether a name has no surrounding whitespace, is nonblank, and contains no control characters. */
+    public static boolean isValidName(String name) {
+        return !name.isEmpty() && name.equals(name.strip())
+                && name.codePoints().noneMatch(Character::isISOControl);
+    }
+
+    /** Returns whether a name contains no reserved command-parameter syntax. */
+    public static boolean hasNoReservedSyntax(String name) {
+        return !RESERVED_SYNTAX.matcher(name).find();
     }
 
     private static boolean isUuid(String id) {
@@ -79,7 +96,7 @@ public final class Role {
     /** Returns a renamed entry retaining its identity. */
     public Role renamed(String name) {
         checkArgument(!equals(NO_ROLE), NO_ROLE_NAME + " cannot be renamed or deleted.");
-        return new Role(id, name);
+        return new Role(id, prepareName(name));
     }
 
     @Override

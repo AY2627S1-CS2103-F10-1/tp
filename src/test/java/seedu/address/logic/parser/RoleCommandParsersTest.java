@@ -8,28 +8,29 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.Messages;
+import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CreateRoleCommand;
 import seedu.address.logic.commands.DeleteRoleCommand;
 import seedu.address.logic.commands.EditRoleCommand;
 import seedu.address.logic.commands.ListRoleCommand;
 import seedu.address.model.role.Role;
 
-class RoleCommandParserTest {
+class RoleCommandParsersTest {
     @Test
     void parse_validCommandsAndInternalSpaces_returnsExpectedCommands() {
-        assertParseSuccess(new RoleCommandParser("create_role"), " n/  Software Engineer  ",
+        assertParseSuccess(new CreateRoleCommandParser(), " n/  Software Engineer  ",
                 new CreateRoleCommand("Software Engineer"));
-        assertParseSuccess(new RoleCommandParser("edit_role"), " r/Software Engineer n/Senior Engineer",
+        assertParseSuccess(new EditRoleCommandParser(), " r/Software Engineer n/Senior Engineer",
                 new EditRoleCommand("Software Engineer", "Senior Engineer"));
-        assertParseSuccess(new RoleCommandParser("edit_role"), " n/New r/Old",
+        assertParseSuccess(new EditRoleCommandParser(), " n/New r/Old",
                 new EditRoleCommand("Old", "New"));
-        assertParseSuccess(new RoleCommandParser("delete_role"), " r/Software Engineer",
+        assertParseSuccess(new DeleteRoleCommandParser(), " r/Software Engineer",
                 new DeleteRoleCommand("Software Engineer"));
-        assertParseSuccess(new RoleCommandParser("list_role"), "",
+        assertParseSuccess(new ListRoleCommandParser(), "",
                 new ListRoleCommand());
-        assertParseSuccess(new RoleCommandParser("create_role"), " n/ C/C++ Engineer",
+        assertParseSuccess(new CreateRoleCommandParser(), " n/ C/C++ Engineer",
                 new CreateRoleCommand("C/C++ Engineer"));
-        assertParseSuccess(new RoleCommandParser("create_role"), " n/C++ / .NET Engineer",
+        assertParseSuccess(new CreateRoleCommandParser(), " n/C++ / .NET Engineer",
                 new CreateRoleCommand("C++ / .NET Engineer"));
     }
 
@@ -39,32 +40,39 @@ class RoleCommandParserTest {
         assertInvalidFormat("edit_role", List.of(" r/Engineer", " n/New"));
         assertInvalidFormat("delete_role", List.of(""));
         assertInvalidFormat("list_role", List.of(" extra", " n/Engineer"));
-        assertParseFailure(new RoleCommandParser("create_role"), " r/Engineer",
+        assertParseFailure(new CreateRoleCommandParser(), " r/Engineer",
                 "Unexpected role parameter: r/. Usage: " + CreateRoleCommand.MESSAGE_USAGE);
-        assertParseFailure(new RoleCommandParser("delete_role"), " n/Engineer",
+        assertParseFailure(new DeleteRoleCommandParser(), " n/Engineer",
                 "Unexpected role parameter: n/. Usage: " + DeleteRoleCommand.MESSAGE_USAGE);
-        assertParseFailure(new RoleCommandParser("create_role"), " n/Engineer p/123",
+        assertParseFailure(new CreateRoleCommandParser(), " n/Engineer p/123",
                 "Unexpected role parameter: p/. Usage: " + CreateRoleCommand.MESSAGE_USAGE);
     }
 
     @Test
     void parse_blankOrControlCharacterName_rejectsWithConstraints() {
-        assertParseFailure(new RoleCommandParser("create_role"), " n/", Role.MESSAGE_CONSTRAINTS);
-        assertParseFailure(new RoleCommandParser("edit_role"), " r/Engineer n/  ", Role.MESSAGE_CONSTRAINTS);
-        assertParseFailure(new RoleCommandParser("delete_role"), " r/ ", Role.MESSAGE_CONSTRAINTS);
-        assertParseFailure(new RoleCommandParser("create_role"), " n/Line\nBreak", Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(new CreateRoleCommandParser(), " n/", Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(new EditRoleCommandParser(), " r/Engineer n/  ", Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(new DeleteRoleCommandParser(), " r/ ", Role.MESSAGE_CONSTRAINTS);
+        assertParseFailure(new CreateRoleCommandParser(), " n/Line\nBreak", Role.MESSAGE_CONSTRAINTS);
     }
 
     @Test
     void parse_repeatedPrefixes_rejectsInsteadOfTakingLast() {
         String duplicateName = Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_NAME);
-        assertParseFailure(new RoleCommandParser("create_role"), " n/Engineer N/Designer", duplicateName);
+        assertParseFailure(new CreateRoleCommandParser(), " n/Engineer N/Designer", duplicateName);
         String duplicateRole = Messages.getErrorMessageForDuplicatePrefixes(CliSyntax.PREFIX_ROLE);
-        assertParseFailure(new RoleCommandParser("delete_role"), " r/Engineer r/Designer", duplicateRole);
-        assertParseFailure(new RoleCommandParser("edit_role"), " r/Old n/New n/Other", duplicateName);
+        assertParseFailure(new DeleteRoleCommandParser(), " r/Engineer r/Designer", duplicateRole);
+        assertParseFailure(new EditRoleCommandParser(), " r/Old n/New n/Other", duplicateName);
     }
 
     private void assertInvalidFormat(String commandWord, List<String> inputs) {
+        Parser<? extends Command> parser = switch (commandWord) {
+            case "create_role" -> new CreateRoleCommandParser();
+            case "edit_role" -> new EditRoleCommandParser();
+            case "delete_role" -> new DeleteRoleCommandParser();
+            case "list_role" -> new ListRoleCommandParser();
+            default -> throw new IllegalArgumentException("Unknown test command.");
+        };
         String usage = switch (commandWord) {
             case "create_role" -> CreateRoleCommand.MESSAGE_USAGE;
             case "edit_role" -> EditRoleCommand.MESSAGE_USAGE;
@@ -73,7 +81,7 @@ class RoleCommandParserTest {
             default -> throw new IllegalArgumentException("Unknown test command.");
         };
         for (String input : inputs) {
-            assertParseFailure(new RoleCommandParser(commandWord), input,
+            assertParseFailure(parser, input,
                     "Invalid role command format. Usage: " + usage);
         }
     }

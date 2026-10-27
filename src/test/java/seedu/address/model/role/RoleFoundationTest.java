@@ -26,6 +26,34 @@ import seedu.address.testutil.PersonBuilder;
 
 class RoleFoundationTest {
     @Test
+    void constructor_unpreparedOrInvalidName_rejects() {
+        String id = "11111111-1111-1111-1111-111111111111";
+        for (String name : List.of("", " ", " Engineer", "Engineer ", "Line\nBreak")) {
+            assertThrows(IllegalArgumentException.class, Role.MESSAGE_CONSTRAINTS, () -> new Role(id, name));
+        }
+        assertThrows(NullPointerException.class, () -> new Role(id, null));
+        assertThrows(NullPointerException.class, () -> new Role(null, "Engineer"));
+        assertThrows(IllegalArgumentException.class,
+                "The built-in No role identity and name are reserved.", () -> new Role(id, "NO ROLE"));
+    }
+
+    @Test
+    void factoriesAndModel_paddedNames_preservePreparedDisplayAndLookup() {
+        Role role = Role.create("\u2003 Software  Engineer \u2003");
+        assertEquals("Software  Engineer", role.getName());
+        Role renamed = role.renamed("\t Senior  Engineer \t");
+        assertEquals("Senior  Engineer", renamed.getName());
+        assertEquals(role.getId(), renamed.getId());
+        assertEquals("senior  engineer", Role.toLookupKey(" Senior  ENGINEER "));
+        ModelManager model = new ModelManager();
+        model.createRole(" Engineer ");
+        model.renameRole(" ENGINEER ", " Senior  Engineer ");
+        assertEquals("Senior  Engineer", model.getRoleCatalog().requireRole(" senior  ENGINEER ").getName());
+        assertThrows(NullPointerException.class, () -> Role.create(null));
+        assertThrows(NullPointerException.class, () -> role.renamed(null));
+    }
+
+    @Test
     void createRole_caseAndWhitespaceConflict_leavesCatalogUnchanged() {
         ModelManager model = new ModelManager();
         model.createRole("  Software Engineer  ");

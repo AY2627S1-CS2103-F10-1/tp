@@ -27,10 +27,10 @@ public final class RoleCatalog {
         for (Role role : roles) {
             requireNonNull(role);
             checkArgument(ids.add(role.getId()), "Duplicate role identity.");
-            checkArgument(names.add(Role.normalize(role.getName())), "A role with this name already exists.");
+            checkArgument(names.add(Role.toLookupKey(role.getName())), "A role with this name already exists.");
         }
         checkArgument(roles.contains(Role.NO_ROLE), "The catalog must contain No role.");
-        this.roles = roles.stream().sorted(Comparator.comparing(role -> Role.normalize(role.getName()))).toList();
+        this.roles = roles.stream().sorted(Comparator.comparing(role -> Role.toLookupKey(role.getName()))).toList();
     }
 
     public List<Role> getRoles() {
@@ -39,8 +39,11 @@ public final class RoleCatalog {
 
     /** Finds a role by its trimmed, case-insensitive name. */
     public Optional<Role> find(String name) {
-        String key = Role.normalize(name);
-        return roles.stream().filter(role -> Role.normalize(role.getName()).equals(key)).findFirst();
+        String preparedName = Role.prepareName(name);
+        checkArgument(Role.isValidName(preparedName), Role.MESSAGE_CONSTRAINTS);
+        checkArgument(Role.hasNoReservedSyntax(preparedName), Role.MESSAGE_RESERVED_SYNTAX);
+        String key = Role.toLookupKey(preparedName);
+        return roles.stream().filter(role -> Role.toLookupKey(role.getName()).equals(key)).findFirst();
     }
 
     /** Resolves an existing name, rejecting unknown assignments. */

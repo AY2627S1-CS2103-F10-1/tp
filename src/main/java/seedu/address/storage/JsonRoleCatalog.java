@@ -28,7 +28,8 @@ class JsonRoleCatalog {
             if (roles == null || roles.stream().anyMatch(Objects::isNull)) {
                 throw new IllegalArgumentException("The role catalog must contain a non-null roles list.");
             }
-            return new RoleCatalog(roles.stream().map(entry -> new Role(entry.id, entry.name)).toList());
+            return new RoleCatalog(roles.stream()
+                    .map(entry -> new Role(entry.id, Role.prepareName(entry.name))).toList());
         } catch (IllegalArgumentException | NullPointerException e) {
             throw new IllegalValueException(e.getMessage());
         }

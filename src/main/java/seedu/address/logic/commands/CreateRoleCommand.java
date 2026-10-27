@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
-import seedu.address.model.role.Role;
 
 /** Creates an unused catalog role. */
 public class CreateRoleCommand extends Command {
@@ -13,10 +12,9 @@ public class CreateRoleCommand extends Command {
 
     private final String name;
 
-    /** Creates a command for the supplied role name. */
+    /** Creates a command for the prepared role display name. */
     public CreateRoleCommand(String name) {
-        Role.normalize(name);
-        this.name = name.strip();
+        this.name = requireNonNull(name);
     }
 
     @Override

@@ -64,12 +64,16 @@ public class AddressBookParser {
         logger.fine("Command word: " + commandWord);
 
         String roleCommand = commandWord.toLowerCase(Locale.ROOT);
-        if (Set.of(CreateRoleCommand.COMMAND_WORD, EditRoleCommand.COMMAND_WORD,
-                DeleteRoleCommand.COMMAND_WORD, ListRoleCommand.COMMAND_WORD).contains(roleCommand)) {
-            return new RoleCommandParser(roleCommand).parse(arguments);
-        }
+        String dispatchWord = Set.of(CreateRoleCommand.COMMAND_WORD, EditRoleCommand.COMMAND_WORD,
+                DeleteRoleCommand.COMMAND_WORD, ListRoleCommand.COMMAND_WORD).contains(roleCommand)
+                ? roleCommand : commandWord;
 
-        return switch (commandWord) {
+        return switch (dispatchWord) {
+            case CreateRoleCommand.COMMAND_WORD -> new CreateRoleCommandParser().parse(arguments);
+            case EditRoleCommand.COMMAND_WORD -> new EditRoleCommandParser().parse(arguments);
+            case DeleteRoleCommand.COMMAND_WORD -> new DeleteRoleCommandParser().parse(arguments);
+            case ListRoleCommand.COMMAND_WORD -> new ListRoleCommandParser().parse(arguments);
+
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case ExpandCommand.COMMAND_WORD -> new ExpandCommandParser().parse(arguments);
