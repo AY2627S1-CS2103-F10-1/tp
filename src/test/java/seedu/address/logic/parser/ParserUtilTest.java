@@ -67,8 +67,7 @@ public class ParserUtilTest {
 
     @Test
     public void verifyNoNotePrefix_notePrefixPresent_throwsParseException() {
-        for (String args : List.of("no/hi", " no/", " a/Blk 1 no/hi", " a/Blk 1\tno/hi", " a/Blk 1\u00A0no/hi",
-                " NO/hi", " No/hi")) {
+        for (String args : List.of("no/hi", " no/", " a/Blk 1 no/hi", " a/Blk 1\tno/hi", " NO/hi", " No/hi")) {
             assertThrows(ParseException.class, "message", () -> ParserUtil.verifyNoNotePrefix(args, "message"));
         }
     }

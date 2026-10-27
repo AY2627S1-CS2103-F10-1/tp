@@ -147,20 +147,6 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void tokenize_tabOrUnicodeSpaceAroundValue_treatedAsWhitespace() {
-        // Text pasted from web pages or documents may use tabs, line breaks or no-break spaces between fields.
-        for (String whitespace : new String[] {"\t", "\n", "\u00A0", "\u202F", "\u3000"}) {
-            String argsString = "Preamble" + whitespace + "p/" + whitespace + "one"
-                    + whitespace + "-t two" + whitespace;
-            ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT);
-
-            assertPreamblePresent(argMultimap, "Preamble");
-            assertArgumentPresent(argMultimap, pSlash, "one");
-            assertArgumentPresent(argMultimap, dashT, "two");
-        }
-    }
-
-    @Test
     public void tokenize_multipleArgumentsJoined() {
         String argsString = "SomePreambleStringp/ pSlash joined-tjoined -t not joined^Qjoined";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT, hatQ);

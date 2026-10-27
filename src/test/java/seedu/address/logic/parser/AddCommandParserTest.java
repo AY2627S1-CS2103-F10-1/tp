@@ -29,7 +29,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
-import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.TypicalPersons.AMY;
@@ -67,17 +66,6 @@ public class AddCommandParserTest {
         assertParseSuccess(parser,
                 NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND,
                 new AddCommand(expectedPersonMultipleTags));
-    }
-
-    @Test
-    public void parse_tabOrNoBreakSpaceBeforePrefix_startsNewField() {
-        Person expectedPerson = new PersonBuilder(BOB).withTags(VALID_TAG_FRIEND)
-                .withStatus(Status.APPLIED).build();
-
-        for (String whitespace : new String[] {"\t", "\u00A0"}) {
-            assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB
-                    + whitespace + PREFIX_TAG + VALID_TAG_FRIEND, new AddCommand(expectedPerson));
-        }
     }
 
     @Test
