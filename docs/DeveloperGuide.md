@@ -421,7 +421,7 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | `* * *`  | user              | list every candidate currently in the app             | see every candidate in my pipeline in one view                      |
 | `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
 | `* * *`  | user              | update a candidate's status after an interview        | keep the pipeline accurate as candidates move through stages        |
-| `* * *`  | user              | view a candidate's full details including all notes   | prepare for the next conversation with them                         |
+| `* * *`  | user              | view a candidate's full details including their note  | prepare for the next conversation with them                         |
 | `* * *`  | user              | see a confirmation when an action succeeds            | confirm that the command did what I intended                        |
 
 #### Nice-to-have (`* *`)
@@ -580,7 +580,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to delete a specific candidate in the list.
-1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
+1. HRvest deletes the candidate, together with the candidate's note, and shows the deleted candidate.
 
    Use case ends.
 
@@ -647,7 +647,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to view the full details of a candidate profile.
-1. HRvest shows the candidate's full details, including all notes.
+1. HRvest shows the candidate's full details, including their note.
 
    Use case ends.
 
@@ -659,18 +659,18 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC09 - Add a note to a candidate**
+**Use case: UC09 - Add or replace a candidate's note**
 
 **MSS**
 
-1. User requests to add a note to a specific candidate.
-1. HRvest adds the note without overwriting earlier notes and shows the updated candidate profile.
+1. User requests to save a note for a specific candidate in the list.
+1. HRvest replaces the candidate's earlier note, if any, with the new note and confirms the update.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. The specified candidate is not found.
+* 1a. The specified candidate is not in the list, or the note is longer than 500 characters.
 
     * 1a1. HRvest shows an error message.
 
@@ -678,7 +678,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * 1b. The note is empty.
 
-    * 1b1. HRvest shows an error message.
+    * 1b1. HRvest clears the candidate's note and confirms that it was cleared.
 
       Use case ends.
 
