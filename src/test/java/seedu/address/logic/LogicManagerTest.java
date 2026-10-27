@@ -29,6 +29,7 @@ import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.ListCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
@@ -257,6 +258,32 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_saveFailsAfterNote_preservesRolesAndExpandedView() {
+        model.createRole("Engineer");
+        Person person = new PersonBuilder().build();
+        model.addPerson(person);
+        model.replacePersonRoles(person, List.of("Engineer", "No role"));
+        Person assigned = model.getAddressBook().getPersonList().getFirst();
+        model.expandPerson(assigned);
+        ReadOnlyAddressBook before = new AddressBook(model.getAddressBook());
+        StorageManager failingStorage = new StorageManager(
+                new JsonAddressBookStorage(temporaryFolder.resolve("failed.json")),
+                new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
+                throw new IOException("Injected save failure");
+            }
+        };
+        logic = new LogicManager(model, failingStorage);
+
+        assertThrows(CommandException.class, () -> logic.execute("note 1 no/Feedback"));
+
+        assertEquals(before, model.getAddressBook());
+        assertEquals(List.of(assigned), model.getFilteredPersonList());
+        assertTrue(model.isExpandedViewProperty().get());
+    }
+
+    @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
     }
@@ -340,9 +367,7 @@ public class LogicManagerTest {
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
-        Person expectedPerson = new PersonBuilder(AMY).withTags().withStatus(Status.APPLIED).build();
-        ModelManager expectedModel = new ModelManager();
-        expectedModel.addPerson(expectedPerson);
+        ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
     }
 }

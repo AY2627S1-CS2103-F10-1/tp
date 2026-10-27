@@ -102,6 +102,21 @@ public class AddCommandTest {
      */
     private class ModelStub implements Model {
         @Override
+        public void createRole(String name) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void renameRole(String oldName, String newName) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public void deleteRole(String name) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public ReadOnlyUserPrefs getUserPrefs() {
             throw new AssertionError("This method should not be called.");
         }

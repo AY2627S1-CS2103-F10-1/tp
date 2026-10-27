@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Text?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      alignment="CENTER_LEFT" minWidth="105" styleClass="summary-card">
+  <Text fx:id="heading" styleClass="summary-card-title" />
+  <Text fx:id="count" styleClass="summary-card-count" />
+  <Text text="shown / total" styleClass="summary-card-legend" />
+</VBox>

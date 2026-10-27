@@ -21,6 +21,14 @@ public class FindCommandParserTest {
     }
 
     @Test
+    public void parse_controlCharacters_throwsParseException() {
+        for (String text : List.of("\t", "\r", "\n")) {
+            assertParseFailure(parser, "Alice" + text + "Bob",
+                    String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Search keywords", text.codePointAt(0)));
+        }
+    }
+
+    @Test
     public void parse_validArgs_returnsFindCommand() {
         // no leading and trailing whitespaces
         FindCommand expectedFindCommand =
@@ -28,7 +36,7 @@ public class FindCommandParserTest {
         assertParseSuccess(parser, "Alice Bob", expectedFindCommand);
 
         // multiple whitespaces between keywords
-        assertParseSuccess(parser, " \n Alice \n \t Bob  \t", expectedFindCommand);
+        assertParseSuccess(parser, "   Alice    Bob   ", expectedFindCommand);
     }
 
 }

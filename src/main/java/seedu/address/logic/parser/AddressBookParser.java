@@ -3,6 +3,8 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
+import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,8 +13,11 @@ import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
+import seedu.address.logic.commands.CreateRoleCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteRoleCommand;
 import seedu.address.logic.commands.EditCommand;
+import seedu.address.logic.commands.EditRoleCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.ExpandCommand;
 import seedu.address.logic.commands.ExportCommand;
@@ -21,6 +26,7 @@ import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ImportCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.ListRoleCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.StatusCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -34,7 +40,7 @@ public class AddressBookParser {
      * Used for initial separation of command word and args.
      */
     private static final Pattern BASIC_COMMAND_FORMAT =
-            Pattern.compile("(?<commandWord>\\S+)(?<arguments>.*)", Pattern.DOTALL);
+            Pattern.compile("[\\x00-\\x20]*(?<commandWord>\\S+)(?<arguments>.*)", Pattern.DOTALL);
     private static final Logger logger = LogsCenter.getLogger(AddressBookParser.class);
 
     /**
@@ -45,7 +51,7 @@ public class AddressBookParser {
      * @throws ParseException if the user input does not conform to the expected format
      */
     public Command parseCommand(String userInput) throws ParseException {
-        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput.trim());
+        final Matcher matcher = BASIC_COMMAND_FORMAT.matcher(userInput);
         if (!matcher.matches()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
@@ -58,7 +64,17 @@ public class AddressBookParser {
         // Lower level log messages are used sparingly to minimize noise in the code.
         logger.fine("Command word: " + commandWord);
 
-        return switch (commandWord) {
+        String roleCommand = commandWord.toLowerCase(Locale.ROOT);
+        String dispatchWord = Set.of(CreateRoleCommand.COMMAND_WORD, EditRoleCommand.COMMAND_WORD,
+                DeleteRoleCommand.COMMAND_WORD, ListRoleCommand.COMMAND_WORD).contains(roleCommand)
+                ? roleCommand : commandWord;
+
+        return switch (dispatchWord) {
+            case CreateRoleCommand.COMMAND_WORD -> new CreateRoleCommandParser().parse(arguments);
+            case EditRoleCommand.COMMAND_WORD -> new EditRoleCommandParser().parse(arguments);
+            case DeleteRoleCommand.COMMAND_WORD -> new DeleteRoleCommandParser().parse(arguments);
+            case ListRoleCommand.COMMAND_WORD -> new ListRoleCommandParser().parse(arguments);
+
             case AddCommand.COMMAND_WORD -> new AddCommandParser().parse(arguments);
             case EditCommand.COMMAND_WORD -> new EditCommandParser().parse(arguments);
             case ExpandCommand.COMMAND_WORD -> new ExpandCommandParser().parse(arguments);
