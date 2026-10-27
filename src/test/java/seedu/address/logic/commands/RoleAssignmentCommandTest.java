@@ -73,7 +73,8 @@ class RoleAssignmentCommandTest {
         EditPersonDescriptor descriptor = new EditPersonDescriptor();
         descriptor.setRoleNames(invalidNames);
         List<Command> commands = List.of(new AddCommand(person, invalidNames),
-                new EditCommand(Index.fromOneBased(1), descriptor), new FilterCommand(List.of(), invalidNames));
+                new EditCommand(Index.fromOneBased(1), descriptor),
+                new FilterCommand(List.of(), invalidNames));
         for (Command command : commands) {
             ModelManager model = new ModelManager();
             model.addPerson(person);
