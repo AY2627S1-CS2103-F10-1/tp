@@ -23,7 +23,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 1. Copy the file to the folder you want to use as the _home folder_ for HRvest.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar HRvest.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds. Note how the app contains some sample data.<br>
+   A GUI similar to the one below should appear in a few seconds, listing some sample candidates. The screenshot shows a different set of candidates, filtered with `filter s/Shortlisted s/Interviewing s/Offered`.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
