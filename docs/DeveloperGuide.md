@@ -116,7 +116,7 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
-For role-management commands, `AddressBookParser` selects `RoleCommandParser` to parse role names and create the corresponding `Command`. During execution, the command delegates catalogue validation and assignment updates to the `Model`.
+Role-management commands use dedicated parsers and delegate catalogue validation and assignment updates to the `Model`.
 
 #### Command input character validation
 
@@ -404,6 +404,10 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 |----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
 | `* *`    | familiar user     | find a candidate by a partial keyword of their name               | find a candidate whose full name I do not remember                    |
 | `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a complete history of my interactions with that candidate        |
+| `* *`    | familiar user     | create roles before adding candidates                             | prepare the catalog for upcoming hiring                             |
+| `* *`    | familiar user     | list all available roles, including unused ones                   | reuse an existing role instead of creating a duplicate                |
+| `* *`    | familiar user     | rename a role across all assigned candidates                      | correct a job title consistently                                      |
+| `* *`    | familiar user     | remove an obsolete role while keeping candidates' other roles     | keep the catalog relevant without losing unrelated hiring details   |
 | `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
 | `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
@@ -679,6 +683,81 @@ The terms candidate details, candidate status, duplicate candidate and note are 
     * 2b1. HRvest shows an error message.
 
       Use case ends.
+
+**Use case: UC11 - Create a role**
+
+**MSS**
+
+1. User requests to create a role, giving its name.
+1. HRvest makes the new role available for assigning to candidates.
+1. HRvest shows a success message identifying the created role.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The name is invalid or matches an existing role, including `No role`.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC12 - Rename a role globally**
+
+**MSS**
+
+1. User requests to rename an existing role, giving the role and its new name.
+1. HRvest changes the role's name for all candidates who have it, leaving their other roles unchanged.
+1. HRvest shows a success message identifying the renamed role.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The role does not exist or is the protected `No role` entry.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1b. The new name is invalid or matches another role, including `No role`.
+
+    * 1b1. HRvest shows an error message.
+
+      Use case ends.
+
+* 1c. The new name is unchanged or differs only in capitalisation.
+
+    * 1c1. HRvest accepts the name and confirms the change, updating the capitalisation if needed.
+
+      Use case ends.
+
+**Use case: UC13 - Delete a role globally**
+
+**MSS**
+
+1. User requests to delete an existing role.
+1. HRvest removes the role from the available roles and from all candidates who have it, leaving their other roles unchanged. Candidates left without a role receive `No role`.
+1. HRvest shows a success message identifying the deleted role.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. The role does not exist or is the protected `No role` entry.
+
+    * 1a1. HRvest shows an error message.
+
+      Use case ends.
+
+**Use case: UC14 - List the role catalog**
+
+**MSS**
+
+1. User requests to list available roles.
+1. HRvest shows all catalog entries, including unused roles and `No role`, in alphabetical order ignoring case.
+
+   Use case ends.
 
 ### Non-Functional Requirements
 

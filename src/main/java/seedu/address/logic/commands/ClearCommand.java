@@ -44,7 +44,9 @@ public class ClearCommand extends Command {
         if (!isConfirmed) {
             return new CommandResult(String.format(MESSAGE_CONFIRM, candidateCount));
         }
-        model.setAddressBook(new AddressBook());
+        AddressBook empty = new AddressBook();
+        empty.setRoleCatalog(model.getRoleCatalog());
+        model.setAddressBook(empty);
         return new CommandResult(MESSAGE_SUCCESS);
     }
 
