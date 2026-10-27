@@ -52,4 +52,17 @@ public class CandidateDataNormalizationTest {
 
         assertEquals(expected, adapted.toModelType());
     }
+
+    @Test
+    public void readAddressBook_byteOrderMark_loadsAllCandidates() throws Exception {
+        Path path = temporaryFolder.resolve("candidates.json");
+        String json = "{\"persons\":[" + JsonUtil.toJsonString(new JsonAdaptedPerson(ALICE)) + ","
+                + JsonUtil.toJsonString(new JsonAdaptedPerson(BENSON)) + "]}";
+        // Notepad's "UTF-8 with BOM" option starts the file with this mark.
+        Files.writeString(path, "\uFEFF" + json);
+
+        AddressBook loaded = new AddressBook(new JsonAddressBookStorage(path).readAddressBook().orElseThrow());
+
+        assertEquals(List.of(ALICE, BENSON), loaded.getPersonList());
+    }
 }
