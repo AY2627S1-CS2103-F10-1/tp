@@ -229,6 +229,7 @@ class CandidateRolesIntegrationTest {
         return model.getAddressBook().getPersonList().getFirst();
     }
 
+    /** Verifies a rejected command preserves model data, the displayed list, and both saved files. */
     private void assertRejectedWithoutChanges(String input, String message) throws Exception {
         AddressBook before = new AddressBook(model.getAddressBook());
         List<Person> displayed = List.copyOf(model.getFilteredPersonList());

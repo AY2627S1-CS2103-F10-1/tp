@@ -98,7 +98,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 | `n/NAME` | Yes | A non-blank name containing only letters, digits, and spaces, e.g. `n/John Doe`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. Punctuation such as apostrophes and hyphens is not accepted. |
 | `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/john.doe@example.com`. The local part allows letters, digits, and `+`, `_`, `.`, or `-` between alphanumeric groups; it must start and end with a letter or digit. Domain labels allow letters, digits, and internal hyphens; the final label must contain at least two characters. Spaces are not accepted. |
-| `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01 r/No role`. Spaces and punctuation are allowed. |
+| `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
 | `r/ROLE` | Yes | An existing [role name](#managing-the-role-catalogue). Repeat `r/` to assign multiple roles. Matching ignores case and surrounding whitespace; repeated references have no extra effect. Use `r/No role` if no role applies. |
 | `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
 | `t/TAG` | No | A non-blank label containing only letters and digits, e.g. `t/backend`. Spaces and punctuation are not accepted. Repeat the prefix for multiple tags: `t/backend t/Java`. Identical tags are removed, but tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. |
@@ -145,6 +145,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 * `edit` does not change notes. Like `add`, it rejects `no/` anywhere, in any letter case, with `The edit command does not support no/. Use note INDEX no/NOTE_TEXT to add, replace or clear a note.` Use the `note` command instead.
 
 Examples:
+
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
 *  `edit 3 s/Interviewing` Updates the status of the 3rd candidate to `Interviewing`.
