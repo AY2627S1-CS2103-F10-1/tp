@@ -18,6 +18,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Note;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
 import seedu.address.model.tag.Tag;
@@ -37,6 +38,34 @@ public class ParserUtilTest {
     private static final String VALID_TAG_2 = "neighbour";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void parseNote_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseNote(null));
+    }
+
+    @Test
+    public void parseNote_blank_throwsParseException() {
+        for (String note : List.of("", WHITESPACE, "\u2003")) {
+            assertThrows(ParseException.class, Note.MESSAGE_BLANK, () -> ParserUtil.parseNote(note));
+        }
+    }
+
+    @Test
+    public void parseNote_surroundingWhitespace_preservesInternalContents() throws Exception {
+        String contents = "Strong on C++,  weak on SQL; [round 2] / follow-up\tYES\nNext: \u4e2d\u6587";
+        assertEquals(new Note(contents), ParserUtil.parseNote("\t \u2003" + contents + "\u2003 \r\n"));
+    }
+
+    @Test
+    public void parseNote_lengthBoundaries_validatesStrippedCodePointCount() throws Exception {
+        for (String character : List.of("a", "\ud83d\ude00")) {
+            String contents = character.repeat(Note.MAX_LENGTH);
+            assertEquals(new Note(contents), ParserUtil.parseNote("\u2003 " + contents + " \u2003"));
+            assertThrows(ParseException.class, Note.MESSAGE_TOO_LONG, () ->
+                    ParserUtil.parseNote("\u2003 " + contents + character + " \u2003"));
+        }
+    }
 
     @Test
     public void parseStatus_null_throwsNullPointerException() {
