@@ -121,15 +121,18 @@ public class ParserUtil {
     /**
      * Parses a note, trimming its surrounding whitespace and preserving its internal contents.
      *
-     * @throws ParseException If the note is blank or exceeds the length limit.
+     * @throws ParseException If the note contains unsupported characters, is blank or exceeds the length limit.
      */
     public static Note parseNote(String note) throws ParseException {
         verifyPrintableAscii(note, "Note");
-        try {
-            return new Note(note);
-        } catch (IllegalArgumentException e) {
-            throw new ParseException(e.getMessage(), e);
+        String strippedNote = note.strip();
+        if (strippedNote.isBlank()) {
+            throw new ParseException(Note.MESSAGE_BLANK);
         }
+        if (!Note.isValidNote(strippedNote)) {
+            throw new ParseException(Note.MESSAGE_TOO_LONG);
+        }
+        return new Note(strippedNote);
     }
 
     /**

@@ -18,6 +18,7 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
 import seedu.address.model.person.Name;
+import seedu.address.model.person.Note;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
 import seedu.address.model.tag.Tag;
@@ -37,6 +38,43 @@ public class ParserUtilTest {
     private static final String VALID_TAG_2 = "neighbour";
 
     private static final String WHITESPACE = " \t\r\n";
+
+    @Test
+    public void parseNote_null_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> ParserUtil.parseNote(null));
+    }
+
+    @Test
+    public void parseNote_blank_throwsParseException() {
+        for (String note : List.of("", " ", "   ")) {
+            assertThrows(ParseException.class, Note.MESSAGE_BLANK, () -> ParserUtil.parseNote(note));
+        }
+    }
+
+    @Test
+    public void parseNote_surroundingWhitespace_preservesInternalContents() throws Exception {
+        String contents = "Strong on C++,  weak on SQL; [round 2] / follow-up YES";
+        assertEquals(new Note(contents), ParserUtil.parseNote("   " + contents + "   "));
+    }
+
+    @Test
+    public void parseNote_lengthBoundaries_validatesStrippedCodePointCount() throws Exception {
+        String contents = "a".repeat(Note.MAX_LENGTH);
+        assertEquals(new Note(contents), ParserUtil.parseNote("   " + contents + "   "));
+        assertThrows(ParseException.class, Note.MESSAGE_TOO_LONG, () ->
+                ParserUtil.parseNote("   " + contents + "a   "));
+    }
+
+    @Test
+    public void parseNote_unsupportedCharacters_throwsParseException() {
+        for (String character : List.of("\t", "\r", "\n", "\u2003", "\u4e2d", "\ud83d\ude00")) {
+            String message = String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER,
+                    "Note", character.codePointAt(0));
+            for (String note : List.of(character, character + "text", "text" + character, "a" + character + "b")) {
+                assertThrows(ParseException.class, message, () -> ParserUtil.parseNote(note));
+            }
+        }
+    }
 
     @Test
     public void parseStatus_null_throwsNullPointerException() {
