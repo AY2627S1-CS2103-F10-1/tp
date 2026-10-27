@@ -174,9 +174,7 @@ The `Storage` component,
 * is implemented by `StorageManager`, which coordinates candidate and role files through `RoleDataStorage` and delegates preference storage to `JsonUserPrefsStorage`.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
-`JsonAddressBookStorage` writes UTF-8 JSON to a temporary file in the destination directory, then atomically replaces the saved file after writing completes. Symbolic-link destinations are resolved to their existing targets before creating the temporary file and replacing the target, preserving the links. Dangling links cause an `IOException` without changing the links or creating files. On filesystems supporting `AclFileAttributeView`, the existing destination's ACL is applied to the temporary file before writing JSON. POSIX permissions are also copied before writing on filesystems supporting `PosixFileAttributeView`. New destinations retain default ACLs and POSIX permissions. ACL or POSIX permission errors, including `AccessDeniedException`, abort the save and trigger temporary-file cleanup. The existing file's access restrictions are not replaced with default permissions when access is denied; `LogicManager` reports the permission error. Failed writes leave the previous saved file intact. Filesystems that cannot perform atomic replacement reject the save instead of attempting a potentially partial overwrite. A filesystem root is rejected as a destination with an `IOException`.
-
-Temporary files use unique names of the form `HRvest-<random>.tmp`, so a later save does not reuse or overwrite an existing temporary file. The `finally` block attempts to remove the current save's temporary file when execution unwinds normally, including after an `IOException` or an unchecked exception. A forced JVM termination or power loss can prevent this cleanup and leave an orphaned temporary file. Subsequent saves ignore these files. After closing all HRvest instances, leftover `HRvest-*.tmp` files can be removed manually; keep the configured JSON data file and any symbolic-link target.
+`JsonAddressBookStorage` never overwrites the data file in place, so a failed or interrupted save leaves the previous file intact. It writes the JSON to a uniquely named `HRvest-<random>.tmp` file in the same folder, gives it the existing file's access permissions, and then atomically replaces the data file with it. Filesystems that cannot replace a file atomically reject the save, and permission errors abort it; `LogicManager` reports either error. A symbolic link to the data file is kept, and its target is replaced. The temporary file is deleted if the save fails, but a crash or power loss can leave it behind; later saves ignore such files, and they can be deleted once HRvest is closed.
 
 During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalogue. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
 
@@ -206,6 +204,45 @@ Classes used by multiple components are in the `seedu.address.commons` package.
 ## **Implementation**
 
 This section describes some noteworthy details on how certain features are implemented.
+
+### Candidate notes
+
+Each candidate has at most one note, such as interview feedback. `note INDEX no/NOTE_TEXT` replaces the note of a candidate in the displayed list, and `note INDEX no/` clears it.
+
+#### How it fits in
+
+* `Person` holds the note as an `Optional<Note>`. `Note` is an immutable value that rejects blank text and text longer than `Note.MAX_LENGTH` (500) characters, so a candidate either has a valid note or none. `ParserUtil#parseNote` and `JsonAdaptedPerson` trim the text before creating a `Note`.
+* `NoteCommandParser` tokenizes the arguments with `no/` as its only prefix, so text such as `n/A` inside a note stays part of the note. It rejects a missing or repeated `no/`. Blank note text creates a `NoteCommand` that clears the note.
+* `NoteCommand#execute` finds the candidate in the displayed list and builds a new `Person` with the same details and the new note, because `Person` is immutable. It then calls `Model#setPerson`, which keeps the current filter and keeps the candidate expanded if it was.
+* `add` and `edit` reject `no/` through `ParserUtil#verifyNoNotePrefix`, so `note` is the only command that changes a note.
+* `JsonAdaptedPerson` stores the note text in a `note` field. On loading, a missing, `null` or blank `note` means no note, so data files from before notes existed still load.
+* `PersonCard` shows a sticky-note icon when `Person#hasNote()` is true and shows the note text only in expanded view.
+
+The sequence diagram below shows how `note 2 no/Strong on SQL` is executed. `p` is the candidate at index 2 of the displayed list.
+
+<puml src="diagrams/NoteSequenceDiagram.puml" alt="Interactions inside the Logic and Model components for the note 2 no/Strong on SQL command" />
+
+After the note command returns, `LogicManager` saves the address book.
+
+#### Design considerations
+
+**Aspect: One note or a list of notes**
+
+* **Alternative 1 (current choice):** One note per candidate, replaced by each `note` command.
+  * Pros: Simple to use and display. No extra commands or indexes are needed to correct or remove one entry.
+  * Cons: Replacing a note loses the earlier text, so the User Guide tells users to include anything they want to keep.
+* **Alternative 2:** A list of notes that `note` appends to.
+  * Pros: Keeps a full history of interactions with the candidate.
+  * Cons: Needs commands to edit or delete a single entry, and makes the expanded view longer.
+
+**Aspect: A separate command or a field of `add` and `edit`**
+
+* **Alternative 1 (current choice):** A separate `note` command.
+  * Pros: The note can contain text that looks like a prefix, because `no/` is the only prefix `note` recognises. An `edit` cannot replace a note by accident.
+  * Cons: Users learn one more command.
+* **Alternative 2:** A `no/` field in `add` and `edit`.
+  * Pros: Fewer commands.
+  * Cons: Any other prefix inside the note, such as the `a/` in "follow up on a/b test", would start a new field.
 
 ### Command history navigation
 
@@ -395,7 +432,7 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | `* * *`  | user              | list every candidate currently in the app             | see every candidate in my pipeline in one view                      |
 | `* * *`  | user              | filter the list by candidate status                   | focus on one hiring stage, for example only those interviewing      |
 | `* * *`  | user              | update a candidate's status after an interview        | keep the pipeline accurate as candidates move through stages        |
-| `* * *`  | user              | view a candidate's full details including all notes   | prepare for the next conversation with them                         |
+| `* * *`  | user              | view a candidate's full details including their note  | prepare for the next conversation with them                         |
 | `* * *`  | user              | see a confirmation when an action succeeds            | confirm that the command did what I intended                        |
 
 #### Nice-to-have (`* *`)
@@ -558,7 +595,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to delete a specific candidate in the list.
-1. HRvest deletes the candidate, together with the candidate's notes, and shows the deleted candidate.
+1. HRvest deletes the candidate, together with the candidate's note, and shows the deleted candidate.
 
    Use case ends.
 
@@ -625,7 +662,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 **MSS**
 
 1. User requests to view the full details of a candidate profile.
-1. HRvest shows the candidate's full details, including all notes.
+1. HRvest shows the candidate's full details, including their note.
 
    Use case ends.
 
@@ -637,18 +674,18 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC09 - Add a note to a candidate**
+**Use case: UC09 - Add or replace a candidate's note**
 
 **MSS**
 
-1. User requests to add a note to a specific candidate.
-1. HRvest adds the note without overwriting earlier notes and shows the updated candidate profile.
+1. User requests to save a note for a specific candidate in the list.
+1. HRvest replaces the candidate's earlier note, if any, with the new note and confirms the update.
 
    Use case ends.
 
 **Extensions**
 
-* 1a. The specified candidate is not found.
+* 1a. The specified candidate is not in the list, or the note is longer than 500 characters.
 
     * 1a1. HRvest shows an error message.
 
@@ -656,7 +693,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * 1b. The note is empty.
 
-    * 1b1. HRvest shows an error message.
+    * 1b1. HRvest clears the candidate's note and confirms that it was cleared.
 
       Use case ends.
 
