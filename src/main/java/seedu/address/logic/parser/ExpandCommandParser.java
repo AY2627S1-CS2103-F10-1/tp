@@ -15,10 +15,6 @@ public class ExpandCommandParser implements Parser<ExpandCommand> {
         if (args.isBlank()) {
             throw new ParseException("Missing index. " + ExpandCommand.MESSAGE_USAGE);
         }
-        try {
-            return new ExpandCommand(ParserUtil.parseIndex(args));
-        } catch (ParseException e) {
-            throw new ParseException(MESSAGE_INVALID_INDEX, e);
-        }
+        return new ExpandCommand(ParserUtil.parseDisplayedIndex(args, MESSAGE_INVALID_INDEX));
     }
 }

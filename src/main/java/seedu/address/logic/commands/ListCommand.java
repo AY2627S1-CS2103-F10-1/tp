@@ -12,7 +12,7 @@ public class ListCommand extends Command {
 
     public static final String COMMAND_WORD = "list";
 
-    public static final String MESSAGE_SUCCESS = "Listed all persons.";
+    public static final String MESSAGE_SUCCESS = "Listed all candidates.";
     public static final String MESSAGE_NO_CANDIDATES = "There are no candidates yet. Use add to add one.";
 
 

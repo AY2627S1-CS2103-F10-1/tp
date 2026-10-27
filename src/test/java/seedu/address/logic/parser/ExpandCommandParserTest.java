@@ -9,6 +9,7 @@ import static seedu.address.testutil.Assert.assertThrows;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.ExpandCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -29,9 +30,22 @@ public class ExpandCommandParserTest {
     }
 
     @Test
-    public void parse_invalidIndex_reportsPositiveIntegerRequirement() {
-        for (String input : new String[] {"0", "-1", "1.5", "abc", "1 2", "1 n/Alice",
-            "2147483648", "999999999999999999999"}) {
+    public void parse_nonPositiveIndex_reportsPositiveIntegerRequirement() {
+        for (String input : new String[] {"0", "00", "-0", "-1", "-2147483649"}) {
+            assertParseFailure(parser, input, ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_overflowingPositiveIndex_reportsInvalidDisplayedIndex() {
+        for (String input : new String[] {"2147483648", "99999999999", "999999999999999999999"}) {
+            assertParseFailure(parser, input, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_malformedIndex_reportsExpandGuidance() {
+        for (String input : new String[] {"1.5", "abc", "1 2", "1 n/Alice"}) {
             assertParseFailure(parser, input, ExpandCommandParser.MESSAGE_INVALID_INDEX);
         }
     }
