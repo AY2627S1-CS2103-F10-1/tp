@@ -41,6 +41,14 @@ public class AddNotePrefixTest {
     }
 
     @Test
+    public void parse_notePrefixInOtherCase_reportsUnsupportedNote() {
+        for (String prefix : List.of("NO/", "No/", "nO/")) {
+            assertParseFailure(parser, REQUIRED_FIELDS + " " + prefix + "feedback",
+                    AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        }
+    }
+
+    @Test
     public void parse_notePrefixInsideAddressWord_preservesLiteralAddress() {
         AddCommand expected = new AddCommand(new PersonBuilder().withName("A").withPhone("123")
                 .withEmail("a@x.com").withAddress("Blk 1 yes/no/feedback").build());

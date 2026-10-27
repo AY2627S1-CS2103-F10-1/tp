@@ -116,6 +116,36 @@ class RoleCommandIntegrationTest {
         assertEquals(model.getAddressBook(), storage().readAddressBook().orElseThrow());
     }
 
+    @Test
+    void execute_clearCandidates_preservesRolesAcrossRestart() throws Exception {
+        ModelManager model = new ModelManager();
+        LogicManager logic = new LogicManager(model, storage());
+        logic.execute("create_role n/Engineer");
+        logic.execute("create_role n/Unused");
+        Person person = new PersonBuilder().build();
+        model.addPerson(person);
+        model.replacePersonRoles(person, List.of("Engineer"));
+        storage().saveAddressBook(model.getAddressBook());
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        logic.execute("clear");
+
+        assertEquals(before, model.getAddressBook());
+        assertEquals(before, storage().readAddressBook().orElseThrow());
+
+        logic.execute("clear confirm");
+
+        ReadOnlyAddressBook restarted = storage().readAddressBook().orElseThrow();
+        assertTrue(model.getAddressBook().getPersonList().isEmpty());
+        assertTrue(restarted.getPersonList().isEmpty());
+        assertEquals(before.getRoleCatalog(), model.getRoleCatalog());
+        assertEquals(before.getRoleCatalog(), restarted.getRoleCatalog());
+
+        logic.execute("clear confirm");
+
+        assertEquals(before.getRoleCatalog(), storage().readAddressBook().orElseThrow().getRoleCatalog());
+    }
+
     private StorageManager storage() {
         return new StorageManager(new JsonAddressBookStorage(directory.resolve("HRvest.json")),
                 new JsonUserPrefsStorage(directory.resolve("prefs.json")));

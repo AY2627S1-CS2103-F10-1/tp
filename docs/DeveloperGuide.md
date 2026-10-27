@@ -116,7 +116,7 @@ How the parsing works:
 * When called upon to parse a user command, the `AddressBookParser` class creates an `XYZCommandParser` (`XYZ` is a placeholder for the specific command name, e.g., `AddCommandParser`). The parser uses the other classes shown above to parse the user command and create an `XYZCommand` object (e.g., `AddCommand`). The `AddressBookParser` returns that object as a `Command` object.
 * All `XYZCommandParser` classes, such as `AddCommandParser` and `DeleteCommandParser`, implement the `Parser` interface so they can be treated similarly where appropriate, for example during testing.
 
-Role command parsers use `ParserUtil.parseRoleName` to strip surrounding whitespace and validate names using the model's shared rules.
+For role-management commands, `AddressBookParser` selects `RoleCommandParser` to parse role names and create the corresponding `Command`. During execution, the command delegates catalogue validation and assignment updates to the `Model`.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
@@ -127,7 +127,7 @@ Role command parsers use `ParserUtil.parseRoleName` to strip surrounding whitesp
 The `Model` component,
 
 * stores the address book data i.e., all `Person` objects (which are contained in a `UniquePersonList` object).
-* stores a shared role catalog in `AddressBook`, separately from candidate assignments.
+* stores a shared role catalogue in `AddressBook`, separately from candidate assignments.
 * enforces email-only uniqueness through `Person.isSamePerson`, using case-insensitive comparison. `ParserUtil.parseEmail` trims command input, while `Email` validates stored values and preserves case. Full `Person.equals` and `Email.equals` remain case-sensitive. Add, edit, bulk replacement and JSON loading share this identity rule. Edit permits unchanged identity because the list already enforces uniqueness; a changed identity is checked against the entire address book, not only the displayed list.
 * stores the `Person` objects selected by the current filter, such as search results, in a separate _filtered_ list. It exposes this list as an unmodifiable `ObservableList<Person>` that the UI can observe and bind to, so the UI updates when the list changes.
 * tracks whether the displayed list is in expanded view as transient state. The `Logic` API exposes this read-only property to the `UI`; it is not persisted.
@@ -142,13 +142,13 @@ The `Model` component,
 <puml src="diagrams/BetterModelClassDiagram.puml" width="450" />
 </box>
 
-#### Role catalog design
+#### Role catalogue design
 
-The catalog stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position.
+The catalogue stores roles independently of candidates so that unused roles remain available, even after all candidates are cleared. Commands identify roles by name rather than list position, so catalogue sorting does not change their targets.
 
-* Each candidate has at least one role from the catalog. The protected `No role` entry provides a fallback when deleting the candidate's last role.
-* Roles keep a stable identity across renames. A rename updates the catalog and all assigned candidates together, including candidates outside the displayed list.
-* Before applying a change, the model checks that every candidate's roles exist in the updated catalog; if validation fails, neither is changed. Roles created programmatically or loaded from files follow the same naming rules as command input, so commands can still identify them by name.
+* Each candidate has at least one role from the catalogue. The protected `No role` entry provides a fallback when deleting the candidate's last role.
+* Roles keep a stable identity across renames. A rename updates the catalogue and all assigned candidates together, including candidates outside the displayed list.
+* The model validates catalogue and assignment changes together before applying them, preventing inconsistent references or partial updates.
 
 ### Storage component
 
@@ -165,7 +165,7 @@ The `Storage` component,
 
 Temporary files use unique names of the form `HRvest-<random>.tmp`, so a later save does not reuse or overwrite an existing temporary file. The `finally` block attempts to remove the current save's temporary file when execution unwinds normally, including after an `IOException` or an unchecked exception. A forced JVM termination or power loss can prevent this cleanup and leave an orphaned temporary file. Subsequent saves ignore these files. After closing all HRvest instances, leftover `HRvest-*.tmp` files can be removed manually; keep the configured JSON data file and any symbolic-link target.
 
-During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalog. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
+During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalogue. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
 
 Both backup and replacement saving must finish before commands become available. Otherwise startup aborts with an actionable terminal error, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
 
@@ -175,13 +175,13 @@ The activity diagram below summarizes candidate data initialization and recovery
 
 #### Coordinating candidate and role storage
 
-Candidates store role IDs, while `roles.json` stores the catalog. `RoleDataStorage` loads the catalog first so that it can validate candidate assignments. Older candidates without role assignments receive `No role`; invalid assignments use the data-recovery process described above.
+Candidates store role IDs, while `roles.json` stores the catalogue. `RoleDataStorage` loads the catalogue first so that it can validate candidate assignments. Older candidates without role assignments receive `No role`; invalid assignments use the data-recovery process described above.
 
 The two files must stay consistent, but a filesystem rename can replace only one file at a time. To support recovery:
 
-* A rollback journal, `roles-transaction.json`, preserves the previous files and their resolved destinations before either is replaced. Recovery checks both destinations before restoring the pair, preventing a changed data path or symbolic-link target from overwriting unrelated files.
-* Invalid journals, destination mismatches, or incomplete rollback block further saves and preserve the journal for repair. Candidate, catalog, and journal paths must identify different files; concurrent HRvest instances are unsupported.
-* Recovery from invalid candidate or catalog data backs up both originals before saving an empty candidate list and the built-in catalog. The catalog backup uses the candidate backup name with `.roles.json` appended; a catalog-only backup is used when no candidate file exists.
+* A rollback journal, `roles-transaction.json`, preserves the previous files before either is replaced. Failed or interrupted saves restore that pair before data is loaded again.
+* Invalid journals or incomplete rollback block further saves, preserving the recovery data. Candidate, catalogue, and journal paths must identify different files, and concurrent HRvest instances are unsupported.
+* Recovery from invalid candidate or catalogue data backs up both originals before saving an empty candidate list and the built-in catalogue. The catalogue backup uses the candidate backup name with `.roles.json` appended; a catalogue-only backup is used when no candidate file exists.
 * If saving a command fails, `LogicManager` restores the previous model data, filter, and expanded view so that memory and saved data remain consistent after successful rollback.
 
 ### Common classes
@@ -329,9 +329,9 @@ You can refer to the diagram below as a reference.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
 
-The writer exports one row per candidate to `export.csv` inside the configured data directory, alongside the JSON data file, with a header and all candidate fields. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
+The writer exports one row per candidate, with a header and all candidate fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. A future CSV import must skip the mark before reading the header. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
 
-**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, and spreadsheet auto-detection can alter values.
+**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users instead. Spreadsheet auto-detection can still alter values when the file is opened directly.
 
 HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. It is non-destructive to HRvest's stored records: the CSV is a separate copy of data that remains available in the application. For this reason, export uses direct writing with failure reporting rather than rollback or deletion of a failed output file; the user can retry after resolving the problem. This differs from saving HRvest's source data, where atomic replacement protects the existing records. The non-destructive guarantee does not extend to an earlier CSV: each export directly overwrites it, so an interrupted or failed write may destroy the previous export and leave an empty or incomplete file.
 
@@ -391,10 +391,6 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 |----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
 | `* *`    | familiar user     | find a candidate by a partial keyword of their name               | find a candidate whose full name I do not remember                    |
 | `* *`    | familiar user     | append a note to a candidate without overwriting existing notes   | keep a complete history of my interactions with that candidate        |
-| `* *`    | familiar user     | create roles before adding candidates                             | prepare the catalog for upcoming hiring                             |
-| `* *`    | familiar user     | list all available roles, including unused ones                   | reuse an existing role instead of creating a duplicate                |
-| `* *`    | familiar user     | rename a role across all assigned candidates                      | correct a job title consistently                                      |
-| `* *`    | familiar user     | remove an obsolete role while keeping candidates' other roles     | keep the catalog relevant without losing unrelated hiring details   |
 | `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
 | `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
@@ -671,81 +667,6 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-**Use case: UC11 - Create a role**
-
-**MSS**
-
-1. User requests to create a role, giving its name.
-1. HRvest makes the new role available for assigning to candidates.
-1. HRvest shows a success message identifying the created role.
-
-   Use case ends.
-
-**Extensions**
-
-* 1a. The name is invalid or matches an existing role, including `No role`.
-
-    * 1a1. HRvest shows an error message.
-
-      Use case ends.
-
-**Use case: UC12 - Rename a role globally**
-
-**MSS**
-
-1. User requests to rename an existing role, giving the role and its new name.
-1. HRvest changes the role's name for all candidates who have it, leaving their other roles unchanged.
-1. HRvest shows a success message identifying the renamed role.
-
-   Use case ends.
-
-**Extensions**
-
-* 1a. The role does not exist or is the protected `No role` entry.
-
-    * 1a1. HRvest shows an error message.
-
-      Use case ends.
-
-* 1b. The new name is invalid or matches another role, including `No role`.
-
-    * 1b1. HRvest shows an error message.
-
-      Use case ends.
-
-* 1c. The new name is unchanged or differs only in capitalisation.
-
-    * 1c1. HRvest accepts the name and confirms the change, updating the capitalisation if needed.
-
-      Use case ends.
-
-**Use case: UC13 - Delete a role globally**
-
-**MSS**
-
-1. User requests to delete an existing role.
-1. HRvest removes the role from the available roles and from all candidates who have it, leaving their other roles unchanged. Candidates left without a role receive `No role`.
-1. HRvest shows a success message identifying the deleted role.
-
-   Use case ends.
-
-**Extensions**
-
-* 1a. The role does not exist or is the protected `No role` entry.
-
-    * 1a1. HRvest shows an error message.
-
-      Use case ends.
-
-**Use case: UC14 - List the role catalog**
-
-**MSS**
-
-1. User requests to list available roles.
-1. HRvest shows all catalog entries, including unused roles and `No role`, in alphabetical order ignoring case.
-
-   Use case ends.
-
 ### Non-Functional Requirements
 
 1. HRvest should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or other application-specific software beyond a single JAR file.
@@ -761,8 +682,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * **Candidate**: A person being considered for an open role.
 * **Open role**: A position for which the startup is currently recruiting.
-* **Role catalog**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
-* **Rollback journal**: A file containing the previous contents and destinations of the candidate and role files, used to restore both if a save fails or is interrupted. HRvest uses `roles-transaction.json` for this journal.
+* **Role catalogue**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 * **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
 * **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
 * **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
@@ -851,29 +771,29 @@ testers are expected to do more *exploratory* testing.
 
 ### Managing roles
 
-Use a separate test folder and keep a matching backup of candidate and catalog files.
+Use a separate test folder and keep a matching backup of candidate and catalogue files.
 
 1. Run `create_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
-1. Run `create_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalog.
+1. Run `create_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalogue.
 1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
-1. To check global assignment updates, close HRvest. In a test copy, assign the new role ID to two candidates' `roles` arrays; give one candidate another valid role too. Restart, filter so one candidate is hidden, and rename the role again. Close HRvest and inspect both files. Expected: The catalog name changes, both candidates retain the same role ID, and their other fields and assignments remain unchanged.
-1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalog entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.
-1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear`, then `list_role`. Expected: Candidates are removed while remaining catalog entries survive. Restore both test files together after testing.
+1. To check global assignment updates, close HRvest. In a test copy, assign the new role ID to two candidates' `roles` arrays; give one candidate another valid role too. Restart, filter so one candidate is hidden, and rename the role again. Close HRvest and inspect both files. Expected: The catalogue name changes, both candidates retain the same role ID, and their other fields and assignments remain unchanged.
+1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalogue entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.
+1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear confirm`, then `list_role`. Expected: Candidates are removed while remaining catalogue entries survive. Restore both test files together after testing.
 
 ### Saving data
 
 1. Checking null entries in a test copy of the data file
 
-   1. Close HRvest and back up `data/HRvest.json` and `data/roles.json` together (if the catalog file exists). Insert `null` alongside a valid candidate in the `persons` array, then launch HRvest. Expected: The app handles a data loading failure and opens a window, rather than crashing with a `NullPointerException`. Close HRvest and restore the valid backup before running further commands.
+   1. Close HRvest and back up `data/HRvest.json` and `data/roles.json` together (if the catalogue file exists). Insert `null` alongside a valid candidate in the `persons` array, then launch HRvest. Expected: The app handles a data loading failure and opens a window, rather than crashing with a `NullPointerException`. Close HRvest and restore the valid backup before running further commands.
    1. Restore the test copy, insert `null` in one candidate's `tags` array, and repeat. Expected: The same controlled data loading failure. Restore the valid backup after testing.
 
 1. Dealing with missing/corrupted data files
 
-   1. Prerequisites: Use a test folder and back up its candidate and catalog files together. Close HRvest, make the test data file invalid (for example, change one candidate's email to `invalid`), and launch. Expected: A warning gives the full path of a new `HRvest-<timestamp>-<random>-corrupt.json` beside the data file, where the timestamp matches the launch time; its bytes match the invalid original. The app shows an empty list, already saved to `data/HRvest.json`.
+   1. Prerequisites: Use a test folder and back up its candidate and catalogue files together. Close HRvest, make the test data file invalid (for example, change one candidate's email to `invalid`), and launch. Expected: A warning gives the full path of a new `HRvest-<timestamp>-<random>-corrupt.json` beside the data file, where the timestamp matches the launch time; its bytes match the invalid original. The app shows an empty list, already saved to `data/HRvest.json`.
    1. Run `list`, `find Alice`, and `help`. Expected: The backup remains unchanged. Restart HRvest. Expected: The list stays empty and no additional backup or recovery warning appears.
    1. Close HRvest, copy the backup, repair the invalid email in the copy, and replace the candidate file with that copy. Restore the companion `.roles.json` backup to `data/roles.json` if present. Expected: All candidates return after relaunch; the backup remains unchanged.
-   1. Repeat with an invalid catalog entry and with an unknown candidate role ID. Expected: Both existing originals are backed up before an empty candidate list and built-in catalog are saved. Restore both files from the matching backup pair before continuing.
-   1. In a separate test folder, keep only an invalid `data/roles.json` and launch. Expected: The warning points to a catalog-only `.roles.json` backup. Close HRvest and restore its repaired copy to `data/roles.json`.
+   1. Repeat with an invalid catalogue entry and with an unknown candidate role ID. Expected: Both existing originals are backed up before an empty candidate list and built-in catalogue are saved. Restore both files from the matching backup pair before continuing.
+   1. In a separate test folder, keep only an invalid `data/roles.json` and launch. Expected: The warning points to a catalogue-only `.roles.json` backup. Close HRvest and restore its repaired copy to `data/roles.json`.
    1. Repeat with malformed JSON and duplicate emails that differ only in case. Expected: The same recovery process, with a separate backup for each invalid file.
    1. Close HRvest and edit a valid test file to contain `"note": ""` and `"status": " Applied "`. Expected: All candidates load, the note is absent, the status is Applied, and no recovery backup is created.
    1. Make the test data file invalid and deny writing in its folder. Launch from a terminal with `java -jar HRvest.jar`. Expected: Startup stops before a window opens, an actionable terminal error appears, and the original file is unchanged. Restore permissions after testing.

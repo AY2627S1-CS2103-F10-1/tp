@@ -35,7 +35,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
    * `delete 3` : Deletes the 3rd candidate shown in the current list.
 
-   * `clear` : Deletes all candidates.
+   * `clear confirm` : Deletes all candidates. `clear` on its own only asks you to confirm.
 
    * `exit` : Exits the app.
 
@@ -58,11 +58,14 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Items followed by `...` can appear zero or more times.<br>
   For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
 
+* Prefixes ignore letter case.<br>
+  For example, `S/Offered` is read the same way as `s/Offered`.
+
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
 
-* Extraneous parameters for `help`, `list`, `exit`, `clear`, and `export` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. The `list_role` command is an exception: it rejects all arguments.
+* Extraneous parameters for `help`, `list`, `exit`, and `export` are ignored.<br>
+  For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
@@ -98,8 +101,8 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... `
 * Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Only `t/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
 * All four required prefixes must have valid values. Missing required prefixes or text before the first prefix produces an invalid-command-format message.
 * Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This person already exists in the address book.` Names, phones, addresses, statuses, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
-* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix preceded by whitespace also starts a new field, even if you intended it to be part of an address.
-* `no/` is reserved for the `note` command and is rejected anywhere in `add`, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
+* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix.
+* `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
 
 Examples:
 
@@ -129,6 +132,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This person already exists in the address book.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
+* As in `add`, a recognised prefix in any letter case after a space starts a new field. For example, `edit 1 a/Unit N/A` changes the address to `Unit` and the name to `A`. Check the success message, which shows the updated details.
+* `edit` does not change notes. Like `add`, it rejects `no/` anywhere, in any letter case, with `The edit command does not support no/. Use note INDEX no/NOTE_TEXT to add, replace or clear a note.` Use the `note` command instead.
 
 Examples:
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
@@ -147,7 +152,7 @@ Format: `note INDEX no/[NOTE_TEXT]`
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
 * To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
 * Non-empty `NOTE_TEXT` can contain at most 500 characters. Leading and trailing spaces are removed; spacing, capitalisation, and punctuation within the note are kept.
-* Supply `no/` only once. Other prefixes, such as `n/`, are treated as part of the note.
+* Supply `no/` only once. Because prefixes ignore letter case, a later ` NO/` in the text also counts as a second `no/`. Other prefixes, such as `n/`, are treated as part of the note.
 * After the note is updated or cleared, the current filter is kept. When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
 * Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
 
@@ -249,9 +254,9 @@ Examples:
 * `list` followed by `expand 1` shows the 1st candidate in HRvest.
 * `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the results of the `filter` command.
 
-### Managing the role catalog
+### Managing the role catalogue
 
-The role catalog is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
+The role catalogue is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
 * Each candidate has one or more roles. New candidates receive `No role`; `add` and `edit` do not assign other roles in this version.
 * `No role` cannot be renamed or deleted and may coexist with other roles.
@@ -264,7 +269,7 @@ The role catalog is the shared collection of roles available in HRvest, includin
 * Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
 * Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
-* Whitespace followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case, even in `roles.json`. Quotes do not escape it. Names may start with a prefix, e.g. `n/Engineer`.
+* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
 
 #### Creating an unused role: `create_role`
 
@@ -291,7 +296,7 @@ Example: `edit_role r/Software Engineer n/Senior Software Engineer`
 
 #### Deleting a role globally: `delete_role`
 
-Removes a role from the catalog and all assigned candidates.
+Removes a role from the catalogue and all assigned candidates.
 
 Format: `delete_role r/NAME`
 
@@ -301,7 +306,7 @@ Format: `delete_role r/NAME`
 
 Example: `delete_role r/Senior Software Engineer`
 
-#### Listing the complete catalog: `list_role`
+#### Listing the complete catalogue: `list_role`
 
 Shows all role names in the command result, including unused roles and `No role`.
 
@@ -312,23 +317,44 @@ Format: `list_role`
 
 ### Clearing all entries: `clear`
 
-Clears all candidates from HRvest while preserving the role catalog, including unused roles.
+Clears all candidates from HRvest while preserving the role catalogue, including unused roles.
 
-Format: `clear`
+Format: `clear confirm`
+
+* `clear` on its own deletes nothing. It shows how many candidates would be deleted and asks you to enter `clear confirm`.
+* `clear confirm` deletes every candidate, including those hidden by the current `find` or `filter`. The message is `All candidates have been cleared.`
+* `confirm` ignores letter case. Any other text after `clear` is rejected.
+* If there are no candidates, both forms reply `There are no candidates to clear.`
+
+<box type="warning" seamless>
+
+**Caution:** Clearing cannot be undone. Use `export` first if you may need the candidates again.
+</box>
 
 ### Exporting candidates: `export`
 
-Exports every candidate to `export.csv` inside the application's data folder, alongside the configured JSON data file (for example, `./data/data.json` gives `./data/export.csv`). Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
+Exports every candidate to `data/export.csv`, next to the candidate data file `data/HRvest.json` in the folder you run HRvest from. Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
 
 Format: `export`
 
 * Use the lowercase command; surrounding whitespace is accepted.
-* The destination is always `export.csv` in the same directory as the application's configured JSON data file. You are not able to specify your own export path.
+* The destination is always `data/export.csv`. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order.
+* The file is UTF-8 with a byte order mark, so spreadsheet programs such as Excel show accented and non-Latin text correctly.
 * For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
 * If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
+
+<box type="warning" seamless>
+
+**Opening the CSV in a spreadsheet:** The CSV holds your data exactly as stored, but spreadsheet programs change some values when you double-click to open the file:
+
+* Phone numbers lose their leading zeroes, for example `007` becomes `7`.
+* Text that starts with `=`, `+`, `-` or `@`, such as an address `=1+2`, is treated as a formula and calculated.
+
+To keep every value as stored, import the file instead. In Excel, use **Data > From Text/CSV**, choose **Transform Data**, and set the columns to **Text** before loading. Do not open exports from untrusted data with formulas enabled.
+</box>
 
 **Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. This is expected behaviour. It is your responsibility to keep a copy of the exported data: after exporting, copy `export.csv` to a separate location or rename it before running `export` again. Export writes directly to the destination: a failed or interrupted overwrite may destroy the previous export and leave an empty or incomplete CSV.
 
@@ -369,11 +395,10 @@ HRvest automatically saves data after every successful command. Use [`export`](#
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
 * Run only one HRvest instance at a time. Your account needs permission to access the files and write to their folder.
 * If saving fails, follow the error message before continuing. Do not edit or delete `roles-transaction.json`; restart HRvest to recover an interrupted save.
-* If recovery reports a destination mismatch, restore the original configured data path or symbolic-link target and restart before moving any data files.
 
 ### Editing the data file
 
-Advanced users may edit the JSON files. For a custom candidate data path, use that file and the `roles.json` beside it.
+Advanced users may edit the JSON files in the `data` folder.
 
 **Before editing:**
 
@@ -391,7 +416,7 @@ Advanced users may edit the JSON files. For a custom candidate data path, use th
 
 <box type="warning" seamless>
 
-Invalid edits can cause HRvest to start with an empty candidate list and the default role catalog. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
+Invalid edits can cause HRvest to start with an empty candidate list and the default role catalogue. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
 
 1. Close HRvest and copy the backups shown in the warning.
 1. Repair the copies and restore the corresponding candidate and role files together.
@@ -414,7 +439,7 @@ _Details coming soon ..._
 
 1. If `roles-transaction.json` exists on the old computer, restart HRvest there to complete recovery first. If recovery fails, follow the reported instructions before transferring.
 1. Close HRvest on both computers.
-1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together. For a custom candidate path, copy that file and its neighbouring `roles.json` instead.
+1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -434,7 +459,7 @@ Action     | Format, Examples
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`
-**Clear**  | `clear`
+**Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
 **Export** | `export`

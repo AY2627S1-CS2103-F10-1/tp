@@ -20,7 +20,7 @@ Class Name
 Class Phone
 Class Note
 Class Tag
-Class RoleCatalog
+Class RoleCatalogue
 Class Role
 
 Class I #FFFFFF
@@ -38,9 +38,9 @@ ModelManager -left-> "1" AddressBook
 ModelManager -right-> "1" UserPrefs
 UserPrefs .up.|> ReadOnlyUserPrefs
 
-AddressBook *--> "1" RoleCatalog
-RoleCatalog --> "1..*" Role : catalog
-note right of RoleCatalog
+AddressBook *--> "1" RoleCatalogue
+RoleCatalogue --> "1..*" Role : catalogue
+note right of RoleCatalogue
   Always contains the protected
   "No role" entry.
 end note

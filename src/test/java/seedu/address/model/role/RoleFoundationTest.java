@@ -239,7 +239,7 @@ class RoleFoundationTest {
     void clear_peopleWithRoles_preservesUnusedCatalogEntries() {
         ModelManager model = getAssignedModel("Engineer");
         RoleCatalog catalog = model.getRoleCatalog();
-        new ClearCommand().execute(model);
+        new ClearCommand(true).execute(model);
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
         assertEquals(catalog, model.getRoleCatalog());
     }

@@ -79,7 +79,7 @@ public class AddressBookParser {
             case ExpandCommand.COMMAND_WORD -> new ExpandCommandParser().parse(arguments);
             case ExportCommand.COMMAND_WORD -> new ExportCommandParser().parse(arguments);
             case DeleteCommand.COMMAND_WORD -> new DeleteCommandParser().parse(arguments);
-            case ClearCommand.COMMAND_WORD -> new ClearCommand();
+            case ClearCommand.COMMAND_WORD -> new ClearCommandParser().parse(arguments);
             case FilterCommand.COMMAND_WORD -> new FilterCommandParser().parse(arguments);
             case FindCommand.COMMAND_WORD -> new FindCommandParser().parse(arguments);
             case ListCommand.COMMAND_WORD -> new ListCommand();

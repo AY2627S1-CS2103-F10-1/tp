@@ -20,6 +20,11 @@ public class StatusCommandParserTest {
     }
 
     @Test
+    public void parse_uppercasePrefix_returnsCommand() {
+        assertParseSuccess(parser, "1 S/Offered", new StatusCommand(INDEX_FIRST_PERSON, Status.OFFERED));
+    }
+
+    @Test
     public void parse_missingPrefix_throwsParseException() {
         assertParseFailure(parser, "1 Interviewing",
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
