@@ -20,36 +20,55 @@ public class DataDirectoryLockTest {
     public Path directory;
 
     @Test
-    public void acquire_sameDirectory_rejectsSecondOwnerAndAllowsReopeningAfterClose() throws Exception {
+    public void acquire_sameDirectory_rejectsSecondOwner() throws Exception {
         Path data = directory.resolve("data");
         try (DataDirectoryLock first = DataDirectoryLock.acquire(data)) {
-            assertThrows(IOException.class, () -> DataDirectoryLock.acquire(data.resolve("../data")));
-            assertTrue(Files.isRegularFile(data.resolve(".hrvest.lock")));
+            assertThrows(IOException.class, conflictMessage(data), () ->
+                     DataDirectoryLock.acquire(data.resolve("../data")));
+            assertTrue(Files.isRegularFile(data.resolve(DataDirectoryLock.LOCK_FILE_NAME)));
         }
+    }
 
-        try (DataDirectoryLock reopened = DataDirectoryLock.acquire(data)) {
-            assertThrows(IOException.class, () -> DataDirectoryLock.acquire(data));
+    @Test
+    public void close_lockedDirectory_allowsReopening() throws Exception {
+        DataDirectoryLock first = DataDirectoryLock.acquire(directory);
+        first.close();
+
+        try (DataDirectoryLock reopened = DataDirectoryLock.acquire(directory)) {
+            assertThrows(IOException.class, conflictMessage(directory), () ->
+                     DataDirectoryLock.acquire(directory));
         }
-        assertTrue(Files.exists(data.resolve(".hrvest.lock")));
+        assertTrue(Files.exists(directory.resolve(DataDirectoryLock.LOCK_FILE_NAME)));
     }
 
     @Test
     public void acquire_differentDirectories_allowsIndependentInstances() throws Exception {
         try (DataDirectoryLock first = DataDirectoryLock.acquire(directory.resolve("first"));
                 DataDirectoryLock second = DataDirectoryLock.acquire(directory.resolve("second"))) {
-            assertTrue(Files.exists(directory.resolve("first/.hrvest.lock")));
-            assertTrue(Files.exists(directory.resolve("second/.hrvest.lock")));
+            assertTrue(Files.exists(directory.resolve("first").resolve(DataDirectoryLock.LOCK_FILE_NAME)));
+            assertTrue(Files.exists(directory.resolve("second").resolve(DataDirectoryLock.LOCK_FILE_NAME)));
         }
     }
 
     @Test
-    public void acquire_invalidPaths_failsWithoutChangingExistingFiles() throws Exception {
+    public void acquire_filePath_failsWithoutChangingFile() throws Exception {
         Path file = Files.writeString(directory.resolve("file"), "keep");
+
         assertThrows(IOException.class, () -> DataDirectoryLock.acquire(file));
-        assertThrows(NullPointerException.class, () -> DataDirectoryLock.acquire(null));
-        Files.createDirectory(directory.resolve(".hrvest.lock"));
-        assertThrows(IOException.class, () -> DataDirectoryLock.acquire(directory));
         assertEquals("keep", Files.readString(file));
+    }
+
+    @Test
+    public void acquire_nullPath_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> DataDirectoryLock.acquire(null));
+    }
+
+    @Test
+    public void acquire_lockFileIsDirectory_failsWithoutChangingDirectory() throws Exception {
+        Path lock = Files.createDirectory(directory.resolve(DataDirectoryLock.LOCK_FILE_NAME));
+
+        assertThrows(IOException.class, () -> DataDirectoryLock.acquire(directory));
+        assertTrue(Files.isDirectory(lock));
     }
 
     @Test
@@ -74,7 +93,8 @@ public class DataDirectoryLockTest {
             }).get(20, TimeUnit.SECONDS);
             assertEquals("Acquired", ready);
 
-            assertThrows(IOException.class, () -> DataDirectoryLock.acquire(directory));
+            assertThrows(IOException.class, conflictMessage(directory), () ->
+                     DataDirectoryLock.acquire(directory));
 
             owner.getOutputStream().close();
             assertTrue(owner.waitFor(20, TimeUnit.SECONDS));
@@ -83,8 +103,14 @@ public class DataDirectoryLockTest {
             owner.destroyForcibly();
         }
         try (DataDirectoryLock reopened = DataDirectoryLock.acquire(directory)) {
-            assertTrue(Files.isRegularFile(directory.resolve(".hrvest.lock")));
+            assertTrue(Files.isRegularFile(directory.resolve(DataDirectoryLock.LOCK_FILE_NAME)));
         }
+    }
+
+    private String conflictMessage(Path data) {
+        return "Another HRvest instance is already using " + data.toAbsolutePath().normalize()
+                + ". Close that instance before restarting. Do not delete "
+                + DataDirectoryLock.LOCK_FILE_NAME + " while HRvest is running.";
     }
 
     private int runProbe() throws Exception {
@@ -103,9 +129,11 @@ public class DataDirectoryLockTest {
     }
 
     private Process startProbe(boolean hold) throws Exception {
-        String classPath = Path.of(DataDirectoryLock.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+        String classPath = Path.of(DataDirectoryLock.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI())
                 + File.pathSeparator
-                + Path.of(DataDirectoryLockTest.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+                + Path.of(DataDirectoryLockTest.class.getProtectionDomain()
+                        .getCodeSource().getLocation().toURI());
         return new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                 "-cp", classPath, LockProbe.class.getName(), directory.toString(), Boolean.toString(hold))
                 .redirectErrorStream(true).start();

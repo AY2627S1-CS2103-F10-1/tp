@@ -12,6 +12,8 @@ import java.nio.file.StandardOpenOption;
 
 /** Holds exclusive access to a data directory for the lifetime of an application instance. */
 public final class DataDirectoryLock implements AutoCloseable {
+    public static final String LOCK_FILE_NAME = ".hrvest.lock";
+
     private final FileChannel channel;
 
     private DataDirectoryLock(FileChannel channel) {
@@ -27,7 +29,7 @@ public final class DataDirectoryLock implements AutoCloseable {
     public static DataDirectoryLock acquire(Path directory) throws IOException {
         requireNonNull(directory);
         Files.createDirectories(directory);
-        Path lockPath = directory.toRealPath().resolve(".hrvest.lock");
+        Path lockPath = directory.toRealPath().resolve(LOCK_FILE_NAME);
         FileChannel channel = FileChannel.open(lockPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE,
                 LinkOption.NOFOLLOW_LINKS);
         try {
@@ -48,8 +50,10 @@ public final class DataDirectoryLock implements AutoCloseable {
     }
 
     private static IOException alreadyRunning(Path directory) {
-        return new IOException("Another HRvest instance is already using " + directory.toAbsolutePath().normalize()
-                + ". Close that instance before restarting. Do not delete .hrvest.lock while HRvest is running.");
+        return new IOException("Another HRvest instance is already using "
+                + directory.toAbsolutePath().normalize()
+                + ". Close that instance before restarting. Do not delete "
+                + LOCK_FILE_NAME + " while HRvest is running.");
     }
 
     @Override
