@@ -441,10 +441,6 @@ HRvest does not repair or merge records automatically. See the [Developer Guide]
 
 </box>
 
-### Archiving data files `[coming in v2.0]`
-
-_Details coming soon ..._
-
 --------------------------------------------------------------------------------------------------------------------
 
 ## FAQ
