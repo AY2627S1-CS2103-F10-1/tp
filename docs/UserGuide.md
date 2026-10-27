@@ -255,7 +255,6 @@ Format: `expand INDEX`
 * The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
 * The list shows only the selected candidate at index `1`, with their full note. If the candidate has no note, it shows `No note recorded.` Run `list` to show all candidates again.
 * If HRvest has no candidates, the error is `There are no candidates yet. Use add to add one.` If only the displayed list is empty, use `list` or change the filter to display candidates.
-* An overflowing positive index, such as `99999999999`, is rejected with `The candidate index provided is invalid.` Zero and negative whole-number indexes are rejected with `Index must be a positive integer.`
 
 Examples:
 
