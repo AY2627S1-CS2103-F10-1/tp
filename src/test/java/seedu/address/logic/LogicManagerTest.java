@@ -172,10 +172,27 @@ public class LogicManagerTest {
 
     @Test
     public void execute_invalidAdd_doesNotChangeOrSaveData() {
-        assertParseException("add", String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+        assertParseException("add", "Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.");
 
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
         assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+    }
+
+    @Test
+    public void execute_missingAddFields_preservesExpandedViewAndSavedData() throws Exception {
+        logic.execute("add n/Existing p/123 e/existing@example.com a/Street");
+        logic.execute("expand 1");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        Path savedPath = temporaryFolder.resolve("addressBook.json");
+        String saved = Files.readString(savedPath);
+
+        assertThrows(ParseException.class, "Missing p/PHONE_NUMBER, a/ADDRESS.", () ->
+                logic.execute("add n/New e/new@example.com"));
+
+        assertEquals(before, model.getAddressBook());
+        assertEquals(before.getPersonList(), model.getFilteredPersonList());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(saved, Files.readString(savedPath));
     }
 
     @Test
