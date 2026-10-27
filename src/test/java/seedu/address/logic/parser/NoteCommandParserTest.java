@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
@@ -45,15 +46,28 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_missingIndex_throwsParseException() {
-        assertParseFailure(parser, " no/hi",
-                ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE);
+        assertParseFailure(parser, " no/hi", String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE));
     }
 
     @Test
-    public void parse_invalidIndex_throwsParseException() {
-        String message = ParserUtil.MESSAGE_INVALID_INDEX + "\n" + NoteCommand.MESSAGE_USAGE;
-        for (String index : new String[] {"abc", "0", "-1", "+1", "1.5", "1 2", "2147483648"}) {
+    public void parse_notWholeNumberIndex_throwsFormatError() {
+        String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
+        for (String index : new String[] {"abc", "+1", "1.5", "1 2"}) {
             assertParseFailure(parser, " " + index + " no/hi", message);
+        }
+    }
+
+    @Test
+    public void parse_zeroOrNegativeIndex_throwsInvalidIndex() {
+        for (String index : new String[] {"0", "-1", "000"}) {
+            assertParseFailure(parser, " " + index + " no/hi", ParserUtil.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
+    public void parse_indexTooLargeForAnyList_throwsInvalidDisplayedIndex() {
+        for (String index : new String[] {"2147483648", "99999999999"}) {
+            assertParseFailure(parser, " " + index + " no/hi", Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
     }
 
