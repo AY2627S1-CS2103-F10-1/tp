@@ -1,6 +1,7 @@
 package seedu.address.model.person;
 
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+import static seedu.address.model.role.RoleCatalog.MESSAGE_ROLES_REQUIRED;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,8 +19,6 @@ import seedu.address.model.tag.Tag;
  * Guarantees: details are present and not null, field values are validated, immutable.
  */
 public class Person {
-
-    public static final String MESSAGE_ROLES_REQUIRED = "Every person must have at least one role.";
 
     // Identity field for duplicate detection
     private final Email email;

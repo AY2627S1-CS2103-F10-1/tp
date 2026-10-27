@@ -82,7 +82,11 @@ public class FilterCommand extends Command {
         requireNonNull(model);
         Set<Role> roles = RoleCommandUtil.resolveRoles(model, roleNames, ListRoleCommand.COMMAND_WORD);
         model.updateFilteredPersonList(new CandidateMatchesFilterPredicate(statuses, roles));
-        int count = model.getFilteredPersonList().size();
+        return createFilterResult(model.getFilteredPersonList().size(), roles);
+    }
+
+    /** Creates feedback describing the result count and selected filter criteria. */
+    private CommandResult createFilterResult(int count, Set<Role> roles) {
         if (roles.isEmpty()) {
             return new CommandResult(String.format(MESSAGE_SUCCESS, count,
                     joinNames(statuses.stream().map(Status::toString).toList())));

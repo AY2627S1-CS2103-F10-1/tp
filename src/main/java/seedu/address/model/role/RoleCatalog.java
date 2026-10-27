@@ -2,7 +2,6 @@ package seedu.address.model.role;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
-import static seedu.address.model.person.Person.MESSAGE_ROLES_REQUIRED;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -13,6 +12,7 @@ import java.util.Set;
 
 /** Validates and exposes an immutable role catalog, including unused roles. */
 public final class RoleCatalog {
+    public static final String MESSAGE_ROLES_REQUIRED = "Every person must have at least one role.";
     public static final String MESSAGE_DUPLICATE_NAME = "A role with this name already exists.";
     public static final String MESSAGE_UNKNOWN_ROLE = "Role does not exist: %1$s";
 
