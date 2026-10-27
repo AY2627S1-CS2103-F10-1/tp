@@ -68,22 +68,45 @@ public class LogicManagerTest {
     }
 
     @Test
-    public void execute_formattedPhoneAddAndEdit_preservesSavedAndExportedValues() throws Exception {
+    public void execute_formattedPhoneAdd_preservesSavedValue() throws Exception {
+        logic.execute("add n/Phone Test p/1234 5678 (HP) 1111-3333 (Office) e/phone@example.com a/Block 1");
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+
+        assertEquals("1234 5678 (HP) 1111-3333 (Office)",
+                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+    }
+
+    @Test
+    public void execute_formattedPhoneEdit_preservesSavedValue() throws Exception {
+        model.addPerson(new PersonBuilder().build());
+
+        logic.execute("edit 1 p/(65) 6123 4567 ext. 123");
+
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals("(65) 6123 4567 ext. 123", model.getFilteredPersonList().getFirst().getPhone().value);
+        assertEquals("(65) 6123 4567 ext. 123",
+                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+    }
+
+    @Test
+    public void execute_formattedPhoneExport_preservesCsvValue() throws Exception {
+        model.addPerson(new PersonBuilder().withPhone("001-234 567 (Office)").build());
+
+        logic.execute("export");
+
+        assertTrue(Files.readString(temporaryFolder.resolve("export.csv")).contains("\"001-234 567 (Office)\""));
+    }
+
+    @Test
+    public void execute_phoneWithTooFewDigits_preservesSavedAndDisplayedData() throws Exception {
         logic.execute("add n/Phone Test p/+65 9123 4567 e/phone@example.com a/Block 1");
         JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
-        assertEquals("+65 9123 4567",
-                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
-
-        logic.execute("edit 1 p/001-234 567");
-        assertEquals("001-234 567", model.getFilteredPersonList().getFirst().getPhone().value);
-        assertEquals("001-234 567", saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
-        logic.execute("export");
-        assertTrue(Files.readString(temporaryFolder.resolve("export.csv")).contains("\"001-234 567\""));
-
         String before = Files.readString(saved.getAddressBookFilePath());
-        assertParseException("edit 1 p/12+34", Phone.MESSAGE_CONSTRAINTS);
+
+        assertParseException("edit 1 p/Office: 12", Phone.MESSAGE_CONSTRAINTS);
+
         assertEquals(before, Files.readString(saved.getAddressBookFilePath()));
-        assertEquals("001-234 567", model.getFilteredPersonList().getFirst().getPhone().value);
+        assertEquals("+65 9123 4567", model.getFilteredPersonList().getFirst().getPhone().value);
     }
 
     @Test
