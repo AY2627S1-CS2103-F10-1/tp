@@ -74,12 +74,7 @@ class RoleDataStorage {
         }
         // Validate the complete pair before touching either destination.
         new AddressBook(data);
-        Journal journal = new Journal(JOURNAL_VERSION, Snapshot.capture(candidates.getAddressBookFilePath()),
-                Snapshot.capture(rolesPath));
-        Path permissions = exists(candidates.getAddressBookFilePath())
-                ? candidates.getAddressBookFilePath() : rolesPath;
-        JsonAddressBookStorage.writeBytes(JsonUtil.toJsonString(journal).getBytes(StandardCharsets.UTF_8),
-                journalPath, permissions);
+        Journal journal = writeJournal();
         try {
             candidates.saveAddressBook(data);
             writeCatalog(data.getRoleCatalog());
@@ -93,6 +88,17 @@ class RoleDataStorage {
             }
             throw e;
         }
+    }
+
+    /** Captures and persists both before-images with existing data-file permissions before either file changes. */
+    private Journal writeJournal() throws IOException {
+        Journal journal = new Journal(JOURNAL_VERSION, Snapshot.capture(candidates.getAddressBookFilePath()),
+                Snapshot.capture(rolesPath));
+        Path permissions = exists(candidates.getAddressBookFilePath())
+                ? candidates.getAddressBookFilePath() : rolesPath;
+        JsonAddressBookStorage.writeBytes(JsonUtil.toJsonString(journal).getBytes(StandardCharsets.UTF_8),
+                journalPath, permissions);
+        return journal;
     }
 
     /** Provides a narrow fault-injection seam for testing a failure between the two file commits. */
