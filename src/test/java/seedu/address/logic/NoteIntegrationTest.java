@@ -52,7 +52,7 @@ public class NoteIntegrationTest {
     @Test
     public void execute_noteReplacement_persistsAcrossRepeatAndReload() throws Exception {
         String first = "Strong on system design, weak on SQL";
-        String replacement = "Passed round 2,  schedule final interview [C++]; \u4e2d\u6587";
+        String replacement = "Passed round 2,  schedule final interview [C++]; \"follow up\"";
         assertEquals("Updated note for " + BENSON.getName() + ": " + first,
                 logic.execute("note 2 no/" + first).getFeedbackToUser());
         assertEquals(new Note(first), readCandidate(1).getNote().orElseThrow());
@@ -160,6 +160,22 @@ public class NoteIntegrationTest {
         assertEquals(before, model.getAddressBook());
         assertEquals(displayedBefore, model.getFilteredPersonList());
         assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
+    }
+
+    @Test
+    public void execute_unsupportedInput_keepsMemoryDiskAndFilterUnchanged() throws Exception {
+        logic.execute("note 2 no/Keep this note");
+        logic.execute("find Benson");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
+        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
+        for (String command : List.of("add n/Alice p/123 e/alice@example.com a/Block\u00A01",
+                "edit 1 a/Block\u200B1", "note 1 no/\u200B", "note 1 no/\t", "find Ben\u00A0son")) {
+            assertThrows(ParseException.class, () -> logic.execute(command));
+            assertEquals(before, model.getAddressBook());
+            assertEquals(displayedBefore, model.getFilteredPersonList());
+            assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
+        }
     }
 
     @Test
