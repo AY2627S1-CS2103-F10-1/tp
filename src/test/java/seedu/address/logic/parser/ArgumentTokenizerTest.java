@@ -127,6 +127,26 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenize_prefixInDifferentCase_treatedAsSamePrefix() {
+        Prefix noteSlash = new Prefix("no/");
+        String argsString = "Preamble P/upper p/lower NO/note No/mixed";
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, noteSlash);
+
+        assertPreamblePresent(argMultimap, "Preamble");
+        assertArgumentPresent(argMultimap, pSlash, "upper", "lower");
+        assertArgumentPresent(argMultimap, noteSlash, "note", "mixed");
+    }
+
+    @Test
+    public void tokenize_prefixInDifferentCaseWithoutWhitespace_takenAsValue() {
+        String argsString = "Preamble p/one/P/two-P/three";
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash);
+
+        assertPreamblePresent(argMultimap, "Preamble");
+        assertArgumentPresent(argMultimap, pSlash, "one/P/two-P/three");
+    }
+
+    @Test
     public void tokenize_multipleArgumentsJoined() {
         String argsString = "SomePreambleStringp/ pSlash joined-tjoined -t not joined^Qjoined";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash, dashT, hatQ);

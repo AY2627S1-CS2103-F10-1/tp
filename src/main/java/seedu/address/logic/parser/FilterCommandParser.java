@@ -4,6 +4,9 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Status;
@@ -27,16 +30,12 @@ public class FilterCommandParser implements Parser<FilterCommand> {
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FilterCommand.MESSAGE_USAGE));
         }
 
-        argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_STATUS);
-
-        Status status;
-        try {
-            status = Status.fromString(argMultimap.getValue(PREFIX_STATUS).get());
-        } catch (IllegalArgumentException e) {
-            throw new ParseException(Status.MESSAGE_CONSTRAINTS);
+        List<Status> statuses = new ArrayList<>();
+        for (String status : argMultimap.getAllValues(PREFIX_STATUS)) {
+            statuses.add(ParserUtil.parseStatus(status));
         }
 
-        return new FilterCommand(status);
+        return new FilterCommand(statuses);
     }
 
 }

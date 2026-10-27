@@ -1,13 +1,16 @@
 package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.StringUtil;
+import seedu.address.logic.Messages;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Email;
@@ -24,6 +27,25 @@ public class ParserUtil {
 
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
+    // ArgumentTokenizer only recognises prefixes after a space, so a tab before no/ must be caught separately.
+    private static final Pattern NOTE_PREFIX_PATTERN =
+            Pattern.compile("(^|\\s)" + Pattern.quote(PREFIX_NOTE.getPrefix()), Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Rejects {@code args} if it contains the note prefix, so that commands without a note field
+     * do not silently store note text in another field.
+     *
+     * @param args Arguments of a command that does not accept a note.
+     * @param message Error message that points the user to the note command.
+     * @throws ParseException If {@code args} contains the note prefix after whitespace or at its start.
+     */
+    public static void verifyNoNotePrefix(String args, String message) throws ParseException {
+        requireNonNull(args);
+        if (NOTE_PREFIX_PATTERN.matcher(args).find()) {
+            throw new ParseException(message);
+        }
+    }
+
     /**
      * Parses {@code oneBasedIndex} into an {@code Index} and returns it. Leading and trailing whitespaces will be
      * trimmed.
@@ -35,6 +57,41 @@ public class ParserUtil {
             throw new ParseException(MESSAGE_INVALID_INDEX);
         }
         return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    /**
+     * Parses {@code oneBasedIndex} like {@link #parseIndex(String)}, but explains why a whole number is rejected.
+     * Leading and trailing whitespaces will be trimmed.
+     *
+     * @param oneBasedIndex Index typed by the user, from the displayed list.
+     * @param formatErrorMessage Message used when {@code oneBasedIndex} is not a whole number.
+     * @return The parsed index.
+     * @throws ParseException If {@code oneBasedIndex} is not a whole number, is zero or negative,
+     *     or is too large to identify any displayed candidate.
+     */
+    public static Index parseDisplayedIndex(String oneBasedIndex, String formatErrorMessage)
+            throws ParseException {
+        requireNonNull(oneBasedIndex);
+        String trimmedIndex = oneBasedIndex.trim();
+        if (!isWholeNumber(trimmedIndex)) {
+            throw new ParseException(formatErrorMessage);
+        }
+        if (isZeroOrNegative(trimmedIndex)) {
+            throw new ParseException(MESSAGE_INVALID_INDEX);
+        }
+        if (!StringUtil.isNonZeroUnsignedInteger(trimmedIndex)) {
+            // Too large for an int, so no displayed list can be this long.
+            throw new ParseException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        }
+        return Index.fromOneBased(Integer.parseInt(trimmedIndex));
+    }
+
+    private static boolean isWholeNumber(String text) {
+        return text.matches("-?\\d+");
+    }
+
+    private static boolean isZeroOrNegative(String wholeNumber) {
+        return wholeNumber.startsWith("-") || wholeNumber.matches("0+");
     }
 
     /**
