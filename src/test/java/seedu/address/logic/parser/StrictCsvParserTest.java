@@ -56,6 +56,63 @@ public class StrictCsvParserTest {
     }
 
     @Test
+    public void parse_missingColumns_identifiesFieldAndEnding() {
+        for (String ending : List.of("", "\n", "\r\n")) {
+            String reason = ending.isEmpty() ? "end of file" : "record ending";
+            assertThrows(ParseException.class, "CSV record 2, field 6 (tags): Too few columns: expected 7, "
+                    + "found 6 before " + reason + ". Add the missing comma-separated fields; use an empty field "
+                    + "for an absent optional value.", () ->
+                    new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f" + ending).parse());
+        }
+    }
+
+    @Test
+    public void parse_extraColumn_identifiesRecordAndColumnCount() {
+        assertThrows(ParseException.class, "CSV record 2: Too many columns: expected 7; "
+                + "found an extra column after field 7 (note).", () ->
+                new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f,g,h").parse());
+    }
+
+    @Test
+    public void parse_misplacedQuote_identifiesFieldWithoutExposingValue() {
+        assertThrows(ParseException.class, "CSV record 2, field 3 (email): Unexpected quote in an unquoted field. "
+                + "Enclose the entire field in double quotes and escape embedded quotes by doubling them.", () ->
+                new StrictCsvParser(EMPTY_RECORD + "a,b,private\"value,d,e,f,g").parse());
+    }
+
+    @Test
+    public void parse_contentAfterClosingQuote_identifiesFieldAndExpectedDelimiter() {
+        for (String suffix : List.of("private", " ")) {
+            assertThrows(ParseException.class, "CSV record 2, field 7 (note): Unexpected content after a closing "
+                    + "quote. Expected a comma, LF/CRLF record ending, or end of file; remove text or spaces "
+                    + "outside the quotes.", () ->
+                    new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f,\"note\"" + suffix).parse());
+        }
+    }
+
+    @Test
+    public void parse_unterminatedQuote_identifiesFieldAndRemedy() {
+        assertThrows(ParseException.class, "CSV record 2, field 7 (note): Unterminated quoted field. "
+                + "Add a closing double quote; escape embedded quotes by doubling them.", () ->
+                new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f,\"private").parse());
+    }
+
+    @Test
+    public void parse_bareCr_identifiesRecordAndSupportedEndings() {
+        for (String suffix : List.of("", "x")) {
+            assertThrows(ParseException.class, "CSV record 2: Bare CR record ending. "
+                    + "Use LF or CRLF line endings instead.", () ->
+                    new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f,g\r" + suffix).parse());
+        }
+    }
+
+    @Test
+    public void parse_oversizedField_identifiesFieldAndLimit() {
+        assertThrows(ParseException.class, "CSV record 2, field 1 (name): Field exceeds 65,536 characters.", () ->
+                new StrictCsvParser(EMPTY_RECORD + "a".repeat(65_537) + ",,,,,,").parse());
+    }
+
+    @Test
     public void parse_wrongColumnCountOrEscaping_rejects() {
         for (String input : new String[] {"\"\"\r\n", EMPTY_RECORD.replace("\r\n", ",\"\"\r\n"),
             "\"bad\"quote\",\"\",\"\",\"\",\"\",\"\",\"\"\r\n"}) {
