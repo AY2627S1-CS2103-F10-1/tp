@@ -386,7 +386,7 @@ Appends candidates from `import.csv` to all candidates currently loaded in HRves
 
 Format: `import`
 
-* Extra arguments are ignored, just like `export`. Place `import.csv` in the same directory as the JSON data file and `export.csv`: normally `data/import.csv`. For a configured data file `/app/data/HRvest.json`, the input is `/app/data/import.csv`. No other location is tried.
+* Extra arguments are ignored, just like `export`. Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is, `data/import.csv` in the folder you run HRvest from. The location cannot be changed, and no other location is tried.
 * The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
 * Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view.
 * An empty (zero-byte) file or valid header-only file runs the same pipeline, saves normally, resets the view, and reports 0 imported candidates. Whitespace-only files are invalid.
