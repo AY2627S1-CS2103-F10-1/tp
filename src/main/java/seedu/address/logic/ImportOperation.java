@@ -2,6 +2,7 @@ package seedu.address.logic;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -63,7 +64,7 @@ final class ImportOperation {
     private AddressBook combine(AddressBook snapshot, List<Person> imported) throws CommandException {
         Map<String, String> identities = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         snapshot.getPersonList().forEach(person -> identities.put(person.getEmail().value, "existing HRvest data"));
-        AddressBook combined = new AddressBook(snapshot);
+        List<Person> candidates = new ArrayList<>(snapshot.getPersonList());
         for (int index = 0; index < imported.size(); index++) {
             Person person = imported.get(index);
             int record = index + 2;
@@ -72,8 +73,11 @@ final class ImportOperation {
                 throw new CommandException("Import failed: CSV record " + record
                         + ", field email: duplicate candidate conflicts with " + conflict + ".");
             }
-            combined.addPerson(person);
+            candidates.add(person);
         }
+        AddressBook combined = new AddressBook();
+        combined.setRoleCatalog(snapshot.getRoleCatalog());
+        combined.setPersons(candidates);
         return combined;
     }
 

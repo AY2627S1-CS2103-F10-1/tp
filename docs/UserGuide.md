@@ -97,7 +97,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 |---|---|---|
 | `n/NAME` | Yes | A non-blank name containing only letters, digits, and spaces, e.g. `n/John Doe`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. Punctuation such as apostrophes and hyphens is not accepted. |
 | `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
-| `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/john.doe@example.com`. The local part allows letters, digits, and `+`, `_`, `.`, or `-` between alphanumeric groups; it must start and end with a letter or digit. Domain labels allow letters, digits, and internal hyphens; the final label must contain at least two characters. Spaces are not accepted. |
+| `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/anne.o'brien@example.com`. The local part allows letters, digits, and <code>!#$%&'*+/=?^_&#96;{&#124;}~-</code>, with periods separating non-empty groups. Leading, trailing, and consecutive periods are invalid. Domain labels must start and end with letters or digits and may contain internal hyphens, including consecutive hyphens (e.g. `xn--bcher-kva.de`); the final label must contain at least two characters. Spaces and quoted local parts are not accepted. |
 | `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
 | `r/ROLE` | Yes | An existing [role name](#managing-the-role-catalog). Repeat `r/` to assign multiple roles. Matching ignores case and surrounding whitespace. Use `r/No role` if no role applies. |
 | `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
@@ -290,6 +290,7 @@ The role catalog is the shared collection of roles available in HRvest, includin
 
 * Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
 * Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
+* Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent. Display spelling and role IDs are preserved. This applies to creation, assignment, filtering, renaming, and deletion.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
 * A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
 
@@ -390,6 +391,7 @@ Format: `import`
 
 * Extra arguments are ignored, just like `export`. Place `import.csv` in the same directory as the JSON data file and `export.csv`: normally `data/import.csv`. For a configured data file `/app/data/HRvest.json`, the input is `/app/data/import.csv`. No other location is tried.
 * The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
+* CSV accepts legacy Unicode addresses and notes that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 Unicode code points; quoted notes may contain tabs or line breaks. The printable-ASCII policy still applies when entering these values through commands. Other field, duplicate, and import size rules still apply.
 * Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view.
 * An empty (zero-byte) file or valid header-only file runs the same pipeline, saves normally, resets the view, and reports 0 imported candidates. Whitespace-only files are invalid.
 * Only readable regular files are accepted; symbolic links, directories, and special files are rejected.
@@ -412,7 +414,7 @@ Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the h
 | File | 10 MiB (10,485,760 bytes) |
 | Candidates in one import | 10,000, excluding the header |
 | Decoded field | 65,536 Unicode characters before trimming |
-| Note | 500 printable-ASCII characters after trimming |
+| Note | 500 Unicode code points after trimming |
 | Tags per candidate | 100 array entries before deduplication |
 | Each tag name | 256 Unicode characters before trimming |
 | Tag JSON structure | One flat array of strings only |
@@ -458,12 +460,13 @@ The command box remembers every command you submit in the current session so you
 
 ### Saving the data
 
-HRvest automatically saves data after every successful command. Use [`export`](#exporting-candidates-export) to create a CSV copy.
+HRvest automatically saves data after each command that changes candidates or the role catalog, and after every successful import. Viewing, searching, filtering, help, exit, and commands that leave the stored data unchanged do not rewrite the data files. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
 * HRvest allows only one instance to use a data folder at a time. A second instance stops before reading or writing candidate data or preferences and shows an error dialog asking you to close the first. Dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
 * Keep `data/.hrvest.lock` in place. HRvest releases the operating-system lock when it closes or its process terminates; the file remains and does not prevent restarting. Do not delete or replace it while HRvest is running. Separate HRvest folders can run independently.
 * If saving fails, follow the error message before continuing. Do not edit or delete `roles-transaction.json`; restart HRvest to recover an interrupted save.
+* A failed data change is rolled back. You can still inspect the loaded candidates, open help, export a copy, or exit through the command box when JSON saving is unavailable. Exit does not retry a rejected change.
 
 ### Editing the data file
 
@@ -478,6 +481,8 @@ Advanced users may edit the JSON files in the `data` folder.
 **When editing records:**
 
 * Keep candidate emails unique, ignoring case.
+* Role names must be unique ignoring case and Unicode composition. If an older catalog contains both composed and decomposed spellings of the same name, loading rejects the catalog and backs up both files. In copies of the backups, give one entry a distinct name, keep its ID and candidate assignments, then restore the candidate and catalog files together.
+* Each file must contain exactly one JSON object. Do not repeat a property name within an object or append another object or text after it. Surrounding JSON whitespace is allowed. Invalid JSON follows the backup and recovery process below.
 * A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Loading a mix of `no-role` and named role IDs removes `no-role`. Use `no-role` for `No role`, rather than its display name.
 * Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
 * One invalid value in **any** candidate, such as a space between the digits of a phone number, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
