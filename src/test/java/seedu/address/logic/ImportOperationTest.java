@@ -92,18 +92,21 @@ public class ImportOperationTest {
     }
 
     @Test
-    public void execute_invalidNote_rejectsWithoutChangingSavedData() throws Exception {
-        byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
+    public void execute_legacyNoteText_importsWithoutChangingInput() throws Exception {
         model.expandPerson(existing);
+        int index = 0;
         for (String note : List.of("Unicode \u4e2d\u6587", "First\r\nsecond", "Tab\there")) {
-            writeInput(new PersonBuilder(incoming).withNote(note).build());
+            Person candidate = new PersonBuilder(incoming).withEmail("legacy" + index++ + "@example.com")
+                    .withNote(note).build();
+            writeInput(candidate);
+            byte[] input = Files.readAllBytes(inputPath());
 
-            assertThrows(CommandException.class, () -> logic.execute("import"));
+            logic.execute("import");
 
-            assertEquals(List.of(existing), model.getAddressBook().getPersonList());
-            assertEquals(List.of(existing), model.getFilteredPersonList());
-            assertTrue(model.isExpandedViewProperty().get());
-            assertArrayEquals(disk, Files.readAllBytes(storage.getAddressBookFilePath()));
+            assertEquals(candidate, model.getAddressBook().getPersonList().getLast());
+            assertFalse(model.isExpandedViewProperty().get());
+            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+            assertArrayEquals(input, Files.readAllBytes(inputPath()));
         }
     }
 
