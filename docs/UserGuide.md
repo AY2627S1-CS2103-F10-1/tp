@@ -280,15 +280,15 @@ The role catalogue is the shared collection of roles available in HRvest, includ
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
 * A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
 
-#### Creating an unused role: `create_role`
+#### Creating an unused role: `add_role`
 
 Creates a role without assigning it to a candidate.
 
-Format: `create_role n/NAME`
+Format: `add_role n/NAME`
 
 * The name must not match an existing role, including `No role`.
 
-Example: `create_role n/Software Engineer`
+Example: `add_role n/Software Engineer`
 
 #### Renaming a role globally: `edit_role`
 
@@ -512,7 +512,7 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 t/friend t/colleague`
-**Create role** | `create_role n/NAME`<br> e.g., `create_role n/Software Engineer`
+**Create role** | `add_role n/NAME`<br> e.g., `add_role n/Software Engineer`
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`
