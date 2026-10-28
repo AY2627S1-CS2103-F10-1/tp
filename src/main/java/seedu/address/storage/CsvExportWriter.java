@@ -60,10 +60,12 @@ public class CsvExportWriter {
 
     /** Keeps the previous export intact until the replacement has been written and closed successfully. */
     private void writeReplacement(ReadOnlyAddressBook addressBook, Path destination) throws IOException {
-        Path temporary = Files.createTempFile(destination.toAbsolutePath().getParent(), "HRvest-export-", ".tmp");
+        Path temporary = Files.createTempFile(destination.toAbsolutePath().getParent(),
+                "HRvest-export-", ".tmp");
         try {
             JsonAddressBookStorage.copyExistingAcl(
-                    Files.getFileAttributeView(destination, AclFileAttributeView.class, LinkOption.NOFOLLOW_LINKS),
+                    Files.getFileAttributeView(destination, AclFileAttributeView.class,
+                            LinkOption.NOFOLLOW_LINKS),
                     Files.getFileAttributeView(temporary, AclFileAttributeView.class));
             JsonAddressBookStorage.copyExistingPosixPermissions(destination, temporary);
             try (Writer writer = openWriter(temporary)) {
@@ -82,7 +84,8 @@ public class CsvExportWriter {
 
     /** Replaces the completed export atomically, failing safely if the filesystem cannot do so. */
     protected void replaceFile(Path temporary, Path destination) throws IOException {
-        Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        Files.move(temporary, destination,
+                StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /**
