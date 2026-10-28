@@ -13,7 +13,9 @@
 
 ## **Acknowledgements**
 
-* HRvest is a fork of [AddressBook-Level3](https://github.com/se-edu/addressbook-level3). Most of the original code remains unchanged; changes so far have focused on user-facing aspects of the application. The design descriptions and diagrams are also initially inherited from AddressBook-Level3.
+* HRvest is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) (AB3) by the SE-EDU initiative. HRvest keeps AB3's architecture, and parts of its code, documentation and diagrams are adapted from AB3.
+* HRvest uses [JavaFX](https://openjfx.io/) for its GUI, [Jackson](https://github.com/FasterXML/jackson) for JSON and CSV tag data, and [JUnit 5](https://junit.org/junit5/) for testing.
+* Team members used AI coding assistants for parts of the code, tests and documentation, guided by the repository's `AGENTS.md`.
 
 --------------------------------------------------------------------------------------------------------------------
 
