@@ -160,6 +160,7 @@ Adds a note to the specified candidate, such as interview feedback or follow-up 
 Format: `note INDEX no/[NOTE_TEXT]`
 
 * Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
+* `0` or a negative index gives `Index must be a positive integer.` An index beyond the displayed list gives `The candidate index provided is invalid.` A missing or non-numeric index gives `Invalid command format!`. The current view stays unchanged.
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
 * To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
 * Non-empty `NOTE_TEXT` can contain at most 500 printable-ASCII characters. Leading and trailing ordinary spaces are removed; spacing, capitalisation, and ASCII punctuation within the note are kept. Tabs, line breaks, and non-ASCII characters are rejected.
@@ -189,7 +190,7 @@ Format: `status INDEX s/STATUS`
 * Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
 * Candidates created with `add` start with `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
 * After an update, the current filter is kept. Candidates that no longer match a status filter disappear from the displayed list. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
-* A missing `s/` or non-integer index gives `Invalid command format!`; an index outside the displayed list gives `The candidate index provided is invalid.`
+* `0` or a negative index gives `Index must be a positive integer.` An index beyond the displayed list gives `The candidate index provided is invalid.` A missing or non-numeric index, or a missing `s/`, gives `Invalid command format!`. The candidate and current view stay unchanged.
 * An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
 
 Examples:
@@ -264,6 +265,8 @@ Format: `expand INDEX`
 * Shows the candidate at the specified `INDEX`.
 * The index refers to the index number shown in the displayed candidate list.
 * The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
+* `0` or a negative index gives `Index must be a positive integer.` A non-numeric index gives `Invalid index! Index must be a positive integer.` The current view stays unchanged.
+* An index beyond the displayed list gives `No candidate found with that index. Enter an index between 1 and N.`, where `N` is the number of candidates shown. A number above 2147483647 gives `The candidate index provided is invalid.`
 * The list shows only the selected candidate at index `1`, with their full note. If the candidate has no note, it shows `No note recorded.` Run `list` to show all candidates again.
 * If HRvest has no candidates, the error is `There are no candidates yet. Use add to add one.` If only the displayed list is empty, use `list` or change the filter to display candidates.
 
@@ -458,7 +461,8 @@ The command box remembers every command you submit in the current session so you
 HRvest automatically saves data after every successful command. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
-* Run only one HRvest instance at a time. Your account needs permission to access the files and write to their folder.
+* HRvest allows only one instance to use a data folder at a time. A second instance stops before reading or writing candidate data or preferences and shows an error dialog asking you to close the first. Dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
+* Keep `data/.hrvest.lock` in place. HRvest releases the operating-system lock when it closes or its process terminates; the file remains and does not prevent restarting. Do not delete or replace it while HRvest is running. Separate HRvest folders can run independently.
 * If saving fails, follow the error message before continuing. Do not edit or delete `roles-transaction.json`; restart HRvest to recover an interrupted save.
 
 ### Editing the data file
