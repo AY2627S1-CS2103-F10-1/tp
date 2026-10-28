@@ -131,7 +131,7 @@ Edits an existing candidate in HRvest.
 
 The success message shows the candidate's updated details.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`
+Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`
 
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -530,6 +530,7 @@ Action     | Format, Examples
 **Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Expand** | `expand INDEX`<br> e.g., `expand 2`
 **Export** | `export`
 **Import** | `import`
 **Filter** | `filter [s/STATUS]... [r/ROLE]...`<br> e.g., `filter s/Interviewing s/Offered`
@@ -538,3 +539,4 @@ Action     | Format, Examples
 **Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear
 **Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
 **Help**   | `help`
+**Exit**   | `exit`
