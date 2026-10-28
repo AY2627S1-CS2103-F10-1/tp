@@ -11,6 +11,7 @@ import static seedu.address.testutil.TypicalPersons.BOB;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -44,6 +45,34 @@ public class UniquePersonListTest {
         Person editedAlice = new PersonBuilder(ALICE).withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND)
                 .build();
         assertTrue(uniquePersonList.contains(editedAlice));
+    }
+
+    @Test
+    public void findSamePerson_nullPerson_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> uniquePersonList.findSamePerson(null));
+    }
+
+    @Test
+    public void findSamePerson_emptyList_returnsEmpty() {
+        assertEquals(Optional.empty(), uniquePersonList.findSamePerson(ALICE));
+    }
+
+    @Test
+    public void findSamePerson_distinctEmail_returnsEmpty() {
+        uniquePersonList.add(ALICE);
+        Person distinct = new PersonBuilder(ALICE).withEmail("other@example.com").build();
+
+        assertEquals(Optional.empty(), uniquePersonList.findSamePerson(distinct));
+        assertFalse(uniquePersonList.contains(distinct));
+    }
+
+    @Test
+    public void findSamePerson_sameEmailIgnoringCase_returnsStoredPerson() {
+        uniquePersonList.add(ALICE);
+        Person candidate = new PersonBuilder(BOB).withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertEquals(Optional.of(ALICE), uniquePersonList.findSamePerson(candidate));
+        assertTrue(uniquePersonList.contains(candidate));
     }
 
     @Test

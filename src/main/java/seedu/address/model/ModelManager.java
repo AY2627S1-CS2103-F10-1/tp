@@ -91,7 +91,7 @@ public class ModelManager implements Model {
     @Override
     public Optional<Person> findSamePerson(Person person) {
         requireNonNull(person);
-        return addressBook.getPersonList().stream().filter(person::isSamePerson).findFirst();
+        return addressBook.findSamePerson(person);
     }
 
     @Override
