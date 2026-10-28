@@ -19,6 +19,7 @@ Class Email
 Class Name
 Class Phone
 Class Note
+Class "<<enumeration>>\nStatus" as Status
 Class Tag
 Class RoleCatalog
 Class Role
@@ -47,12 +48,13 @@ end note
 Person --> "1..*" Role : assigned roles
 
 AddressBook *--> "1" UniquePersonList
-UniquePersonList --> "~* all" Person
+UniquePersonList --> "*" Person : all
 Person *--> Name
 Person *--> Phone
 Person *--> Email
 Person *--> Address
 Person *--> "0..1" Note
+Person --> Status
 Person *--> "*" Tag
 
 Person -[hidden]up--> I
@@ -63,5 +65,5 @@ Phone -[hidden]right-> Address
 Address -[hidden]right-> Email
 Email -[hidden]right-> Note
 
-ModelManager --> "~* filtered" Person
+ModelManager --> "*" Person : filtered
 @enduml
