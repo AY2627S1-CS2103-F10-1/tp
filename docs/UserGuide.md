@@ -476,6 +476,7 @@ Advanced users may edit the JSON files in the `data` folder.
 
 * Keep candidate emails unique, ignoring case.
 * A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Loading a mix of `no-role` and named role IDs removes `no-role`. Use `no-role` for `No role`, rather than its display name.
+* In `roles.json`, keep the entry with the ID `no-role` and the name `No role`. Give each role you add a new, unique ID in UUID format, such as `3f2b6c1e-8d4a-4b7e-9c2f-1a2b3c4d5e6f`. Any other ID, or a missing or renamed `no-role` entry, stops both files from loading.
 * Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
 * One invalid value in **any** candidate, such as a space between the digits of a phone number, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
 * Save the file as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
