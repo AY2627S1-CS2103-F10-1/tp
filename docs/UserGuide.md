@@ -107,7 +107,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 
 * Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Both `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
 * Supply valid `n/`, `p/`, `e/`, `a/`, and `r/` values. Missing contact details or text before the first prefix produces an invalid-command-format message.
-* Create named roles with `create_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
+* Create named roles with `add_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
 * Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` identifies the matching existing record, even if hidden by a filter. The submitted candidate and current view are not changed. Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
 * Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix.
 * `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
@@ -115,14 +115,15 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 Examples:
 
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 r/No role`
-* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison r/Developer s/Interviewing t/backend` (create `Developer` first with `create_role n/Developer`).
+* `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison r/Developer s/Interviewing t/backend` (create `Developer` first with `add_role n/Developer`).
 
 ### Listing all candidates: `list`
 
-Shows a list of all candidates in HRvest.
+Shows a list of all candidates in HRvest, along with the total count.
 
 Format: `list`
 
+* The success message is `Listed all N candidate(s).`, where `N` is the current number of candidates. For example, `Listed all 6 candidate(s).`
 * If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
 
 ### Editing a candidate: `edit`
@@ -138,7 +139,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 * Existing values will be updated to the input values. The current filter is kept; candidates that no longer match disappear from the displayed list.
 * If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` identifies the matching existing record rather than the submitted name, even if hidden by a filter. The original candidate, filter, and expanded view remain unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
-* Supplied `r/` values replace all existing roles; omitting `r/` preserves them. A bare `r/` is invalid; use `r/No role` to remove named roles. Unknown roles suggest `create_role n/NAME`, and an invalid role leaves all details unchanged.
+* Supplied `r/` values replace all existing roles; omitting `r/` preserves them. A bare `r/` is invalid; use `r/No role` to remove named roles. Unknown roles suggest `add_role n/NAME`, and an invalid role leaves all details unchanged.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
 * As in `add`, a recognised prefix in any letter case after a space starts a new field. For example, `edit 1 a/Unit N/A` changes the address to `Unit` and the name to `A`. Check the success message, which shows the updated details.
@@ -295,15 +296,15 @@ The role catalog is the shared collection of roles available in HRvest, includin
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
 * A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
 
-#### Creating an unused role: `create_role`
+#### Creating an unused role: `add_role`
 
 Creates a role without assigning it to a candidate.
 
-Format: `create_role n/NAME`
+Format: `add_role n/NAME`
 
 * The name must not match an existing role, including `No role`.
 
-Example: `create_role n/Software Engineer`
+Example: `add_role n/Software Engineer`
 
 #### Renaming a role globally: `edit_role`
 
@@ -532,7 +533,7 @@ _Details coming soon ..._
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 **Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 r/No role t/friend t/colleague`
-**Create role** | `create_role n/NAME`<br> e.g., `create_role n/Software Engineer`
+**Create role** | `add_role n/NAME`<br> e.g., `add_role n/Software Engineer`
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`

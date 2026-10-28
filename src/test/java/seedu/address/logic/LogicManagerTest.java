@@ -372,6 +372,7 @@ public class LogicManagerTest {
         Person first = new PersonBuilder().withNote("Keep this note").build();
         model.addPerson(first);
         model.addPerson(new PersonBuilder().withEmail("other@example.com").build());
+        new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")).saveAddressBook(model.getAddressBook());
         logic.execute("list");
         JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         saved.saveAddressBook(model.getAddressBook());
