@@ -121,7 +121,7 @@ public class MainAppTest {
         MainApp first = new MainApp(preferences, candidates);
         first.init();
         try {
-            first.logic.execute("add n/Protected Candidate p/123 e/protected@example.com a/Block 1");
+            first.logic.execute("add n/Protected Candidate p/123 e/protected@example.com a/Block 1 r/No role");
             String beforeCandidates = Files.readString(candidates);
             String beforePreferences = Files.readString(preferences);
             StartupErrorApp second = new StartupErrorApp(preferences, candidates);

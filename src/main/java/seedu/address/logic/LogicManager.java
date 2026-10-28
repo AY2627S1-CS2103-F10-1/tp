@@ -51,6 +51,10 @@ public class LogicManager implements Logic {
         Runnable restore = model.createRestorePoint();
         commandResult = command.execute(model);
 
+        if (commandResult.isImport()) {
+            return new ImportOperation(model, storage).execute();
+        }
+
         if (commandResult.isExport()) {
             return exportAddressBook();
         }

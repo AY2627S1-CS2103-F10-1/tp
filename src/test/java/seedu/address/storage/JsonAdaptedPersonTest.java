@@ -7,6 +7,7 @@ import static seedu.address.testutil.TypicalPersons.BENSON;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,8 @@ import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.testutil.PersonBuilder;
 
 public class JsonAdaptedPersonTest {
@@ -40,6 +43,19 @@ public class JsonAdaptedPersonTest {
     public void toModelType_validPersonDetails_returnsPerson() throws Exception {
         JsonAdaptedPerson person = new JsonAdaptedPerson(BENSON);
         assertEquals(BENSON, person.toModelType());
+    }
+
+    @Test
+    public void toModelType_legacyMixedRoles_removesNoRoleAndRoundTrips() throws Exception {
+        Role developer = new Role("00000000-0000-0000-0000-000000000001", "Developer");
+        RoleCatalog catalog = new RoleCatalog(List.of(Role.NO_ROLE, developer));
+        JsonAdaptedPerson adapted = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                VALID_ADDRESS, VALID_TAGS, null, null, List.of(Role.NO_ROLE_ID, developer.getId()));
+
+        Person restored = adapted.toModelType(catalog);
+
+        assertEquals(Set.of(developer), restored.getRoles());
+        assertEquals(restored, new JsonAdaptedPerson(restored).toModelType(catalog));
     }
 
     @Test

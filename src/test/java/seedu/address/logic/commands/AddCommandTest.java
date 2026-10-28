@@ -52,8 +52,9 @@ public class AddCommandTest {
 
         CommandResult result = new AddCommand(candidate).execute(modelStub);
 
-        assertEquals("New person added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; Tags: [backend]",
+        assertEquals("New candidate added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
+                + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; "
+                + "Roles: No role; Tags: [backend]",
                 result.getFeedbackToUser());
     }
 
@@ -93,7 +94,7 @@ public class AddCommandTest {
     @Test
     public void toStringMethod() {
         AddCommand addCommand = new AddCommand(ALICE);
-        String expected = AddCommand.class.getCanonicalName() + "{toAdd=" + ALICE + "}";
+        String expected = AddCommand.class.getCanonicalName() + "{toAdd=" + ALICE + ", roleNames=[No role]}";
         assertEquals(expected, addCommand.toString());
     }
 
@@ -143,7 +144,7 @@ public class AddCommandTest {
 
         @Override
         public ReadOnlyAddressBook getAddressBook() {
-            throw new AssertionError("This method should not be called.");
+            return new AddressBook();
         }
 
         @Override
@@ -173,6 +174,11 @@ public class AddCommandTest {
 
         @Override
         public void expandPerson(Person person) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public Predicate<? super Person> getPersonFilter() {
             throw new AssertionError("This method should not be called.");
         }
 

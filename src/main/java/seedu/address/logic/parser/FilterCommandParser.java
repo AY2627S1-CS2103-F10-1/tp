@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import java.util.ArrayList;
@@ -23,9 +24,10 @@ public class FilterCommandParser implements Parser<FilterCommand> {
      */
     public FilterCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STATUS);
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(args, PREFIX_STATUS, PREFIX_ROLE);
 
-        if (!argMultimap.getValue(PREFIX_STATUS).isPresent() || !argMultimap.getPreamble().isEmpty()) {
+        if ((argMultimap.getValue(PREFIX_STATUS).isEmpty() && argMultimap.getValue(PREFIX_ROLE).isEmpty())
+                || !argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, FilterCommand.MESSAGE_USAGE));
         }
@@ -35,7 +37,7 @@ public class FilterCommandParser implements Parser<FilterCommand> {
             statuses.add(ParserUtil.parseStatus(status));
         }
 
-        return new FilterCommand(statuses);
+        return new FilterCommand(statuses, ParserUtil.parseRoleNames(argMultimap.getAllValues(PREFIX_ROLE)));
     }
 
 }
