@@ -539,7 +539,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * 2c. The candidate already has the new status.
 
-    * 2c1. HRvest reports `No change: NAME is already STATUS.` and keeps the candidate and displayed view unchanged.
+    * 2c1. HRvest informs the user that the status is unchanged.
 
       Use case ends.
 

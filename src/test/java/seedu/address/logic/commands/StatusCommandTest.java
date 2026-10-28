@@ -31,7 +31,7 @@ public class StatusCommandTest {
         Person candidate = model.getFilteredPersonList().getFirst();
         Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
-        String expectedMessage = String.format(StatusCommand.MESSAGE_UNCHANGED,
+        String expectedMessage = String.format("No change: %s already has status %s.",
                 candidate.getName(), candidate.getStatus());
 
         assertCommandSuccess(new StatusCommand(INDEX_FIRST_PERSON, candidate.getStatus()),
