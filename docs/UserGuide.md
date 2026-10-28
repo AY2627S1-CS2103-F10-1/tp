@@ -119,10 +119,11 @@ Examples:
 
 ### Listing all candidates: `list`
 
-Shows a list of all candidates in HRvest.
+Shows a list of all candidates in HRvest, along with the total count.
 
 Format: `list`
 
+* The success message is `Listed all N candidate(s).`, where `N` is the current number of candidates. For example, `Listed all 6 candidate(s).`
 * If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
 
 ### Editing a candidate: `edit`
