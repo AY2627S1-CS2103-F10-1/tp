@@ -73,7 +73,11 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CandidateSummaryHeader`, `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. `CandidateSummaryHeader` composes the top row from an `AppLogo` and a group of summary cards: one `CandidateSummaryCard` for all candidates and a `StatusSummaryCard` for each recruitment status. These UI parts, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CandidateSummaryHeader`, `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. These UI parts, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+
+The following diagram details `CandidateSummaryHeader`, which composes the top row from an `AppLogo` and a group of summary cards: one `CandidateSummaryCard` for all candidates and a `StatusSummaryCard` for each recruitment status. These parts also inherit from `UiPart`.
+
+<puml src="diagrams/CandidateSummaryHeaderClassDiagram.puml" alt="Structure of the candidate summary header"/>
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 

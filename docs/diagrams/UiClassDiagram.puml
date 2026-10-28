@@ -11,9 +11,6 @@ Class UiManager
 Class MainWindow
 Class HelpWindow
 Class CandidateSummaryHeader
-Class AppLogo
-Class CandidateSummaryCard
-Class StatusSummaryCard
 Class ResultDisplay
 Class PersonListPanel
 Class PersonCard
@@ -42,10 +39,6 @@ MainWindow *-down-> "1" PersonListPanel
 MainWindow *-down-> "1" StatusBarFooter
 MainWindow --> "1" HelpWindow
 
-CandidateSummaryHeader *-down-> "1" AppLogo
-CandidateSummaryHeader *-down-> "1" CandidateSummaryCard
-CandidateSummaryHeader *-down-> "7" StatusSummaryCard
-
 PersonListPanel -down-> "*" PersonCard
 PersonListPanel ..> ListSummary
 
@@ -58,17 +51,13 @@ PersonCard --|> UiPart
 StatusBarFooter --|> UiPart
 HelpWindow --|> UiPart
 CandidateSummaryHeader --|> UiPart
-AppLogo --|> UiPart
-CandidateSummaryCard --|> UiPart
-StatusSummaryCard --|> UiPart
 
 PersonCard ..> Model
-CandidateSummaryCard ..> Model
-StatusSummaryCard ..> Model
 UiManager -right-> Logic
 MainWindow -left-> Logic
 
 PersonListPanel -[hidden]left- HelpWindow
+CandidateSummaryHeader -[hidden]left- PersonListPanel
 HelpWindow -[hidden]left- CommandBox
 CommandBox -[hidden]left- ResultDisplay
 ResultDisplay -[hidden]left- StatusBarFooter
