@@ -1,36 +1,42 @@
 @startuml
 !include style.puml
 skinparam arrowThickness 1.1
+skinparam arrowColor UI_COLOR_T4
+skinparam classBackgroundColor UI_COLOR
+skinparam classAttributeFontColor #FFFFFF
 skinparam classAttributeIconSize 0
 
-package "seedu.address.ui" <<Rectangle>> {
-    class CommandBox {
-        -commandExecutor: CommandExecutor
-        -history: CommandHistory
-        -draft: Optional<String>
-        -commandTextField: TextField
-        -handleCommandEntered()
-        -handleArrowNavigation(event: KeyEvent)
-        -captureDraftIfStartingNavigation()
-        -applyHistoryEntry(entry: String)
-    }
-
-    class CommandHistory {
-        +MAX_ENTRIES: int
-        -entries: List<String>
-        -cursor: int
-        +add(command: String)
-        +previous(): Optional<String>
-        +next(): Optional<String>
-        +getEntries(): List<String>
-        +getCursor(): int
-    }
-
-    interface CommandExecutor <<interface>> {
-        +execute(commandText: String): CommandResult
-    }
+package UI <<Rectangle>> {
+Class CommandBox {
+    -draft: Optional<String>
+    -commandTextField: TextField
+    -handleCommandEntered()
+    -handleArrowNavigation(event: KeyEvent)
+    -captureDraftIfStartingNavigation()
+    -applyHistoryEntry(entry: String)
 }
 
-CommandBox *--> "1" CommandHistory
-CommandBox ..> CommandExecutor : uses >
+Class CommandHistory {
+    {static} +MAX_ENTRIES: int
+    -entries: List<String>
+    -cursor: int
+    +add(command: String)
+    +previous(): Optional<String>
+    +next(): Optional<String>
+    +moveCursorToNewest()
+    +getEntries(): List<String>
+    +getCursor(): int
+}
+
+Class "<<interface>>\nCommandExecutor" as CommandExecutor {
+    +execute(commandText: String): CommandResult
+}
+}
+
+show CommandBox members
+show CommandHistory members
+show CommandExecutor methods
+
+CommandBox *--> "1" CommandHistory : history
+CommandBox --> "1" CommandExecutor : commandExecutor
 @enduml
