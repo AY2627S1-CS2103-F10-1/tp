@@ -77,8 +77,8 @@ public class FilterCommandTest {
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
         expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(
                 List.of(Status.APPLIED, Status.INTERVIEWING, Status.OFFERED)));
-        String expectedMessage = "Filtered " + expectedModel.getFilteredPersonList().size()
-                + " candidate(s) with status(es): Applied, Interviewing or Offered";
+        String expectedMessage = expectedModel.getFilteredPersonList().size()
+                + " candidate(s) filtered with status(es): Applied, Interviewing or Offered";
 
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
     }
@@ -115,8 +115,8 @@ public class FilterCommandTest {
     @Test
     public void toStringMethod() {
         FilterCommand filterCommand = new FilterCommand(Status.APPLIED);
-        StatusContainsKeywordPredicate predicate = new StatusContainsKeywordPredicate(Status.APPLIED);
-        String expected = FilterCommand.class.getCanonicalName() + "{predicate=" + predicate + "}";
+        String expected = FilterCommand.class.getCanonicalName()
+                + "{statuses=[Applied], roleNames=[]}";
         assertEquals(expected, filterCommand.toString());
     }
 

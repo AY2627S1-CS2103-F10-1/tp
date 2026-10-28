@@ -11,6 +11,7 @@ import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
 import seedu.address.model.tag.Tag;
 import seedu.address.model.util.SampleDataUtil;
 
@@ -31,6 +32,7 @@ public class PersonBuilder {
     private Status status;
     private Optional<Note> note;
     private Set<Tag> tags;
+    private Set<Role> roles;
 
     /**
      * Creates a {@code PersonBuilder} with the default details.
@@ -43,6 +45,7 @@ public class PersonBuilder {
         status = Status.APPLIED;
         note = Optional.empty();
         tags = new HashSet<>();
+        roles = Set.of(Role.NO_ROLE);
     }
 
     /**
@@ -56,6 +59,7 @@ public class PersonBuilder {
         status = personToCopy.getStatus();
         note = personToCopy.getNote();
         tags = new HashSet<>(personToCopy.getTags());
+        roles = personToCopy.getRoles();
     }
 
     /**
@@ -114,8 +118,15 @@ public class PersonBuilder {
         return this;
     }
 
+    /** Sets the role assignments of the person being built. */
+    public PersonBuilder withRoles(Role... roles) {
+        this.roles = Set.of(roles);
+        return this;
+    }
+
+    /** Builds a person with the supplied details and role assignments. */
     public Person build() {
-        return new Person(name, phone, email, address, tags, status, note);
+        return new Person(name, phone, email, address, tags, status, note, roles);
     }
 
 }

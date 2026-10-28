@@ -20,7 +20,8 @@ class RoleCommandsTest {
     @Test
     void createAndList_unusedRoles_listsAllInPredictableOrder() throws Exception {
         ModelManager model = new ModelManager();
-        new CreateRoleCommand("Zoologist").execute(model);
+        assertEquals("Created role: Zoologist",
+                new CreateRoleCommand("Zoologist").execute(model).getFeedbackToUser());
         new CreateRoleCommand("Analyst").execute(model);
         assertEquals("Roles:\nAnalyst\nNo role\nZoologist",
                 new ListRoleCommand().execute(model).getFeedbackToUser());
@@ -38,7 +39,7 @@ class RoleCommandsTest {
 
         assertEquals(id, model.getRoleCatalog().requireRole("Senior Engineer").getId());
         Set<Role> assignments = model.getAddressBook().getPersonList().getFirst().getRoles();
-        assertEquals(Set.of(Role.NO_ROLE, model.getRoleCatalog().requireRole("Senior Engineer")), assignments);
+        assertEquals(Set.of(model.getRoleCatalog().requireRole("Senior Engineer")), assignments);
         assertTrue(model.getFilteredPersonList().isEmpty());
     }
 
@@ -49,7 +50,8 @@ class RoleCommandsTest {
         model.createRole("Designer");
         model.replacePersonRoles(model.getAddressBook().getPersonList().getFirst(), List.of("Engineer", "Designer"));
 
-        new DeleteRoleCommand("Engineer").execute(model);
+        assertEquals("Deleted role: Engineer",
+                new DeleteRoleCommand("Engineer").execute(model).getFeedbackToUser());
         assertEquals(Set.of(model.getRoleCatalog().requireRole("Designer")),
                 model.getAddressBook().getPersonList().getFirst().getRoles());
         new DeleteRoleCommand("Designer").execute(model);
@@ -67,8 +69,10 @@ class RoleCommandsTest {
         Command duplicate = new CreateRoleCommand(" ENGINEER ");
         Command protectedRename = new EditRoleCommand("No role", "Other");
         assertThrows(CommandException.class, duplicateMessage, () -> duplicate.execute(model));
-        assertThrows(CommandException.class, () -> new EditRoleCommand("Engineer", "designer").execute(model));
-        assertThrows(CommandException.class, () -> new DeleteRoleCommand("Missing").execute(model));
+        assertThrows(CommandException.class, duplicateMessage, () ->
+                new EditRoleCommand("Engineer", "designer").execute(model));
+        assertThrows(CommandException.class, "Role does not exist: Missing", () ->
+                new DeleteRoleCommand("Missing").execute(model));
         assertThrows(CommandException.class, protectedMessage, () -> protectedRename.execute(model));
         assertThrows(CommandException.class, protectedMessage, () -> new DeleteRoleCommand(" NO ROLE ").execute(model));
         assertThrows(CommandException.class, () -> new CreateRoleCommand("No role").execute(model));

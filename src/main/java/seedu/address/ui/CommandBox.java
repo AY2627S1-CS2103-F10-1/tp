@@ -65,9 +65,11 @@ public class CommandBox extends UiPart<Region> {
             commandExecutor.execute(commandText);
             commandTextField.setText("");
         } catch (CommandException | ParseException e) {
-            // Clear the failed text so pressing Up immediately after shows it from history,
-            // instead of appearing to do nothing because the field already holds that text.
-            commandTextField.setText("");
+            // Keep the failed text so that the user can correct it. Its history entry counts as already shown,
+            // so pressing Up shows the command before it instead of appearing to do nothing.
+            if (!commandText.isBlank()) {
+                history.moveCursorToNewest();
+            }
             setStyleToIndicateCommandFailure();
         }
     }

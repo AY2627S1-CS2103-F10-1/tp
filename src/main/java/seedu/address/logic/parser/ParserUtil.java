@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -26,6 +27,9 @@ import seedu.address.model.tag.Tag;
  */
 public class ParserUtil {
 
+    public static final String MESSAGE_EMPTY_ROLE =
+            "Role name cannot be empty. Use " + PREFIX_ROLE + Role.NO_ROLE_NAME + " if no role applies.";
+
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
     public static final String MESSAGE_UNSUPPORTED_CHARACTER =
@@ -48,6 +52,19 @@ public class ParserUtil {
             throw new ParseException(Role.MESSAGE_RESERVED_SYNTAX);
         }
         return preparedName;
+    }
+
+    /** Parses repeated role names without resolving catalog membership. */
+    public static Set<String> parseRoleNames(Collection<String> names) throws ParseException {
+        requireNonNull(names);
+        Set<String> roles = new HashSet<>();
+        for (String name : names) {
+            if (Role.prepareName(name).isEmpty()) {
+                throw new ParseException(MESSAGE_EMPTY_ROLE);
+            }
+            roles.add(parseRoleName(name));
+        }
+        return roles;
     }
 
     /**

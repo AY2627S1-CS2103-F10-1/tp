@@ -3,6 +3,7 @@ package seedu.address.model.role;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
@@ -16,6 +17,9 @@ public final class Role {
             "Role names must not contain whitespace followed by n/, r/, p/, e/, a/, t/, no/, or s/ (ignoring case).";
     public static final String NO_ROLE_ID = "no-role";
     public static final String NO_ROLE_NAME = "No role";
+    public static final String MESSAGE_PROTECTED_ROLE = NO_ROLE_NAME + " cannot be renamed or deleted.";
+    public static final String MESSAGE_RESERVED_IDENTITY =
+            "The built-in " + NO_ROLE_NAME + " identity and name are reserved.";
     public static final Role NO_ROLE;
 
     private static final Pattern RESERVED_SYNTAX = Pattern.compile("(?i)\\s(?:n/|r/|p/|e/|a/|t/|no/|s/)");
@@ -42,10 +46,10 @@ public final class Role {
         checkArgument(hasNoReservedSyntax(name), MESSAGE_RESERVED_SYNTAX);
         boolean hasReservedName = toLookupKey(name).equals(toLookupKey(NO_ROLE_NAME));
         if (isBuiltIn) {
-            checkArgument(hasReservedName, "The built-in " + NO_ROLE_NAME + " identity and name are reserved.");
+            checkArgument(hasReservedName, MESSAGE_RESERVED_IDENTITY);
             checkArgument(name.equals(NO_ROLE_NAME), "The built-in role must be named " + NO_ROLE_NAME + ".");
         } else {
-            checkArgument(!hasReservedName, "The built-in " + NO_ROLE_NAME + " identity and name are reserved.");
+            checkArgument(!hasReservedName, MESSAGE_RESERVED_IDENTITY);
         }
         this.name = name;
         this.id = id;
@@ -61,9 +65,9 @@ public final class Role {
         return requireNonNull(name).strip();
     }
 
-    /** Returns the case-insensitive lookup key; internal whitespace remains significant. */
+    /** Returns a case-insensitive NFC lookup key; display text and internal whitespace remain unchanged. */
     public static String toLookupKey(String name) {
-        return prepareName(name).toLowerCase(Locale.ROOT);
+        return Normalizer.normalize(prepareName(name), Normalizer.Form.NFC).toLowerCase(Locale.ROOT);
     }
 
     /** Returns whether a name has no surrounding whitespace, is nonblank, and contains no control characters. */
@@ -95,7 +99,7 @@ public final class Role {
 
     /** Returns a renamed entry retaining its identity. */
     public Role renamed(String name) {
-        checkArgument(!equals(NO_ROLE), NO_ROLE_NAME + " cannot be renamed or deleted.");
+        checkArgument(!equals(NO_ROLE), MESSAGE_PROTECTED_ROLE);
         return new Role(id, prepareName(name));
     }
 

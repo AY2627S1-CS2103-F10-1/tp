@@ -53,6 +53,6 @@ public class AddNotePrefixTest {
         AddCommand expected = new AddCommand(new PersonBuilder().withName("A").withPhone("123")
                 .withEmail("a@x.com").withAddress("Blk 1 yes/no/feedback").build());
 
-        assertParseSuccess(parser, REQUIRED_FIELDS + " yes/no/feedback", expected);
+        assertParseSuccess(parser, REQUIRED_FIELDS + " yes/no/feedback" + " r/No role", expected);
     }
 }

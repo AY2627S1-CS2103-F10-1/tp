@@ -2,13 +2,12 @@ package seedu.address.ui;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -18,10 +17,14 @@ import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
+import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -37,14 +40,7 @@ public class PersonCardTest {
 
     @BeforeAll
     public static void setUpToolkit() throws Exception {
-        CompletableFuture<Void> ready = new CompletableFuture<>();
-        Platform.startup(() -> ready.complete(null));
-        ready.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    }
-
-    @AfterAll
-    public static void tearDownToolkit() {
-        Platform.exit();
+        JavaFxTestUtil.initializeToolkit();
     }
 
     @Test
@@ -131,6 +127,58 @@ public class PersonCardTest {
             assertTrue(iconBounds.getMinX() >= 0);
             assertTrue(iconBounds.getMaxX() <= CARD_WIDTH);
             assertEquals(Status.REJECTED.toString(), ((Label) card.lookup("#status")).getText());
+        });
+    }
+
+    @Test
+    public void constructor_multipleRoles_displaysSortedDistinctBadges() throws Exception {
+        runOnFxThread(() -> {
+            Role developer = new Role("00000000-0000-0000-0000-000000000001", "Developer");
+            Role designer = new Role("00000000-0000-0000-0000-000000000002", "Designer");
+            Region card = new PersonCard(new PersonBuilder().withRoles(developer, designer, Role.NO_ROLE)
+                    .withTags("backend").build(), 1).getRoot();
+            layoutCard(card);
+
+            FlowPane roles = (FlowPane) card.lookup("#roles");
+            assertEquals(2, roles.getChildren().size());
+            Label firstRole = (Label) roles.getChildren().getFirst();
+            assertEquals("Designer", firstRole.getText());
+            assertEquals("Developer", ((Label) roles.getChildren().getLast()).getText());
+            Label tag = (Label) ((FlowPane) card.lookup("#tags")).getChildren().getFirst();
+            assertNotEquals(tag.getBackground(), firstRole.getBackground());
+            assertEquals(tag.getPadding(), firstRole.getPadding());
+        });
+    }
+
+    @Test
+    public void constructor_noNamedRole_displaysNoRoleBadge() throws Exception {
+        runOnFxThread(() -> {
+            Region card = new PersonCard(new PersonBuilder().build(), 1).getRoot();
+            layoutCard(card);
+            FlowPane roles = (FlowPane) card.lookup("#roles");
+            assertEquals(1, roles.getChildren().size());
+            Label badge = (Label) roles.getChildren().getFirst();
+            assertEquals("No role", badge.getText());
+            assertEquals(Color.web("#b23b48"), badge.getBackground().getFills().getFirst().getFill());
+        });
+    }
+
+    @Test
+    public void constructor_longRole_wrapsWithinOrdinaryAndExpandedCards() throws Exception {
+        runOnFxThread(() -> {
+            Role role = new Role("00000000-0000-0000-0000-000000000001",
+                    "Long role name ".repeat(20).strip());
+            Person candidate = new PersonBuilder().withRoles(role).build();
+            for (boolean expanded : new boolean[] {false, true}) {
+                Region card = new PersonCard(candidate, 1, expanded).getRoot();
+                layoutCard(card);
+                FlowPane roles = (FlowPane) card.lookup("#roles");
+                Label badge = (Label) roles.getChildren().getFirst();
+                assertEquals(role.getName(), badge.getText());
+                assertTrue(badge.isWrapText());
+                assertTrue(badge.getWidth() <= roles.getWidth());
+                assertTrue(badge.getHeight() > badge.getFont().getSize() * 2);
+            }
         });
     }
 
