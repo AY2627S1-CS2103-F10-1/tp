@@ -133,24 +133,11 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 
 #### Displayed-index validation
 
-`status`, `note`, and `expand` use `ParserUtil.parseDisplayedIndex` to distinguish invalid numeric indexes from malformed command syntax. A known numeric error must not be replaced by a generic format error. Parsing accepts positive whole numbers through `2147483647`, including leading zeroes, and trims surrounding whitespace. The command then checks the index against the currently displayed list, not the complete address book. Rejected commands leave candidate data, filters, and expanded view unchanged.
+`status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report numeric index errors the same way. The exact messages are listed under each command in the User Guide. A rejected command leaves candidate data, filters, and the expanded view unchanged.
 
-| Input or condition | Error feedback |
-|---|---|
-| Zero or a negative whole number, including `000`, `-0`, and negative overflow | `Index must be a positive integer.` |
-| A positive whole number above `2147483647` | `The candidate index provided is invalid.` |
-| Missing or malformed index for `status` or `note`, such as `abc`, `1.5`, or `+1` | `Invalid command format!` followed by that command's usage |
-| Missing index for `expand` | `Missing index.` followed by expand-command usage |
-| Malformed index for `expand` | `Invalid index! Index must be a positive integer.` |
-| Representable index outside the displayed list for `status` or `note` | `The candidate index provided is invalid.` |
-| Representable index outside a non-empty displayed list for `expand` | `No candidate found with that index. Enter an index between 1 and N.`, where `N` is the displayed count |
-| Representable index for `expand` when no candidates are displayed | `No candidates currently listed. Please use the filter or list command.` |
-
-Numeric index errors do not append usage. Validation order is command-specific and intentionally preserved:
-
-* `note` checks raw note characters first, then requires `no/`, then validates the index before checking repeated prefixes and note values. A missing `no/` reports `The note prefix no/ is required.` followed by note-command usage, even if the index is also invalid.
-* `status` validates the index before requiring a single `s/` and validating its value. A missing `s/` with a valid index reports `Invalid command format!` followed by status-command usage.
-* `expand` handles a blank index explicitly before applying the shared numeric validation and its own execution-time list-bounds errors.
+* A number too large for an `int` is reported as an out-of-range index rather than a format error, because no displayed list can be that long.
+* A known numeric problem, such as `0`, is reported instead of the generic `Invalid command format!`, so the user knows exactly what to fix.
+* Each command keeps its own validation order. For example, `note` still reports a missing `no/` before an invalid index. This keeps the change limited to index errors.
 
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
