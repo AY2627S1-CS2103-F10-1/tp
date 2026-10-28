@@ -30,10 +30,10 @@ public class UnicodeRoleCompatibilityTest {
         StorageManager storage = storage();
         ModelManager model = new ModelManager();
         LogicManager logic = new LogicManager(model, storage);
-        logic.execute("create_role n/Cafe\u0301");
+        logic.execute("add_role n/Cafe\u0301");
         logic.execute("add n/Candidate p/123 e/candidate@example.com a/Street r/Caf\u00e9");
         Role original = model.getRoleCatalog().requireRole("Caf\u00e9");
-        assertThrows(CommandException.class, () -> logic.execute("create_role n/Caf\u00e9"));
+        assertThrows(CommandException.class, () -> logic.execute("add_role n/Caf\u00e9"));
         logic.execute("filter r/Caf\u00e9");
         assertEquals(1, model.getFilteredPersonList().size());
         logic.execute("edit_role r/Caf\u00e9 n/CAF\u00c9");
@@ -52,8 +52,8 @@ public class UnicodeRoleCompatibilityTest {
         StorageManager storage = storage();
         ModelManager model = new ModelManager();
         LogicManager logic = new LogicManager(model, storage);
-        logic.execute("create_role n/Caf\u00e9");
-        logic.execute("create_role n/Other");
+        logic.execute("add_role n/Caf\u00e9");
+        logic.execute("add_role n/Other");
         logic.execute("add n/Candidate p/123 e/candidate@example.com a/Street r/Caf\u00e9 r/Other");
         Path candidates = directory.resolve("HRvest.json");
         Path catalog = directory.resolve("roles.json");
