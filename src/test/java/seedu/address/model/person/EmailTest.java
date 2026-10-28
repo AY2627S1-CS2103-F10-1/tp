@@ -1,8 +1,12 @@
 package seedu.address.model.person;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+
+import java.util.List;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 
@@ -64,6 +68,35 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+    }
+
+    @Test
+    public void isValidEmail_longSegmentedValues_doesNotOverflowStack() {
+        assertTrue(Email.isValidEmail("a.".repeat(10_000) + "a@example.com"));
+        assertTrue(Email.isValidEmail("a@" + "a.".repeat(10_000) + "com"));
+        assertTrue(Email.isValidEmail("a@" + "ab-".repeat(10_000) + "ab"));
+        assertFalse(Email.isValidEmail("a@" + "a-".repeat(10_000) + "a"));
+    }
+
+    @Test
+    public void isValidEmail_shortCombinations_preservesPreviousValidation() {
+        String alphanumeric = "[^\\W_]+";
+        String domainPart = alphanumeric + "(-" + alphanumeric + ")*";
+        Pattern previous = Pattern.compile("^" + alphanumeric + "([+_.-]" + alphanumeric + ")*@"
+                + "(" + domainPart + "\\.)*(" + domainPart + "){2,}$");
+        String alphabet = "ab-.";
+        for (int value = 0; value < 4096; value++) {
+            StringBuilder domain = new StringBuilder();
+            int remaining = value;
+            for (int position = 0; position < 6; position++) {
+                domain.append(alphabet.charAt(remaining % alphabet.length()));
+                remaining /= alphabet.length();
+            }
+            for (String local : List.of("a", "a.b", "a+b", "a_b", "a-b", "a..b", "-a")) {
+                String email = local + "@" + domain;
+                assertEquals(previous.matcher(email).matches(), Email.isValidEmail(email), email);
+            }
+        }
     }
 
     @Test
