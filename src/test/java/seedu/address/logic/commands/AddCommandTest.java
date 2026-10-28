@@ -52,7 +52,7 @@ public class AddCommandTest {
 
         CommandResult result = new AddCommand(candidate).execute(modelStub);
 
-        assertEquals("New person added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
+        assertEquals("New candidate added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
                 + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; Tags: [backend]",
                 result.getFeedbackToUser());
     }
