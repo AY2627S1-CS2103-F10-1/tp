@@ -108,7 +108,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 * Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Both `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
 * Supply valid `n/`, `p/`, `e/`, `a/`, and `r/` values. Missing contact details or text before the first prefix produces an invalid-command-format message.
 * Create named roles with `create_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
-* Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This person already exists in the address book.` Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
+* Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This candidate already exists in HRvest.` Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
 * Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix.
 * `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
 
@@ -119,7 +119,7 @@ Examples:
 
 ### Listing all candidates: `list`
 
-Shows a list of all persons in HRvest.
+Shows a list of all candidates in HRvest.
 
 Format: `list`
 
@@ -127,9 +127,9 @@ Format: `list`
 
 ### Editing a candidate: `edit`
 
-The success message shows the candidate's updated details.
+Edits an existing candidate in HRvest.
 
-Edits an existing person in HRvest.
+The success message shows the candidate's updated details.
 
 Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`
 
@@ -137,7 +137,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG].
 * At least one of the optional fields must be provided.
 * Existing values will be updated to the input values. The current filter is kept; candidates that no longer match disappear from the displayed list.
 * If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
-* An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This person already exists in the address book.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
+* An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `This candidate already exists in HRvest.`, even if that candidate is hidden by a filter. The original candidate remains unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
 * Supplied `r/` values replace all existing roles; omitting `r/` preserves them. A bare `r/` is invalid; use `r/No role` to remove named roles. Unknown roles suggest `create_role n/NAME`, and an invalid role leaves all details unchanged.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
@@ -240,9 +240,9 @@ Examples (create `Developer` and `Designer` first):
 
 ### Deleting a candidate: `delete`
 
-The success message shows the deleted candidate's details, including their status.
+Deletes the specified candidate from HRvest.
 
-Deletes the specified person from HRvest.
+The success message shows the deleted candidate's details, including their status.
 
 Format: `delete INDEX`
 
@@ -251,8 +251,9 @@ Format: `delete INDEX`
 * The index **must be a positive integer** 1, 2, 3, ...
 
 Examples:
-* `list` followed by `delete 2` deletes the 2nd person in HRvest.
-* `find Betsy` followed by `delete 1` deletes the 1st person in the results of the `find` command.
+
+* `list` followed by `delete 2` deletes the 2nd candidate in HRvest.
+* `find Betsy` followed by `delete 1` deletes the 1st candidate in the results of the `find` command.
 
 ### Viewing a candidate's full record: `expand`
 
@@ -264,6 +265,7 @@ Format: `expand INDEX`
 * The index refers to the index number shown in the displayed candidate list.
 * The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
 * The list shows only the selected candidate at index `1`, with their full note. If the candidate has no note, it shows `No note recorded.` Run `list` to show all candidates again.
+* If HRvest has no candidates, the error is `There are no candidates yet. Use add to add one.` If only the displayed list is empty, use `list` or change the filter to display candidates.
 
 Examples:
 

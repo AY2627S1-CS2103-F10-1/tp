@@ -646,7 +646,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User requests to find candidates whose names contain a keyword.
+1. User requests to find candidates by name using keywords.
 1. HRvest shows a list of matching candidates.
 
    Use case ends.

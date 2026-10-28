@@ -36,11 +36,11 @@ public class FilterCommand extends Command {
             + Status.MESSAGE_CONSTRAINTS + "\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "Interviewing " + PREFIX_STATUS + "Offered";
 
-    public static final String MESSAGE_SUCCESS = "Filtered %1$d candidate(s) with status(es): %2$s";
+    public static final String MESSAGE_SUCCESS = "%1$d candidate(s) filtered with status(es): %2$s";
 
-    public static final String MESSAGE_ROLE_SUCCESS = "Filtered %1$d candidate(s) with role(s): %2$s";
+    public static final String MESSAGE_ROLE_SUCCESS = "%1$d candidate(s) filtered with role(s): %2$s";
     public static final String MESSAGE_COMBINED_SUCCESS =
-            "Filtered %1$d candidate(s) with status(es): %2$s and role(s): %3$s";
+            "%1$d candidate(s) filtered with status(es): %2$s and role(s): %3$s";
 
     private static final String NAME_SEPARATOR = ", ";
     private static final String LAST_NAME_SEPARATOR = " or ";

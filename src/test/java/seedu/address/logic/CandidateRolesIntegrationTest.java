@@ -111,10 +111,10 @@ class CandidateRolesIntegrationTest {
         logic.execute(BOB + " r/Designer");
         logic.execute("find Nobody");
 
-        assertEquals("Filtered 2 candidate(s) with role(s): Designer or Developer",
+        assertEquals("2 candidate(s) filtered with role(s): Designer or Developer",
                 logic.execute("filter r/developer r/Developer r/Designer").getFeedbackToUser());
         assertEquals(2, model.getFilteredPersonList().size());
-        assertEquals("Filtered 0 candidate(s) with role(s): Unused",
+        assertEquals("0 candidate(s) filtered with role(s): Unused",
                 logic.execute("filter r/Unused").getFeedbackToUser());
         assertTrue(model.getFilteredPersonList().isEmpty());
     }
@@ -124,7 +124,7 @@ class CandidateRolesIntegrationTest {
         logic.execute(ALICE + " r/Developer s/Interviewing");
         logic.execute(BOB + " r/Designer s/Applied");
 
-        assertEquals("Filtered 1 candidate(s) with status(es): Interviewing or Offered"
+        assertEquals("1 candidate(s) filtered with status(es): Interviewing or Offered"
                 + " and role(s): Designer or Developer",
                 logic.execute("filter r/Developer r/Designer s/Interviewing s/Offered").getFeedbackToUser());
         assertEquals(List.of(getFirstPerson()), model.getFilteredPersonList());

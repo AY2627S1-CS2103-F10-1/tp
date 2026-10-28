@@ -158,7 +158,7 @@ public class AddCommandParserTest {
         String example = AddCommand.MESSAGE_USAGE.split("Example: ", 2)[1];
         Person expected = new PersonBuilder().withName("John Doe").withPhone("98765432")
                 .withEmail("johnd@example.com").withAddress("311, Clementi Ave 2, #02-25")
-                .withTags("friends", "owesMoney").withStatus(Status.INTERVIEWING).build();
+                .withTags("backend", "Java").withStatus(Status.INTERVIEWING).build();
 
         assertParseSuccess(parser, example.substring(AddCommand.COMMAND_WORD.length()), new AddCommand(expected));
     }
