@@ -227,7 +227,7 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 * Each `filter` replaces the previous search or filter and considers all candidates.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
 * Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalog.
-* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`.
+* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`. Other prefixes, such as `n/` or `t/`, are rejected with `The filter command does not support n/. Use only s/STATUS and r/ROLE.`
 * If no candidates match, the result count is zero.
 * Renaming a role keeps an active filter following that role. Deleting it removes that role's matches.
 
