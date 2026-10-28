@@ -31,7 +31,7 @@ public class ExpandCommandParserTest {
     }
 
     @Test
-    public void parse_invalidIndex_reportsPositiveIntegerRequirement() {
+    public void parse_malformedIndex_reportsExpandGuidance() {
         for (String input : new String[] {"1.5", "abc", "+1", "1 2", "1 n/Alice"}) {
             assertParseFailure(parser, input, ExpandCommandParser.MESSAGE_INVALID_INDEX);
         }
@@ -39,14 +39,14 @@ public class ExpandCommandParserTest {
 
     @Test
     public void parse_nonPositiveIndex_reportsPositiveIntegerRequirement() {
-        for (String input : new String[] {"0", "000", "-0", "-1", "-99999999999"}) {
+        for (String input : new String[] {"0", "00", "000", "-0", "-1", "-2147483649", "-99999999999"}) {
             assertParseFailure(parser, input, ParserUtil.MESSAGE_INVALID_INDEX);
         }
     }
 
     @Test
     public void parse_positiveOverflow_reportsInvalidDisplayedIndex() {
-        for (String input : new String[] {"2147483648", "99999999999", "9".repeat(100)}) {
+        for (String input : new String[] {"2147483648", "99999999999", "999999999999999999999", "9".repeat(100)}) {
             assertParseFailure(parser, input, MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
     }
