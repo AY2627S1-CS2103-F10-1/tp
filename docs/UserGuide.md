@@ -58,8 +58,8 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Items followed by `...` can appear zero or more times.<br>
   For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
 
-* Prefixes ignore letter case.<br>
-  For example, `S/Offered` is read the same way as `s/Offered`.
+* Command words and prefixes ignore letter case.<br>
+  For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
@@ -229,7 +229,7 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 * Each `filter` replaces the previous search or filter and considers all candidates.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
 * Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalog.
-* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`.
+* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`. Other prefixes, such as `n/` or `t/`, are rejected with `The filter command does not support n/. Use only s/STATUS and r/ROLE.`
 * If no candidates match, the result count is zero.
 * Renaming a role keeps an active filter following that role. Deleting it removes that role's matches.
 
@@ -291,6 +291,7 @@ The role catalog is the shared collection of roles available in HRvest, includin
 **Role names:**
 
 * Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
+* Invisible characters, such as no-break spaces (`U+00A0`) and zero-width spaces (`U+200B`), are rejected, even when text copied from a web page looks normal. Use ordinary spaces instead.
 * Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
 * Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent. Display spelling and role IDs are preserved. This applies to creation, assignment, filtering, renaming, and deletion.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
@@ -362,7 +363,7 @@ Exports every candidate to `data/export.csv`, next to the candidate data file `d
 
 Format: `export`
 
-* Use the lowercase command; surrounding whitespace is accepted.
+* Surrounding whitespace is accepted.
 * The destination is always `data/export.csv`. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Role assignments and the role catalog are not exported; back up both JSON files to preserve them.
