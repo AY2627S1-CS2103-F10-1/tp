@@ -155,7 +155,7 @@ Adds a note to the specified candidate, such as interview feedback or follow-up 
 Format: `note INDEX no/[NOTE_TEXT]`
 
 * Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
-* Zero or negative whole-number indexes report `Index must be a positive integer.` Positive indexes above `2147483647` report `The candidate index provided is invalid.` Missing or malformed indexes show an invalid-command-format error with note-command usage; numeric index errors do not append usage. A missing `no/` is reported before index validation.
+* An invalid index produces an error message explaining the problem while the current view remains unchanged. See the [Developer Guide](DeveloperGuide.md#displayed-index-validation) for details.
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
 * To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
 * Non-empty `NOTE_TEXT` can contain at most 500 printable-ASCII characters. Leading and trailing ordinary spaces are removed; spacing, capitalisation, and ASCII punctuation within the note are kept. Tabs, line breaks, and non-ASCII characters are rejected.
@@ -185,7 +185,7 @@ Format: `status INDEX s/STATUS`
 * Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
 * Candidates created with `add` start with `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
 * After an update, the current filter is kept. Candidates that no longer match a status filter disappear from the displayed list. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
-* A missing index, malformed index, or missing `s/` with a valid index gives `Invalid command format!`. Zero or negative whole-number indexes give `Index must be a positive integer.` Positive indexes above `2147483647`, or representable indexes outside the displayed list, give `The candidate index provided is invalid.` Index validation runs before status-prefix and value validation.
+* An invalid index or missing `s/` produces a corresponding error message without changing the candidate or current view. See the [Developer Guide](DeveloperGuide.md#displayed-index-validation) for details.
 * An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
 
 Examples:
@@ -254,7 +254,7 @@ Format: `expand INDEX`
 * Shows the candidate at the specified `INDEX`.
 * The index refers to the index number shown in the displayed candidate list.
 * The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
-* Zero or negative whole-number indexes report `Index must be a positive integer.` Positive indexes above `2147483647` report `The candidate index provided is invalid.` A missing index shows usage, while malformed input retains `Invalid index! Index must be a positive integer.` For representable indexes outside the displayed list, HRvest reports the valid range or explains that no candidates are listed.
+* An invalid index produces an error message explaining the problem while the current view remains unchanged. See the [Developer Guide](DeveloperGuide.md#displayed-index-validation) for details.
 * The list shows only the selected candidate at index `1`, with their full note. If the candidate has no note, it shows `No note recorded.` Run `list` to show all candidates again.
 
 Examples:
