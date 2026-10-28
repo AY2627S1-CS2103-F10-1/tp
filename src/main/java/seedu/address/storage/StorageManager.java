@@ -62,6 +62,11 @@ public class StorageManager implements Storage {
     }
 
     @Override
+    public byte[] readImport() throws IOException {
+        return new CsvImportReader().read(getAddressBookFilePath());
+    }
+
+    @Override
     public Path exportAddressBook(ReadOnlyAddressBook addressBook) throws IOException {
         Path destination = CsvExportWriter.resolveDestination(getAddressBookFilePath());
         return new CsvExportWriter().export(addressBook, destination);

@@ -11,8 +11,9 @@ public class Phone {
 
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone numbers should only contain digits, and should be at least 3 digits long";
-    public static final String VALIDATION_REGEX = "\\d{3,}";
+            "Phone numbers must contain at least 3 ASCII digits and only printable ASCII characters. "
+                    + "Formatting, extensions and contact labels are allowed";
+    public static final String VALIDATION_REGEX = "[\\x20-\\x7E]+";
     public final String value;
 
     /**
@@ -30,7 +31,7 @@ public class Phone {
      * Returns true if a given string is a valid phone number.
      */
     public static boolean isValidPhone(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return test.matches(VALIDATION_REGEX) && test.chars().filter(Character::isDigit).count() >= 3;
     }
 
     @Override

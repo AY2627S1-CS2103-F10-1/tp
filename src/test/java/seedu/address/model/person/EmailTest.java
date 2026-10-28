@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
 import org.junit.jupiter.api.Test;
 
 public class EmailTest {
@@ -42,8 +45,8 @@ public class EmailTest {
         assertFalse(Email.isValidEmail("peterjack@example.com ")); // trailing space
         assertFalse(Email.isValidEmail("peterjack@@example.com")); // double '@' symbol
         assertFalse(Email.isValidEmail("peter@jack@example.com")); // '@' symbol in local part
-        assertFalse(Email.isValidEmail("-peterjack@example.com")); // local part starts with a hyphen
-        assertFalse(Email.isValidEmail("peterjack-@example.com")); // local part ends with a hyphen
+        assertTrue(Email.isValidEmail("-peterjack@example.com")); // an atom may start with punctuation
+        assertTrue(Email.isValidEmail("peterjack-@example.com")); // an atom may end with punctuation
         assertFalse(Email.isValidEmail("peter..jack@example.com")); // local part has two consecutive periods
         assertFalse(Email.isValidEmail("peterjack@example@com")); // '@' symbol in domain name
         assertFalse(Email.isValidEmail("peterjack@.example.com")); // domain name starts with a period
@@ -64,6 +67,53 @@ public class EmailTest {
         assertTrue(Email.isValidEmail("peter_jack@very-very-very-long-example.com")); // long domain name
         assertTrue(Email.isValidEmail("if.you.dream.it_you.can.do.it@example.com")); // long local part
         assertTrue(Email.isValidEmail("e1234567@u.nus.edu")); // more than one period in domain
+    }
+
+    @Test
+    public void isValidEmail_longSegmentedValues_doesNotOverflowStack() {
+        assertTrue(Email.isValidEmail("a.".repeat(10_000) + "a@example.com"));
+        assertTrue(Email.isValidEmail("a@" + "a.".repeat(10_000) + "com"));
+        assertTrue(Email.isValidEmail("a@" + "ab-".repeat(10_000) + "ab"));
+        assertTrue(Email.isValidEmail("a@" + "a-".repeat(10_000) + "a"));
+        assertFalse(Email.isValidEmail("a@" + "a-".repeat(10_000)));
+        assertFalse(Email.isValidEmail("a@" + "a-".repeat(10_000) + "!"));
+    }
+
+    @Test
+    public void isValidEmail_shortCombinations_acceptsPreviouslyValidEmails() {
+        String alphanumeric = "[^\\W_]+";
+        String domainPart = alphanumeric + "(-" + alphanumeric + ")*";
+        Pattern previous = Pattern.compile("^" + alphanumeric + "([+_.-]" + alphanumeric + ")*@"
+                + "(" + domainPart + "\\.)*(" + domainPart + "){2,}$");
+        String alphabet = "ab-.";
+        for (int value = 0; value < 4096; value++) {
+            StringBuilder domain = new StringBuilder();
+            int remaining = value;
+            for (int position = 0; position < 6; position++) {
+                domain.append(alphabet.charAt(remaining % alphabet.length()));
+                remaining /= alphabet.length();
+            }
+            for (String local : List.of("a", "a.b", "a+b", "a_b", "a-b", "a..b", "-a")) {
+                String email = local + "@" + domain;
+                if (previous.matcher(email).matches()) {
+                    assertTrue(Email.isValidEmail(email), email);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void isValidEmail_dotAtomsAndInternalHyphens_acceptsValidAddresses() {
+        for (String email : List.of("anne.o'brien@example.com", "alice!team@example.com",
+                "!#$%&'*+/=?^_`{|}~-@example.com", "a+_-b@example.com", "a@xn--bcher-kva.de",
+                "a@recruit--team.example.com", "a@a-b", "a@a--b")) {
+            assertTrue(Email.isValidEmail(email), email);
+        }
+        for (String email : List.of(".alice@example.com", "alice.@example.com", "alice..team@example.com",
+                "alice@a..com", "alice@a.-bc", "alice@a.bc-", "alice@--ab.com", "alice@a b.com",
+                "alice(office)@example.com", "\"alice\"@example.com")) {
+            assertFalse(Email.isValidEmail(email), email);
+        }
     }
 
     @Test

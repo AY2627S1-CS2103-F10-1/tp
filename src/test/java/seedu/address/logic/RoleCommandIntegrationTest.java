@@ -35,8 +35,8 @@ class RoleCommandIntegrationTest {
     void execute_manageRolesAcrossRestarts_preservesCatalogAndAssignments() throws Exception {
         ModelManager model = new ModelManager();
         LogicManager logic = new LogicManager(model, storage());
-        logic.execute("create_role n/Engineer");
-        logic.execute("create_role n/Unused");
+        logic.execute("add_role n/Engineer");
+        logic.execute("add_role n/Unused");
         assertTrue(storage().readAddressBook().orElseThrow().getRoleCatalog().find("Unused").isPresent());
         Person person = new PersonBuilder().build();
         model.addPerson(person);
@@ -46,7 +46,8 @@ class RoleCommandIntegrationTest {
 
         ModelManager restarted = new ModelManager(storage().readAddressBook().orElseThrow(), new UserPrefs());
         assertEquals(id, restarted.getRoleCatalog().requireRole("Senior Engineer").getId());
-        assertEquals(2, restarted.getAddressBook().getPersonList().getFirst().getRoles().size());
+        assertEquals(Set.of(restarted.getRoleCatalog().requireRole("Senior Engineer")),
+                restarted.getAddressBook().getPersonList().getFirst().getRoles());
         LogicManager restartedLogic = new LogicManager(restarted, storage());
         assertEquals("Roles:\nNo role\nSenior Engineer\nUnused",
                 restartedLogic.execute("list_role").getFeedbackToUser());
@@ -60,12 +61,12 @@ class RoleCommandIntegrationTest {
     void execute_invalidOperations_leavesModelAndBothFilesUnchanged() throws Exception {
         ModelManager model = new ModelManager();
         LogicManager logic = new LogicManager(model, storage());
-        logic.execute("create_role n/Engineer");
+        logic.execute("add_role n/Engineer");
         String candidates = Files.readString(directory.resolve("HRvest.json"));
         String catalog = Files.readString(directory.resolve("roles.json"));
         AddressBook before = new AddressBook(model.getAddressBook());
 
-        assertThrows(CommandException.class, () -> logic.execute("create_role n/ ENGINEER "));
+        assertThrows(CommandException.class, () -> logic.execute("add_role n/ ENGINEER "));
         assertThrows(CommandException.class, () -> logic.execute("edit_role r/Engineer n/No role"));
         assertThrows(CommandException.class, () -> logic.execute("delete_role r/No role"));
         assertThrows(ParseException.class, () -> logic.execute("edit_role r/Engineer n/New n/Other"));
@@ -109,7 +110,7 @@ class RoleCommandIntegrationTest {
                 new JsonUserPrefsStorage(directory.resolve("prefs.json")));
         LogicManager logic = new LogicManager(model, failing);
 
-        assertThrows(CommandException.class, () -> logic.execute("create_role n/Engineer"));
+        assertThrows(CommandException.class, () -> logic.execute("add_role n/Engineer"));
 
         assertEquals(List.of(Role.NO_ROLE), model.getRoleCatalog().getRoles());
         assertEquals(catalog, Files.readString(directory.resolve("roles.json")));
@@ -120,8 +121,8 @@ class RoleCommandIntegrationTest {
     void execute_clearCandidates_preservesRolesAcrossRestart() throws Exception {
         ModelManager model = new ModelManager();
         LogicManager logic = new LogicManager(model, storage());
-        logic.execute("create_role n/Engineer");
-        logic.execute("create_role n/Unused");
+        logic.execute("add_role n/Engineer");
+        logic.execute("add_role n/Unused");
         Person person = new PersonBuilder().build();
         model.addPerson(person);
         model.replacePersonRoles(person, List.of("Engineer"));

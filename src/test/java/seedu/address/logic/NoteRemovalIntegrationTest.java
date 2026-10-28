@@ -38,13 +38,14 @@ public class NoteRemovalIntegrationTest {
     private Logic logic;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws IOException {
         AddressBook candidates = getTypicalAddressBook();
         candidates.setPerson(ALICE, new PersonBuilder(ALICE).withNote("Keep this note").build());
         candidates.setPerson(BENSON, new PersonBuilder(BENSON).withStatus(Status.INTERVIEWING)
                 .withNote("Remove this note").build());
         model = new ModelManager(candidates, new UserPrefs());
         storage = new JsonAddressBookStorage(temporaryFolder.resolve("candidates.json"));
+        storage.saveAddressBook(model.getAddressBook());
         logic = createLogic(storage);
     }
 

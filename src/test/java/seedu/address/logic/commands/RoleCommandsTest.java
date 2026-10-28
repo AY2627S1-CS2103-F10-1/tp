@@ -20,8 +20,9 @@ class RoleCommandsTest {
     @Test
     void createAndList_unusedRoles_listsAllInPredictableOrder() throws Exception {
         ModelManager model = new ModelManager();
-        new CreateRoleCommand("Zoologist").execute(model);
-        new CreateRoleCommand("Analyst").execute(model);
+        assertEquals("Created role: Zoologist",
+                new AddRoleCommand("Zoologist").execute(model).getFeedbackToUser());
+        new AddRoleCommand("Analyst").execute(model);
         assertEquals("Roles:\nAnalyst\nNo role\nZoologist",
                 new ListRoleCommand().execute(model).getFeedbackToUser());
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
@@ -38,7 +39,7 @@ class RoleCommandsTest {
 
         assertEquals(id, model.getRoleCatalog().requireRole("Senior Engineer").getId());
         Set<Role> assignments = model.getAddressBook().getPersonList().getFirst().getRoles();
-        assertEquals(Set.of(Role.NO_ROLE, model.getRoleCatalog().requireRole("Senior Engineer")), assignments);
+        assertEquals(Set.of(model.getRoleCatalog().requireRole("Senior Engineer")), assignments);
         assertTrue(model.getFilteredPersonList().isEmpty());
     }
 
@@ -49,7 +50,8 @@ class RoleCommandsTest {
         model.createRole("Designer");
         model.replacePersonRoles(model.getAddressBook().getPersonList().getFirst(), List.of("Engineer", "Designer"));
 
-        new DeleteRoleCommand("Engineer").execute(model);
+        assertEquals("Deleted role: Engineer",
+                new DeleteRoleCommand("Engineer").execute(model).getFeedbackToUser());
         assertEquals(Set.of(model.getRoleCatalog().requireRole("Designer")),
                 model.getAddressBook().getPersonList().getFirst().getRoles());
         new DeleteRoleCommand("Designer").execute(model);
@@ -64,24 +66,30 @@ class RoleCommandsTest {
 
         String duplicateMessage = "A role with this name already exists.";
         String protectedMessage = "No role cannot be renamed or deleted.";
-        Command duplicate = new CreateRoleCommand(" ENGINEER ");
+        Command duplicate = new AddRoleCommand(" ENGINEER ");
         Command protectedRename = new EditRoleCommand("No role", "Other");
         assertThrows(CommandException.class, duplicateMessage, () -> duplicate.execute(model));
-        assertThrows(CommandException.class, () -> new EditRoleCommand("Engineer", "designer").execute(model));
-        assertThrows(CommandException.class, () -> new DeleteRoleCommand("Missing").execute(model));
+        assertThrows(CommandException.class, duplicateMessage, () ->
+                new EditRoleCommand("Engineer", "designer").execute(model));
+        assertThrows(CommandException.class, "Role does not exist: Missing", () ->
+                new DeleteRoleCommand("Missing").execute(model));
         assertThrows(CommandException.class, protectedMessage, () -> protectedRename.execute(model));
         assertThrows(CommandException.class, protectedMessage, () -> new DeleteRoleCommand(" NO ROLE ").execute(model));
-        assertThrows(CommandException.class, () -> new CreateRoleCommand("No role").execute(model));
+        assertThrows(CommandException.class, () -> new AddRoleCommand("No role").execute(model));
         assertEquals(before, model.getAddressBook());
     }
 
     @Test
     void commands_valueSemantics_useTheirArguments() {
-        CreateRoleCommand create = new CreateRoleCommand("Engineer");
-        assertFalse(create.equals(new CreateRoleCommand(" Engineer ")));
-        assertEquals(create.hashCode(), new CreateRoleCommand("Engineer").hashCode());
-        assertFalse(create.equals(new CreateRoleCommand("Designer")));
-        assertEquals("create_role Engineer", create.toString());
+        AddRoleCommand create = new AddRoleCommand("Engineer");
+        assertEquals(create, create);
+        assertEquals(create, new AddRoleCommand("Engineer"));
+        assertFalse(create.equals(null));
+        assertFalse(create.equals("Engineer"));
+        assertFalse(create.equals(new AddRoleCommand(" Engineer ")));
+        assertEquals(create.hashCode(), new AddRoleCommand("Engineer").hashCode());
+        assertFalse(create.equals(new AddRoleCommand("Designer")));
+        assertEquals("add_role Engineer", create.toString());
         EditRoleCommand edit = new EditRoleCommand("Engineer", "Designer");
         assertEquals(edit, new EditRoleCommand("Engineer", "Designer"));
         assertEquals(edit.hashCode(), new EditRoleCommand("Engineer", "Designer").hashCode());

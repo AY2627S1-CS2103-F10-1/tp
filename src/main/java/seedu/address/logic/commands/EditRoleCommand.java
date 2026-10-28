@@ -1,6 +1,8 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 
 import java.util.Objects;
 
@@ -10,7 +12,10 @@ import seedu.address.model.Model;
 /** Renames a catalog role globally without replacing candidate role assignments. */
 public class EditRoleCommand extends Command {
     public static final String COMMAND_WORD = "edit_role";
-    public static final String MESSAGE_USAGE = "edit_role r/EXISTING_NAME n/NEW_NAME";
+    public static final String MESSAGE_USAGE = COMMAND_WORD + " " + PREFIX_ROLE + "EXISTING_NAME "
+            + PREFIX_NAME + "NEW_NAME";
+
+    public static final String MESSAGE_SUCCESS = "Renamed role: %1$s -> %2$s";
 
     private final String oldName;
     private final String newName;
@@ -26,7 +31,7 @@ public class EditRoleCommand extends Command {
         requireNonNull(model);
         try {
             model.renameRole(oldName, newName);
-            return new CommandResult("Renamed role: " + oldName + " -> " + newName);
+            return new CommandResult(String.format(MESSAGE_SUCCESS, oldName, newName));
         } catch (IllegalArgumentException e) {
             throw new CommandException(e.getMessage(), e);
         }

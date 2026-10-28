@@ -2,9 +2,11 @@ package seedu.address.logic.parser;
 
 import static java.util.Objects.requireNonNull;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -26,10 +28,15 @@ import seedu.address.model.tag.Tag;
  */
 public class ParserUtil {
 
+    public static final String MESSAGE_EMPTY_ROLE =
+            "Role name cannot be empty. Use " + PREFIX_ROLE + Role.NO_ROLE_NAME + " if no role applies.";
+
     public static final String MESSAGE_INVALID_INDEX = "Index must be a positive integer.";
 
     public static final String MESSAGE_UNSUPPORTED_CHARACTER =
             "%s contains unsupported character U+%04X. Use printable ASCII only (U+0020-U+007E).";
+    public static final String MESSAGE_INVISIBLE_ROLE_CHARACTER =
+            "Role name contains invisible character U+%04X. Use ordinary spaces and visible characters only.";
 
     private static final int FIRST_PRINTABLE_ASCII = 0x20;
     private static final int LAST_PRINTABLE_ASCII = 0x7E;
@@ -38,16 +45,47 @@ public class ParserUtil {
     private static final Pattern NOTE_PREFIX_PATTERN =
             Pattern.compile("(^|\\s)" + Pattern.quote(PREFIX_NOTE.getPrefix()), Pattern.CASE_INSENSITIVE);
 
-    /** Parses a role display name using the model's shared validation rules. */
+    /**
+     * Parses a role display name using the model's shared validation rules.
+     * Also rejects invisible characters, which could make a new role look blank or identical to another role.
+     */
     public static String parseRoleName(String name) throws ParseException {
         String preparedName = Role.prepareName(name);
         if (!Role.isValidName(preparedName)) {
             throw new ParseException(Role.MESSAGE_CONSTRAINTS);
         }
+        OptionalInt invisibleCharacter =
+                preparedName.codePoints().filter(ParserUtil::isInvisible).findFirst();
+        if (invisibleCharacter.isPresent()) {
+            throw new ParseException(
+                    String.format(MESSAGE_INVISIBLE_ROLE_CHARACTER, invisibleCharacter.getAsInt()));
+        }
         if (!Role.hasNoReservedSyntax(preparedName)) {
             throw new ParseException(Role.MESSAGE_RESERVED_SYNTAX);
         }
         return preparedName;
+    }
+
+    /** Parses repeated role names without resolving catalog membership. */
+    public static Set<String> parseRoleNames(Collection<String> names) throws ParseException {
+        requireNonNull(names);
+        Set<String> roles = new HashSet<>();
+        for (String name : names) {
+            if (Role.prepareName(name).isEmpty()) {
+                throw new ParseException(MESSAGE_EMPTY_ROLE);
+            }
+            roles.add(parseRoleName(name));
+        }
+        return roles;
+    }
+
+    /**
+     * Returns whether {@code codePoint} is a space other than the ordinary space, such as a no-break space,
+     * or a zero-width formatting character, such as a zero-width space.
+     */
+    private static boolean isInvisible(int codePoint) {
+        boolean isUnusualSpace = codePoint != ' ' && Character.isSpaceChar(codePoint);
+        return isUnusualSpace || Character.getType(codePoint) == Character.FORMAT;
     }
 
     /**
