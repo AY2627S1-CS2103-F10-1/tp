@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalPersons.BOB;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
@@ -235,6 +236,21 @@ public class UniquePersonListTest {
     public void setPersons_listWithDuplicatePersons_throwsDuplicatePersonException() {
         List<Person> listWithDuplicatePersons = List.of(ALICE, ALICE);
         assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPersons(listWithDuplicatePersons));
+    }
+
+    @Test
+    public void setPersons_largeBatch_preservesOrderAndRejectsCaseInsensitiveDuplicatesAtomically() {
+        List<Person> candidates = IntStream.range(0, 10_000)
+                .mapToObj(index -> new PersonBuilder(ALICE).withEmail("candidate" + index + "@example.com").build())
+                .toList();
+        uniquePersonList.setPersons(candidates);
+        assertEquals(candidates, uniquePersonList.asUnmodifiableObservableList());
+        List<Person> duplicate = List.of(candidates.getFirst(),
+                new PersonBuilder(BOB).withEmail("CANDIDATE0@EXAMPLE.COM").build());
+
+        assertThrows(DuplicatePersonException.class, () -> uniquePersonList.setPersons(duplicate));
+
+        assertEquals(candidates, uniquePersonList.asUnmodifiableObservableList());
     }
 
     @Test
