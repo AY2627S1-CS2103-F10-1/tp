@@ -12,7 +12,7 @@ public class AppLogoTest {
     public void constructor_standaloneLogo_displaysStyledAppName() {
         Text logo = new AppLogo().getRoot();
 
-        assertEquals("HRVest", logo.getText());
+        assertEquals("HRvest", logo.getText());
         assertEquals("logo", logo.getId());
         assertTrue(logo.getStyleClass().contains("header-logo"));
         assertTrue(logo.isVisible());
