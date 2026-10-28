@@ -1,5 +1,6 @@
 package seedu.address.logic.commands;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -45,7 +46,20 @@ public class AddCommandIntegrationTest {
         Person existing = model.getFilteredPersonList().getFirst();
         Person duplicate = new PersonBuilder().withEmail(existing.getEmail().value.toUpperCase(Locale.ROOT)).build();
 
-        assertCommandFailure(new AddCommand(duplicate), model, AddCommand.MESSAGE_DUPLICATE_PERSON);
+        assertCommandFailure(new AddCommand(duplicate), model,
+                String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, existing.getName()));
+    }
+
+    @Test
+    public void execute_hiddenDuplicate_preservesExpandedViewAndNamesExistingCandidate() {
+        Person hidden = model.getAddressBook().getPersonList().get(1);
+        model.expandPerson(model.getFilteredPersonList().getFirst());
+        Person submitted = new PersonBuilder(hidden).withName("Submitted Name")
+                .withEmail(hidden.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertCommandFailure(new AddCommand(submitted), model,
+                "Another candidate (" + hidden.getName() + ") already uses this email.");
+        assertTrue(model.isExpandedViewProperty().get());
     }
 
     @Test
@@ -63,7 +77,7 @@ public class AddCommandIntegrationTest {
     public void execute_duplicatePerson_throwsCommandException() {
         Person personInList = model.getAddressBook().getPersonList().get(0);
         assertCommandFailure(new AddCommand(personInList), model,
-                AddCommand.MESSAGE_DUPLICATE_PERSON);
+                String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, personInList.getName()));
     }
 
 }

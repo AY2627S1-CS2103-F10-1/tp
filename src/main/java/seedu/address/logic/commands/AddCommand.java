@@ -11,6 +11,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -48,7 +49,7 @@ public class AddCommand extends Command {
             + PREFIX_TAG + "Java";
 
     public static final String MESSAGE_SUCCESS = "New candidate added: %1$s";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This candidate already exists in HRvest.";
+    public static final String MESSAGE_DUPLICATE_PERSON = "Another candidate (%1$s) already uses this email.";
 
     public static final String MESSAGE_MISSING_ROLE =
             "Specify at least one role. Use " + PREFIX_ROLE + Role.NO_ROLE_NAME + " if no role applies.";
@@ -78,8 +79,9 @@ public class AddCommand extends Command {
 
         Person candidate = toAdd.withRoles(
                 RoleCommandUtil.resolveRoles(model, roleNames, AddRoleCommand.MESSAGE_USAGE));
-        if (model.hasPerson(candidate)) {
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+        Optional<Person> existing = model.findSamePerson(candidate);
+        if (existing.isPresent()) {
+            throw new CommandException(String.format(MESSAGE_DUPLICATE_PERSON, existing.get().getName()));
         }
 
         model.addPerson(candidate);

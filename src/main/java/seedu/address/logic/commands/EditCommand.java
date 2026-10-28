@@ -57,7 +57,7 @@ public class EditCommand extends Command {
     public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited candidate: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_NOT_CHANGED = "No changes made: %1$s already has these details.";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This candidate already exists in HRvest.";
+    public static final String MESSAGE_DUPLICATE_PERSON = "Another candidate (%1$s) already uses this email.";
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -94,8 +94,11 @@ public class EditCommand extends Command {
             return new CommandResult(String.format(MESSAGE_NOT_CHANGED, personToEdit.getName()));
         }
 
-        if (!personToEdit.isSamePerson(editedPerson) && model.hasPerson(editedPerson)) {
-            throw new CommandException(MESSAGE_DUPLICATE_PERSON);
+        if (!personToEdit.isSamePerson(editedPerson)) {
+            Optional<Person> existing = model.findSamePerson(editedPerson);
+            if (existing.isPresent()) {
+                throw new CommandException(String.format(MESSAGE_DUPLICATE_PERSON, existing.get().getName()));
+            }
         }
 
         model.setPerson(personToEdit, editedPerson);
