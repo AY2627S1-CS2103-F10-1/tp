@@ -34,7 +34,7 @@ public class CandidateSummaryHeaderTest {
         Region header = new CandidateSummaryHeader(persons, persons).getRoot();
         Region cards = cards(header);
 
-        assertEquals("HRVest", ((Text) header.lookup("#logo")).getText());
+        assertEquals("HRvest", ((Text) header.lookup("#logo")).getText());
         assertEquals(Status.values().length + 1, cards.getChildrenUnmodifiable().size());
         assertEquals("totalSummaryCard", cards.getChildrenUnmodifiable().get(0).getId());
         assertCount(header, "total", "0 / 0");

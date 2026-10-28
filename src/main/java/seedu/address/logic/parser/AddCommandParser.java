@@ -5,6 +5,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -41,7 +42,7 @@ public class AddCommandParser implements Parser<AddCommand> {
                 ArgumentTokenizer.tokenizeWithValidation(args,
                         Set.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG),
                         PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                        PREFIX_STATUS, PREFIX_TAG);
+                        PREFIX_STATUS, PREFIX_TAG, PREFIX_ROLE);
 
         if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL)
                 || !argMultimap.getPreamble().isEmpty()) {
@@ -60,7 +61,11 @@ public class AddCommandParser implements Parser<AddCommand> {
 
         Person person = new Person(name, phone, email, address, tagList, status);
 
-        return new AddCommand(person);
+        Set<String> roleNames = ParserUtil.parseRoleNames(argMultimap.getAllValues(PREFIX_ROLE));
+        if (roleNames.isEmpty()) {
+            throw new ParseException(AddCommand.MESSAGE_MISSING_ROLE);
+        }
+        return new AddCommand(person, roleNames);
     }
 
     /**

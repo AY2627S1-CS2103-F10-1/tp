@@ -32,6 +32,7 @@ public class AddNotePrefixIntegrationTest {
         JsonAddressBookStorage storage = new JsonAddressBookStorage(temporaryFolder.resolve("candidates.json"));
         Logic logic = new LogicManager(model, new StorageManager(storage,
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        storage.saveAddressBook(model.getAddressBook());
         logic.execute("find Benson");
         AddressBook before = new AddressBook(model.getAddressBook());
         List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());

@@ -1,10 +1,12 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -36,24 +38,26 @@ public class EditCommand extends Command {
 
     public static final String COMMAND_WORD = "edit";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Edits the details of the person identified "
-            + "by the index number used in the displayed person list. "
+    public static final String MESSAGE_USAGE = COMMAND_WORD
+            + ": Edits the details of the candidate identified "
+            + "by the index number used in the displayed candidate list. "
             + "Existing values will be overwritten by the input values.\n"
             + "Parameters: INDEX (must be a positive integer) "
             + "[" + PREFIX_NAME + "NAME] "
             + "[" + PREFIX_PHONE + "PHONE] "
             + "[" + PREFIX_EMAIL + "EMAIL] "
             + "[" + PREFIX_ADDRESS + "ADDRESS] "
+            + "[" + PREFIX_ROLE + "ROLE]... "
             + "[" + PREFIX_STATUS + "STATUS] "
             + "[" + PREFIX_TAG + "TAG]...\n"
             + "Example: " + COMMAND_WORD + " 1 "
             + PREFIX_PHONE + "91234567 "
             + PREFIX_EMAIL + "johndoe@example.com";
 
-    public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited person: %1$s";
+    public static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited candidate: %1$s";
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_NOT_CHANGED = "No changes made: %1$s already has these details.";
-    public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
+    public static final String MESSAGE_DUPLICATE_PERSON = "This candidate already exists in HRvest.";
 
     private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
@@ -81,6 +85,10 @@ public class EditCommand extends Command {
 
         Person personToEdit = lastShownList.get(index.getZeroBased());
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
+        if (editPersonDescriptor.getRoleNames().isPresent()) {
+            editedPerson = editedPerson.withRoles(RoleCommandUtil.resolveRoles(model,
+                    editPersonDescriptor.getRoleNames().get(), CreateRoleCommand.MESSAGE_USAGE));
+        }
 
         if (editedPerson.equals(personToEdit)) {
             return new CommandResult(String.format(MESSAGE_NOT_CHANGED, personToEdit.getName()));
@@ -146,12 +154,13 @@ public class EditCommand extends Command {
         private Address address;
         private Status status;
         private Set<Tag> tags;
+        private Set<String> roleNames;
 
         public EditPersonDescriptor() {}
 
         /**
          * Copy constructor.
-         * A defensive copy of {@code tags} is used internally.
+         * Defensive copies of {@code tags} and role names are used internally.
          */
         public EditPersonDescriptor(EditPersonDescriptor toCopy) {
             setName(toCopy.name);
@@ -160,13 +169,14 @@ public class EditCommand extends Command {
             setAddress(toCopy.address);
             setStatus(toCopy.status);
             setTags(toCopy.tags);
+            setRoleNames(toCopy.roleNames);
         }
 
         /**
          * Returns true if at least one field is edited.
          */
         public boolean isAnyFieldEdited() {
-            return CollectionUtil.isAnyNonNull(name, phone, email, address, status, tags);
+            return CollectionUtil.isAnyNonNull(name, phone, email, address, status, tags, roleNames);
         }
 
         public void setName(Name name) {
@@ -226,6 +236,19 @@ public class EditCommand extends Command {
             return (tags != null) ? Optional.of(Collections.unmodifiableSet(tags)) : Optional.empty();
         }
 
+        /** Sets replacement role names using a defensive copy; null preserves existing assignments. */
+        public void setRoleNames(Set<String> roleNames) {
+            if (roleNames != null) {
+                checkArgument(!roleNames.isEmpty(), AddCommand.MESSAGE_MISSING_ROLE);
+            }
+            this.roleNames = roleNames == null ? null : Set.copyOf(roleNames);
+        }
+
+        /** Returns immutable replacement names, or an empty optional if roles are unchanged. */
+        public Optional<Set<String>> getRoleNames() {
+            return Optional.ofNullable(roleNames);
+        }
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -242,7 +265,8 @@ public class EditCommand extends Command {
                     && Objects.equals(email, otherEditPersonDescriptor.email)
                     && Objects.equals(address, otherEditPersonDescriptor.address)
                     && Objects.equals(status, otherEditPersonDescriptor.status)
-                    && Objects.equals(tags, otherEditPersonDescriptor.tags);
+                    && Objects.equals(tags, otherEditPersonDescriptor.tags)
+                    && Objects.equals(roleNames, otherEditPersonDescriptor.roleNames);
         }
 
         @Override
@@ -254,6 +278,7 @@ public class EditCommand extends Command {
                     .add("address", address)
                     .add("status", status)
                     .add("tags", tags)
+                    .add("roleNames", roleNames)
                     .toString();
         }
     }
