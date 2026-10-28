@@ -33,6 +33,8 @@ Before declaring a task complete, an agent must:
 
 ## Conventions (summary)
 
+Read the relevant checked-in file in [`docs/conventions/`](docs/conventions/README.md) before writing code, a commit message, or a review comment. That directory records the repository's conventions; the skills below provide the workflows for applying them.
+
 Detailed, step-by-step instructions live in `.agents/skills/<name>/SKILL.md`, which Codex discovers directly. `.claude/skills` is a symlink to that folder so Claude Code discovers the same files; on Windows, run `git config core.symlinks true` with Developer Mode on before checking out. Load the relevant skill before doing that kind of work.
 
 | Skill | Use when |
