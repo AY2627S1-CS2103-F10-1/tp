@@ -77,4 +77,14 @@ public class FilterCommandParserTest {
         assertParseFailure(parser, " s/Applied s/", INVALID_STATUS_MESSAGE);
     }
 
+    @Test
+    public void parse_otherCommandPrefix_throwsParseException() {
+        assertParseFailure(parser, " s/Interviewing n/John",
+                String.format(FilterCommandParser.MESSAGE_UNSUPPORTED_PREFIX, "n/"));
+        assertParseFailure(parser, " r/Developer T/java",
+                String.format(FilterCommandParser.MESSAGE_UNSUPPORTED_PREFIX, "t/"));
+        assertParseFailure(parser, " no/Follow up",
+                String.format(FilterCommandParser.MESSAGE_UNSUPPORTED_PREFIX, "no/"));
+    }
+
 }

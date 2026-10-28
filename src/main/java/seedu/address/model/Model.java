@@ -1,6 +1,7 @@
 package seedu.address.model;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -44,6 +45,9 @@ public interface Model {
      */
     boolean hasPerson(Person person);
 
+    /** Returns the candidate with the same identity from the complete address book, regardless of filters. */
+    Optional<Person> findSamePerson(Person person);
+
     /**
      * Deletes the given person.
      * The person must exist in the address book.
@@ -72,6 +76,9 @@ public interface Model {
      * @throws IllegalArgumentException if the person is not in the displayed list.
      */
     void expandPerson(Person person);
+
+    /** Returns the current filter for transactional view restoration. */
+    Predicate<? super Person> getPersonFilter();
 
     /** Returns an unmodifiable view of the filtered person list */
     ObservableList<Person> getFilteredPersonList();

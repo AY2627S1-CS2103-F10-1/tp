@@ -1,6 +1,7 @@
 package seedu.address.storage;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.core.CandidateCsvFormat.HEADERS;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -30,7 +31,6 @@ public class CsvExportWriter {
     /** Lets spreadsheet programs such as Excel detect UTF-8, so that non-ASCII text is not garbled. */
     static final char BYTE_ORDER_MARK = '\uFEFF';
 
-    private static final List<String> HEADERS = List.of("name", "phone", "email", "address", "status", "tags", "note");
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     /** Returns the export path beside the configured JSON data file, without resolving symbolic links. */

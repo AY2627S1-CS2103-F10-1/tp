@@ -93,6 +93,17 @@ public class ExpandCommandTest {
     }
 
     @Test
+    public void execute_emptyAddressBook_suggestsAddingCandidateWithoutChangingView() {
+        ModelManager emptyModel = new ModelManager(new AddressBook(), new UserPrefs());
+
+        assertCommandFailure(new ExpandCommand(Index.fromOneBased(1)), emptyModel,
+                ListCommand.MESSAGE_NO_CANDIDATES);
+        assertTrue(emptyModel.getAddressBook().getPersonList().isEmpty());
+        assertTrue(emptyModel.getFilteredPersonList().isEmpty());
+        assertFalse(emptyModel.isExpandedViewProperty().get());
+    }
+
+    @Test
     public void execute_repeatedExpansion_remainsExpanded() {
         Person selected = model.getFilteredPersonList().getFirst();
         ExpandCommand command = new ExpandCommand(Index.fromOneBased(1));

@@ -7,6 +7,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -88,6 +89,12 @@ public class ModelManager implements Model {
     }
 
     @Override
+    public Optional<Person> findSamePerson(Person person) {
+        requireNonNull(person);
+        return addressBook.findSamePerson(person);
+    }
+
+    @Override
     public void deletePerson(Person target) {
         addressBook.removePerson(target);
     }
@@ -132,7 +139,7 @@ public class ModelManager implements Model {
     @Override
     public void createRole(String name) {
         List<Role> roles = new ArrayList<>(getRoleCatalog().getRoles());
-        checkArgument(getRoleCatalog().find(name).isEmpty(), "A role with this name already exists.");
+        checkArgument(getRoleCatalog().find(name).isEmpty(), RoleCatalog.MESSAGE_DUPLICATE_NAME);
         roles.add(Role.create(name));
         addressBook.setRoleCatalog(new RoleCatalog(roles));
     }
@@ -149,7 +156,7 @@ public class ModelManager implements Model {
     @Override
     public void deleteRole(String name) {
         Role role = getRoleCatalog().requireRole(name);
-        checkArgument(!role.equals(Role.NO_ROLE), "No role cannot be renamed or deleted.");
+        checkArgument(!role.equals(Role.NO_ROLE), Role.MESSAGE_PROTECTED_ROLE);
         List<Role> remaining = getRoleCatalog().getRoles().stream()
                 .filter(entry -> !entry.equals(role)).toList();
         replaceRoleData(role, null, new RoleCatalog(remaining));
@@ -162,11 +169,11 @@ public class ModelManager implements Model {
         for (Person person : addressBook.getPersonList()) {
             replacement.addPerson(createPersonWithUpdatedRoles(person, oldRole, renamed));
         }
-        boolean wasExpanded = isExpandedView.get();
+        Optional<Person> expandedPerson = isExpandedView.get()
+                ? Optional.of(filteredPersons.getFirst()) : Optional.empty();
         addressBook.resetData(replacement);
-        if (wasExpanded) {
-            updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        }
+        expandedPerson.ifPresent(person ->
+                expandPersonAfterEdit(createPersonWithUpdatedRoles(person, oldRole, renamed)));
     }
 
     /** Returns a person with the old role removed, or replaced when renamed is non-null. */
@@ -204,6 +211,11 @@ public class ModelManager implements Model {
         checkArgument(filteredPersons.contains(person), "Person must be in the displayed list.");
         updateFilteredPersonList(person::equals);
         isExpandedView.set(true);
+    }
+
+    @Override
+    public Predicate<? super Person> getPersonFilter() {
+        return filteredPersons.getPredicate();
     }
 
     @Override

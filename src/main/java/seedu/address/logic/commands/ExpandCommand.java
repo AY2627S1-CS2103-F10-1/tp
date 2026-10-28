@@ -33,7 +33,9 @@ public class ExpandCommand extends Command {
         requireNonNull(model);
         int size = model.getFilteredPersonList().size();
         if (size == 0) {
-            throw new CommandException(MESSAGE_EMPTY_LIST);
+            String message = model.getAddressBook().getPersonList().isEmpty()
+                    ? ListCommand.MESSAGE_NO_CANDIDATES : MESSAGE_EMPTY_LIST;
+            throw new CommandException(message);
         }
         if (targetIndex.getZeroBased() >= size) {
             throw new CommandException(String.format(MESSAGE_OUT_OF_RANGE, size));

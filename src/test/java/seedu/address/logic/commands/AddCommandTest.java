@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -52,8 +53,9 @@ public class AddCommandTest {
 
         CommandResult result = new AddCommand(candidate).execute(modelStub);
 
-        assertEquals("New person added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
-                + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; Tags: [backend]",
+        assertEquals("New candidate added: Amy Bee; Phone: 85355255; Email: amy@gmail.com; "
+                + "Address: 123, Jurong West Ave 6, #08-111; Status: Interviewing; "
+                + "Roles: No role; Tags: [backend]",
                 result.getFeedbackToUser());
     }
 
@@ -63,7 +65,8 @@ public class AddCommandTest {
         AddCommand addCommand = new AddCommand(validPerson);
         ModelStub modelStub = new ModelStubWithPerson(validPerson);
 
-        assertThrows(CommandException.class, AddCommand.MESSAGE_DUPLICATE_PERSON, () -> addCommand.execute(modelStub));
+        String expected = String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, validPerson.getName());
+        assertThrows(CommandException.class, expected, () -> addCommand.execute(modelStub));
     }
 
     @Test
@@ -93,7 +96,7 @@ public class AddCommandTest {
     @Test
     public void toStringMethod() {
         AddCommand addCommand = new AddCommand(ALICE);
-        String expected = AddCommand.class.getCanonicalName() + "{toAdd=" + ALICE + "}";
+        String expected = AddCommand.class.getCanonicalName() + "{toAdd=" + ALICE + ", roleNames=[No role]}";
         assertEquals(expected, addCommand.toString());
     }
 
@@ -143,11 +146,16 @@ public class AddCommandTest {
 
         @Override
         public ReadOnlyAddressBook getAddressBook() {
-            throw new AssertionError("This method should not be called.");
+            return new AddressBook();
         }
 
         @Override
         public boolean hasPerson(Person person) {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
+        public Optional<Person> findSamePerson(Person person) {
             throw new AssertionError("This method should not be called.");
         }
 
@@ -177,6 +185,11 @@ public class AddCommandTest {
         }
 
         @Override
+        public Predicate<? super Person> getPersonFilter() {
+            throw new AssertionError("This method should not be called.");
+        }
+
+        @Override
         public void updateFilteredPersonList(Predicate<Person> predicate) {
             throw new AssertionError("This method should not be called.");
         }
@@ -194,9 +207,9 @@ public class AddCommandTest {
         }
 
         @Override
-        public boolean hasPerson(Person person) {
+        public Optional<Person> findSamePerson(Person person) {
             requireNonNull(person);
-            return this.person.isSamePerson(person);
+            return this.person.isSamePerson(person) ? Optional.of(this.person) : Optional.empty();
         }
     }
 
@@ -207,9 +220,9 @@ public class AddCommandTest {
         final ArrayList<Person> personsAdded = new ArrayList<>();
 
         @Override
-        public boolean hasPerson(Person person) {
+        public Optional<Person> findSamePerson(Person person) {
             requireNonNull(person);
-            return personsAdded.stream().anyMatch(person::isSamePerson);
+            return personsAdded.stream().filter(person::isSamePerson).findFirst();
         }
 
         @Override

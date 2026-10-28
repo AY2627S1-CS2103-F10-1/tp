@@ -6,6 +6,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
@@ -41,7 +42,7 @@ public class EditCommandParser implements Parser<EditCommand> {
                 ArgumentTokenizer.tokenizeWithValidation(args,
                         Set.of(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_TAG),
                         PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
-                        PREFIX_STATUS, PREFIX_TAG);
+                        PREFIX_STATUS, PREFIX_TAG, PREFIX_ROLE);
 
         Index index = ParserUtil.parseDisplayedIndex(argMultimap.getPreamble(),
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, EditCommand.MESSAGE_USAGE));
@@ -67,6 +68,11 @@ public class EditCommandParser implements Parser<EditCommand> {
             editPersonDescriptor.setStatus(ParserUtil.parseStatus(argMultimap.getValue(PREFIX_STATUS).get()));
         }
         parseTagsForEdit(argMultimap.getAllValues(PREFIX_TAG)).ifPresent(editPersonDescriptor::setTags);
+
+        if (argMultimap.getValue(PREFIX_ROLE).isPresent()) {
+            editPersonDescriptor.setRoleNames(
+                    ParserUtil.parseRoleNames(argMultimap.getAllValues(PREFIX_ROLE)));
+        }
 
         if (!editPersonDescriptor.isAnyFieldEdited()) {
             throw new ParseException(EditCommand.MESSAGE_NOT_EDITED);
