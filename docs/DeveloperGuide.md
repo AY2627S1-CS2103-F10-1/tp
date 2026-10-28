@@ -131,6 +131,14 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 * Status values, candidate indexes, and `clear confirm` retain their own validation rules rather than this character check. Command words and prefix syntax are unchanged; use ordinary spaces before prefixes.
 * This restriction applies only to new command input, not loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export retain their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
 
+#### Displayed-index validation
+
+`status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report numeric index errors the same way. The exact messages are listed under each command in the User Guide. A rejected command leaves candidate data, filters, and the expanded view unchanged.
+
+* A number too large for an `int` is reported as an out-of-range index rather than a format error, because no displayed list can be that long.
+* A known numeric problem, such as `0`, is reported instead of the generic `Invalid command format!`, so the user knows exactly what to fix.
+* Each command keeps its own validation order. For example, `note` still reports a missing `no/` before an invalid index. This keeps the change limited to index errors.
+
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 

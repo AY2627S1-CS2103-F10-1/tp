@@ -1,6 +1,7 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
@@ -9,7 +10,6 @@ import static seedu.address.testutil.Assert.assertThrows;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.commons.core.index.Index;
-import seedu.address.logic.Messages;
 import seedu.address.logic.commands.ExpandCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 
@@ -20,6 +20,7 @@ public class ExpandCommandParserTest {
     public void parse_validIndex_acceptsSurroundingWhitespace() {
         assertParseSuccess(parser, " \t2 ", new ExpandCommand(Index.fromOneBased(2)));
         assertParseSuccess(parser, "2147483647", new ExpandCommand(Index.fromOneBased(Integer.MAX_VALUE)));
+        assertParseSuccess(parser, "01", new ExpandCommand(Index.fromOneBased(1)));
     }
 
     @Test
@@ -30,23 +31,23 @@ public class ExpandCommandParserTest {
     }
 
     @Test
+    public void parse_malformedIndex_reportsExpandGuidance() {
+        for (String input : new String[] {"1.5", "abc", "+1", "1 2", "1 n/Alice"}) {
+            assertParseFailure(parser, input, ExpandCommandParser.MESSAGE_INVALID_INDEX);
+        }
+    }
+
+    @Test
     public void parse_nonPositiveIndex_reportsPositiveIntegerRequirement() {
-        for (String input : new String[] {"0", "00", "-0", "-1", "-2147483649"}) {
+        for (String input : new String[] {"0", "00", "000", "-0", "-1", "-2147483649", "-99999999999"}) {
             assertParseFailure(parser, input, ParserUtil.MESSAGE_INVALID_INDEX);
         }
     }
 
     @Test
-    public void parse_overflowingPositiveIndex_reportsInvalidDisplayedIndex() {
-        for (String input : new String[] {"2147483648", "99999999999", "999999999999999999999"}) {
-            assertParseFailure(parser, input, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
-    }
-
-    @Test
-    public void parse_malformedIndex_reportsExpandGuidance() {
-        for (String input : new String[] {"1.5", "abc", "1 2", "1 n/Alice"}) {
-            assertParseFailure(parser, input, ExpandCommandParser.MESSAGE_INVALID_INDEX);
+    public void parse_positiveOverflow_reportsInvalidDisplayedIndex() {
+        for (String input : new String[] {"2147483648", "99999999999", "999999999999999999999", "9".repeat(100)}) {
+            assertParseFailure(parser, input, MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
     }
 
