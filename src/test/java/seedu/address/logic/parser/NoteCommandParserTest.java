@@ -34,13 +34,14 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_uppercasePrefix_returnsCommand() {
-        assertParseSuccess(parser, " 1 NO/Follow up", new NoteCommand(INDEX_FIRST_PERSON, new Note("Follow up")));
+        assertParseSuccess(parser, " 1 NO/Follow up",
+                new NoteCommand(INDEX_FIRST_PERSON, new Note("Follow up")));
     }
 
     @Test
     public void parse_missingPrefix_throwsParseException() {
         String message = NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE;
-        for (String args : new String[] {"", " 1", " 1 n/hi", " 1 hi", " 1no/hi", " 0", " 99999999999"}) {
+        for (String args : new String[] { "", " 1", " 1 n/hi", " 1 hi", " 1no/hi", " 0", " 99999999999" }) {
             assertParseFailure(parser, args, message);
         }
     }
@@ -54,42 +55,45 @@ public class NoteCommandParserTest {
     @Test
     public void parse_notWholeNumberIndex_throwsFormatError() {
         String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
-        for (String index : new String[] {"abc", "+1", "1.5", "1 2"}) {
+        for (String index : new String[] { "abc", "+1", "1.5", "1 2" }) {
             assertParseFailure(parser, " " + index + " no/hi", message);
         }
     }
 
     @Test
     public void parse_zeroOrNegativeIndex_throwsInvalidIndex() {
-        for (String index : new String[] {"0", "000", "-0", "-1", "-99999999999"}) {
+        for (String index : new String[] { "0", "000", "-0", "-1", "-99999999999" }) {
             assertParseFailure(parser, " " + index + " no/hi", ParserUtil.MESSAGE_INVALID_INDEX);
         }
     }
 
     @Test
     public void parse_indexTooLargeForAnyList_throwsInvalidDisplayedIndex() {
-        for (String index : new String[] {"2147483648", "99999999999", "9".repeat(100)}) {
-            assertParseFailure(parser, " " + index + " no/hi", Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        for (String index : new String[] { "2147483648", "99999999999", "9".repeat(100) }) {
+            assertParseFailure(parser, " " + index + " no/hi",
+                    Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
         }
     }
 
     @Test
     public void parse_mixedErrors_preservesCharacterAndPrefixPrecedence() {
-        assertParseFailure(parser, " 0 no/\t", String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "no/", 9));
+        assertParseFailure(parser, " 0 no/\t",
+                String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "no/", 9));
         assertParseFailure(parser, " 0 no/first no/second", ParserUtil.MESSAGE_INVALID_INDEX);
-        assertParseFailure(parser, " 99999999999 no/first no/second", Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        assertParseFailure(parser, " 99999999999 no/first no/second",
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void parse_blankNote_returnsClearCommand() {
-        for (String args : new String[] {" 1 no/", " 1 no/   "}) {
+        for (String args : new String[] { " 1 no/", " 1 no/   " }) {
             assertParseSuccess(parser, args, new NoteCommand(INDEX_FIRST_PERSON));
         }
     }
 
     @Test
     public void parse_noteLengthBoundaries_validatesTrimmedLength() {
-        for (String character : new String[] {"x", "~"}) {
+        for (String character : new String[] { "x", "~" }) {
             String note = character.repeat(Note.MAX_LENGTH);
             assertParseSuccess(parser, " 1 no/ " + note + " ",
                     new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
@@ -99,8 +103,9 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_invisibleOrUnicodeNote_throwsParseException() {
-        for (String text : new String[] {"\t", "\u2003", "\u00A0", "\u200B", "\uD83D\uDE00"}) {
-            String message = String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "no/", text.codePointAt(0));
+        for (String text : new String[] { "\t", "\u2003", "\u00A0", "\u200B", "\uD83D\uDE00" }) {
+            String message = String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "no/",
+                    text.codePointAt(0));
             assertParseFailure(parser, " 1 no/" + text, message);
         }
     }
