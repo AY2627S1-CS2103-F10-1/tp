@@ -254,7 +254,7 @@ The command history feature lets a user walk through commands they submitted ear
 
 `CommandBox` already owns the JavaFX `TextField` and runs user input through `CommandExecutor` on Enter. The new field reuses that path:
 
-1. On Enter, `CommandBox#handleCommandEntered` records the raw text with `CommandHistory#add` **before** dispatching to the executor. Rejected commands are recorded too so the user can press Up and fix a typo. The text field is cleared on both success and failure so the next Up press shows the command from history instead of appearing to do nothing.
+1. On Enter, `CommandBox#handleCommandEntered` records the raw text with `CommandHistory#add` **before** dispatching to the executor. Rejected commands are recorded too. The text field is cleared after a successful command. After a rejected command, the text stays so that the user can fix it, and `CommandHistory#moveCursorToNewest` marks that entry as already shown, so the next Up press shows the command before it instead of appearing to do nothing.
 2. A `KEY_PRESSED` event filter on `commandTextField` catches `UP` and `DOWN` presses, calls `history.previous()` or `history.next()`, and swaps the text field's contents with the result. The event is consumed so the caret does not move within the text field.
 3. When the user presses `Up` while composing a fresh command, `CommandBox` captures the current text as a `draft` before replacing the field with a past entry. Pressing `Down` back past the newest entry restores that draft.
 
@@ -266,6 +266,7 @@ The command history feature lets a user walk through commands they submitted ear
 * `previous()` moves the cursor one step back and returns the command there, or `Optional.empty()` when already at the oldest entry.
 * `next()` moves the cursor forward. On reaching the past-the-end position it returns an empty string so the UI knows to clear or restore the field.
 * Entries are capped at `MAX_ENTRIES` (100) to bound memory for long-running sessions. The oldest entry is dropped when the cap is reached.
+* `moveCursorToNewest()` moves the cursor onto the newest entry when the command box keeps a rejected command on screen.
 
 The class diagram below shows the collaborator relationship:
 
