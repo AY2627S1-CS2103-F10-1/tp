@@ -946,6 +946,35 @@ testers are expected to do more *exploratory* testing.
 1. Run `find Betsy`, then change that candidate's name with `edit 1 n/Other Name`. Expected: The candidate disappears if the new name does not match.
 1. Run `filter s/Applied`, `expand 1`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded at index `1` after each update, including the Offered status change. Expansion replaces the earlier status filter with a selection of the candidate. Run `list` to show all candidates again.
 
+### Updating status, finding and filtering
+
+1. Run `list`, then `status 1 s/Interviewing`. Expected: The message is `Updated status of NAME: OLD_STATUS -> Interviewing`, and the first card shows Interviewing.
+1. Run `status 1 s/Hired`, then `status 1`. Expected: The first lists the valid statuses and the second gives the command format. The candidate is unchanged.
+1. With the sample candidates, run `find ale`. Expected: Alex Yeoh is listed, because `ale` starts a word in the name. Run `find eoh`. Expected: `0 candidate(s) listed!`
+1. Run `filter s/Interviewing s/Offered`. Expected: Only candidates with either status are listed. Run `filter s/Hired`. Expected: The valid statuses are listed, and the displayed list is unchanged.
+
+### Viewing a candidate's full record
+
+1. Give a candidate a note with `note 2 no/Strong on SQL`, then run `expand 2`. Expected: Only that candidate is shown, at index `1`, with `Note: Strong on SQL`. The line above the list reads `Expanded view of 1 of N candidates. Type list to show all.`
+1. Run `list`, then expand a candidate without a note. Expected: `No note recorded.` appears.
+1. Run `expand 0` and `expand abc`. Expected: Each gives an error, and the displayed list is unchanged.
+
+### Exporting and importing candidates
+
+1. Run `export`. Expected: `Exported successfully to PATH.`, where `PATH` ends in `export.csv` inside the `data` folder. In a text editor, the file starts with the header `"name","phone","email","address","status","tags","note"` and has one row per candidate, including candidates hidden by a filter.
+1. Copy the template from the User Guide's `import` section into `data/import.csv`, using an email that no candidate has, and run `import`. Expected: `Imported 1 candidate successfully.` The candidate appears at the end of the full list with `No role`.
+1. Run `import` again without changing the file. Expected: An error names the CSV record whose email is a duplicate, and no candidate is added.
+
+### Clearing all candidates
+
+1. Run `clear`. Expected: The message gives the number of candidates and asks you to enter `clear confirm`. Nothing is deleted.
+1. Run `clear 1`. Expected: An invalid-command-format error. Nothing is deleted.
+1. Run `clear confirm`. Expected: `All candidates have been cleared.` The list is empty, and `list_role` still shows any roles you created.
+
+### Viewing help
+
+1. Run `help`, or press `F1`. Expected: A help window shows the User Guide's URL and a **Copy URL** button.
+
 ### Header summary cards
 
 1. Launch HRvest and widen the window until all summary cards appear beside the logo. Confirm there is one Total candidates card and one card per status, including statuses with zero candidates.
