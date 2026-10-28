@@ -77,8 +77,13 @@ public class CsvExportWriter {
             }
             checkDestination(destination);
             replaceFile(temporary, destination);
-        } finally {
-            Files.deleteIfExists(temporary);
+        } catch (IOException | RuntimeException e) {
+            try {
+                Files.deleteIfExists(temporary);
+            } catch (IOException | RuntimeException cleanupError) {
+                e.addSuppressed(cleanupError);
+            }
+            throw e;
         }
     }
 
