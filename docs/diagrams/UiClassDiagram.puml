@@ -10,6 +10,10 @@ Class "{abstract}\nUiPart" as UiPart
 Class UiManager
 Class MainWindow
 Class HelpWindow
+Class CandidateSummaryHeader
+Class AppLogo
+Class CandidateSummaryCard
+Class StatusSummaryCard
 Class ResultDisplay
 Class PersonListPanel
 Class PersonCard
@@ -31,11 +35,16 @@ HiddenOutside ..> Ui
 
 UiManager .left.|> Ui
 UiManager -down-> "1" MainWindow
+MainWindow *-down-> "1" CandidateSummaryHeader
 MainWindow *-down->  "1" CommandBox
 MainWindow *-down-> "1" ResultDisplay
 MainWindow *-down-> "1" PersonListPanel
 MainWindow *-down-> "1" StatusBarFooter
-MainWindow --> "0..1" HelpWindow
+MainWindow --> "1" HelpWindow
+
+CandidateSummaryHeader *-down-> "1" AppLogo
+CandidateSummaryHeader *-down-> "1" CandidateSummaryCard
+CandidateSummaryHeader *-down-> "7" StatusSummaryCard
 
 PersonListPanel -down-> "*" PersonCard
 PersonListPanel ..> ListSummary
@@ -48,8 +57,14 @@ PersonListPanel --|> UiPart
 PersonCard --|> UiPart
 StatusBarFooter --|> UiPart
 HelpWindow --|> UiPart
+CandidateSummaryHeader --|> UiPart
+AppLogo --|> UiPart
+CandidateSummaryCard --|> UiPart
+StatusSummaryCard --|> UiPart
 
 PersonCard ..> Model
+CandidateSummaryCard ..> Model
+StatusSummaryCard ..> Model
 UiManager -right-> Logic
 MainWindow -left-> Logic
 
