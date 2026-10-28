@@ -208,6 +208,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 * The search considers only names.
 * A keyword matches the start of any word in a name; for example, `Han` matches `Hans`, and `Gru` matches `Hans Gruber`. Text inside a word does not match; for example, `ans` does not match `Hans`.
 * Candidates matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* Each `find` replaces the previous search or filter and considers all candidates, so `find` and `filter` cannot be combined. For example, `filter s/Interviewing` followed by `find Alex` shows every candidate matching `Alex`, whatever their status.
 
 Examples:
 * `find John` returns `john` and `John Doe`
@@ -224,7 +225,7 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 * Supply at least one status or role.
 * Repeat `s/` or `r/` to match any value within that field (`OR`). Repeated values have no extra effect.
 * If both fields are supplied, candidates must match a specified status and a specified role (`AND`).
-* Each `filter` replaces the previous search or filter and considers all candidates.
+* Each `filter` replaces the previous search or filter and considers all candidates, so `filter` and `find` cannot be combined. For example, `find Alex` followed by `filter r/Developer` shows every Developer, not only those matching `Alex`.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
 * Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalog.
 * Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`.
