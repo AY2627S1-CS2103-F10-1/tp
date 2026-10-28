@@ -77,6 +77,9 @@ public interface Model {
      */
     void expandPerson(Person person);
 
+    /** Returns the current filter for transactional view restoration. */
+    Predicate<? super Person> getPersonFilter();
+
     /** Returns an unmodifiable view of the filtered person list */
     ObservableList<Person> getFilteredPersonList();
 
