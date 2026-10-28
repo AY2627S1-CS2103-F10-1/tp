@@ -37,6 +37,7 @@ public class LogsCenterTest {
 
             assertArrayEquals(originalHandlers, base.getHandlers());
             assertTrue(output.toString().contains("Could not create the log file."));
+            assertTrue(output.toString().contains("java.nio.file.NoSuchFileException"));
             assertTrue(output.toString().contains("Logging after failure remains available."));
             assertFalse(Files.exists(directory.resolve("missing")));
         } finally {
@@ -48,13 +49,19 @@ public class LogsCenterTest {
     @Test
     public void initialize_logDestinationIsDirectory_retainsConsoleLogging() throws Exception {
         Files.createDirectory(directory.resolve("addressbook.log.0"));
-        String classPath = Path.of(LogsCenter.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+        String classPath = Path.of(LogsCenter.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI())
                 + File.pathSeparator
-                + Path.of(LogsCenterTest.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+                + Path.of(LogsCenterTest.class.getProtectionDomain()
+                        .getCodeSource().getLocation().toURI());
         Path output = directory.resolve("console.txt");
-        Process process = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+        Process process = new ProcessBuilder(
+                Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                 "-cp", classPath, LoggingProbe.class.getName())
-                .directory(directory.toFile()).redirectErrorStream(true).redirectOutput(output.toFile()).start();
+                .directory(directory.toFile())
+                .redirectErrorStream(true)
+                .redirectOutput(output.toFile())
+                .start();
         try {
             assertTrue(process.waitFor(20, TimeUnit.SECONDS));
             String console = Files.readString(output);

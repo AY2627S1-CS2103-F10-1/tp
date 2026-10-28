@@ -88,12 +88,14 @@ public class LogsCenter {
     /** Adds file logging when available, retaining the already configured console handler on failure. */
     static void addFileHandler(String filePattern) {
         try {
-            FileHandler fileHandler = new FileHandler(filePattern, MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
+            FileHandler fileHandler = new FileHandler(filePattern,
+                    MAX_FILE_SIZE_IN_BYTES, MAX_FILE_COUNT, true);
             fileHandler.setFormatter(new SimpleFormatter());
             fileHandler.setLevel(Level.ALL);
             baseLogger.addHandler(fileHandler);
         } catch (IOException e) {
-            baseLogger.warning("Could not create the log file. Console logging remains available.");
+            baseLogger.log(Level.WARNING,
+                    "Could not create the log file. Console logging remains available.", e);
         }
     }
 
