@@ -57,7 +57,7 @@ class CandidateRoleParsersTest {
         assertParseFailure(new AddCommandParser(), DETAILS + " r/Designer\u00A0", noBreakSpaceError);
         assertParseFailure(new EditCommandParser(), "1 r/No\u00A0role", noBreakSpaceError);
         assertParseFailure(new FilterCommandParser(), " r/\u00A0", noBreakSpaceError);
-        assertParseFailure(new CreateRoleCommandParser(), " n/Design\u200Ber",
+        assertParseFailure(new AddRoleCommandParser(), " n/Design\u200Ber",
                 String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x200B));
     }
 

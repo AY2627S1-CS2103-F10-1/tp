@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
 
 public class CandidateCsvParserTest {
@@ -147,8 +148,8 @@ public class CandidateCsvParserTest {
     public void parse_invalidCandidateField_identifiesRecordAndField() {
         String input = HEADER + record(List.of("Candidate", "invalid", "candidate@example.com", "Address",
                 "Applied", "[]", ""));
-        assertThrows(ParseException.class, "CSV record 2, field phone: Phone numbers should only contain digits, "
-                + "and should be at least 3 digits long", () -> parse(input.getBytes(StandardCharsets.UTF_8)));
+        assertThrows(ParseException.class, "CSV record 2, field phone: " + Phone.MESSAGE_CONSTRAINTS, () ->
+                parse(input.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test

@@ -72,7 +72,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
 ### Accepted characters in candidate inputs
 
-Names, phone numbers, emails, addresses, tags, notes, and `find` keywords accept only **printable ASCII (`U+0020–U+007E`)**: English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces, and ASCII punctuation. This keeps command input within a single, explicit character set. Existing field rules still apply afterward: for example, phone numbers accept only digits, and names do not accept punctuation.
+Names, phone numbers, emails, addresses, tags, notes, and `find` keywords accept only **printable ASCII (`U+0020–U+007E`)**: English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces, and ASCII punctuation. This keeps command input within a single, explicit character set. Existing field rules still apply afterward: for example, phone numbers need at least three ASCII digits, and names do not accept punctuation.
 
 For more information about rejected characters, error messages, and validation scope, see [Command input character validation in the Developer Guide](DeveloperGuide.md#command-input-character-validation).
 
@@ -96,7 +96,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 | Parameter | Required? | Accepted values and behavior |
 |---|---|---|
 | `n/NAME` | Yes | A non-blank name containing only letters, digits, and spaces, e.g. `n/John Doe`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. Punctuation such as apostrophes and hyphens is not accepted. |
-| `p/PHONE_NUMBER` | Yes | At least three digits, e.g. `p/98765432`. Spaces within the number, `+`, hyphens, and parentheses are not accepted. Leading zeroes are preserved. |
+| `p/PHONE_NUMBER` | Yes | Any printable-ASCII text containing at least three ASCII digits, e.g. `p/+65 9123 4567`, `p/(65) 6123 4567`, or `p/1234 5678 (HP) 1111-3333 (Office)`. Formatting, extensions and contact labels are accepted. Leading and trailing spaces are removed; internal text and leading zeroes are preserved. HRvest stores contact information without checking whether a number is dialable. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/anne.o'brien@example.com`. The local part allows letters, digits, and <code>!#$%&'*+/=?^_&#96;{&#124;}~-</code>, with periods separating non-empty groups. Leading, trailing, and consecutive periods are invalid. Domain labels must start and end with letters or digits and may contain internal hyphens, including consecutive hyphens (e.g. `xn--bcher-kva.de`); the final label must contain at least two characters. Spaces and quoted local parts are not accepted. |
 | `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
 | `r/ROLE` | Yes | An existing [role name](#managing-the-role-catalog). Repeat `r/` to assign multiple roles. Matching ignores case and surrounding whitespace. Use `r/No role` if no role applies. |
@@ -488,7 +488,7 @@ Advanced users may edit the JSON files in the `data` folder.
 * Each file must contain exactly one JSON object. Do not repeat a property name within an object or append another object or text after it. Surrounding JSON whitespace is allowed. Invalid JSON follows the backup and recovery process below.
 * A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Loading a mix of `no-role` and named role IDs removes `no-role`. Use `no-role` for `No role`, rather than its display name.
 * Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
-* One invalid value in **any** candidate, such as a space between the digits of a phone number, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
+* One invalid value in **any** candidate, such as a phone number containing fewer than three digits, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
 * Save the file as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
 
 **If data cannot be loaded:**

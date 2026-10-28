@@ -35,6 +35,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
@@ -66,6 +67,48 @@ public class LogicManagerTest {
     public void execute_invalidCommandFormat_throwsParseException() {
         String invalidCommand = "uicfhmowqewca";
         assertParseException(invalidCommand, MESSAGE_UNKNOWN_COMMAND);
+    }
+
+    @Test
+    public void execute_formattedPhoneAdd_preservesSavedValue() throws Exception {
+        logic.execute("add n/Phone Test p/1234 5678 (HP) 1111-3333 (Office) e/phone@example.com a/Block 1 r/No role");
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+
+        assertEquals("1234 5678 (HP) 1111-3333 (Office)",
+                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+    }
+
+    @Test
+    public void execute_formattedPhoneEdit_preservesSavedValue() throws Exception {
+        model.addPerson(new PersonBuilder().build());
+
+        logic.execute("edit 1 p/(65) 6123 4567 ext. 123");
+
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals("(65) 6123 4567 ext. 123", model.getFilteredPersonList().getFirst().getPhone().value);
+        assertEquals("(65) 6123 4567 ext. 123",
+                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+    }
+
+    @Test
+    public void execute_formattedPhoneExport_preservesCsvValue() throws Exception {
+        model.addPerson(new PersonBuilder().withPhone("001-234 567 (Office)").build());
+
+        logic.execute("export");
+
+        assertTrue(Files.readString(temporaryFolder.resolve("export.csv")).contains("\"001-234 567 (Office)\""));
+    }
+
+    @Test
+    public void execute_phoneWithTooFewDigits_preservesSavedAndDisplayedData() throws Exception {
+        logic.execute("add n/Phone Test p/+65 9123 4567 e/phone@example.com a/Block 1 r/No role");
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        String before = Files.readString(saved.getAddressBookFilePath());
+
+        assertParseException("edit 1 p/Office: 12", Phone.MESSAGE_CONSTRAINTS);
+
+        assertEquals(before, Files.readString(saved.getAddressBookFilePath()));
+        assertEquals("+65 9123 4567", model.getFilteredPersonList().getFirst().getPhone().value);
     }
 
     @Test
@@ -372,10 +415,8 @@ public class LogicManagerTest {
         Person first = new PersonBuilder().withNote("Keep this note").build();
         model.addPerson(first);
         model.addPerson(new PersonBuilder().withEmail("other@example.com").build());
-        new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")).saveAddressBook(model.getAddressBook());
-        logic.execute("list");
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
-        saved.saveAddressBook(model.getAddressBook());
+        new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"))
+                .saveAddressBook(model.getAddressBook());
         return first;
     }
 
