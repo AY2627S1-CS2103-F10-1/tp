@@ -82,6 +82,10 @@ class RoleCommandsTest {
     @Test
     void commands_valueSemantics_useTheirArguments() {
         AddRoleCommand create = new AddRoleCommand("Engineer");
+        assertEquals(create, create);
+        assertEquals(create, new AddRoleCommand("Engineer"));
+        assertFalse(create.equals(null));
+        assertFalse(create.equals("Engineer"));
         assertFalse(create.equals(new AddRoleCommand(" Engineer ")));
         assertEquals(create.hashCode(), new AddRoleCommand("Engineer").hashCode());
         assertFalse(create.equals(new AddRoleCommand("Designer")));
