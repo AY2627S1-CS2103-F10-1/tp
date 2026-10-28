@@ -77,7 +77,7 @@ public class AddCommand extends Command {
         requireNonNull(model);
 
         Person candidate = toAdd.withRoles(
-                RoleCommandUtil.resolveRoles(model, roleNames, CreateRoleCommand.MESSAGE_USAGE));
+                RoleCommandUtil.resolveRoles(model, roleNames, AddRoleCommand.MESSAGE_USAGE));
         if (model.hasPerson(candidate)) {
             throw new CommandException(MESSAGE_DUPLICATE_PERSON);
         }
