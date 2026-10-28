@@ -44,7 +44,7 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
-        logger.info("----------------[USER COMMAND][" + commandText + "]");
+        logger.info("----------------[USER COMMAND][" + getCommandWord(commandText) + "]");
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
@@ -72,6 +72,14 @@ public class LogicManager implements Logic {
     private void rollBack(Runnable restore) {
         restore.run();
         logger.warning("Could not save the changes made by the command, so they were rolled back.");
+    }
+
+    /**
+     * Returns the first word of {@code commandText}. The arguments are left out of the log because they can hold
+     * candidate names, contact details and notes.
+     */
+    private static String getCommandWord(String commandText) {
+        return commandText.strip().split("\\s+", 2)[0];
     }
 
     /** Completes export before reporting success and deliberately bypasses unrelated JSON saving. */

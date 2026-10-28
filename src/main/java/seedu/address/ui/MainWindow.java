@@ -187,7 +187,8 @@ public class MainWindow extends UiPart<Stage> {
     private CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult commandResult = logic.execute(commandText);
-            logger.info("Result: " + commandResult.getFeedbackToUser());
+            // The feedback is not logged because it can repeat candidate details.
+            logger.info("Command succeeded.");
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
             if (commandResult.isShowHelp()) {
@@ -200,7 +201,7 @@ public class MainWindow extends UiPart<Stage> {
 
             return commandResult;
         } catch (CommandException | ParseException e) {
-            logger.info("An error occurred while executing command: " + commandText);
+            logger.info("Command rejected with " + e.getClass().getSimpleName() + ".");
             resultDisplay.setFeedbackToUser(e.getMessage());
             throw e;
         }
