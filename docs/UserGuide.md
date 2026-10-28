@@ -249,6 +249,7 @@ Format: `delete INDEX`
 * Deletes the candidate at the specified `INDEX`.
 * The index refers to the index number shown in the displayed candidate list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* After `expand`, deleting the expanded candidate shows all remaining candidates again.
 
 Examples:
 
