@@ -4,6 +4,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
@@ -73,8 +74,14 @@ public class AddressBook implements ReadOnlyAddressBook {
      * Returns true if a person with the same identity as {@code person} exists in the address book.
      */
     public boolean hasPerson(Person person) {
-        requireNonNull(person);
-        return persons.contains(person);
+        return findSamePerson(person).isPresent();
+    }
+
+    /**
+     * Returns the stored person with the same identity as {@code person}, or empty if none exists.
+     */
+    public Optional<Person> findSamePerson(Person person) {
+        return persons.findSamePerson(person);
     }
 
     /**

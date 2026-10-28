@@ -171,6 +171,7 @@ The catalog stores roles independently of candidates so that unused roles remain
 * Roles keep a stable identity across renames. A rename updates the catalog and all assigned candidates together, including candidates outside the displayed list.
 * Role lookup keys use Unicode NFC before case conversion; display names and IDs retain their stored values. Catalogs with canonical name collisions are rejected through the existing paired-file backup path, rather than silently merging identities and assignments.
 * Parsers validate role names through `ParserUtil.parseRoleName`; commands resolve membership through `RoleCatalog` before changing any data. Person edits replace all assignments in one `setPerson` call.
+* `ParserUtil.parseRoleName` also rejects no-break, zero-width and other invisible spaces, because they would let a pasted name look blank or identical to an existing role. As with the printable-ASCII check for candidate fields, this check is parser-only, so catalog entries saved by earlier versions still load.
 * Role filters retain IDs rather than `Role` objects because role equality includes the display name. A rename therefore keeps matching the same role; a newly created role with a deleted role's name does not inherit its filter. Status and role groups combine with `AND`, with `OR` within each group.
 * The model validates catalog and assignment changes together before applying them, preventing inconsistent references or partial updates. Global role updates retain the current filter or reselect the expanded candidate with their updated roles.
 
@@ -998,7 +999,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Assigning and filtering candidate roles
 
-1. In a test copy without Developer or Designer roles, run `create_role n/Developer` and `create_role n/Designer`. Run `add n/Role Tester p/91234567 e/roles@example.com a/Test Street r/Developer r/developer r/No role` with an unused email, then `find Role Tester`. Expected: The new candidate has only one Developer badge and no No role badge. Restart and find the candidate again; the assignment remains. Use their displayed index in place of `1` below.
+1. In a test copy without Developer or Designer roles, run `add_role n/Developer` and `add_role n/Designer`. Run `add n/Role Tester p/91234567 e/roles@example.com a/Test Street r/Developer r/developer r/No role` with an unused email, then `find Role Tester`. Expected: The new candidate has only one Developer badge and no No role badge. Restart and find the candidate again; the assignment remains. Use their displayed index in place of `1` below.
 1. Run `edit 1 r/Developer r/Designer`, then `edit 1 p/91234567`. Expected: Both roles remain after the phone edit. Run `edit 1 r/No role`; only No role remains.
 1. Try `add n/Missing Role p/91234567 e/missingrole@example.com a/Test Street` with an unused email, `edit 1 r/`, and `edit 1 p/98765432 r/Missing`. Expected: Specific errors leave all candidates unchanged; the missing-role error suggests `r/No role`.
 1. Assign the Developer role and Interviewing status to one candidate and the Designer role and Applied status to another. Run `filter r/Developer r/Designer s/Interviewing s/Offered`. Expected: Only candidates in either role with status Interviewing or Offered appear. Run `filter r/Designer`; the Applied candidate appears because each filter starts from all candidates.
@@ -1010,8 +1011,8 @@ testers are expected to do more *exploratory* testing.
 
 Use a separate test folder and keep a matching backup of candidate and catalog files.
 
-1. Run `create_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
-1. Run `create_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalog.
+1. Run `add_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
+1. Run `add_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalog.
 1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
 1. Assign `Senior Documentation Tester` to two candidates with `edit INDEX r/Senior Documentation Tester`; give one another existing role using a second `r/` in the same edit. Filter so one candidate is hidden, then rename the role again. Expected: Both assignments update, their role IDs stay unchanged, and other fields and assignments are preserved.
 1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalog entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.

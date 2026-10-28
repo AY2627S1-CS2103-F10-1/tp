@@ -199,7 +199,7 @@ public class LogicManagerTest {
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String original = Files.readString(savedPath);
 
-        assertCommandException(input, AddCommand.MESSAGE_DUPLICATE_PERSON);
+        assertCommandException(input, String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, AMY.getName()));
 
         assertEquals(original, Files.readString(savedPath));
         assertEquals(1, model.getAddressBook().getPersonList().size());
@@ -212,12 +212,14 @@ public class LogicManagerTest {
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String original = Files.readString(savedPath);
 
+        Person existing = model.getAddressBook().getPersonList().getFirst();
         assertCommandException("add n/Bob p/456 e/  ALICE@EXAMPLE.COM  a/Other Street r/No role",
-                AddCommand.MESSAGE_DUPLICATE_PERSON);
+                String.format(AddCommand.MESSAGE_DUPLICATE_PERSON, existing.getName()));
         assertEquals(original, Files.readString(savedPath));
         logic.execute("add n/Bob p/456 e/bob@example.com a/Other Street r/No role");
         String beforeEdit = Files.readString(savedPath);
-        assertCommandException("edit 2 e/  ALICE@EXAMPLE.COM  ", EditCommand.MESSAGE_DUPLICATE_PERSON);
+        assertCommandException("edit 2 e/  ALICE@EXAMPLE.COM  ",
+                String.format(EditCommand.MESSAGE_DUPLICATE_PERSON, existing.getName()));
 
         assertEquals(beforeEdit, Files.readString(savedPath));
         assertEquals(2, model.getAddressBook().getPersonList().size());
