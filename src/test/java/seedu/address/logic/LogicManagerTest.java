@@ -100,7 +100,7 @@ public class LogicManagerTest {
         Person expected = new PersonBuilder(AMY).withTags().withStatus(Status.APPLIED).build();
 
         CommandResult result = logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
-                + EMAIL_DESC_AMY + ADDRESS_DESC_AMY);
+                + EMAIL_DESC_AMY + " r/No role" + ADDRESS_DESC_AMY);
 
         assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)), result.getFeedbackToUser());
         assertEquals(List.of(existing, expected), model.getFilteredPersonList());
@@ -113,7 +113,7 @@ public class LogicManagerTest {
     @Test
     public void execute_addWithExplicitStatus_savesCanonicalStatus() throws Exception {
         logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
-                + ADDRESS_DESC_AMY + " s/  iNtErViEwInG  ");
+                + " r/No role" + ADDRESS_DESC_AMY + " s/  iNtErViEwInG  ");
 
         assertEquals(Status.INTERVIEWING, model.getFilteredPersonList().get(0).getStatus());
         JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
@@ -123,7 +123,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_addWithInvalidOrRepeatedStatus_preservesSavedData() throws Exception {
-        String input = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+        String input = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
+                + " r/No role" + ADDRESS_DESC_AMY;
         logic.execute(input);
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String original = Files.readString(savedPath);
@@ -140,7 +141,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_duplicateAdd_preservesSavedData() throws Exception {
-        String input = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+        String input = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY + EMAIL_DESC_AMY
+                + " r/No role" + ADDRESS_DESC_AMY;
         logic.execute(input);
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String original = Files.readString(savedPath);
@@ -154,14 +156,14 @@ public class LogicManagerTest {
 
     @Test
     public void execute_duplicateEmailWithCaseAndWhitespace_preservesSavedData() throws Exception {
-        logic.execute("add n/Alice p/123 e/alice@example.com a/Street");
+        logic.execute("add n/Alice p/123 e/alice@example.com a/Street r/No role");
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String original = Files.readString(savedPath);
 
-        assertCommandException("add n/Bob p/456 e/  ALICE@EXAMPLE.COM  a/Other Street",
+        assertCommandException("add n/Bob p/456 e/  ALICE@EXAMPLE.COM  a/Other Street r/No role",
                 AddCommand.MESSAGE_DUPLICATE_PERSON);
         assertEquals(original, Files.readString(savedPath));
-        logic.execute("add n/Bob p/456 e/bob@example.com a/Other Street");
+        logic.execute("add n/Bob p/456 e/bob@example.com a/Other Street r/No role");
         String beforeEdit = Files.readString(savedPath);
         assertCommandException("edit 2 e/  ALICE@EXAMPLE.COM  ", EditCommand.MESSAGE_DUPLICATE_PERSON);
 
@@ -180,7 +182,7 @@ public class LogicManagerTest {
 
     @Test
     public void execute_missingAddFields_preservesExpandedViewAndSavedData() throws Exception {
-        logic.execute("add n/Existing p/123 e/existing@example.com a/Street");
+        logic.execute("add n/Existing p/123 e/existing@example.com a/Street r/No role");
         logic.execute("expand 1");
         AddressBook before = new AddressBook(model.getAddressBook());
         Path savedPath = temporaryFolder.resolve("addressBook.json");
@@ -383,7 +385,8 @@ public class LogicManagerTest {
 
         // Triggers the saveAddressBook method by executing an add command
         String addCommand = AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
-                + EMAIL_DESC_AMY + ADDRESS_DESC_AMY;
+                + EMAIL_DESC_AMY
+                + " r/No role" + ADDRESS_DESC_AMY;
         ModelManager expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
         assertCommandFailure(addCommand, CommandException.class, expectedMessage, expectedModel);
     }
