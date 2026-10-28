@@ -903,14 +903,14 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+   1. Open a terminal in that folder and run `java -jar HRvest.jar`.<br>
+      Expected: The GUI opens with a set of sample candidates. The window size may not be optimal.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar HRvest.jar`.<br>
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
@@ -929,7 +929,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: List all candidates using the `list` command, with multiple candidates in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first candidate is deleted from the list. The status message shows the deleted candidate's details.
 
    1. Test case: `delete 0`<br>
       Expected: No candidate is deleted. The status message shows error details.
