@@ -62,7 +62,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, `S/Offered` is read the same way as `s/Offered`.
 
 * Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
+  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
 
 * Extraneous parameters for `help`, `list`, `exit`, `export`, and `import` are ignored.<br>
   For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
