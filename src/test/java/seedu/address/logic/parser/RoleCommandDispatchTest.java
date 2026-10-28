@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.logic.commands.CreateRoleCommand;
+import seedu.address.logic.commands.AddRoleCommand;
 import seedu.address.logic.commands.DeleteRoleCommand;
 import seedu.address.logic.commands.EditRoleCommand;
 import seedu.address.logic.commands.ListRoleCommand;
@@ -14,8 +14,8 @@ class RoleCommandDispatchTest {
 
     @Test
     void parseCommand_uppercaseAndMixedCaseCommands_preservesNameCase() throws Exception {
-        for (String command : new String[] {"CREATE_ROLE", "Create_Role"}) {
-            assertEquals(new CreateRoleCommand("Engineer"), dispatcher.parseCommand(command + " N/Engineer"));
+        for (String command : new String[] {"ADD_ROLE", "Add_Role"}) {
+            assertEquals(new AddRoleCommand("Engineer"), dispatcher.parseCommand(command + " N/Engineer"));
         }
         for (String command : new String[] {"EDIT_ROLE", "Edit_Role"}) {
             assertEquals(new EditRoleCommand("Engineer", "Designer"),
@@ -31,7 +31,7 @@ class RoleCommandDispatchTest {
 
     @Test
     void parseCommand_lowercaseCommandAndUppercasePrefixes_preservesNameCase() throws Exception {
-        assertEquals(new CreateRoleCommand("Engineer"), dispatcher.parseCommand("create_role N/Engineer"));
+        assertEquals(new AddRoleCommand("Engineer"), dispatcher.parseCommand("add_role N/Engineer"));
         assertEquals(new EditRoleCommand("Engineer", "Designer"),
                 dispatcher.parseCommand("edit_role R/Engineer N/Designer"));
         assertEquals(new DeleteRoleCommand("Engineer"), dispatcher.parseCommand("delete_role R/Engineer"));
@@ -40,9 +40,9 @@ class RoleCommandDispatchTest {
 
     @Test
     void parseCommand_surroundingWhitespace_preservesInternalSpacing() throws Exception {
-        assertEquals(new CreateRoleCommand("Software  Engineer"),
-                dispatcher.parseCommand("  create_role   n/ Software  Engineer   "));
-        assertEquals(new CreateRoleCommand("Engineer"), dispatcher.parseCommand("create_role\tn/Engineer"));
+        assertEquals(new AddRoleCommand("Software  Engineer"),
+                dispatcher.parseCommand("  add_role   n/ Software  Engineer   "));
+        assertEquals(new AddRoleCommand("Engineer"), dispatcher.parseCommand("add_role\tn/Engineer"));
         assertEquals(new EditRoleCommand("Old", "New"), dispatcher.parseCommand("edit_role\tr/Old\tn/New"));
     }
 }

@@ -87,7 +87,7 @@ public class EditCommand extends Command {
         Person editedPerson = createEditedPerson(personToEdit, editPersonDescriptor);
         if (editPersonDescriptor.getRoleNames().isPresent()) {
             editedPerson = editedPerson.withRoles(RoleCommandUtil.resolveRoles(model,
-                    editPersonDescriptor.getRoleNames().get(), CreateRoleCommand.MESSAGE_USAGE));
+                    editPersonDescriptor.getRoleNames().get(), AddRoleCommand.MESSAGE_USAGE));
         }
 
         if (editedPerson.equals(personToEdit)) {

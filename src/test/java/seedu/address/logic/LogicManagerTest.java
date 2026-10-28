@@ -279,6 +279,7 @@ public class LogicManagerTest {
     @Test
     public void execute_invalidExpand_preservesCurrentView() throws Exception {
         model.addPerson(new PersonBuilder().build());
+        new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")).saveAddressBook(model.getAddressBook());
         logic.execute("expand 1");
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(savedPath);
@@ -341,6 +342,43 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_readOnlyCommands_bypassesFailingStorageAndKeepsRequestedView() throws Exception {
+        model.addPerson(AMY);
+        StorageManager failingStorage = new StorageManager(
+                new JsonAddressBookStorage(temporaryFolder.resolve("failed.json")),
+                new JsonUserPrefsStorage(temporaryFolder.resolve("prefs.json"))) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook addressBook) {
+                throw new AssertionError("Read-only commands must not save");
+            }
+        };
+        logic = new LogicManager(model, failingStorage);
+
+        logic.execute("find Nobody");
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        logic.execute("list");
+        logic.execute("expand 1");
+        assertTrue(model.isExpandedViewProperty().get());
+        logic.execute("filter s/Offered");
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertFalse(model.isExpandedViewProperty().get());
+        logic.execute("list_role");
+        assertTrue(logic.execute("help").isShowHelp());
+        assertTrue(logic.execute("exit").isExit());
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+        assertFalse(Files.exists(temporaryFolder.resolve("failed.json")));
+    }
+
+    @Test
+    public void execute_unchangedNote_doesNotCreateDataFiles() throws Exception {
+        model.addPerson(AMY);
+        logic.execute("note 1 no/");
+
+        assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
+        assertEquals(List.of(AMY), model.getAddressBook().getPersonList());
+    }
+
+    @Test
     public void getFilteredPersonList_modifyList_throwsUnsupportedOperationException() {
         assertThrows(UnsupportedOperationException.class, () -> logic.getFilteredPersonList().remove(0));
     }
@@ -350,6 +388,7 @@ public class LogicManagerTest {
         Person first = new PersonBuilder().withNote("Keep this note").build();
         model.addPerson(first);
         model.addPerson(new PersonBuilder().withEmail("other@example.com").build());
+        new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")).saveAddressBook(model.getAddressBook());
         logic.execute("list");
         return first;
     }

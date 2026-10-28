@@ -3,6 +3,7 @@ package seedu.address.logic;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.logging.Logger;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
@@ -16,6 +17,7 @@ import seedu.address.logic.parser.AddressBookParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.storage.Storage;
 
 /**
@@ -48,6 +50,8 @@ public class LogicManager implements Logic {
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
+        List<Person> originalCandidates = List.copyOf(model.getAddressBook().getPersonList());
+        RoleCatalog originalCatalog = model.getRoleCatalog();
         Runnable restore = model.createRestorePoint();
         commandResult = command.execute(model);
 
@@ -57,6 +61,11 @@ public class LogicManager implements Logic {
 
         if (commandResult.isExport()) {
             return exportAddressBook();
+        }
+
+        if (originalCandidates.equals(model.getAddressBook().getPersonList())
+                && originalCatalog.equals(model.getRoleCatalog())) {
+            return commandResult;
         }
 
         try {
