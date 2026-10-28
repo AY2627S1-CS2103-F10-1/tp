@@ -107,6 +107,38 @@ public class CommandHistoryTest {
     }
 
     @Test
+    public void moveCursorToNewest_afterAdd_previousReturnsEntryBeforeNewest() {
+        CommandHistory h = new CommandHistory();
+        h.add("list");
+        h.add("fitler s/Offered");
+
+        h.moveCursorToNewest();
+
+        assertEquals(1, h.getCursor());
+        assertEquals(Optional.of("list"), h.previous());
+    }
+
+    @Test
+    public void moveCursorToNewest_thenNext_returnsEmptyStringToClearField() {
+        CommandHistory h = new CommandHistory();
+        h.add("fitler s/Offered");
+
+        h.moveCursorToNewest();
+
+        assertEquals(Optional.of(""), h.next());
+    }
+
+    @Test
+    public void moveCursorToNewest_emptyHistory_keepsCursorAtZero() {
+        CommandHistory h = new CommandHistory();
+
+        h.moveCursorToNewest();
+
+        assertEquals(0, h.getCursor());
+        assertEquals(Optional.empty(), h.previous());
+    }
+
+    @Test
     public void getEntries_returnsImmutableCopy() {
         CommandHistory h = new CommandHistory();
         h.add("list");

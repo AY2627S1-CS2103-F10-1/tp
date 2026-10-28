@@ -250,6 +250,7 @@ Format: `delete INDEX`
 * Deletes the candidate at the specified `INDEX`.
 * The index refers to the index number shown in the displayed candidate list.
 * The index **must be a positive integer** 1, 2, 3, ...
+* After `expand`, deleting the expanded candidate shows all remaining candidates again.
 
 Examples:
 
@@ -433,7 +434,7 @@ A pinned sticky note icon beside a candidate's name indicates that a note exists
 
 ### Header summary cards
 
-The **HRVest** text logo appears above the command box. When the window is wide enough, a row beside it shows **Total candidates** and one card for each recruitment status: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, and Withdrawn.
+The **HRvest** text logo appears above the command box. When the window is wide enough, as it is when HRvest first opens on most screens, a row beside it shows **Total candidates** and one card for each recruitment status: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, and Withdrawn.
 
 * Each card shows **shown / total**: the number in the currently displayed candidate list versus the number among all candidates loaded in HRvest. For example, `2 / 8` on Interviewing means two interviewing candidates are currently shown, out of eight overall.
 * Searching, filtering, or expanding a candidate changes the shown counts; overall counts still include candidates hidden from the list. Use `list` to show all candidates again.
@@ -455,8 +456,8 @@ The command box remembers every command you submit in the current session so you
 
 * `Up` moves back through your submitted commands. Repeated presses walk further into the past; the earliest entry stays shown once you reach it.
 * `Down` moves forward. Pressing past the newest entry restores whatever draft you were typing before you started navigating, or clears the box if there was no draft.
-* Both successful and rejected commands are recorded, so you can quickly fix a typo and resubmit. A command identical to the most recent one does not take up an extra slot.
-* Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent distinct commands.
+* Both successful and rejected commands are recorded. A rejected command also stays in the command box, shown in red, so you can fix a typo and press Enter again; `Up` then shows the command before it. A command identical to the most recent one does not take up an extra slot.
+* Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent commands. Repeating an earlier command that is not the most recent one takes another slot.
 
 ### Saving the data
 
