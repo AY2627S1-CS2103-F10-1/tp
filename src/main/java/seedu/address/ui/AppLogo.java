@@ -9,7 +9,7 @@ public class AppLogo extends UiPart<Text> {
     private static final String FXML = "AppLogo.fxml";
 
     /**
-     * Creates the HRVest text logo.
+     * Creates the HRvest text logo.
      */
     public AppLogo() {
         super(FXML);

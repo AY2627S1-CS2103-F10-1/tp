@@ -1,6 +1,7 @@
 package seedu.address.model.person;
 
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
+import static seedu.address.model.role.RoleCatalog.MESSAGE_ROLES_REQUIRED;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -55,7 +56,7 @@ public class Person {
 
     /**
      * Constructs a legacy person with a recruitment status, optional note, and No role.
-     * This compatibility overload does not enforce the future explicit-role add-command rule.
+     * This compatibility overload supports legacy data; the add parser requires explicit role input.
      * Every field must be present and not null.
      */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
@@ -63,13 +64,16 @@ public class Person {
         this(name, phone, email, address, tags, status, note, Set.of(Role.NO_ROLE));
     }
 
-    /** Creates a person with explicit nonempty role assignments. */
+    /** Creates a person with nonempty role assignments, removing No role when named roles are present. */
     public Person(Name name, Phone phone, Email email, Address address, Set<Tag> tags, Status status,
             Optional<Note> note, Set<Role> roles) {
         requireAllNonNull(name, phone, email, address, tags, status, note, roles);
-        AppUtil.checkArgument(!roles.isEmpty(),
-                "Every person must have at least one role.");
-        this.roles = Set.copyOf(roles);
+        AppUtil.checkArgument(!roles.isEmpty(), MESSAGE_ROLES_REQUIRED);
+        Set<Role> assignedRoles = new HashSet<>(roles);
+        if (assignedRoles.size() > 1) {
+            assignedRoles.remove(Role.NO_ROLE);
+        }
+        this.roles = Set.copyOf(assignedRoles);
         this.name = name;
         this.phone = phone;
         this.email = email;
