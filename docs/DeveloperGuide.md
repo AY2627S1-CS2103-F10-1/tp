@@ -182,7 +182,7 @@ During startup, `MainApp` uses the storage component's `CandidateDataInitializer
 
 Both backup and replacement saving must finish before commands become available. Otherwise startup aborts with an actionable terminal error, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
 
-The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data, and null entries rejected during deserialization or validation.
+The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data or role catalog entries, unknown role IDs, and null entries rejected during deserialization or validation.
 
 <puml src="diagrams/DataRecoveryActivityDiagram.puml" alt="Startup candidate data loading and recovery, including backup and replacement save failures" />
 
