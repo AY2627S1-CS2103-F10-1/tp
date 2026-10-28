@@ -106,7 +106,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 **Input and results:**
 
 * Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Both `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
-* If the command contains several errors, HRvest reports one error at a time. Fix the reported error and try again.
+* The error message lists all missing contact parameters together. For example, `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
 * Create named roles with `create_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
 * Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `This candidate already exists in HRvest.` Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
 * Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix.
