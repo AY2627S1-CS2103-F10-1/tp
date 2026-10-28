@@ -15,6 +15,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,24 @@ public class ImportOperationTest {
         assertFalse(model.isExpandedViewProperty().get());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
         assertArrayEquals(input, Files.readAllBytes(inputPath()));
+    }
+
+    @Test
+    public void execute_maximumBatch_preservesOrderInputAndSavedData() throws Exception {
+        List<Person> imported = IntStream.range(0, 10_000)
+                .mapToObj(index -> new PersonBuilder(incoming).withEmail("batch" + index + "@example.com").build())
+                .toList();
+        writeInput(imported.toArray(Person[]::new));
+        byte[] originalInput = Files.readAllBytes(inputPath());
+        model.expandPerson(existing);
+
+        assertEquals("Imported 10000 candidates successfully.", logic.execute("import").getFeedbackToUser());
+
+        assertEquals(existing, model.getAddressBook().getPersonList().getFirst());
+        assertEquals(imported, model.getAddressBook().getPersonList().subList(1, imported.size() + 1));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        assertFalse(model.isExpandedViewProperty().get());
+        assertArrayEquals(originalInput, Files.readAllBytes(inputPath()));
     }
 
     @Test
