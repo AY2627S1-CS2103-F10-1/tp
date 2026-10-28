@@ -58,8 +58,8 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Items followed by `...` can appear zero or more times.<br>
   For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
 
-* Prefixes ignore letter case.<br>
-  For example, `S/Offered` is read the same way as `s/Offered`.
+* Command words and prefixes ignore letter case.<br>
+  For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
@@ -356,7 +356,7 @@ Exports every candidate to `data/export.csv`, next to the candidate data file `d
 
 Format: `export`
 
-* Use the lowercase command; surrounding whitespace is accepted.
+* Surrounding whitespace is accepted.
 * The destination is always `data/export.csv`. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Role assignments and the role catalog are not exported; back up both JSON files to preserve them.

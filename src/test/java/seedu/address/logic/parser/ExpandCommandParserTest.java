@@ -61,10 +61,12 @@ public class ExpandCommandParserTest {
     }
 
     @Test
-    public void parseCommand_expandWithDifferentCase_reportsUnknownCommand() {
+    public void parseCommand_expandWithDifferentCase_dispatchesToExpandParser() throws Exception {
         for (String command : new String[] {"EXPAND 1", "eXpAnD 1"}) {
-            assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () ->
+            assertEquals(new ExpandCommand(Index.fromOneBased(1)),
                     new AddressBookParser().parseCommand(command));
         }
+        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () ->
+                new AddressBookParser().parseCommand("EXPANDS 1"));
     }
 }
