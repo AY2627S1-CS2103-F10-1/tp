@@ -198,7 +198,7 @@ public class EditCommandTest {
                 .withEmail(other.getEmail().value.toUpperCase(Locale.ROOT)).build();
 
         assertCommandFailure(new EditCommand(INDEX_FIRST_PERSON, descriptor), model,
-                "Another candidate (" + other.getName() + ") already uses this email.");
+                String.format(EditCommand.MESSAGE_DUPLICATE_PERSON, other.getName()));
         assertTrue(model.isExpandedViewProperty().get());
     }
 

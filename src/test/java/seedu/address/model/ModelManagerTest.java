@@ -81,6 +81,7 @@ public class ModelManagerTest {
     @Test
     public void findSamePerson_distinctEmail_returnsEmpty() {
         modelManager.addPerson(ALICE);
+
         assertEquals(Optional.empty(), modelManager.findSamePerson(BENSON));
     }
 
