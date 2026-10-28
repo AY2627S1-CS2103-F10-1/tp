@@ -19,7 +19,7 @@ Class Email
 Class Name
 Class Phone
 Class Note
-Enum Status
+Class "<<enumeration>>\nStatus" as Status
 Class Tag
 Class RoleCatalog
 Class Role
