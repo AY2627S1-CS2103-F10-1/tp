@@ -409,10 +409,10 @@ Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the h
 |------|------|
 | File | 10 MiB (10,485,760 bytes) |
 | Candidates in one import | 10,000, excluding the header |
-| Decoded field | 65,536 Unicode characters before trimming |
+| Decoded field | 65,536 characters before trimming |
 | Note | 500 printable-ASCII characters after trimming |
 | Tags per candidate | 100 array entries before deduplication |
-| Each tag name | 256 Unicode characters before trimming |
+| Each tag name | 256 characters before trimming |
 | Tag JSON structure | One flat array of strings only |
 
 These are import limits, not new add/edit restrictions. Files exceeding them cannot be imported even if their contents originated in HRvest.
