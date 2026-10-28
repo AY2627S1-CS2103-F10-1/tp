@@ -221,7 +221,7 @@ public class EditCommand extends Command {
 
         /**
          * Sets {@code tags} to this object's {@code tags}.
-         * Defensive copies of {@code tags} and role names are used internally.
+         * A defensive copy of {@code tags} is used internally.
          */
         public void setTags(Set<Tag> tags) {
             this.tags = (tags != null) ? new HashSet<>(tags) : null;
