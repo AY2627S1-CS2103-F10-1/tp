@@ -12,8 +12,10 @@ import java.util.Set;
 
 /** Validates and exposes an immutable role catalog, including unused roles. */
 public final class RoleCatalog {
+    public static final String MESSAGE_ROLES_REQUIRED = "Every person must have at least one role.";
     public static final String MESSAGE_DUPLICATE_NAME = "A role with this name already exists.";
     public static final String MESSAGE_UNKNOWN_ROLE = "Role does not exist: %1$s";
+    public static final String MESSAGE_INVALID_REFERENCE = "Person references an unknown or stale role.";
 
     private final List<Role> roles;
 
@@ -58,7 +60,7 @@ public final class RoleCatalog {
     /** Resolves a nonempty set of names through the same lookup used by management commands. */
     public Set<Role> resolve(Collection<String> names) {
         requireNonNull(names);
-        checkArgument(!names.isEmpty(), "Every person must have at least one role.");
+        checkArgument(!names.isEmpty(), MESSAGE_ROLES_REQUIRED);
         Set<Role> result = new HashSet<>();
         names.forEach(name -> result.add(requireRole(name)));
         return Set.copyOf(result);
@@ -67,8 +69,8 @@ public final class RoleCatalog {
     /** Rejects empty, unknown, or stale person references. */
     public void validateReferences(Collection<Role> references) {
         requireNonNull(references);
-        checkArgument(!references.isEmpty(), "Every person must have at least one role.");
-        checkArgument(roles.containsAll(references), "Person references an unknown or stale role.");
+        checkArgument(!references.isEmpty(), MESSAGE_ROLES_REQUIRED);
+        checkArgument(roles.containsAll(references), MESSAGE_INVALID_REFERENCE);
     }
 
     @Override

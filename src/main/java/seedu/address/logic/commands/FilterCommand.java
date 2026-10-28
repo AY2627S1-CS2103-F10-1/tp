@@ -1,36 +1,52 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import seedu.address.commons.util.ToStringBuilder;
+import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
+import seedu.address.model.person.CandidateMatchesFilterPredicate;
 import seedu.address.model.person.Status;
-import seedu.address.model.person.StatusContainsKeywordPredicate;
+import seedu.address.model.role.Role;
 
 /**
- * Filters candidates by their status and displays them.
+ * Filters candidates by status, role, or both and displays them.
  */
 public class FilterCommand extends Command {
 
     public static final String COMMAND_WORD = "filter";
 
-    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Filters candidates by status. "
+    public static final String MESSAGE_USAGE = COMMAND_WORD + ": Filters candidates by status and/or role. "
             + "Repeat " + PREFIX_STATUS + " to show candidates in any of several statuses.\n"
             + "Parameters: "
-            + PREFIX_STATUS + "STATUS [" + PREFIX_STATUS + "MORE_STATUS]...\n"
+            + "[" + PREFIX_STATUS + "STATUS]... [" + PREFIX_ROLE + "ROLE]...\n"
+            + "Supply at least one status or role. Matches any value within each field "
+            + "and both fields when supplied.\n"
             + Status.MESSAGE_CONSTRAINTS + "\n"
             + "Example: " + COMMAND_WORD + " " + PREFIX_STATUS + "Interviewing " + PREFIX_STATUS + "Offered";
 
     public static final String MESSAGE_SUCCESS = "%1$d candidate(s) filtered with status(es): %2$s";
 
-    private static final String STATUS_SEPARATOR = ", ";
-    private static final String LAST_STATUS_SEPARATOR = " or ";
+    public static final String MESSAGE_ROLE_SUCCESS = "%1$d candidate(s) filtered with role(s): %2$s";
+    public static final String MESSAGE_COMBINED_SUCCESS =
+            "%1$d candidate(s) filtered with status(es): %2$s and role(s): %3$s";
 
-    private final StatusContainsKeywordPredicate predicate;
+    private static final String NAME_SEPARATOR = ", ";
+    private static final String LAST_NAME_SEPARATOR = " or ";
+
+    private final Set<Status> statuses;
+    private final Set<String> roleNames;
 
     /**
      * Constructs a FilterCommand to filter candidates by the specified status.
@@ -38,7 +54,7 @@ public class FilterCommand extends Command {
      * @param status the status to filter by
      */
     public FilterCommand(Status status) {
-        this.predicate = new StatusContainsKeywordPredicate(status);
+        this(List.of(status));
     }
 
     /**
@@ -47,29 +63,55 @@ public class FilterCommand extends Command {
      * @param statuses the statuses to filter by; must not be empty
      */
     public FilterCommand(Collection<Status> statuses) {
-        this.predicate = new StatusContainsKeywordPredicate(statuses);
+        this(statuses, Set.of());
+    }
+
+    /** Creates a filter with at least one status or role name; roles are resolved during execution. */
+    public FilterCommand(Collection<Status> statuses, Collection<String> roleNames) {
+        requireNonNull(statuses);
+        requireNonNull(roleNames);
+        checkArgument(!statuses.isEmpty() || !roleNames.isEmpty(),
+                CandidateMatchesFilterPredicate.MESSAGE_CRITERIA_REQUIRED);
+        this.statuses = statuses.isEmpty() ? Set.of()
+                : Collections.unmodifiableSet(EnumSet.copyOf(statuses));
+        this.roleNames = Set.copyOf(roleNames);
     }
 
     @Override
-    public CommandResult execute(Model model) {
+    public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        model.updateFilteredPersonList(predicate);
-        List<String> statusNames = predicate.getStatuses().stream().map(Status::toString).toList();
-        return new CommandResult(String.format(MESSAGE_SUCCESS, model.getFilteredPersonList().size(),
-                joinStatusNames(statusNames)));
+        Set<Role> roles = RoleCommandUtil.resolveRoles(model, roleNames, ListRoleCommand.COMMAND_WORD);
+        model.updateFilteredPersonList(new CandidateMatchesFilterPredicate(statuses, roles));
+        return createFilterResult(model.getFilteredPersonList().size(), roles);
+    }
+
+    /** Creates feedback describing the result count and selected filter criteria. */
+    private CommandResult createFilterResult(int count, Set<Role> roles) {
+        if (roles.isEmpty()) {
+            return new CommandResult(String.format(MESSAGE_SUCCESS, count,
+                    joinNames(statuses.stream().map(Status::toString).toList())));
+        }
+        String roleSummary = joinNames(roles.stream().sorted(Comparator.comparing(role ->
+                Role.toLookupKey(role.getName()))).map(Role::getName).toList());
+        if (statuses.isEmpty()) {
+            return new CommandResult(String.format(MESSAGE_ROLE_SUCCESS, count, roleSummary));
+        }
+        return new CommandResult(String.format(MESSAGE_COMBINED_SUCCESS, count,
+                joinNames(statuses.stream().map(Status::toString).toList()), roleSummary));
     }
 
     /**
-     * Joins status names as "A", "A or B", or "A, B or C".
-     * The list is never empty, because {@code StatusContainsKeywordPredicate} requires at least one status.
+     * Joins names as "A", "A or B", or "A, B or C".
+     * The list must not be empty.
      */
-    private static String joinStatusNames(List<String> statusNames) {
-        int lastIndex = statusNames.size() - 1;
+    private static String joinNames(List<String> names) {
+        assert !names.isEmpty();
+        int lastIndex = names.size() - 1;
         if (lastIndex == 0) {
-            return statusNames.get(0);
+            return names.get(0);
         }
-        return String.join(STATUS_SEPARATOR, statusNames.subList(0, lastIndex))
-                + LAST_STATUS_SEPARATOR + statusNames.get(lastIndex);
+        return String.join(NAME_SEPARATOR, names.subList(0, lastIndex))
+                + LAST_NAME_SEPARATOR + names.get(lastIndex);
     }
 
     @Override
@@ -81,18 +123,20 @@ public class FilterCommand extends Command {
             return false;
         }
         FilterCommand otherCommand = (FilterCommand) other;
-        return predicate.equals(otherCommand.predicate);
+        return statuses.equals(otherCommand.statuses)
+                && roleNames.equals(otherCommand.roleNames);
     }
 
     @Override
     public int hashCode() {
-        return predicate.hashCode();
+        return Objects.hash(statuses, roleNames);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .add("predicate", predicate)
+                .add("statuses", statuses)
+                .add("roleNames", roleNames)
                 .toString();
     }
 }

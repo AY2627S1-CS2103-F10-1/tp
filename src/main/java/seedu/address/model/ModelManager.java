@@ -7,6 +7,7 @@ import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -162,11 +163,11 @@ public class ModelManager implements Model {
         for (Person person : addressBook.getPersonList()) {
             replacement.addPerson(createPersonWithUpdatedRoles(person, oldRole, renamed));
         }
-        boolean wasExpanded = isExpandedView.get();
+        Optional<Person> expandedPerson = isExpandedView.get()
+                ? Optional.of(filteredPersons.getFirst()) : Optional.empty();
         addressBook.resetData(replacement);
-        if (wasExpanded) {
-            updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS);
-        }
+        expandedPerson.ifPresent(person ->
+                expandPersonAfterEdit(createPersonWithUpdatedRoles(person, oldRole, renamed)));
     }
 
     /** Returns a person with the old role removed, or replaced when renamed is non-null. */
