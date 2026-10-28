@@ -909,7 +909,7 @@ testers are expected to do more *exploratory* testing.
 
 1. Launching a second instance
 
-   1. Keep HRvest running and double-click the same JAR again.<br>
+   1. Keep HRvest running, open another terminal in the same folder and run `java -jar HRvest.jar` again.<br>
       Expected: An error dialog asks you to close the first instance. Dismissing it exits the second instance; the first remains usable and its data is unchanged.
 
    1. Close the first instance and launch the JAR again.<br>
