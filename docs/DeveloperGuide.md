@@ -13,7 +13,9 @@
 
 ## **Acknowledgements**
 
-* HRvest is a fork of [AddressBook-Level3](https://github.com/se-edu/addressbook-level3). Most of the original code remains unchanged; changes so far have focused on user-facing aspects of the application. The design descriptions and diagrams are also initially inherited from AddressBook-Level3.
+* HRvest is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) (AB3) by the SE-EDU initiative. HRvest keeps AB3's architecture, and parts of its code, documentation and diagrams are adapted from AB3.
+* HRvest uses [JavaFX](https://openjfx.io/) for its GUI, [Jackson](https://github.com/FasterXML/jackson) for JSON and CSV tag data, and [JUnit 5](https://junit.org/junit5/) for testing.
+* Team members used AI coding assistants for parts of the code, tests and documentation, guided by the repository's `AGENTS.md`.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -71,7 +73,11 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CandidateSummaryHeader`, `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. `CandidateSummaryHeader` composes the top row from an `AppLogo` and a group of summary cards: one `CandidateSummaryCard` for all candidates and a `StatusSummaryCard` for each recruitment status. These UI parts, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CandidateSummaryHeader`, `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. These UI parts, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+
+The following diagram details `CandidateSummaryHeader`, which composes the top row from an `AppLogo` and a group of summary cards: one `CandidateSummaryCard` for all candidates and a `StatusSummaryCard` for each recruitment status. These parts also inherit from `UiPart`.
+
+<puml src="diagrams/CandidateSummaryHeaderClassDiagram.puml" alt="Structure of the candidate summary header"/>
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -96,9 +102,8 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 
 <box type="info" seamless>
 
-**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
+**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
 </box>
-
 
 How the `Logic` component works:
 
@@ -194,7 +199,7 @@ During startup, `MainApp` uses the storage component's `CandidateDataInitializer
 
 Both backup and replacement saving must finish before commands become available. Otherwise startup shows an actionable error dialog and exits after dismissal, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
 
-The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data, and null entries rejected during deserialization or validation.
+The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data or role catalog entries, unknown role IDs, and null entries rejected during deserialization or validation.
 
 <puml src="diagrams/DataRecoveryActivityDiagram.puml" alt="Startup candidate data loading and recovery, including backup and replacement save failures" />
 
@@ -903,7 +908,6 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, roles, tags or notes, affect duplicate detection.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
-* **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -923,12 +927,12 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+   1. Open a terminal in that folder and run `java -jar HRvest.jar`.<br>
+      Expected: The GUI opens with a set of sample candidates. The window size may not be optimal.
 
 1. Launching a second instance
 
-   1. Keep HRvest running and double-click the same JAR again.<br>
+   1. Keep HRvest running, open another terminal in the same folder and run `java -jar HRvest.jar` again.<br>
       Expected: An error dialog asks you to close the first instance. Dismissing it exits the second instance; the first remains usable and its data is unchanged.
 
    1. Close the first instance and launch the JAR again.<br>
@@ -938,7 +942,7 @@ testers are expected to do more *exploratory* testing.
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar HRvest.jar`.<br>
        Expected: The most recent window size and location are retained.
 
 1. _{ more test cases … }_
@@ -957,7 +961,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: List all candidates using the `list` command, with multiple candidates in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first candidate is deleted from the list. The status message shows the deleted candidate's details.
 
    1. Test case: `delete 0`<br>
       Expected: No candidate is deleted. The status message shows error details.
@@ -973,6 +977,35 @@ testers are expected to do more *exploratory* testing.
 1. Run `filter s/Applied`, then `status 1 s/Offered`. Expected: The updated candidate disappears, and only remaining Applied candidates are shown. The line above the list reads `Showing N of M candidates (filtered). Type list to show all.`, where `M` still counts the updated candidate. Repeat with `edit 1 s/Offered`.
 1. Run `find Betsy`, then change that candidate's name with `edit 1 n/Other Name`. Expected: The candidate disappears if the new name does not match.
 1. Run `filter s/Applied`, `expand 1`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded at index `1` after each update, including the Offered status change. Expansion replaces the earlier status filter with a selection of the candidate. Run `list` to show all candidates again.
+
+### Updating status, finding and filtering
+
+1. Run `list`, then `status 1 s/Interviewing`. Expected: The message is `Updated status of NAME: OLD_STATUS -> Interviewing`, and the first card shows Interviewing.
+1. Run `status 1 s/Hired`, then `status 1`. Expected: The first lists the valid statuses and the second gives the command format. The candidate is unchanged.
+1. With the sample candidates, run `find ale`. Expected: Alex Yeoh is listed, because `ale` starts a word in the name. Run `find eoh`. Expected: `0 candidate(s) listed!`
+1. Run `filter s/Interviewing s/Offered`. Expected: Only candidates with either status are listed. Run `filter s/Hired`. Expected: The valid statuses are listed, and the displayed list is unchanged.
+
+### Viewing a candidate's full record
+
+1. Run `list`, and check that at least two candidates are listed. Give the second candidate a note with `note 2 no/Strong on SQL`, then run `expand 2`. Expected: Only that candidate is shown, at index `1`, with `Note: Strong on SQL`. The line above the list reads `Expanded view of 1 of N candidates. Type list to show all.`
+1. Run `list`, clear the first candidate's note with `note 1 no/`, then run `expand 1`. Expected: `Cleared note for NAME` after the `note` command, and `No note recorded.` in the expanded record.
+1. Run `expand 0` and `expand abc`. Expected: Each gives an error, and the displayed list is unchanged.
+
+### Exporting and importing candidates
+
+1. Run `export`. Expected: `Exported successfully to PATH.`, where `PATH` ends in `export.csv` inside the `data` folder. In a text editor, the file starts with the header `"name","phone","email","address","status","tags","note"` and has one row per candidate, including candidates hidden by a filter.
+1. Copy the template from the User Guide's `import` section into `data/import.csv`, using an email that no candidate has, and run `import`. Expected: `Imported 1 candidate successfully.` The candidate appears at the end of the full list with `No role`.
+1. Run `import` again without changing the file. Expected: An error names the CSV record whose email is a duplicate, and no candidate is added.
+
+### Clearing all candidates
+
+1. Run `clear`. Expected: The message gives the number of candidates and asks you to enter `clear confirm`. Nothing is deleted.
+1. Run `clear 1`. Expected: An invalid-command-format error. Nothing is deleted.
+1. Run `clear confirm`. Expected: `All candidates have been cleared.` The list is empty, and `list_role` still shows any roles you created.
+
+### Viewing help
+
+1. Run `help`, or press `F1`. Expected: A help window shows the User Guide's URL and a **Copy URL** button.
 
 ### Header summary cards
 
@@ -1003,6 +1036,7 @@ testers are expected to do more *exploratory* testing.
 1. Run `edit 1 r/Developer r/Designer`, then `edit 1 p/91234567`. Expected: Both roles remain after the phone edit. Run `edit 1 r/No role`; only No role remains.
 1. Try `add n/Missing Role p/91234567 e/missingrole@example.com a/Test Street` with an unused email, `edit 1 r/`, and `edit 1 p/98765432 r/Missing`. Expected: Specific errors leave all candidates unchanged; the missing-role error suggests `r/No role`.
 1. Assign the Developer role and Interviewing status to one candidate and the Designer role and Applied status to another. Run `filter r/Developer r/Designer s/Interviewing s/Offered`. Expected: Only candidates in either role with status Interviewing or Offered appear. Run `filter r/Designer`; the Applied candidate appears because each filter starts from all candidates.
+1. Run `filter r/Developer`, then `find NAME` using the Designer candidate's name. Expected: The Designer candidate appears, because `find` replaces the filter and searches all candidates. Run `find NAME` using the Developer candidate's name, then `filter r/Designer`. Expected: The Designer candidate appears and the Developer candidate does not.
 1. Run `filter r/Missing`. Expected: An error suggests `list_role` and preserves the displayed list. Filter by an unused existing role; expect zero results.
 1. Filter by Developer, then rename Developer. Expected: The same candidate still matches. Change their assignments so they no longer have that role; they disappear. In expanded view, an assignment edit keeps the candidate expanded instead.
 1. Create and assign a long multiword role. Resize the window and expand the candidate. Expected: All role badges remain readable and wrap within the card.

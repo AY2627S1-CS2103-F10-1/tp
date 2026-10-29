@@ -62,7 +62,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
 * Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable.
+  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
 
 * Extraneous parameters for `help`, `list`, `exit`, `export`, and `import` are ignored.<br>
   For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
@@ -132,7 +132,7 @@ Edits an existing candidate in HRvest.
 
 The success message shows the candidate's updated details.
 
-Format: `edit INDEX [n/NAME] [p/PHONE] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`
+Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`
 
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
@@ -211,6 +211,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 * The search considers only names.
 * A keyword matches the start of any word in a name; for example, `Han` matches `Hans`, and `Gru` matches `Hans Gruber`. Text inside a word does not match; for example, `ans` does not match `Hans`.
 * Candidates matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* Each `find` replaces the previous search or filter and considers all candidates, so `find` and `filter` cannot be combined. For example, `filter s/Interviewing` followed by `find Alex` shows every candidate matching `Alex`, whatever their status.
 
 Examples:
 * `find John` returns `john` and `John Doe`
@@ -227,7 +228,7 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 * Supply at least one status or role.
 * Repeat `s/` or `r/` to match any value within that field (`OR`). Repeated values have no extra effect.
 * If both fields are supplied, candidates must match a specified status and a specified role (`AND`).
-* Each `filter` replaces the previous search or filter and considers all candidates.
+* Each `filter` replaces the previous search or filter and considers all candidates, so `filter` and `find` cannot be combined. For example, `find Alex` followed by `filter r/Developer` shows every Developer, not only those matching `Alex`.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
 * Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalog.
 * Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`. Other prefixes, such as `n/` or `t/`, are rejected with `The filter command does not support n/. Use only s/STATUS and r/ROLE.`
@@ -393,7 +394,7 @@ Appends candidates from `import.csv` to all candidates currently loaded in HRves
 
 Format: `import`
 
-* Extra arguments are ignored, just like `export`. Place `import.csv` in the same directory as the JSON data file and `export.csv`: normally `data/import.csv`. For a configured data file `/app/data/HRvest.json`, the input is `/app/data/import.csv`. No other location is tried.
+* Extra arguments are ignored, just like `export`. Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is, `data/import.csv` in the folder you run HRvest from. The location cannot be changed, and no other location is tried.
 * The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
 * CSV accepts legacy Unicode addresses and notes that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 Unicode code points; quoted notes may contain tabs or line breaks. The printable-ASCII policy still applies when entering these values through commands. Other field, duplicate, and import size rules still apply.
 * Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view.
@@ -420,7 +421,7 @@ Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the h
 | Decoded field | 65,536 Unicode characters before trimming |
 | Note | 500 Unicode code points after trimming |
 | Tags per candidate | 100 array entries before deduplication |
-| Each tag name | 256 Unicode characters before trimming |
+| Each tag name | 256 characters before trimming |
 | Tag JSON structure | One flat array of strings only |
 
 These are import limits, not new add/edit restrictions. Files exceeding them cannot be imported even if their contents originated in HRvest.
@@ -490,6 +491,7 @@ Advanced users may edit the JSON files in the `data` folder.
 * Role names must be unique ignoring case and Unicode composition. If an older catalog contains both composed and decomposed spellings of the same name, loading rejects the catalog and backs up both files. In copies of the backups, give one entry a distinct name, keep its ID and candidate assignments, then restore the candidate and catalog files together.
 * Each file must contain exactly one JSON object. Do not repeat a property name within an object or append another object or text after it. Surrounding JSON whitespace is allowed. Invalid JSON follows the backup and recovery process below.
 * A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Loading a mix of `no-role` and named role IDs removes `no-role`. Use `no-role` for `No role`, rather than its display name.
+* In `roles.json`, keep the entry with the ID `no-role` and the name `No role`. Give each role you add a new, unique ID in UUID format, such as `3f2b6c1e-8d4a-4b7e-9c2f-1a2b3c4d5e6f`. Any other ID, or a missing or renamed `no-role` entry, stops both files from loading.
 * Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
 * One invalid value in **any** candidate, such as a phone number containing fewer than three digits, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
 * Save the file as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
@@ -544,6 +546,7 @@ Action     | Format, Examples
 **Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
 **Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Expand** | `expand INDEX`<br> e.g., `expand 2`
 **Export** | `export`
 **Import** | `import`
 **Filter** | `filter [s/STATUS]... [r/ROLE]...`<br> e.g., `filter s/Interviewing s/Offered`
@@ -552,3 +555,4 @@ Action     | Format, Examples
 **Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear
 **Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
 **Help**   | `help`
+**Exit**   | `exit`

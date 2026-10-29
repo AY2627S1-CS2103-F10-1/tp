@@ -48,7 +48,7 @@ end note
 Person --> "1..*" Role : assigned roles
 
 AddressBook *--> "1" UniquePersonList
-UniquePersonList --> "*" Person : all
+UniquePersonList --> "~* all" Person
 Person *--> Name
 Person *--> Phone
 Person *--> Email
@@ -65,5 +65,5 @@ Phone -[hidden]right-> Address
 Address -[hidden]right-> Email
 Email -[hidden]right-> Note
 
-ModelManager --> "*" Person : filtered
+ModelManager --> "~* filtered" Person
 @enduml
