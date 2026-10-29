@@ -23,13 +23,12 @@ import seedu.address.logic.parser.exceptions.ParseException;
  *    in the above example.<br>
  * 4. Prefixes are recognised regardless of letter case e.g. {@code T/} is treated as {@code t/}.<br>
  * 5. Within a name, the connector {@code s/o} is part of the name, not a prefix. So are {@code a/l} and
- *    {@code a/p} when another {@code a/} field gives the address.<br>
+ *    {@code a/p} when an explicit {@code a/} field disambiguates the address.<br>
  */
 public class ArgumentTokenizer {
 
     public static final String MESSAGE_AMBIGUOUS_NAME_CONNECTOR = "%1$s after a name could start the address or be "
-            + "part of the name, as in Siti a/p Ahmad. To set the address, put a/ADDRESS before n/NAME. "
-            + "To keep %1$s in the name, also give the address with a/ADDRESS.";
+            + "part of the name, as in Siti a/p Ahmad. Put a/ADDRESS before n/NAME to make the address explicit.";
 
     // Legal names such as "Ravi s/o Kumar" use these connectors, which look like the s/ and a/ prefixes.
     private static final Set<String> NAME_CONNECTORS = Set.of("s/o", "a/l", "a/p");
@@ -215,22 +214,38 @@ public class ArgumentTokenizer {
     }
 
     /**
-     * Returns the text of the first {@code a/l} or {@code a/p} that continues a name when no separate address
-     * field exists, so it could be either the address or part of the name.
+     * Returns the first {@code a/l} or {@code a/p} that could be either an address or part of the name.
+     * An address immediately after the name cannot disambiguate its connectors from repeated addresses.
      */
     private static Optional<String> findAmbiguousNameConnector(String argsString,
             List<PrefixPosition> prefixPositions) {
         List<PrefixPosition> sortedPositions = new ArrayList<>(prefixPositions);
         sortedPositions.sort(Comparator.comparingInt(PrefixPosition::getStartPosition));
         List<PrefixPosition> candidates = findNameConnectorCandidates(argsString, sortedPositions);
-        if (hasAddressField(sortedPositions, candidates)) {
-            return Optional.empty();
-        }
+        boolean hasAddressField = hasAddressField(sortedPositions, candidates);
         return candidates.stream()
                 .filter(candidate -> isAddressLikeConnector(argsString, candidate))
+                .filter(candidate -> !hasAddressField
+                        || isFollowedByAmbiguousAddress(candidate, sortedPositions, candidates))
                 .findFirst()
                 .map(candidate -> argsString.substring(candidate.getStartPosition(),
                         candidate.getStartPosition() + NAME_CONNECTOR_LENGTH));
+    }
+
+    /** Returns whether the name runs directly into an address without an earlier explicit address. */
+    private static boolean isFollowedByAmbiguousAddress(PrefixPosition candidate, List<PrefixPosition> positions,
+            List<PrefixPosition> candidates) {
+        boolean hasEarlierAddress = positions.stream()
+                .anyMatch(position -> position.getPrefix().equals(PREFIX_ADDRESS) && !candidates.contains(position)
+                        && position.getStartPosition() < candidate.getStartPosition());
+        if (hasEarlierAddress) {
+            return false;
+        }
+        return positions.stream()
+                .filter(position -> position.getStartPosition() > candidate.getStartPosition()
+                        && !candidates.contains(position))
+                .findFirst()
+                .filter(position -> position.getPrefix().equals(PREFIX_ADDRESS)).isPresent();
     }
 
     /** Returns whether an address field exists that is not itself a possible name connector. */

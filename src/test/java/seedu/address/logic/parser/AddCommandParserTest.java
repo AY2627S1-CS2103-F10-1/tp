@@ -188,6 +188,23 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_connectorImmediatelyBeforeAddress_failure() {
+        assertParseFailure(parser, " p/91234567 e/john@example.com n/John a/L Street a/9 Road r/No role",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+        assertParseFailure(parser, " p/91234567 e/siti@example.com n/Siti a/p Ahmad a/1 Road r/No role",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"));
+    }
+
+    @Test
+    public void parse_addressBeforeConnectorName_success() {
+        Person expected = new PersonBuilder().withName("Siti a/p Ahmad").withPhone("91234567")
+                .withEmail("siti@example.com").withAddress("L Street").withTags().withStatus(Status.APPLIED).build();
+
+        assertParseSuccess(parser, " a/L Street n/Siti a/p Ahmad p/91234567 e/siti@example.com r/No role",
+                new AddCommand(expected));
+    }
+
+    @Test
     public void parse_punctuatedNameAndLabelledPhone_success() {
         Person expected = new PersonBuilder().withName("Anne O'Brien Jr.")
                 .withPhone("+65 6123 4567 (Office) ext 89").withEmail("anne.o'brien@example.com")
