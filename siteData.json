@@ -114,6 +114,7 @@
       "headings": {
         "testing-guide": "Testing guide",
         "running-tests": "Running tests",
+        "windows-symbolic-link-prerequisite": "Windows symbolic-link prerequisite",
         "types-of-tests": "Types of tests"
       },
       "headingKeywords": {}
