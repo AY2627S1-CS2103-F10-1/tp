@@ -39,19 +39,34 @@ public class NameTest {
     }
 
     @Test
-    public void isValidName_apostrophesAndPeriodsWithinWords_returnsTrue() {
+    public void isValidName_punctuationWithinWords_returnsTrue() {
         for (String value : new String[] {"Anne O'Brien", "D'Angelo", "Ng'ang'a Tan", "Tan Ah Kow Jr.",
-            "J. Tan", "J.R.R. Tolkien", "St. John Lee", "Mary  O'Neil", "O'Brien ", "Ravi s/o Kumar",
-            "Siti a/p Ahmad", "Muthu d/o Raju"}) {
+            "J. Tan", "J.R.R. Tolkien", "St. John Lee", "Mary  O'Neil", "O'Brien ", "Kelly-Ann Tan",
+            "Kim Min-jun", "Jean-Luc O'Neil-Smith", "Ahmad bin Ali"}) {
             assertTrue(Name.isValidName(value), value);
         }
     }
 
     @Test
+    public void isValidName_lineageAndGenderMarkers_returnsTrue() {
+        for (String value : new String[] {"Ravi s/o Kumar", "Priya d/o Raju", "Arul a/l Muthu", "Siti a/p Ahmad",
+            "Lim Ah Seng l/p", "RAVI S/O KUMAR"}) {
+            assertTrue(Name.isValidName(value), value);
+        }
+    }
+
+    @Test
+    public void isValidName_aliasAfterSeparateAt_returnsTrue() {
+        assertTrue(Name.isValidName("Mohamed Ali @ Ahmad"));
+        assertTrue(Name.isValidName("Tan Ah Kow @ Tan Kow Ming"));
+    }
+
+    @Test
     public void isValidName_misplacedOrRepeatedPunctuation_returnsFalse() {
         for (String value : new String[] {"'", ".", "'Anne", ".Anne", "Anne O'", "Anne O' Brien", "Anne ..",
-            "Jr..", "O''Brien", "A.'B", "J. . Tan", "Anne-Marie", "Anne O’Brien", "/", "/Ravi", "Ravi/",
-            "Ravi s//o Kumar", "Ravi s/ o"}) {
+            "Jr..", "O''Brien", "A.'B", "J. . Tan", "Anne O’Brien", "/", "/Ravi", "Ravi/", "Ravi s//o Kumar",
+            "Ravi s/ o", "-", "Kelly-", "-Ann", "Kelly--Ann", "Kelly - Ann", "@", "@ Ahmad", "Ali @",
+            "Ali @@ Ahmad", "Ali@Ahmad", "Ali @ @ Ahmad", "Ali, Ahmad"}) {
             assertFalse(Name.isValidName(value), value);
         }
     }

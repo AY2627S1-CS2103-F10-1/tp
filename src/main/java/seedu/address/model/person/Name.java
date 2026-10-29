@@ -10,22 +10,24 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain letters, digits, spaces, apostrophes ('), periods (.) and slashes (/), "
-                    + "and should not be blank. Each word must start with a letter or digit. "
-                    + "An apostrophe, period or slash must be followed by a letter or digit, "
-                    + "except that a word may end with one period, e.g. Anne O'Brien, Tan Ah Kow Jr. "
-                    + "or Ravi s/o Kumar";
+            "Names should only contain letters, digits, spaces, apostrophes ('), periods (.), hyphens (-) "
+                    + "and slashes (/), and should not be blank. Each word must start with a letter or digit, "
+                    + "and each of these punctuation marks must be followed by a letter or digit, except that "
+                    + "a word may end with one period. A separate @ may introduce an alias. E.g. Anne O'Brien, "
+                    + "Kelly-Ann Tan, Tan Ah Kow Jr., Ravi s/o Kumar or Mohamed Ali @ Ahmad";
 
-    // Real names use apostrophes, periods and slashes (O'Brien, Jr., s/o). Allowing them only between
-    // letters or digits, or as one closing period, keeps punctuation-only and repeated-punctuation names invalid.
+    // Real names use apostrophes, periods, hyphens and slashes (O'Brien, Jr., Kelly-Ann, s/o). Allowing them
+    // only between letters or digits, or as one closing period, keeps punctuation-only names invalid.
     private static final String ALPHANUMERIC_RUN = "\\p{Alnum}++";
-    private static final String WORD_REGEX = ALPHANUMERIC_RUN + "(?:['./]" + ALPHANUMERIC_RUN + ")*+\\.?+";
+    private static final String WORD_REGEX = ALPHANUMERIC_RUN + "(?:['./-]" + ALPHANUMERIC_RUN + ")*+\\.?+";
+    // Singapore and Malaysian legal names can record an alias after a separate "@", e.g. "Mohamed Ali @ Ahmad".
+    private static final String ALIAS_MARKER = "(?:@ ++)?+";
 
     /*
      * The first character of the name must not be a whitespace,
      * otherwise " " (a blank string) becomes a valid input.
      */
-    public static final String VALIDATION_REGEX = WORD_REGEX + "(?: ++" + WORD_REGEX + ")*+ *+";
+    public static final String VALIDATION_REGEX = WORD_REGEX + "(?: ++" + ALIAS_MARKER + WORD_REGEX + ")*+ *+";
 
     public final String fullName;
 
