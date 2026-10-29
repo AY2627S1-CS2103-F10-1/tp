@@ -41,8 +41,8 @@ public class PhoneTest {
     @Test
     public void constructor_formattedNumbers_preservesFormatting() {
         for (String value : new String[] {"+65 9123 4567", "9123-4567", "+1-202-555-0123", "0 0-7",
-            "(65) 6123 4567", "1234 5678 (HP) 1111-3333 (Office)", "6123 4567 ext. 123", "Office: 911",
-            "123456789012345678901234567890"}) {
+            "(65) 6123 4567", "1234 5678 (HP) 1111-3333 (Office)", "6123 4567 ext. 123", "911 (Office)",
+            "123456789012345678901234567890", "+65 9123 4567 (HP), +65 6123 4567 (Office)"}) {
             assertTrue(Phone.isValidPhone(value), value);
             assertEquals(value, new Phone(value).value);
         }
@@ -54,6 +54,23 @@ public class PhoneTest {
             "123\t456", "123\n456", "123\u00A0", "123\u200B", "\uFF11\uFF12\uFF13", "123\u007F"}) {
             assertFalse(Phone.isValidPhone(value), value);
         }
+    }
+
+    @Test
+    public void isValidPhone_textBeforeNumber_returnsFalse() {
+        for (String value : new String[] {"Office: 911", "HP 9123 4567", "call me after 5pm on 9123", "-123",
+            " 123", ".911", "ext 123"}) {
+            assertFalse(Phone.isValidPhone(value), value);
+        }
+    }
+
+    @Test
+    public void isValidPhone_lengthBoundary_acceptsUpToMaxLength() {
+        String longestPhone = "9".repeat(Phone.MAX_LENGTH);
+
+        assertTrue(Phone.isValidPhone(longestPhone));
+        assertFalse(Phone.isValidPhone(longestPhone + "9"));
+        assertFalse(Phone.isValidPhone("9".repeat(300)));
     }
 
     @Test

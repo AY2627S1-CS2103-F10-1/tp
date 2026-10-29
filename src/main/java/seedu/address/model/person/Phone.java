@@ -10,10 +10,14 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Phone {
 
 
+    public static final int MAX_LENGTH = 50;
     public static final String MESSAGE_CONSTRAINTS =
-            "Phone numbers must contain at least 3 ASCII digits and only printable ASCII characters. "
-                    + "Formatting, extensions and contact labels are allowed";
-    public static final String VALIDATION_REGEX = "[\\x20-\\x7E]+";
+            "Phone numbers must start with a digit, + or (, contain at least 3 digits, and have at most 50 "
+                    + "printable ASCII characters. Put labels and extensions after the number, "
+                    + "e.g. +65 6123 4567 (Office) ext 89";
+    // Starting with the number rejects free text such as "call me on 9123". The length leaves room for two
+    // labelled numbers, e.g. "+65 9123 4567 (HP), +65 6123 4567 (Office)".
+    public static final String VALIDATION_REGEX = "[0-9+(][\\x20-\\x7E]{0," + (MAX_LENGTH - 1) + "}";
     public final String value;
 
     /**
