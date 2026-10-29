@@ -968,7 +968,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Viewing a candidate's full record
 
-1. Give a candidate a note with `note 2 no/Strong on SQL`, then run `expand 2`. Expected: Only that candidate is shown, at index `1`, with `Note: Strong on SQL`. The line above the list reads `Expanded view of 1 of N candidates. Type list to show all.`
+1. Run `list`, and check that at least two candidates are listed. Give the second candidate a note with `note 2 no/Strong on SQL`, then run `expand 2`. Expected: Only that candidate is shown, at index `1`, with `Note: Strong on SQL`. The line above the list reads `Expanded view of 1 of N candidates. Type list to show all.`
 1. Run `list`, then expand a candidate without a note. Expected: `No note recorded.` appears.
 1. Run `expand 0` and `expand abc`. Expected: Each gives an error, and the displayed list is unchanged.
 
