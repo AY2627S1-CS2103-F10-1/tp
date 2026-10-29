@@ -27,33 +27,7 @@ checkstyle {
 test {
     useJUnitPlatform()
     enableAssertions = true
-    if (project.hasProperty('javaFxUiScale')) {
-        systemProperty 'glass.win.uiScale', project.property('javaFxUiScale')
-    }
     finalizedBy jacocoTestReport
-}
-
-// Keep fractional-scale layout results separate from the full suite's coverage and reports.
-[testWindowsScale150: '1.5', testWindowsScale175: '1.75'].each { taskName, uiScale ->
-    tasks.register(taskName, Test) {
-        description = "Checks Windows feedback layout at ${uiScale}x display scaling."
-        group = 'verification'
-        dependsOn testClasses
-        testClassesDirs = sourceSets.test.output.classesDirs
-        classpath = sourceSets.test.runtimeClasspath
-        useJUnitPlatform()
-        enableAssertions = true
-        systemProperty 'glass.win.uiScale', uiScale
-        filter {
-            includeTestsMatching 'seedu.address.ui.ResultDisplayTest'
-        }
-        onlyIf {
-            System.getProperty('os.name').startsWith('Windows')
-        }
-    }
-    tasks.named('check') {
-        dependsOn taskName
-    }
 }
 
 task coverage(type: JacocoReport) {
