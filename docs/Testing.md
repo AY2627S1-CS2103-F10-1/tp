@@ -27,6 +27,10 @@ You can run tests in two ways.
 **Link**: Read [this Gradle Tutorial from the se-edu/guides](https://se-education.org/guides/tutorials/gradle.html) to learn more about using Gradle.
 </box>
 
+### Windows symbolic-link prerequisite
+
+The storage tests create real symbolic links. With JDK 25 on Windows, enable **Developer Mode** and run the suite from a session that permits link creation. Otherwise setup can fail with `A required privilege is not held by the client`. See [Microsoft's symbolic-link prerequisites](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createsymboliclinkw).
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Types of tests

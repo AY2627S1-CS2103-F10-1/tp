@@ -31,6 +31,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import seedu.address.commons.core.GuiSettings;
 import seedu.address.logic.LogicManager;
 import seedu.address.model.ModelManager;
 import seedu.address.storage.JsonAddressBookStorage;
@@ -44,6 +45,8 @@ import seedu.address.testutil.PersonBuilder;
 public class ResultDisplayTest {
     private static final double LAYOUT_TOLERANCE = 1;
     private static final int TIMEOUT_SECONDS = 10;
+    private static final int WINDOW_WIDTH = 1100;
+    private static final int WINDOW_HEIGHT = 650;
 
     @TempDir
     public Path temporaryFolder;
@@ -160,6 +163,8 @@ public class ResultDisplayTest {
 
     private MainWindow createWindow(ModelManager model) {
         model.addPerson(new PersonBuilder().build());
+        // A saved size keeps the fixture independent of the monitor's scaled visual bounds.
+        model.setGuiSettings(new GuiSettings(WINDOW_WIDTH, WINDOW_HEIGHT, 0, 0));
         Path dataFile = temporaryFolder.resolve("HRvest.json");
         StorageManager storage = new StorageManager(new JsonAddressBookStorage(dataFile),
                 new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json")));
@@ -205,6 +210,12 @@ public class ResultDisplayTest {
         // A second layout settles a preferred-height change caused by the first layout assigning the text width.
         root.applyCss();
         root.layout();
+        root.requestLayout();
+        root.layout();
+        // TextAreaSkin schedules its fit-to-height update after layout; process it before the final layout.
+        Object layoutLoop = new Object();
+        Platform.runLater(() -> Platform.exitNestedEventLoop(layoutLoop, null));
+        Platform.enterNestedEventLoop(layoutLoop);
         root.requestLayout();
         root.layout();
     }
