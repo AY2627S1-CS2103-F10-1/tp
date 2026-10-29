@@ -164,6 +164,15 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_nameWithConnector_success() {
+        Person expected = new PersonBuilder().withName("Ravi s/o Kumar").withPhone("91234567")
+                .withEmail("ravi@example.com").withAddress("1 Road").withTags().withStatus(Status.OFFERED).build();
+
+        assertParseSuccess(parser, " n/Ravi s/o Kumar p/91234567 e/ravi@example.com a/1 Road s/Offered r/No role",
+                new AddCommand(expected));
+    }
+
+    @Test
     public void parse_punctuatedNameAndLabelledPhone_success() {
         Person expected = new PersonBuilder().withName("Anne O'Brien Jr.")
                 .withPhone("+65 6123 4567 (Office) ext 89").withEmail("anne.o'brien@example.com")

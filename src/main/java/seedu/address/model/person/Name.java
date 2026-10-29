@@ -10,15 +10,16 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain letters, digits, spaces, apostrophes (') and periods (.), "
+            "Names should only contain letters, digits, spaces, apostrophes ('), periods (.) and slashes (/), "
                     + "and should not be blank. Each word must start with a letter or digit. "
-                    + "An apostrophe or period must be followed by a letter or digit, "
-                    + "except that a word may end with one period, e.g. Anne O'Brien or Tan Ah Kow Jr.";
+                    + "An apostrophe, period or slash must be followed by a letter or digit, "
+                    + "except that a word may end with one period, e.g. Anne O'Brien, Tan Ah Kow Jr. "
+                    + "or Ravi s/o Kumar";
 
-    // Real names use apostrophes and periods (O'Brien, Jr.). Allowing them only between letters or digits,
-    // or as one closing period, keeps punctuation-only and repeated-punctuation names invalid.
+    // Real names use apostrophes, periods and slashes (O'Brien, Jr., s/o). Allowing them only between
+    // letters or digits, or as one closing period, keeps punctuation-only and repeated-punctuation names invalid.
     private static final String ALPHANUMERIC_RUN = "\\p{Alnum}++";
-    private static final String WORD_REGEX = ALPHANUMERIC_RUN + "(?:['.]" + ALPHANUMERIC_RUN + ")*+\\.?+";
+    private static final String WORD_REGEX = ALPHANUMERIC_RUN + "(?:['./]" + ALPHANUMERIC_RUN + ")*+\\.?+";
 
     /*
      * The first character of the name must not be a whitespace,

@@ -15,6 +15,35 @@ public class ArgumentTokenizerTest {
     private final Prefix hatQ = new Prefix("^Q");
 
     @Test
+    public void tokenize_nameConnectorsInName_keptInName() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" n/Ravi S/O Kumar a/l Siti a/p Ahmad s/Offered"
+                + " a/1 Road", CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Ravi S/O Kumar a/l Siti a/p Ahmad");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_STATUS, "Offered");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "1 Road");
+    }
+
+    @Test
+    public void tokenize_nameConnectorOutsideName_treatedAsPrefix() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" a/Blk 5 s/o Kumar",
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "Blk 5");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_STATUS, "o Kumar");
+    }
+
+    @Test
+    public void tokenize_connectorLettersStartingValue_treatedAsPrefix() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" n/Ravi s/Offered a/live Road s/o",
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Ravi");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_STATUS, "Offered", "o");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "live Road");
+    }
+
+    @Test
     public void tokenize_emptyArgsString_noValues() {
         String argsString = "  ";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash);

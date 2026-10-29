@@ -1,8 +1,11 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -16,8 +19,13 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * 3. An argument may be repeated and all its values will be accumulated e.g. the value of {@code t/}
  *    in the above example.<br>
  * 4. Prefixes are recognised regardless of letter case e.g. {@code T/} is treated as {@code t/}.<br>
+ * 5. Within a name, the connectors {@code s/o}, {@code a/l} and {@code a/p} are part of the name, not prefixes.<br>
  */
 public class ArgumentTokenizer {
+
+    // Legal names such as "Ravi s/o Kumar" use these connectors, which look like the s/ and a/ prefixes.
+    private static final Set<String> NAME_CONNECTORS = Set.of("s/o", "a/l", "a/p");
+    private static final int NAME_CONNECTOR_LENGTH = 3;
 
     /**
      * Tokenizes an arguments string and returns an {@code ArgumentMultimap} object that maps prefixes to their
@@ -129,25 +137,51 @@ public class ArgumentTokenizer {
 
         // Sort by start position
         prefixPositions.sort((prefix1, prefix2) -> prefix1.getStartPosition() - prefix2.getStartPosition());
+        List<PrefixPosition> fieldPositions = removeNameConnectors(argsString, prefixPositions);
 
         // Insert a PrefixPosition to represent the preamble
         PrefixPosition preambleMarker = new PrefixPosition(new Prefix(""), 0);
-        prefixPositions.addFirst(preambleMarker);
+        fieldPositions.addFirst(preambleMarker);
 
         // Add a dummy PrefixPosition to represent the end of the string
         PrefixPosition endPositionMarker = new PrefixPosition(new Prefix(""), argsString.length());
-        prefixPositions.add(endPositionMarker);
+        fieldPositions.add(endPositionMarker);
 
         // Map prefixes to their argument values (if any)
         ArgumentMultimap argMultimap = new ArgumentMultimap();
-        for (int i = 0; i < prefixPositions.size() - 1; i++) {
+        for (int i = 0; i < fieldPositions.size() - 1; i++) {
             // Extract and store prefixes and their arguments
-            Prefix argPrefix = prefixPositions.get(i).getPrefix();
-            String argValue = extractArgumentValue(argsString, prefixPositions.get(i), prefixPositions.get(i + 1));
+            Prefix argPrefix = fieldPositions.get(i).getPrefix();
+            String argValue = extractArgumentValue(argsString, fieldPositions.get(i), fieldPositions.get(i + 1));
             argMultimap.put(argPrefix, argValue);
         }
 
         return argMultimap;
+    }
+
+    /**
+     * Returns the sorted {@code prefixPositions} without name connectors inside a name value, so that the
+     * {@code s/o} in {@code n/Ravi s/o Kumar} stays in the name. No status is "o" and no address is "l" or "p",
+     * so a connector followed by whitespace cannot be an intended field.
+     */
+    private static List<PrefixPosition> removeNameConnectors(String argsString,
+            List<PrefixPosition> prefixPositions) {
+        List<PrefixPosition> keptPositions = new ArrayList<>();
+        for (PrefixPosition position : prefixPositions) {
+            boolean isInsideName = !keptPositions.isEmpty()
+                    && keptPositions.getLast().getPrefix().equals(PREFIX_NAME);
+            if (!isInsideName || !isNameConnector(argsString, position.getStartPosition())) {
+                keptPositions.add(position);
+            }
+        }
+        return keptPositions;
+    }
+
+    /** Returns whether a name connector followed by whitespace starts at {@code start} in {@code argsString}. */
+    private static boolean isNameConnector(String argsString, int start) {
+        int end = start + NAME_CONNECTOR_LENGTH;
+        return end < argsString.length() && Character.isWhitespace(argsString.charAt(end))
+                && NAME_CONNECTORS.contains(argsString.substring(start, end).toLowerCase(Locale.ROOT));
     }
 
     /**

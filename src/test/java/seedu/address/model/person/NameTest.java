@@ -41,7 +41,8 @@ public class NameTest {
     @Test
     public void isValidName_apostrophesAndPeriodsWithinWords_returnsTrue() {
         for (String value : new String[] {"Anne O'Brien", "D'Angelo", "Ng'ang'a Tan", "Tan Ah Kow Jr.",
-            "J. Tan", "J.R.R. Tolkien", "St. John Lee", "Mary  O'Neil", "O'Brien "}) {
+            "J. Tan", "J.R.R. Tolkien", "St. John Lee", "Mary  O'Neil", "O'Brien ", "Ravi s/o Kumar",
+            "Siti a/p Ahmad", "Muthu d/o Raju"}) {
             assertTrue(Name.isValidName(value), value);
         }
     }
@@ -49,7 +50,8 @@ public class NameTest {
     @Test
     public void isValidName_misplacedOrRepeatedPunctuation_returnsFalse() {
         for (String value : new String[] {"'", ".", "'Anne", ".Anne", "Anne O'", "Anne O' Brien", "Anne ..",
-            "Jr..", "O''Brien", "A.'B", "J. . Tan", "Anne-Marie", "Ravi s/o Kumar", "Anne O’Brien"}) {
+            "Jr..", "O''Brien", "A.'B", "J. . Tan", "Anne-Marie", "Anne O’Brien", "/", "/Ravi", "Ravi/",
+            "Ravi s//o Kumar", "Ravi s/ o"}) {
             assertFalse(Name.isValidName(value), value);
         }
     }
