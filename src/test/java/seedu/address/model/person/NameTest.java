@@ -62,11 +62,30 @@ public class NameTest {
     }
 
     @Test
+    public void isValidName_officialNameConventions_returnsTrue() {
+        for (String value : new String[] {"JOEY CHAN HSIAO AN (CHAN XIAO AN) @ JOEY CHAN (CHEN XIAO AN) MRS CHAN",
+            "Tan Wei Ming (Kelvin)", "Martin Luther King, Jr.", "Lim, Mei Ling", "Tan (Kelvin), Jr.",
+            "Ludwig van der Waals", "Maria de la Cruz", "Siti Nurhaliza binte Tarudin", "Sukarno", "A",
+            "Henry VIII", "Mary O'Neil-Smith Jr."}) {
+            assertTrue(Name.isValidName(value), value);
+        }
+    }
+
+    @Test
+    public void isValidName_malformedCommasOrParentheses_returnsFalse() {
+        for (String value : new String[] {"Tan,", "Tan , Wei", "Tan,Wei", ", Tan", "Tan ,", "(Kelvin)",
+            "(Kelvin) Tan", "Tan ()", "Tan (Kelvin", "Tan Kelvin)", "Tan ((Kelvin))", "Tan (Kelvin) )",
+            "Tan ( Kelvin )", "Tan,, Wei"}) {
+            assertFalse(Name.isValidName(value), value);
+        }
+    }
+
+    @Test
     public void isValidName_misplacedOrRepeatedPunctuation_returnsFalse() {
         for (String value : new String[] {"'", ".", "'Anne", ".Anne", "Anne O'", "Anne O' Brien", "Anne ..",
             "Jr..", "O''Brien", "A.'B", "J. . Tan", "Anne O’Brien", "/", "/Ravi", "Ravi/", "Ravi s//o Kumar",
             "Ravi s/ o", "-", "Kelly-", "-Ann", "Kelly--Ann", "Kelly - Ann", "@", "@ Ahmad", "Ali @",
-            "Ali @@ Ahmad", "Ali@Ahmad", "Ali @ @ Ahmad", "Ali, Ahmad"}) {
+            "Ali @@ Ahmad", "Ali@Ahmad", "Ali @ @ Ahmad"}) {
             assertFalse(Name.isValidName(value), value);
         }
     }

@@ -57,6 +57,15 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_keywordStartsBracketedOrCommaWord_returnsTrue() {
+        Person person = new PersonBuilder().withName("Tan Wei Ming (Kelvin Chen), Jr.").build();
+
+        assertTrue(new NameContainsKeywordsPredicate(List.of("Kelvin")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("chen")).test(person));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("Ming")).test(person));
+    }
+
+    @Test
     public void test_keywordStartsNameWord_returnsTrue() {
         // Start of the first word
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("Ale"));

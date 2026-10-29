@@ -72,7 +72,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
 ### Accepted characters in candidate inputs
 
-Names, phone numbers, emails, addresses, tags, notes, and `find` keywords accept only **printable ASCII (`U+0020–U+007E`)**: English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces, and ASCII punctuation. This keeps command input within a single, explicit character set. Existing field rules still apply afterward: for example, phone numbers need at least three ASCII digits, and names accept only apostrophes, periods, hyphens, slashes and a separate `@` as punctuation.
+Names, phone numbers, emails, addresses, tags, notes, and `find` keywords accept only **printable ASCII (`U+0020–U+007E`)**: English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces, and ASCII punctuation. This keeps command input within a single, explicit character set. Existing field rules still apply afterward: for example, phone numbers need at least three ASCII digits, and names accept only the punctuation used in legal names, such as `O'Brien`, `Jr.`, `s/o` and `(Kelvin)`.
 
 For more information about rejected characters, error messages, and validation scope, see [Command input character validation in the Developer Guide](DeveloperGuide.md#command-input-character-validation).
 
@@ -95,7 +95,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 
 | Parameter | Required? | Accepted values and behavior |
 |---|---|---|
-| `n/NAME` | Yes | A non-blank name containing only letters, digits, spaces, apostrophes (`'`), periods (`.`), hyphens (`-`) and slashes (`/`), e.g. `n/John Doe`, `n/Anne O'Brien`, `n/Kelly-Ann Tan`, `n/Tan Ah Kow Jr.` or `n/Ravi s/o Kumar`. Each word must start with a letter or digit, and each of these punctuation marks must be followed by a letter or digit, except that a word may end with one period. Lineage and gender markers such as `s/o`, `d/o`, `a/l`, `a/p` and `l/p` are accepted; within a name, `s/o`, `a/l` and `a/p` followed by a space, in any letter case, stay part of the name rather than starting a status or address. An alias can follow a separate `@`, e.g. `n/Mohamed Ali @ Ahmad`. Other punctuation, such as commas and parentheses, is not accepted. Leading and trailing spaces are removed; internal spaces and letter case are preserved. |
+| `n/NAME` | Yes | A non-blank name made of words that each start with a letter or digit, e.g. `n/John Doe`. To match legal names, names can also use apostrophes, periods, hyphens and slashes between letters or digits (`n/Anne O'Brien`, `n/J.R. Tan`, `n/Kelly-Ann Tan`, `n/Ravi s/o Kumar`), one period at the end of a word (`n/Tan Ah Kow Jr.`), a comma after a word (`n/Martin Luther King, Jr.`), words in parentheses after the first word (`n/Tan Wei Ming (Kelvin)`), and an alias after a separate `@` (`n/Mohamed Ali @ Ahmad`). Lineage and gender markers such as `s/o`, `d/o`, `a/l`, `a/p` and `l/p` are accepted; within a name, `s/o`, `a/l` and `a/p` followed by a space, in any letter case, stay part of the name rather than starting a status or address. Other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words are rejected. Leading and trailing spaces are removed; internal spaces and letter case are preserved. |
 | `p/PHONE_NUMBER` | Yes | Any printable-ASCII text containing at least three ASCII digits, e.g. `p/+65 9123 4567`, `p/(65) 6123 4567`, or `p/1234 5678 (HP) 1111-3333 (Office)`. Formatting, extensions and contact labels are accepted. Leading and trailing spaces are removed; internal text and leading zeroes are preserved. HRvest stores contact information without checking whether a number is dialable. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/anne.o'brien@example.com`. The local part allows letters, digits, and <code>!#$%&'*+/=?^_&#96;{&#124;}~-</code>, with periods separating non-empty groups. Leading, trailing, and consecutive periods are invalid. Domain labels must start and end with letters or digits and may contain internal hyphens, including consecutive hyphens (e.g. `xn--bcher-kva.de`); the final label must contain at least two characters. Spaces and quoted local parts are not accepted. |
 | `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
@@ -208,7 +208,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 
 * The search is case-insensitive; for example, `hans` matches `Hans`.
 * Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names.
+* The search considers only names. Parentheses and commas in a name are ignored, so `find Kelvin` matches `Tan Wei Ming (Kelvin)`.
 * A keyword matches the start of any word in a name; for example, `Han` matches `Hans`, and `Gru` matches `Hans Gruber`. Text inside a word does not match; for example, `ans` does not match `Hans`.
 * Candidates matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 * Each `find` replaces the previous search or filter and considers all candidates, so `find` and `filter` cannot be combined. For example, `filter s/Interviewing` followed by `find Alex` shows every candidate matching `Alex`, whatever their status.

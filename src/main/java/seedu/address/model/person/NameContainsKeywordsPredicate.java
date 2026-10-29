@@ -18,7 +18,8 @@ public class NameContainsKeywordsPredicate implements Predicate<Person> {
 
     @Override
     public boolean test(Person person) {
-        String name = person.getName().fullName;
+        // Parentheses and commas only group or separate name words, so "Kelvin" should match "(Kelvin)".
+        String name = person.getName().fullName.replaceAll("[(),]", " ");
         return keywords.stream()
                 .anyMatch(keyword -> StringUtil.containsWordStartingWithIgnoreCase(name, keyword));
     }
