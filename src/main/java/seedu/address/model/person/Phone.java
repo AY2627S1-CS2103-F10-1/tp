@@ -16,11 +16,12 @@ public class Phone {
             "Phone numbers must contain at least 3 ASCII digits and only printable ASCII characters. "
                     + "Formatting, extensions and contact labels are allowed";
     public static final String MESSAGE_INPUT_CONSTRAINTS =
-            "Phone numbers must start with a digit, + or (, contain at least 3 digits, and have at most 50 "
-                    + "printable ASCII characters. Put labels and extensions after the number, "
-                    + "e.g. +65 6123 4567 (Office) ext 89";
+            "Phone numbers must begin with the number itself, such as 9123, +65, (65) or (+65), contain at least "
+                    + "3 digits, and have at most 50 printable ASCII characters. Put labels and extensions after "
+                    + "the number, e.g. +65 6123 4567 (Office) ext 89";
     public static final String VALIDATION_REGEX = "[\\x20-\\x7E]+";
-    private static final String INPUT_START_REGEX = "[0-9+(].*";
+    // A leading + or ( must be followed by a digit, so that "+Office: 911" is rejected like "Office: 911".
+    private static final String INPUT_START_REGEX = "(?:\\+\\(?|\\(\\+?)?[0-9].*";
     public final String value;
 
     /**

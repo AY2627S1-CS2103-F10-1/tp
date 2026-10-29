@@ -59,6 +59,7 @@ public class PhoneTest {
     @Test
     public void isValidPhoneInput_numberFirst_returnsTrue() {
         for (String value : new String[] {"911", "+65 9123 4567", "(65) 6123 4567", "911 (Office)",
+            "+65 96687123 (Phone)", "(+65) 9123 4567", "+(65) 6123 4567",
             "1234 5678 (HP) 1111-3333 (Office)", "+65 6123 4567 (Office) ext 89",
             "+65 9123 4567 (HP), +65 6123 4567 (Office)"}) {
             assertTrue(Phone.isValidPhoneInput(value), value);
@@ -68,7 +69,8 @@ public class PhoneTest {
     @Test
     public void isValidPhoneInput_textBeforeNumber_returnsFalse() {
         for (String value : new String[] {"Office: 911", "HP 9123 4567", "call me after 5pm on 9123", "-123",
-            " 123", ".911", "ext 123"}) {
+            " 123", ".911", "ext 123", "+Office: 911", "+call me on 9123", "(HP) 9123 4567", "++65 9123",
+            "((65) 9123"}) {
             assertFalse(Phone.isValidPhoneInput(value), value);
         }
     }
