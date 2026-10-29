@@ -39,6 +39,22 @@ public class NameTest {
     }
 
     @Test
+    public void isValidName_apostrophesAndPeriodsWithinWords_returnsTrue() {
+        for (String value : new String[] {"Anne O'Brien", "D'Angelo", "Ng'ang'a Tan", "Tan Ah Kow Jr.",
+            "J. Tan", "J.R.R. Tolkien", "St. John Lee", "Mary  O'Neil", "O'Brien "}) {
+            assertTrue(Name.isValidName(value), value);
+        }
+    }
+
+    @Test
+    public void isValidName_misplacedOrRepeatedPunctuation_returnsFalse() {
+        for (String value : new String[] {"'", ".", "'Anne", ".Anne", "Anne O'", "Anne O' Brien", "Anne ..",
+            "Jr..", "O''Brien", "A.'B", "J. . Tan", "Anne-Marie", "Ravi s/o Kumar", "Anne O’Brien"}) {
+            assertFalse(Name.isValidName(value), value);
+        }
+    }
+
+    @Test
     public void equals() {
         Name name = new Name("Valid Name");
 

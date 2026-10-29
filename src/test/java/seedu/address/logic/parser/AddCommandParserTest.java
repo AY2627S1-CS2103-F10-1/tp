@@ -164,6 +164,16 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_punctuatedNameAndLabelledPhone_success() {
+        Person expected = new PersonBuilder().withName("Anne O'Brien Jr.")
+                .withPhone("+65 6123 4567 (Office) ext 89").withEmail("anne.o'brien@example.com")
+                .withAddress("123 Example Road").withTags().withStatus(Status.APPLIED).build();
+
+        assertParseSuccess(parser, " n/Anne O'Brien Jr. p/+65 6123 4567 (Office) ext 89"
+                + " e/anne.o'brien@example.com a/123 Example Road r/No role", new AddCommand(expected));
+    }
+
+    @Test
     public void parse_eachExplicitStatus_success() {
         String details = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
         for (Status status : Status.values()) {

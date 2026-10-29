@@ -10,13 +10,21 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain alphanumeric characters and spaces, and should not be blank";
+            "Names should only contain letters, digits, spaces, apostrophes (') and periods (.), "
+                    + "and should not be blank. Each word must start with a letter or digit. "
+                    + "An apostrophe or period must be followed by a letter or digit, "
+                    + "except that a word may end with one period, e.g. Anne O'Brien or Tan Ah Kow Jr.";
+
+    // Real names use apostrophes and periods (O'Brien, Jr.). Allowing them only between letters or digits,
+    // or as one closing period, keeps punctuation-only and repeated-punctuation names invalid.
+    private static final String ALPHANUMERIC_RUN = "\\p{Alnum}++";
+    private static final String WORD_REGEX = ALPHANUMERIC_RUN + "(?:['.]" + ALPHANUMERIC_RUN + ")*+\\.?+";
 
     /*
      * The first character of the name must not be a whitespace,
      * otherwise " " (a blank string) becomes a valid input.
      */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
+    public static final String VALIDATION_REGEX = WORD_REGEX + "(?: ++" + WORD_REGEX + ")*+ *+";
 
     public final String fullName;
 
