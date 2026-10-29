@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
 
 public class CandidateCsvParserTest {
@@ -75,12 +76,11 @@ public class CandidateCsvParserTest {
     }
 
     @Test
-    public void parse_unquotedInvalidNote_keepsFieldValidation() {
+    public void parse_unquotedLegacyNote_acceptsUnicode() throws Exception {
         String input = "name,phone,email,address,status,tags,note\n"
                 + "Candidate,12345,candidate@example.com,Address,Applied,[],Unicode \u4e2d";
-        assertThrows(ParseException.class, "CSV record 2, field note: "
-                + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", 0x4e2d), () ->
-                parse(input.getBytes(StandardCharsets.UTF_8)));
+        assertEquals("Unicode \u4e2d", parse(input.getBytes(StandardCharsets.UTF_8))
+                .getFirst().getNote().orElseThrow().value);
     }
 
     @Test
@@ -129,20 +129,27 @@ public class CandidateCsvParserTest {
     }
 
     @Test
-    public void parse_nonPrintableAsciiNote_rejectsWithRecordAndField() {
+    public void parse_legacyNoteCharacters_preservesInternalContents() throws Exception {
         for (String character : List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f")) {
-            String message = "CSV record 2, field note: "
-                    + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", character.codePointAt(0));
-            assertThrows(ParseException.class, message, () -> parseRow("[]", "Applied", "Note" + character));
+            String note = "Note" + character + "text";
+            assertEquals(note, parseRow("[]", "Applied", note).getNote().orElseThrow().value);
         }
+    }
+
+    @Test
+    public void parse_unicodeNoteLength_countsCodePoints() throws Exception {
+        String note = "\ud83d\udcdd".repeat(500);
+        assertEquals(note, parseRow("[]", "Applied", note).getNote().orElseThrow().value);
+        assertThrows(ParseException.class, "CSV record 2, field note: " + Note.MESSAGE_TOO_LONG, () ->
+                parseRow("[]", "Applied", note + "x"));
     }
 
     @Test
     public void parse_invalidCandidateField_identifiesRecordAndField() {
         String input = HEADER + record(List.of("Candidate", "invalid", "candidate@example.com", "Address",
                 "Applied", "[]", ""));
-        assertThrows(ParseException.class, "CSV record 2, field phone: Phone numbers should only contain digits, "
-                + "and should be at least 3 digits long", () -> parse(input.getBytes(StandardCharsets.UTF_8)));
+        assertThrows(ParseException.class, "CSV record 2, field phone: " + Phone.MESSAGE_CONSTRAINTS, () ->
+                parse(input.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test

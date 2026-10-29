@@ -5,11 +5,13 @@ import java.util.logging.Logger;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
@@ -139,8 +141,16 @@ public class MainWindow extends UiPart<Stage> {
      * Sets the default size based on {@code guiSettings}.
      */
     private void setWindowDefaultSize(GuiSettings guiSettings) {
-        primaryStage.setHeight(guiSettings.getWindowHeight());
-        primaryStage.setWidth(guiSettings.getWindowWidth());
+        double width = guiSettings.getWindowWidth();
+        double height = guiSettings.getWindowHeight();
+        if (guiSettings.getWindowCoordinates() == null) {
+            // No saved position means the default size, which can exceed a small or highly scaled screen.
+            Rectangle2D screen = Screen.getPrimary().getVisualBounds();
+            width = Math.min(width, screen.getWidth());
+            height = Math.min(height, screen.getHeight());
+        }
+        primaryStage.setHeight(height);
+        primaryStage.setWidth(width);
         if (guiSettings.getWindowCoordinates() != null) {
             primaryStage.setX(guiSettings.getWindowCoordinates().getX());
             primaryStage.setY(guiSettings.getWindowCoordinates().getY());
@@ -187,7 +197,8 @@ public class MainWindow extends UiPart<Stage> {
     private CommandResult executeCommand(String commandText) throws CommandException, ParseException {
         try {
             CommandResult commandResult = logic.execute(commandText);
-            logger.info("Result: " + commandResult.getFeedbackToUser());
+            // The feedback is not logged because it can repeat candidate details.
+            logger.info("Command succeeded.");
             resultDisplay.setFeedbackToUser(commandResult.getFeedbackToUser());
 
             if (commandResult.isShowHelp()) {
@@ -200,7 +211,7 @@ public class MainWindow extends UiPart<Stage> {
 
             return commandResult;
         } catch (CommandException | ParseException e) {
-            logger.info("An error occurred while executing command: " + commandText);
+            logger.info("Command rejected with " + e.getClass().getSimpleName() + ".");
             resultDisplay.setFeedbackToUser(e.getMessage());
             throw e;
         }

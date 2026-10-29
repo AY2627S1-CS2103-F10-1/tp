@@ -17,6 +17,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 import seedu.address.logic.parser.exceptions.ParseException;
+import seedu.address.model.person.Address;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.tag.Tag;
@@ -63,7 +64,7 @@ public final class CandidateCsvParser {
         return new Person(parseField(fields, record, 0, ParserUtil::parseName),
                 parseField(fields, record, 1, ParserUtil::parsePhone),
                 parseField(fields, record, 2, ParserUtil::parseEmail),
-                parseField(fields, record, 3, ParserUtil::parseAddress),
+                parseField(fields, record, 3, value -> new Address(value.trim())),
                 parseField(fields, record, 5, CandidateCsvParser::parseTags),
                 parseField(fields, record, 4, ParserUtil::parseStatus),
                 parseField(fields, record, 6, CandidateCsvParser::parseNote));
@@ -78,8 +79,9 @@ public final class CandidateCsvParser {
         }
     }
 
-    private static Optional<Note> parseNote(String value) throws ParseException {
-        return value.isBlank() ? Optional.empty() : Optional.of(ParserUtil.parseNote(value));
+    private static Optional<Note> parseNote(String value) {
+        // CSV also restores legacy persisted text, which is not restricted to the command character allowlist.
+        return value.isBlank() ? Optional.empty() : Optional.of(new Note(value.strip()));
     }
 
     private static Set<Tag> parseTags(String value) throws ParseException {
