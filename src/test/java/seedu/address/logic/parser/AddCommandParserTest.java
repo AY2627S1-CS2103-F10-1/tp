@@ -217,25 +217,58 @@ public class AddCommandParserTest {
     public void parse_compulsoryFieldMissing_failure() {
         String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE);
 
-        // missing name prefix
+        // Missing name with a non-empty preamble retains preamble guidance.
         assertParseFailure(parser, VALID_NAME_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
                 expectedMessage);
+        assertParseFailure(parser, PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB, "Missing n/NAME.");
 
         // missing phone prefix
         assertParseFailure(parser, NAME_DESC_BOB + VALID_PHONE_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
-                expectedMessage);
+                "Missing p/PHONE_NUMBER.");
 
         // missing email prefix
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + VALID_EMAIL_BOB + ADDRESS_DESC_BOB,
-                expectedMessage);
+                "Missing e/EMAIL.");
 
         // missing address prefix
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + VALID_ADDRESS_BOB,
-                expectedMessage);
+                "Missing a/ADDRESS.");
 
         // all prefixes missing
         assertParseFailure(parser, VALID_NAME_BOB + VALID_PHONE_BOB + VALID_EMAIL_BOB + VALID_ADDRESS_BOB,
                 expectedMessage);
+    }
+
+    @Test
+    public void parse_multipleMissingFields_listsAllInSyntaxOrder() {
+        String allMissing = "Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.";
+        assertParseFailure(parser, "", allMissing);
+        assertParseFailure(parser, " s/Applied t/backend", allMissing);
+        assertParseFailure(parser, EMAIL_DESC_BOB + NAME_DESC_BOB, "Missing p/PHONE_NUMBER, a/ADDRESS.");
+        assertParseFailure(parser, " N/Bob E/bob@example.com", "Missing p/PHONE_NUMBER, a/ADDRESS.");
+    }
+
+    @Test
+    public void parse_blankRequiredFields_reportsFieldValidation() {
+        assertParseFailure(parser, " n/" + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
+                Name.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_BOB + " p/" + EMAIL_DESC_BOB + ADDRESS_DESC_BOB,
+                Phone.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + " e/" + ADDRESS_DESC_BOB,
+                Email.MESSAGE_CONSTRAINTS);
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/",
+                Address.MESSAGE_CONSTRAINTS);
+    }
+
+    @Test
+    public void parse_mixedErrors_preservesAgreedPrecedence() {
+        assertParseFailure(parser, " preamble n/Bob no/note", AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        assertParseFailure(parser, " preamble n/Bob\u4e2d", String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER,
+                "n/", 0x4e2d));
+        assertParseFailure(parser, " preamble n/Bob", String.format(MESSAGE_INVALID_COMMAND_FORMAT,
+                AddCommand.MESSAGE_USAGE));
+        assertParseFailure(parser, NAME_DESC_BOB + NAME_DESC_BOB, "Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.");
+        assertParseFailure(parser, " n/" + EMAIL_DESC_BOB, "Missing p/PHONE_NUMBER, a/ADDRESS.");
     }
 
     @Test
