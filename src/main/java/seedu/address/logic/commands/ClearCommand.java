@@ -2,6 +2,9 @@ package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.logging.Logger;
+
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -25,6 +28,8 @@ public class ClearCommand extends Command {
     public static final String MESSAGE_NO_CANDIDATES = "There are no candidates to clear.";
     public static final String MESSAGE_SUCCESS = "All candidates have been cleared.";
 
+    private static final Logger logger = LogsCenter.getLogger(ClearCommand.class);
+
     private final boolean isConfirmed;
 
     /**
@@ -47,6 +52,7 @@ public class ClearCommand extends Command {
         AddressBook empty = new AddressBook();
         empty.setRoleCatalog(model.getRoleCatalog());
         model.setAddressBook(empty);
+        logger.info("Cleared " + candidateCount + " candidate(s) after confirmation");
         return new CommandResult(MESSAGE_SUCCESS);
     }
 

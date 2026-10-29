@@ -6,7 +6,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NOTE;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.logging.Logger;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.logic.commands.exceptions.CommandException;
@@ -28,6 +30,8 @@ public class NoteCommand extends Command {
     public static final String MESSAGE_SUCCESS = "Updated note for %1$s: %2$s";
     public static final String MESSAGE_CLEAR_SUCCESS = "Cleared note for %1$s";
     public static final String MESSAGE_INVALID_CANDIDATE_INDEX = "The candidate index provided is invalid.";
+
+    private static final Logger logger = LogsCenter.getLogger(NoteCommand.class);
 
     private final Index index;
     private final Optional<Note> note;
@@ -62,6 +66,9 @@ public class NoteCommand extends Command {
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
                 candidate.getAddress(), candidate.getTags(), candidate.getStatus(), note, candidate.getRoles());
         model.setPerson(candidate, updatedCandidate);
+        // Logs the position only, as notes and names are personal data.
+        String action = note.isPresent() ? "Updated" : "Cleared";
+        logger.info(action + " the note of the candidate at displayed index " + index.getOneBased());
         String message = note.map(value -> String.format(MESSAGE_SUCCESS, candidate.getName(), value))
                 .orElseGet(() -> String.format(MESSAGE_CLEAR_SUCCESS, candidate.getName()));
         return new CommandResult(message);

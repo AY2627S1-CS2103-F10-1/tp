@@ -46,7 +46,7 @@ public class LogicManager implements Logic {
 
     @Override
     public CommandResult execute(String commandText) throws CommandException, ParseException {
-        logger.info("----------------[USER COMMAND][" + commandText + "]");
+        logger.info("----------------[USER COMMAND][" + getCommandWord(commandText) + "]");
 
         CommandResult commandResult;
         Command command = addressBookParser.parseCommand(commandText);
@@ -71,14 +71,28 @@ public class LogicManager implements Logic {
         try {
             storage.saveAddressBook(model.getAddressBook());
         } catch (AccessDeniedException e) {
-            restore.run();
+            rollBack(restore);
             throw new CommandException(String.format(FILE_OPS_PERMISSION_ERROR_FORMAT, e.getMessage()), e);
         } catch (IOException ioe) {
-            restore.run();
+            rollBack(restore);
             throw new CommandException(String.format(FILE_OPS_ERROR_FORMAT, ioe.getMessage()), ioe);
         }
 
         return commandResult;
+    }
+
+    /** Restores the model to its state before the command, which the data file still holds. */
+    private void rollBack(Runnable restore) {
+        restore.run();
+        logger.warning("Could not save the changes made by the command, so they were rolled back.");
+    }
+
+    /**
+     * Returns the first word of {@code commandText}. The arguments are left out of the log because they can hold
+     * candidate names, contact details and notes.
+     */
+    private static String getCommandWord(String commandText) {
+        return commandText.strip().split("\\s+", 2)[0];
     }
 
     /** Completes export before reporting success and deliberately bypasses unrelated JSON saving. */
