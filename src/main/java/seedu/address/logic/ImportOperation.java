@@ -3,8 +3,10 @@ package seedu.address.logic;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
@@ -17,6 +19,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.storage.Storage;
 
 /** Coordinates whole-batch import and restores the in-memory snapshot if application or saving fails. */
@@ -34,7 +38,7 @@ final class ImportOperation {
         AddressBook snapshot = new AddressBook(model.getAddressBook());
         Predicate<? super Person> filter = model.getPersonFilter();
         Person expanded = model.isExpandedViewProperty().get() ? model.getFilteredPersonList().getFirst() : null;
-        List<Person> imported = readCandidates();
+        List<Person> imported = readCandidates(snapshot.getRoleCatalog());
         AddressBook combined = combine(snapshot, imported);
         try {
             model.setAddressBook(combined);
@@ -49,13 +53,24 @@ final class ImportOperation {
         }
         model.updateFilteredPersonList(Model.PREDICATE_SHOW_ALL_PERSONS);
         String importedSummary = imported.size() + (imported.size() == 1 ? " candidate" : " candidates");
+        String createdRoles = describeCreatedRoles(snapshot.getRoleCatalog(), combined.getRoleCatalog());
         logger.info("Import completed: " + importedSummary + ".");
-        return new CommandResult("Imported " + importedSummary + " successfully.");
+        return new CommandResult("Imported " + importedSummary + " successfully." + createdRoles);
     }
 
-    private List<Person> readCandidates() throws CommandException {
+    /** Names the roles that {@code after} adds to {@code before}, or returns an empty string if none. */
+    private static String describeCreatedRoles(RoleCatalog before, RoleCatalog after) {
+        List<String> names = after.getRoles().stream()
+                .filter(role -> !before.getRoles().contains(role)).map(Role::getName).toList();
+        if (names.isEmpty()) {
+            return "";
+        }
+        return (names.size() == 1 ? " Created role: " : " Created roles: ") + String.join(", ", names) + ".";
+    }
+
+    private List<Person> readCandidates(RoleCatalog roleCatalog) throws CommandException {
         try {
-            return CandidateCsvParser.parse(storage.readImport());
+            return CandidateCsvParser.parse(storage.readImport(), roleCatalog);
         } catch (IOException | ParseException e) {
             throw new CommandException("Import failed: " + e.getMessage(), e);
         }
@@ -75,8 +90,11 @@ final class ImportOperation {
             }
             candidates.add(person);
         }
+        // Imported roles are either catalog entries or new roles that the parser created once per name.
+        Set<Role> roles = new LinkedHashSet<>(snapshot.getRoleCatalog().getRoles());
+        imported.forEach(person -> roles.addAll(person.getRoles()));
         AddressBook combined = new AddressBook();
-        combined.setRoleCatalog(snapshot.getRoleCatalog());
+        combined.setRoleCatalog(new RoleCatalog(roles));
         combined.setPersons(candidates);
         return combined;
     }
