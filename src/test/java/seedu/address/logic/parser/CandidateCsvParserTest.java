@@ -55,6 +55,54 @@ public class CandidateCsvParserTest {
     }
 
     @Test
+    public void parse_noBreakSpacesInRoleNames_identifiesRecordAndField() {
+        for (String name : List.of("Designer\u00a0", "No role\u00a0", "QA\u00a0Lead")) {
+            assertThrows(ParseException.class, "CSV record 2, field roles: "
+                    + String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x00a0), () ->
+                    parseRoles("[\"" + name + "\"]"));
+        }
+    }
+
+    @Test
+    public void parse_formatCharactersInRoleNames_identifiesRecordAndField() {
+        for (String name : List.of("\u200b", "QA\u200bLead")) {
+            assertThrows(ParseException.class, "CSV record 2, field roles: "
+                    + String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x200b), () ->
+                    parseRoles("[\"" + name + "\"]"));
+        }
+        assertThrows(ParseException.class, "CSV record 2, field roles: "
+                + String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0xfeff), () ->
+                parseRoles("[\"QA\ufeffLead\"]"));
+    }
+
+    @Test
+    public void parse_controlCharactersInRoleNames_identifiesRecordAndField() {
+        for (String name : List.of("QA\\tLead", "QA\\rLead", "QA\\nLead", "QA\\u0000Lead", "QA\\u007fLead")) {
+            assertThrows(ParseException.class, "CSV record 2, field roles: " + Role.MESSAGE_CONSTRAINTS, () ->
+                    parseRoles("[\"" + name + "\"]"));
+        }
+    }
+
+    @Test
+    public void parse_visibleUnicodeAndQuotedRoleNames_preservesNames() throws Exception {
+        Person candidate = parseRoles("[\" Caf\u00e9, \\\"Design\\\" \",\"R\\\\D\"]");
+
+        assertEquals(Set.of("Caf\u00e9, \"Design\"", "R\\D"), candidate.getRoles().stream()
+                .map(Role::getName).collect(Collectors.toSet()));
+    }
+
+    @Test
+    public void parse_equivalentUnicodeRoleName_matchesCatalog() throws Exception {
+        Role cafe = Role.create("Caf\u00e9");
+        String input = HEADER + candidate("candidate@example.com", "[\" CAFE\u0301 \"]");
+
+        List<Person> candidates = CandidateCsvParser.parse(input.getBytes(StandardCharsets.UTF_8),
+                new RoleCatalog(List.of(Role.NO_ROLE, cafe)));
+
+        assertEquals(Set.of(cafe), candidates.getFirst().getRoles());
+    }
+
+    @Test
     public void parse_exportFormat_preservesLiteralValuesAndNormalizesTagsAndStatus() throws Exception {
         Person person = parseRow("[\"java\",\" Java \",\"java\"]", "  iNtErViEwInG ",
                 "Follow up, \"quoted\" feedback");

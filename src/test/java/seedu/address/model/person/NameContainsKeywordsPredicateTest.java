@@ -66,6 +66,44 @@ public class NameContainsKeywordsPredicateTest {
     }
 
     @Test
+    public void test_keywordsContainParenthesesOrCommas_returnsTrue() {
+        Person aliasCandidate = new PersonBuilder().withName("Tan Wei Ming (Kelvin Chen)").build();
+        Person suffixCandidate = new PersonBuilder().withName("Martin Luther King, Jr.").build();
+
+        assertTrue(new NameContainsKeywordsPredicate(List.of("(Kelvin)")).test(aliasCandidate));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("(kEL)")).test(aliasCandidate));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("Chen)")).test(aliasCandidate));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("King,")).test(suffixCandidate));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("Nobody", "(Kelvin)")).test(aliasCandidate));
+    }
+
+    @Test
+    public void test_punctuationOnlyKeywords_doNotMatchEveryCandidate() {
+        Person candidate = new PersonBuilder().withName("Tan Wei Ming (Kelvin)").build();
+
+        assertFalse(new NameContainsKeywordsPredicate(List.of("(", ")", ",", "(,)")).test(candidate));
+        assertFalse(new NameContainsKeywordsPredicate(List.of("(,)", "Nobody")).test(candidate));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("(,)", "Kelvin")).test(candidate));
+    }
+
+    @Test
+    public void test_normalizedKeywordInsideNameWord_returnsFalse() {
+        Person candidate = new PersonBuilder().withName("Tan Wei Ming (Kelvin)").build();
+
+        assertFalse(new NameContainsKeywordsPredicate(List.of("(elvin)")).test(candidate));
+        assertFalse(new NameContainsKeywordsPredicate(List.of("(Kelvins)")).test(candidate));
+    }
+
+    @Test
+    public void test_apostrophesAndHyphens_keepWordPrefixSemantics() {
+        Person candidate = new PersonBuilder().withName("Kelly-Ann O'Brien").build();
+
+        assertTrue(new NameContainsKeywordsPredicate(List.of("Kelly-A")).test(candidate));
+        assertTrue(new NameContainsKeywordsPredicate(List.of("O'B")).test(candidate));
+        assertFalse(new NameContainsKeywordsPredicate(List.of("Ann", "Brien")).test(candidate));
+    }
+
+    @Test
     public void test_keywordStartsNameWord_returnsTrue() {
         // Start of the first word
         NameContainsKeywordsPredicate predicate = new NameContainsKeywordsPredicate(List.of("Ale"));

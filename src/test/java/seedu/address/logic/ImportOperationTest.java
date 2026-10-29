@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.ParserUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
@@ -191,6 +193,44 @@ public class ImportOperationTest {
 
         assertEquals(List.of("Designer", "No role", "QA"),
                 model.getRoleCatalog().getRoles().stream().map(Role::getName).toList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_roleNamesWithNoBreakSpaces_preservesCatalogDataAndView() throws Exception {
+        model.createRole("Designer");
+        storage.saveAddressBook(model.getAddressBook());
+        for (String name : List.of("Designer\u00a0", "No role\u00a0", "QA\u00a0Lead")) {
+            assertInvalidRoleImportPreservesState(name,
+                    String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x00a0));
+        }
+    }
+
+    @Test
+    public void execute_roleNamesWithFormatCharacters_preservesCatalogDataAndView() throws Exception {
+        for (String name : List.of("\u200b", "QA\u200bLead")) {
+            assertInvalidRoleImportPreservesState(name,
+                    String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x200b));
+        }
+    }
+
+    @Test
+    public void execute_roleNamesWithControlCharacters_preservesCatalogDataAndView() throws Exception {
+        for (String name : List.of("QA\tLead", "QA\rLead", "QA\nLead", "QA\u0000Lead", "QA\u007fLead")) {
+            assertInvalidRoleImportPreservesState(name, Role.MESSAGE_CONSTRAINTS);
+        }
+    }
+
+    @Test
+    public void execute_visibleUnicodeAndQuotedRoleNames_savesAndReloads() throws Exception {
+        List<String> names = List.of("Caf\u00e9, \"Design\"", "R\\D");
+        Role[] roles = names.stream().map(Role::create).toArray(Role[]::new);
+        writeInput(new PersonBuilder(incoming).withRoles(roles).build());
+
+        logic.execute("import");
+
+        assertEquals(Set.copyOf(names), model.getAddressBook().getPersonList().getLast().getRoles().stream()
+                .map(Role::getName).collect(Collectors.toSet()));
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
     }
 
@@ -406,6 +446,33 @@ public class ImportOperationTest {
                 + "stop using HRvest and check the saved data before restarting.", thrown.getMessage());
         assertSame(failure, thrown.getCause());
         assertEquals(0, failure.getSuppressed().length);
+    }
+
+    private void assertInvalidRoleImportPreservesState(String name, String error) throws Exception {
+        writeInput(new PersonBuilder(incoming).withRoles(Role.create("QA")).build());
+        String roles = new ObjectMapper().writeValueAsString(List.of("New role", name));
+        Files.writeString(inputPath(), record(List.of("Another Candidate", "12345", "another@example.com",
+                "Address", "Applied", "[]", "", roles)), StandardOpenOption.APPEND);
+        model.expandPerson(existing);
+        AddressBook original = new AddressBook(model.getAddressBook());
+        Predicate<? super Person> filter = model.getPersonFilter();
+        byte[] candidates = Files.readAllBytes(storage.getAddressBookFilePath());
+        byte[] catalog = Files.readAllBytes(directory.resolve("data/roles.json"));
+        byte[] input = Files.readAllBytes(inputPath());
+        int saves = storage.saves;
+
+        assertThrows(CommandException.class, "Import failed: CSV record 3, field roles: " + error, () ->
+                logic.execute("import"));
+
+        assertEquals(original, model.getAddressBook());
+        assertEquals(original.getRoleCatalog(), model.getRoleCatalog());
+        assertSame(filter, model.getPersonFilter());
+        assertEquals(List.of(existing), model.getFilteredPersonList());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(saves, storage.saves);
+        assertArrayEquals(candidates, Files.readAllBytes(storage.getAddressBookFilePath()));
+        assertArrayEquals(catalog, Files.readAllBytes(directory.resolve("data/roles.json")));
+        assertArrayEquals(input, Files.readAllBytes(inputPath()));
     }
 
     private void assertRollbackVerificationFailure(Model failingModel) throws Exception {

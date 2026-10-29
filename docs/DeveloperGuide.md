@@ -980,11 +980,18 @@ testers are expected to do more *exploratory* testing.
 1. Run `find Betsy`, then change that candidate's name with `edit 1 n/Other Name`. Expected: The candidate disappears if the new name does not match.
 1. Run `filter s/Applied`, `expand 1`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded at index `1` after each update, including the Offered status change. Expansion replaces the earlier status filter with a selection of the candidate. Run `list` to show all candidates again.
 
+### Legal-name markers and address ambiguity
+
+1. In a test copy with a candidate at index `1`, run `edit 1 n/John a/L Street a/9 Road`. Expected: A clarification error asks for `a/ADDRESS` before `n/NAME`; the candidate, saved data, filter, and expanded view remain unchanged. Repeat with `a/P Lane` and with uppercase prefixes.
+1. Run `edit 1 a/L Street n/John`. Expected: The name is `John` and address is `L Street`. Run `edit 1 a/9 Road n/Siti a/p Ahmad`. Expected: The legal name remains intact and the address is `9 Road`. Close and restart; both fields retain those values.
+1. With an unused email, run `add n/Siti a/p Ahmad p/91234567 e/lineage@example.com a/1 Road r/No role`. Expected: The legal name and address are saved correctly because the phone field separates them. Run `add n/Ravi s/o Kumar p/91234567 e/lineageso@example.com a/1 Road r/No role` with another unused email; `s/o` remains in the name.
+
 ### Updating status, finding and filtering
 
 1. Run `list`, then `status 1 s/Interviewing`. Expected: The message is `Updated status of NAME: OLD_STATUS -> Interviewing`, and the first card shows Interviewing.
 1. Run `status 1 s/Hired`, then `status 1`. Expected: The first lists the valid statuses and the second gives the command format. The candidate is unchanged.
 1. With the sample candidates, run `find ale`. Expected: Alex Yeoh is listed, because `ale` starts a word in the name. Run `find eoh`. Expected: `0 candidate(s) listed!`
+1. In a test copy, add candidates named `Tan Wei Ming (Kelvin)` and `Martin Luther King, Jr.` with distinct emails. Run `find (Kelvin)` and `find King,`. Expected: Each finds the corresponding candidate, as `find Kelvin` and `find King` do. Run `find (),`. Expected: No candidates match.
 1. Run `filter s/Interviewing s/Offered`. Expected: Only candidates with either status are listed. Run `filter s/Hired`. Expected: The valid statuses are listed, and the displayed list is unchanged.
 
 ### Viewing a candidate's full record
@@ -999,6 +1006,7 @@ testers are expected to do more *exploratory* testing.
 1. Copy the template from the User Guide's `import` section into `data/import.csv`, using an email that no candidate has, and run `import`. Expected: `Imported 1 candidate successfully.` The candidate appears at the end of the full list with `No role`.
 1. Run `import` again without changing the file. Expected: An error names the CSV record whose email is a duplicate, and no candidate is added.
 1. Run `add_role n/Developer` if that role does not exist, then `edit 1 r/Developer` and `export`. Replace `data/import.csv` with a copy of `data/export.csv`, run `clear confirm`, then run `import`. Expected: Every candidate returns with the roles it had before, and the first candidate still has Developer.
+1. In a separate test copy of that CSV, insert a no-break space (`U+00A0`) after a role name in a later record's `roles` array, then run `import`. Expected: An error identifies that record and the `roles` field. No candidates or roles are added; the previous filter or expanded view and both saved JSON files remain unchanged. Repeat with `No role` followed by a no-break space and a zero-width-space-only (`U+200B`) role.
 
 ### Clearing all candidates
 
@@ -1049,6 +1057,7 @@ testers are expected to do more *exploratory* testing.
 Use a separate test folder and keep a matching backup of candidate and catalog files.
 
 1. Run `add_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
+1. Create at least five short roles and run `list_role` at the default window size. Expected: The result area grows so more than two role names are visible without scrolling, while candidate cards remain visible. Run `list`; the result area returns to its ordinary height. Repeat with many roles or a long wrapping name; the result area stays bounded and scrolling reaches the final role. Resize the window and confirm neither feedback nor candidate cards become inaccessible.
 1. Run `add_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalog.
 1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
 1. Assign `Senior Documentation Tester` to two candidates with `edit INDEX r/Senior Documentation Tester`; give one another existing role using a second `r/` in the same edit. Filter so one candidate is hidden, then rename the role again. Expected: Both assignments update, their role IDs stay unchanged, and other fields and assignments are preserved.

@@ -110,7 +110,8 @@ public final class CandidateCsvParser {
         }
         Set<Role> roles = new HashSet<>();
         for (String name : names) {
-            roles.add(knownRoles.computeIfAbsent(Role.toLookupKey(name), key -> Role.create(name)));
+            String roleName = ParserUtil.parseRoleName(name);
+            roles.add(knownRoles.computeIfAbsent(Role.toLookupKey(roleName), key -> Role.create(roleName)));
         }
         return roles;
     }
