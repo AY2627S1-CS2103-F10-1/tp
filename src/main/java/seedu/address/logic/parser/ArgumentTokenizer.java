@@ -180,9 +180,15 @@ public class ArgumentTokenizer {
      */
     private static List<PrefixPosition> removeNameConnectors(String argsString,
             List<PrefixPosition> prefixPositions) {
+        List<PrefixPosition> candidates = findNameConnectorCandidates(argsString, prefixPositions);
+        boolean hasAddressField = hasAddressField(prefixPositions, candidates);
         List<PrefixPosition> keptPositions = new ArrayList<>();
         for (PrefixPosition position : prefixPositions) {
-            if (!isNameConnector(argsString, prefixPositions, keptPositions, position)) {
+            // No status is "o", so s/o is always a connector. An address can start with "L " or "P ", so a/l and
+            // a/p are connectors only when a separate address field gives the address.
+            boolean isConnector = candidates.contains(position)
+                    && (!isAddressLikeConnector(argsString, position) || hasAddressField);
+            if (!isConnector) {
                 keptPositions.add(position);
             }
         }
@@ -190,45 +196,53 @@ public class ArgumentTokenizer {
     }
 
     /**
-     * Returns whether {@code position} is a name connector directly inside a name value.
-     * No status is "o", so {@code s/o} is always a connector there. An address can start with "L " or "P ", so
-     * {@code a/l} and {@code a/p} are connectors only when another {@code a/} field gives the address.
+     * Returns the sorted {@code prefixPositions} that could be name connectors because they continue a name value,
+     * e.g. both {@code a/p} and {@code a/L} in {@code n/Siti a/p Ahmad a/L Street}.
      */
-    private static boolean isNameConnector(String argsString, List<PrefixPosition> allPositions,
-            List<PrefixPosition> keptPositions, PrefixPosition position) {
-        boolean isInsideName = !keptPositions.isEmpty() && keptPositions.getLast().getPrefix().equals(PREFIX_NAME);
-        Optional<String> connector = findConnectorAt(argsString, position.getStartPosition());
-        if (!isInsideName || connector.isEmpty()) {
-            return false;
+    private static List<PrefixPosition> findNameConnectorCandidates(String argsString,
+            List<PrefixPosition> prefixPositions) {
+        List<PrefixPosition> candidates = new ArrayList<>();
+        Prefix currentFieldPrefix = null;
+        for (PrefixPosition position : prefixPositions) {
+            boolean isInsideName = PREFIX_NAME.equals(currentFieldPrefix);
+            if (isInsideName && findConnectorAt(argsString, position.getStartPosition()).isPresent()) {
+                candidates.add(position);
+            } else {
+                currentFieldPrefix = position.getPrefix();
+            }
         }
-        return !ADDRESS_LIKE_CONNECTORS.contains(connector.get()) || hasOtherAddressField(allPositions, position);
+        return candidates;
     }
 
     /**
-     * Returns the text of an {@code a/l} or {@code a/p} that directly follows a name but is read as the address,
-     * because no other {@code a/} field gives the address.
+     * Returns the text of the first {@code a/l} or {@code a/p} that continues a name when no separate address
+     * field exists, so it could be either the address or part of the name.
      */
     private static Optional<String> findAmbiguousNameConnector(String argsString,
             List<PrefixPosition> prefixPositions) {
         List<PrefixPosition> sortedPositions = new ArrayList<>(prefixPositions);
         sortedPositions.sort(Comparator.comparingInt(PrefixPosition::getStartPosition));
-        List<PrefixPosition> fieldPositions = removeNameConnectors(argsString, sortedPositions);
-        for (int i = 1; i < fieldPositions.size(); i++) {
-            int start = fieldPositions.get(i).getStartPosition();
-            boolean isAfterName = fieldPositions.get(i - 1).getPrefix().equals(PREFIX_NAME);
-            boolean isAddressLikeConnector = findConnectorAt(argsString, start)
-                    .filter(ADDRESS_LIKE_CONNECTORS::contains).isPresent();
-            if (isAfterName && isAddressLikeConnector) {
-                return Optional.of(argsString.substring(start, start + NAME_CONNECTOR_LENGTH));
-            }
+        List<PrefixPosition> candidates = findNameConnectorCandidates(argsString, sortedPositions);
+        if (hasAddressField(sortedPositions, candidates)) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        return candidates.stream()
+                .filter(candidate -> isAddressLikeConnector(argsString, candidate))
+                .findFirst()
+                .map(candidate -> argsString.substring(candidate.getStartPosition(),
+                        candidate.getStartPosition() + NAME_CONNECTOR_LENGTH));
     }
 
-    /** Returns whether a position other than {@code connector} starts an address field. */
-    private static boolean hasOtherAddressField(List<PrefixPosition> positions, PrefixPosition connector) {
+    /** Returns whether an address field exists that is not itself a possible name connector. */
+    private static boolean hasAddressField(List<PrefixPosition> positions, List<PrefixPosition> candidates) {
         return positions.stream()
-                .anyMatch(position -> position != connector && position.getPrefix().equals(PREFIX_ADDRESS));
+                .anyMatch(position -> position.getPrefix().equals(PREFIX_ADDRESS) && !candidates.contains(position));
+    }
+
+    /** Returns whether {@code position} starts {@code a/l} or {@code a/p} followed by whitespace. */
+    private static boolean isAddressLikeConnector(String argsString, PrefixPosition position) {
+        return findConnectorAt(argsString, position.getStartPosition())
+                .filter(ADDRESS_LIKE_CONNECTORS::contains).isPresent();
     }
 
     /** Returns the lower-case name connector followed by whitespace that starts at {@code start}, if any. */

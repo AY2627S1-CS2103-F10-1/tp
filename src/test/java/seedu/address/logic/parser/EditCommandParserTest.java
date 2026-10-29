@@ -168,6 +168,25 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_twoAddressLikeConnectorsWithoutAddress_failure() {
+        // Regression: each a/ counted as the other's address, so both were swallowed into the name.
+        assertParseFailure(parser, "1 n/Siti a/p Ahmad a/L Street",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"));
+        assertParseFailure(parser, "1 n/Siti a/l Ahmad a/P Road",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/l"));
+        assertParseFailure(parser, "1 n/Ravi s/o Kumar a/L Street",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+    }
+
+    @Test
+    public void parse_addressLikeAddressBeforeConnectorName_editsAddressAndName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Siti a/p Ahmad")
+                .withAddress("L Street").build();
+
+        assertParseSuccess(parser, "1 a/L Street n/Siti a/p Ahmad", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_addressBeforeName_editsAddressAndName() {
         EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("John")
                 .withAddress("L Street").build();

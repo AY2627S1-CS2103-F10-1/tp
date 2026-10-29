@@ -66,6 +66,23 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenizeWithValidation_onlyConnectorLikeAddresses_throwsParseException() {
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" n/Siti a/p Ahmad a/L Street", Set.of(),
+                        CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void tokenizeWithValidation_connectorLikeAddressBeforeName_readAsAddress() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(" a/L Street n/Siti a/p Ahmad",
+                Set.of(), CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Siti a/p Ahmad");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "L Street");
+    }
+
+    @Test
     public void tokenizeWithValidation_statusConnectorWithoutAddress_keptInName() throws Exception {
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(" n/Ravi s/o Kumar", Set.of(),
                 CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
