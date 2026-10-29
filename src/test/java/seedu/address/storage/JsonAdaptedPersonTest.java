@@ -154,16 +154,6 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
-    public void toModelType_savedPhoneOutsideInputRules_preservesPhone() throws Exception {
-        for (String phone : new String[] {"Office: 911", "9".repeat(Phone.MAX_INPUT_LENGTH + 1)}) {
-            JsonAdaptedPerson person =
-                    new JsonAdaptedPerson(VALID_NAME, phone, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS, null);
-
-            assertEquals(phone, person.toModelType().getPhone().value);
-        }
-    }
-
-    @Test
     public void toModelType_nullPhone_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, null, VALID_EMAIL, VALID_ADDRESS, VALID_TAGS, null);

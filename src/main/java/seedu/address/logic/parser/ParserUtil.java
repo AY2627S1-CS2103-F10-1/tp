@@ -202,7 +202,7 @@ public class ParserUtil {
     }
 
     /**
-     * Parses a {@code String phone} into a {@code Phone}, applying the rules for new phone input.
+     * Parses a {@code String phone} into a {@code Phone}.
      * Leading and trailing whitespaces will be trimmed.
      *
      * @throws ParseException if the given {@code phone} is invalid.
@@ -210,8 +210,8 @@ public class ParserUtil {
     public static Phone parsePhone(String phone) throws ParseException {
         verifyPrintableAscii(phone, "Phone");
         String trimmedPhone = phone.trim();
-        if (!Phone.isValidPhoneInput(trimmedPhone)) {
-            throw new ParseException(Phone.MESSAGE_INPUT_CONSTRAINTS);
+        if (!Phone.isValidPhone(trimmedPhone)) {
+            throw new ParseException(Phone.MESSAGE_CONSTRAINTS);
         }
         return new Phone(trimmedPhone);
     }
