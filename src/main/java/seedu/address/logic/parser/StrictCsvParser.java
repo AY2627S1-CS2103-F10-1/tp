@@ -40,7 +40,8 @@ final class StrictCsvParser {
             if (position < input.length()) {
                 if (input.charAt(position) == ',') {
                     throw error("Too many columns: expected " + COLUMN_COUNT
-                            + "; found an extra column after field " + COLUMN_COUNT + " (note).");
+                            + "; found an extra column after field " + COLUMN_COUNT + " ("
+                            + CandidateCsvFormat.HEADERS.getLast() + ").");
                 }
                 readLineEnding();
             }

@@ -8,7 +8,11 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,18 +24,23 @@ import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.Address;
 import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.model.tag.Tag;
 
 /** Converts the strict exported CSV format into validated candidates without touching live data. */
 public final class CandidateCsvParser {
-    private static final int MAX_TAGS = 100;
-    private static final int MAX_TAG_LENGTH = 256;
+    private static final int MAX_NAMES = 100;
+    private static final int MAX_NAME_LENGTH = 256;
 
     private CandidateCsvParser() {
     }
 
-    /** Decodes strict UTF-8 and validates every record, accepting zero bytes as a zero-candidate import. */
-    public static List<Person> parse(byte[] bytes) throws ParseException {
+    /**
+     * Decodes strict UTF-8 and validates every record, accepting zero bytes as a zero-candidate import.
+     * Role names missing from {@code roleCatalog} become new roles, shared by every record that names them.
+     */
+    public static List<Person> parse(byte[] bytes, RoleCatalog roleCatalog) throws ParseException {
         String text;
         try {
             text = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
@@ -53,21 +62,25 @@ public final class CandidateCsvParser {
         if (!records.getFirst().equals(HEADERS)) {
             throw new ParseException("CSV header must be " + String.join(",", HEADERS) + " in that order.");
         }
+        Map<String, Role> knownRoles = new HashMap<>();
+        roleCatalog.getRoles().forEach(role -> knownRoles.put(Role.toLookupKey(role.getName()), role));
         List<Person> persons = new ArrayList<>();
         for (int index = 1; index < records.size(); index++) {
-            persons.add(parsePerson(records.get(index), index + 1));
+            persons.add(parsePerson(records.get(index), index + 1, knownRoles));
         }
         return persons;
     }
 
-    private static Person parsePerson(List<String> fields, int record) throws ParseException {
+    private static Person parsePerson(List<String> fields, int record, Map<String, Role> knownRoles)
+            throws ParseException {
         return new Person(parseField(fields, record, 0, ParserUtil::parseName),
                 parseField(fields, record, 1, ParserUtil::parsePhone),
                 parseField(fields, record, 2, ParserUtil::parseEmail),
                 parseField(fields, record, 3, value -> new Address(value.trim())),
                 parseField(fields, record, 5, CandidateCsvParser::parseTags),
                 parseField(fields, record, 4, ParserUtil::parseStatus),
-                parseField(fields, record, 6, CandidateCsvParser::parseNote));
+                parseField(fields, record, 6, CandidateCsvParser::parseNote),
+                parseField(fields, record, 7, value -> parseRoles(value, knownRoles)));
     }
 
     private static <T> T parseField(List<String> fields, int record, int column, FieldParser<T> parser)
@@ -85,32 +98,53 @@ public final class CandidateCsvParser {
     }
 
     private static Set<Tag> parseTags(String value) throws ParseException {
+        return ParserUtil.parseTags(parseNames(value, "Tags"));
+    }
+
+    /** Matches role names as role commands do, creating each unknown role once per import. */
+    private static Set<Role> parseRoles(String value, Map<String, Role> knownRoles) throws ParseException {
+        List<String> names = parseNames(value, "Roles");
+        if (names.isEmpty()) {
+            throw new ParseException("Each candidate needs at least one role; "
+                    + "use [\"No role\"] if no role applies.");
+        }
+        Set<Role> roles = new HashSet<>();
+        for (String name : names) {
+            roles.add(knownRoles.computeIfAbsent(Role.toLookupKey(name), key -> Role.create(name)));
+        }
+        return roles;
+    }
+
+    /** Reads a flat JSON array of strings, checking its limits before any trimming or deduplication. */
+    private static List<String> parseNames(String value, String field) throws ParseException {
+        String arrayName = field.toLowerCase(Locale.ROOT);
         List<String> names = new ArrayList<>();
         try (JsonParser parser = new JsonFactory().createParser(value)) {
             if (parser.nextToken() != JsonToken.START_ARRAY) {
-                throw new ParseException("Tags must be a JSON array of strings.");
+                throw new ParseException(field + " must be a JSON array of strings.");
             }
             while (parser.nextToken() != JsonToken.END_ARRAY) {
                 if (parser.getCurrentToken() != JsonToken.VALUE_STRING) {
-                    throw new ParseException("Tags must contain strings only, without nested arrays or objects.");
+                    throw new ParseException(field
+                            + " must contain strings only, without nested arrays or objects.");
                 }
-                if (names.size() >= MAX_TAGS) {
-                    throw new ParseException("Tags exceed the 100-entry limit.");
+                if (names.size() >= MAX_NAMES) {
+                    throw new ParseException(field + " exceed the 100-entry limit.");
                 }
                 String name = parser.getText();
-                if (name.codePointCount(0, name.length()) > MAX_TAG_LENGTH) {
-                    throw new ParseException("Tag name exceeds 256 characters.");
+                if (name.codePointCount(0, name.length()) > MAX_NAME_LENGTH) {
+                    throw new ParseException(field + " must not contain a name longer than 256 characters.");
                 }
                 names.add(name);
             }
             if (parser.nextToken() != null) {
-                throw new ParseException("Unexpected content after the tags array.");
+                throw new ParseException("Unexpected content after the " + arrayName + " array.");
             }
         } catch (IOException e) {
             // Jackson messages can contain source values; keep candidate contents out of errors.
-            throw new ParseException("Malformed tags JSON; expected an array of strings.");
+            throw new ParseException("Malformed " + arrayName + " JSON; expected an array of strings.");
         }
-        return ParserUtil.parseTags(names);
+        return names;
     }
 
     @FunctionalInterface

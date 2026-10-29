@@ -31,28 +31,36 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.model.AddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class CsvExportWriterTest {
-    private static final String HEADER = "\"name\",\"phone\",\"email\",\"address\",\"status\",\"tags\",\"note\"\r\n";
+    private static final String HEADER = "\"name\",\"phone\",\"email\",\"address\",\"status\","
+            + "\"tags\",\"note\",\"roles\"\r\n";
+    private static final String NO_ROLES = "[\"No role\"]";
 
     @TempDir
     public Path directory;
 
     @Test
     public void writeCsv_specialCharacters_exactOutput() throws Exception {
+        Role designer = Role.create("Designer");
+        Role developer = Role.create("backend Developer");
         AddressBook book = new AddressBook();
+        book.setRoleCatalog(new RoleCatalog(List.of(Role.NO_ROLE, designer, developer)));
         book.addPerson(new PersonBuilder().withName("Alice").withPhone("00123").withEmail("alice@example.com")
                 .withAddress("=1+1, \"街\"").withTags("java", "backend", "Java")
-                .withNote("@literal\r\nnext, \"quoted\"").build());
+                .withNote("@literal\r\nnext, \"quoted\"").withRoles(designer, developer).build());
         StringWriter output = new StringWriter();
 
         new CsvExportWriter().writeCsv(book, output);
 
         assertEquals(HEADER + "\"Alice\",\"00123\",\"alice@example.com\",\"=1+1, \"\"街\"\"\","
                 + "\"Applied\",\"[\"\"Java\"\",\"\"backend\"\",\"\"java\"\"]\","
-                + "\"@literal\r\nnext, \"\"quoted\"\"\"\r\n", output.toString());
+                + "\"@literal\r\nnext, \"\"quoted\"\"\",\"[\"\"backend Developer\"\",\"\"Designer\"\"]\"\r\n",
+                output.toString());
     }
 
     @Test
@@ -82,8 +90,8 @@ public class CsvExportWriterTest {
             consumed = matcher.end();
         }
         assertEquals(records.length(), consumed);
-        assertEquals(List.of("Alice", "123", "alice@example.com", ascii, "Applied", "[]", ascii,
-                "Bob", "456", "bob@example.com", "Legacy", "Applied", "[]", legacy), fields);
+        assertEquals(List.of("Alice", "123", "alice@example.com", ascii, "Applied", "[]", ascii, NO_ROLES,
+                "Bob", "456", "bob@example.com", "Legacy", "Applied", "[]", legacy, NO_ROLES), fields);
     }
 
     @Test
@@ -118,7 +126,7 @@ public class CsvExportWriterTest {
         CsvExportWriter exporter = new CsvExportWriter();
         assertEquals(destination, exporter.export(book, destination));
         assertEquals(3, Files.readAllLines(destination).size());
-        assertTrue(Files.readString(destination).endsWith("\"[]\",\"\"\r\n"));
+        assertTrue(Files.readString(destination).endsWith("\"[]\",\"\",\"[\"\"No role\"\"]\"\r\n"));
         exporter.export(new AddressBook(), destination);
         assertEquals(CsvExportWriter.BYTE_ORDER_MARK + HEADER, Files.readString(destination));
         try (var entries = Files.list(directory)) {
