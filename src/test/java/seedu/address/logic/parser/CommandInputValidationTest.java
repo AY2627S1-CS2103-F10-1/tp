@@ -105,7 +105,7 @@ public class CommandInputValidationTest {
 
     @Test
     public void parseFields_printableButInvalidValues_retainsFieldRules() {
-        assertThrows(ParseException.class, Phone.MESSAGE_CONSTRAINTS, () -> ParserUtil.parsePhone("Office: 12"));
+        assertThrows(ParseException.class, Phone.MESSAGE_INPUT_CONSTRAINTS, () -> ParserUtil.parsePhone("Office: 12"));
         assertThrows(ParseException.class, Email.MESSAGE_CONSTRAINTS, () -> ParserUtil.parseEmail("not an email"));
     }
 

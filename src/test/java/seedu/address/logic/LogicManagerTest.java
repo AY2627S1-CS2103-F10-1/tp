@@ -105,7 +105,7 @@ public class LogicManagerTest {
         JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         String before = Files.readString(saved.getAddressBookFilePath());
 
-        assertParseException("edit 1 p/Office: 12", Phone.MESSAGE_CONSTRAINTS);
+        assertParseException("edit 1 p/Office: 12", Phone.MESSAGE_INPUT_CONSTRAINTS);
 
         assertEquals(before, Files.readString(saved.getAddressBookFilePath()));
         assertEquals("+65 9123 4567", model.getFilteredPersonList().getFirst().getPhone().value);

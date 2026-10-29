@@ -148,7 +148,7 @@ public class CandidateCsvParserTest {
     public void parse_invalidCandidateField_identifiesRecordAndField() {
         String input = HEADER + record(List.of("Candidate", "invalid", "candidate@example.com", "Address",
                 "Applied", "[]", ""));
-        assertThrows(ParseException.class, "CSV record 2, field phone: " + Phone.MESSAGE_CONSTRAINTS, () ->
+        assertThrows(ParseException.class, "CSV record 2, field phone: " + Phone.MESSAGE_INPUT_CONSTRAINTS, () ->
                 parse(input.getBytes(StandardCharsets.UTF_8)));
     }
 

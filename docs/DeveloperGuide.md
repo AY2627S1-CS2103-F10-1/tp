@@ -125,7 +125,7 @@ Role-management commands use dedicated parsers and delegate catalog validation a
 
 #### Command input character validation
 
-Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAscii` before their existing validation. This policy is deliberately parser-only: placing it in model constructors would also reject existing valid non-ASCII addresses or notes during JSON loading. Status values, indexes, and confirmation keywords retain their dedicated checks.
+Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAscii` before their existing validation. This policy is deliberately parser-only: placing it in model constructors would also reject existing valid non-ASCII addresses or notes during JSON loading. Status values, indexes, and confirmation keywords retain their dedicated checks. For the same reason, `ParserUtil.parsePhone` applies `Phone.isValidPhoneInput` (the number first, at most 50 characters) only to command and CSV input, so phone numbers saved by earlier versions still load.
 
 `ArgumentTokenizer.tokenizeWithValidation` checks selected raw prefix values before trimming; otherwise trailing control characters could disappear, and invisible-only notes or tags could be mistaken for clearing requests. `AddressBookParser` preserves trailing argument characters for the same reason. The regular tokenizer remains available for commands outside this policy. Character errors take precedence over duplicate-prefix and field validation after tokenisation; command-specific unsupported-prefix checks can still run first. JSON and CSV serialization continue to escape values independently of this input policy.
 

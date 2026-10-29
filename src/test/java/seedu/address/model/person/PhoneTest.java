@@ -41,8 +41,8 @@ public class PhoneTest {
     @Test
     public void constructor_formattedNumbers_preservesFormatting() {
         for (String value : new String[] {"+65 9123 4567", "9123-4567", "+1-202-555-0123", "0 0-7",
-            "(65) 6123 4567", "1234 5678 (HP) 1111-3333 (Office)", "6123 4567 ext. 123", "911 (Office)",
-            "123456789012345678901234567890", "+65 9123 4567 (HP), +65 6123 4567 (Office)"}) {
+            "(65) 6123 4567", "1234 5678 (HP) 1111-3333 (Office)", "6123 4567 ext. 123", "Office: 911",
+            "123456789012345678901234567890"}) {
             assertTrue(Phone.isValidPhone(value), value);
             assertEquals(value, new Phone(value).value);
         }
@@ -57,20 +57,44 @@ public class PhoneTest {
     }
 
     @Test
-    public void isValidPhone_textBeforeNumber_returnsFalse() {
-        for (String value : new String[] {"Office: 911", "HP 9123 4567", "call me after 5pm on 9123", "-123",
-            " 123", ".911", "ext 123"}) {
-            assertFalse(Phone.isValidPhone(value), value);
+    public void isValidPhoneInput_numberFirst_returnsTrue() {
+        for (String value : new String[] {"911", "+65 9123 4567", "(65) 6123 4567", "911 (Office)",
+            "1234 5678 (HP) 1111-3333 (Office)", "+65 6123 4567 (Office) ext 89",
+            "+65 9123 4567 (HP), +65 6123 4567 (Office)"}) {
+            assertTrue(Phone.isValidPhoneInput(value), value);
         }
     }
 
     @Test
-    public void isValidPhone_lengthBoundary_acceptsUpToMaxLength() {
-        String longestPhone = "9".repeat(Phone.MAX_LENGTH);
+    public void isValidPhoneInput_textBeforeNumber_returnsFalse() {
+        for (String value : new String[] {"Office: 911", "HP 9123 4567", "call me after 5pm on 9123", "-123",
+            " 123", ".911", "ext 123"}) {
+            assertFalse(Phone.isValidPhoneInput(value), value);
+        }
+    }
 
-        assertTrue(Phone.isValidPhone(longestPhone));
-        assertFalse(Phone.isValidPhone(longestPhone + "9"));
-        assertFalse(Phone.isValidPhone("9".repeat(300)));
+    @Test
+    public void isValidPhoneInput_storedPhoneRulesBroken_returnsFalse() {
+        for (String value : new String[] {"", "91", "+1-2", "123\t456", "123 "}) {
+            assertFalse(Phone.isValidPhoneInput(value), value);
+        }
+    }
+
+    @Test
+    public void isValidPhoneInput_lengthBoundary_acceptsUpToMaxLength() {
+        String longestPhone = "9".repeat(Phone.MAX_INPUT_LENGTH);
+
+        assertTrue(Phone.isValidPhoneInput(longestPhone));
+        assertFalse(Phone.isValidPhoneInput(longestPhone + "9"));
+        assertFalse(Phone.isValidPhoneInput("9".repeat(300)));
+    }
+
+    @Test
+    public void isValidPhone_savedPhoneOutsideInputRules_returnsTrue() {
+        // Phones saved by earlier versions must keep loading, even if new input would reject them.
+        for (String value : new String[] {"Office: 911", "call me after 5pm on 9123", "9".repeat(300)}) {
+            assertTrue(Phone.isValidPhone(value), value);
+        }
     }
 
     @Test
