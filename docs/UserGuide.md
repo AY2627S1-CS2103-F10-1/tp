@@ -368,9 +368,9 @@ Format: `export`
 * Surrounding whitespace is accepted.
 * The destination is always `data/export.csv`. You are not able to specify your own export path.
 * If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
-* The CSV has the columns `name,phone,email,address,status,tags,note`, in that order. Role assignments and the role catalog are not exported; back up both JSON files to preserve them.
+* The CSV has the columns `name,phone,email,address,status,tags,note,roles`, in that order. Unused roles are not exported; back up both JSON files to keep the complete role catalog.
 * The file is UTF-8 with a byte order mark, so spreadsheet programs such as Excel show accented and non-Latin text correctly.
-* For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet.
+* For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet. Roles appear the same way, in `list_role` order, such as `["Designer","Developer"]`, or `["No role"]` for a candidate without a named role.
 * Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
 * If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
 
@@ -397,17 +397,18 @@ Format: `import`
 * Extra arguments are ignored, just like `export`. Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is, `data/import.csv` in the folder you run HRvest from. The location cannot be changed, and no other location is tried.
 * The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
 * CSV accepts legacy Unicode addresses and notes that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 Unicode code points; quoted notes may contain tabs or line breaks. The printable-ASCII policy still applies when entering these values through commands. Other field, duplicate, and import size rules still apply.
-* Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view.
+* The roles column lists at least one role name; use `["No role"]` if no role applies. Names match existing roles ignoring case and surrounding whitespace, as in `add`, and follow the same [role name rules](#managing-the-role-catalog). A name that matches no existing role is created as a new role, so an export can be imported into an HRvest that does not have its roles yet.
+* Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view. If the import created roles, the message names them, for example `Imported 2 candidates successfully. Created role: QA.`
 * An empty (zero-byte) file or valid header-only file runs the same pipeline, saves normally, resets the view, and reports 0 imported candidates. Whitespace-only files are invalid.
 * Only readable regular files are accepted; symbolic links, directories, and special files are rejected.
 * Finish saving `import.csv` before running import and leave it unchanged until import finishes. Editing, replacing, or deleting it during import is unsupported usage with unpredictable results.
 * `import.csv` is never modified. On failure, HRvest reports the error and restores the pre-import in-memory data, filter, and expanded view, including any pre-existing unsaved changes.
 
-Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the header unchanged, and replace the example row with your candidate's details. An empty note means no note; use `[]` for no tags.
+Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the header unchanged, and replace the example row with your candidate's details. An empty note means no note; use `[]` for no tags and `["No role"]` for no role.
 
 ```csv
-"name","phone","email","address","status","tags","note"
-"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[]",""
+"name","phone","email","address","status","tags","note","roles"
+"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[]","","[""No role""]"
 ```
 
 **For more import details, including CSV formatting and validation rules, see the** [Developer Guide](DeveloperGuide.md#import-csv-format-and-validation).
@@ -420,9 +421,9 @@ Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the h
 | Candidates in one import | 10,000, excluding the header |
 | Decoded field | 65,536 Unicode characters before trimming |
 | Note | 500 Unicode code points after trimming |
-| Tags per candidate | 100 array entries before deduplication |
-| Each tag name | 256 characters before trimming |
-| Tag JSON structure | One flat array of strings only |
+| Tags or roles per candidate | 100 array entries each, before deduplication |
+| Each tag or role name | 256 characters before trimming |
+| Tag and role JSON structure | One flat array of strings only |
 
 These are import limits, not new add/edit restrictions. Files exceeding them cannot be imported even if their contents originated in HRvest.
 
