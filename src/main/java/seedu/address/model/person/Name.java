@@ -10,13 +10,17 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
 public class Name {
 
     public static final String MESSAGE_CONSTRAINTS =
-            "Names should only contain alphanumeric characters and spaces, and should not be blank";
+            "Names should not be blank, and each word must start with a letter or digit. Besides letters, "
+                    + "digits and spaces, names can use apostrophes, periods, hyphens and slashes between letters "
+                    + "(Anne O'Brien, Kelly-Ann Tan, Ravi s/o Kumar), a closing period (Tan Ah Kow Jr.), a comma "
+                    + "after a word (Martin Luther King, Jr.), words in parentheses (Tan Wei Ming (Kelvin)) and "
+                    + "an alias after a separate @ (Mohamed Ali @ Ahmad)";
 
     /*
      * The first character of the name must not be a whitespace,
      * otherwise " " (a blank string) becomes a valid input.
      */
-    public static final String VALIDATION_REGEX = "[\\p{Alnum}][\\p{Alnum} ]*";
+    public static final String VALIDATION_REGEX = buildValidationRegex();
 
     public final String fullName;
 
@@ -29,6 +33,22 @@ public class Name {
         requireNonNull(name);
         checkArgument(isValidName(name), MESSAGE_CONSTRAINTS);
         fullName = name;
+    }
+
+    /**
+     * Returns the pattern for a name made of words, with the punctuation that legal names use.
+     */
+    private static String buildValidationRegex() {
+        // Real names use apostrophes, periods, hyphens and slashes (O'Brien, Jr., Kelly-Ann, s/o). Allowing them
+        // only between letters or digits, or as one closing period, keeps punctuation-only names invalid.
+        String alphanumericRun = "\\p{Alnum}++";
+        String word = alphanumericRun + "(?:['./-]" + alphanumericRun + ")*+\\.?+";
+        // Official names can add a romanised or preferred name in parentheses, e.g. "Tan Wei Ming (Chen Wei Ming)".
+        String bracketedWords = "\\(" + word + "(?: ++" + word + ")*+\\)";
+        // A comma may end a word, e.g. "King, Jr.". Singapore and Malaysian legal names can record an alias after
+        // a separate "@", e.g. "Mohamed Ali @ Ahmad".
+        String separator = ",?+ ++(?:@ ++)?+";
+        return word + "(?:" + separator + "(?:" + word + "|" + bracketedWords + "))*+ *+";
     }
 
     /**

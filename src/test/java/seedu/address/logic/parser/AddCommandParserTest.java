@@ -164,6 +164,40 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_nameWithConnector_success() {
+        Person expected = new PersonBuilder().withName("Ravi s/o Kumar").withPhone("91234567")
+                .withEmail("ravi@example.com").withAddress("1 Road").withTags().withStatus(Status.OFFERED).build();
+
+        assertParseSuccess(parser, " n/Ravi s/o Kumar p/91234567 e/ravi@example.com a/1 Road s/Offered r/No role",
+                new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_nameWithMalayConnectorBeforeAddress_success() {
+        Person expected = new PersonBuilder().withName("Siti a/p Ahmad").withPhone("91234567")
+                .withEmail("siti@example.com").withAddress("1 Road").withTags().withStatus(Status.APPLIED).build();
+
+        assertParseSuccess(parser, " n/Siti a/p Ahmad p/91234567 e/siti@example.com a/1 Road r/No role",
+                new AddCommand(expected));
+    }
+
+    @Test
+    public void parse_addressLikeConnectorAfterNameWithoutAddress_failure() {
+        assertParseFailure(parser, " n/John a/L Street p/91234567 e/john@example.com r/No role",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+    }
+
+    @Test
+    public void parse_punctuatedNameAndLabelledPhone_success() {
+        Person expected = new PersonBuilder().withName("Anne O'Brien Jr.")
+                .withPhone("+65 6123 4567 (Office) ext 89").withEmail("anne.o'brien@example.com")
+                .withAddress("123 Example Road").withTags().withStatus(Status.APPLIED).build();
+
+        assertParseSuccess(parser, " n/Anne O'Brien Jr. p/+65 6123 4567 (Office) ext 89"
+                + " e/anne.o'brien@example.com a/123 Example Road r/No role", new AddCommand(expected));
+    }
+
+    @Test
     public void parse_eachExplicitStatus_success() {
         String details = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
         for (Status status : Status.values()) {

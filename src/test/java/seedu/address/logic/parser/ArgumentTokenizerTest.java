@@ -4,8 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.Assert.assertThrows;
+
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+
+import seedu.address.logic.parser.exceptions.ParseException;
 
 public class ArgumentTokenizerTest {
 
@@ -13,6 +18,78 @@ public class ArgumentTokenizerTest {
     private final Prefix pSlash = new Prefix("p/");
     private final Prefix dashT = new Prefix("-t");
     private final Prefix hatQ = new Prefix("^Q");
+
+    @Test
+    public void tokenize_nameConnectorsInName_keptInName() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" n/Ravi S/O Kumar a/l Siti a/p Ahmad s/Offered"
+                + " a/1 Road", CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Ravi S/O Kumar a/l Siti a/p Ahmad");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_STATUS, "Offered");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "1 Road");
+    }
+
+    @Test
+    public void tokenize_nameConnectorOutsideName_treatedAsPrefix() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" a/Blk 5 s/o Kumar",
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "Blk 5");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_STATUS, "o Kumar");
+    }
+
+    @Test
+    public void tokenize_connectorLettersStartingValue_treatedAsPrefix() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" n/Ravi s/Offered a/live Road s/o",
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Ravi");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_STATUS, "Offered", "o");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "live Road");
+    }
+
+    @Test
+    public void tokenize_addressLikeConnectorWithoutOtherAddress_readAsAddress() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" n/John a/L Street",
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "John");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "L Street");
+    }
+
+    @Test
+    public void tokenizeWithValidation_addressLikeConnectorWithoutOtherAddress_throwsParseException() {
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "A/P"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" n/Siti A/P Ahmad", Set.of(),
+                        CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void tokenizeWithValidation_onlyConnectorLikeAddresses_throwsParseException() {
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" n/Siti a/p Ahmad a/L Street", Set.of(),
+                        CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void tokenizeWithValidation_connectorLikeAddressBeforeName_readAsAddress() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(" a/L Street n/Siti a/p Ahmad",
+                Set.of(), CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Siti a/p Ahmad");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "L Street");
+    }
+
+    @Test
+    public void tokenizeWithValidation_statusConnectorWithoutAddress_keptInName() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(" n/Ravi s/o Kumar", Set.of(),
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_STATUS, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Ravi s/o Kumar");
+        assertArgumentAbsent(argMultimap, CliSyntax.PREFIX_STATUS);
+    }
 
     @Test
     public void tokenize_emptyArgsString_noValues() {
