@@ -30,6 +30,8 @@ import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -90,7 +92,9 @@ public class ImportOperationTest {
 
     @Test
     public void execute_exportClearConfirmImport_preservesCandidatesWithBom() throws Exception {
-        model.addPerson(incoming);
+        model.createRole("Developer");
+        Role developer = model.getRoleCatalog().requireRole("Developer");
+        model.addPerson(new PersonBuilder(incoming).withRoles(developer).build());
         List<Person> expected = List.copyOf(model.getAddressBook().getPersonList());
         logic.execute("export");
         Files.copy(directory.resolve("data/export.csv"), inputPath());
@@ -175,6 +179,33 @@ public class ImportOperationTest {
         storage.failure = null;
         logic.execute("import");
         assertEquals(List.of(existing, unsaved, incoming), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_unknownRoles_createsEachRoleOnceAndReportsThem() throws Exception {
+        writeInput(new PersonBuilder(incoming).withRoles(Role.create("QA"), Role.create("Designer")).build(),
+                new PersonBuilder(incoming).withEmail("qa@example.com").withRoles(Role.create("qa")).build());
+
+        assertEquals("Imported 2 candidates successfully. Created roles: Designer, QA.",
+                logic.execute("import").getFeedbackToUser());
+
+        assertEquals(List.of("Designer", "No role", "QA"),
+                model.getRoleCatalog().getRoles().stream().map(Role::getName).toList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_saveFailureAfterCreatingRole_restoresCatalogAndAllowsRetry() throws Exception {
+        writeInput(new PersonBuilder(incoming).withRoles(Role.create("QA")).build());
+        RoleCatalog catalog = model.getRoleCatalog();
+        storage.failure = new IOException("Injected write failure");
+
+        assertThrows(CommandException.class, () -> logic.execute("import"));
+
+        assertEquals(catalog, model.getRoleCatalog());
+        storage.failure = null;
+        assertEquals("Imported 1 candidate successfully. Created role: QA.",
+                logic.execute("import").getFeedbackToUser());
     }
 
     @Test
@@ -392,13 +423,14 @@ public class ImportOperationTest {
 
     private void writeInput(Person... persons) throws IOException {
         StringBuilder csv = new StringBuilder(record(List.of("name", "phone", "email", "address", "status",
-                "tags", "note")));
+                "tags", "note", "roles")));
         ObjectMapper mapper = new ObjectMapper();
         for (Person person : persons) {
             String tags = mapper.writeValueAsString(person.getTags().stream().map(tag -> tag.tagName).toList());
+            String roles = mapper.writeValueAsString(person.getRoles().stream().map(Role::getName).toList());
             csv.append(record(List.of(person.getName().fullName, person.getPhone().value, person.getEmail().value,
                     person.getAddress().value, person.getStatus().toString(), tags,
-                    person.getNote().map(note -> note.value).orElse(""))));
+                    person.getNote().map(note -> note.value).orElse(""), roles)));
         }
         Files.writeString(inputPath(), csv);
     }

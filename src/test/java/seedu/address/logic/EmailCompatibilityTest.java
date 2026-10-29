@@ -39,7 +39,7 @@ public class EmailCompatibilityTest {
             assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
             Path exported = storage.exportAddressBook(model.getAddressBook());
             assertEquals(model.getAddressBook().getPersonList(),
-                    CandidateCsvParser.parse(Files.readAllBytes(exported)));
+                    CandidateCsvParser.parse(Files.readAllBytes(exported), model.getRoleCatalog()));
             assertThrows(CommandException.class, () -> logic.execute(
                     "add n/Other p/456 e/" + email + " a/Other Street r/No role"));
             assertEquals(1, model.getAddressBook().getPersonList().size());

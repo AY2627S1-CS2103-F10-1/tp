@@ -1,13 +1,13 @@
 package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static seedu.address.logic.parser.CandidateCsvParser.parse;
 import static seedu.address.testutil.Assert.assertThrows;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -17,9 +17,42 @@ import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Phone;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 
 public class CandidateCsvParserTest {
-    private static final String HEADER = record(List.of("name", "phone", "email", "address", "status", "tags", "note"));
+    private static final String HEADER = record(List.of("name", "phone", "email", "address", "status",
+            "tags", "note", "roles"));
+    private static final String NO_ROLES = "[\"No role\"]";
+    private static final String NO_ROLES_CELL = "\"[\"\"No role\"\"]\"";
+
+    @Test
+    public void parse_roleNames_matchesCatalogAndCreatesEachUnknownRoleOnce() throws Exception {
+        Role developer = Role.create("Developer");
+        String input = HEADER + candidate("first@example.com", "[\" developer \",\"QA\",\"No role\"]")
+                + candidate("second@example.com", "[\"qa\"]");
+
+        List<Person> persons = CandidateCsvParser.parse(input.getBytes(StandardCharsets.UTF_8),
+                new RoleCatalog(List.of(Role.NO_ROLE, developer)));
+
+        Role qa = persons.get(1).getRoles().iterator().next();
+        assertEquals("QA", qa.getName());
+        assertEquals(Set.of(developer, qa), persons.get(0).getRoles());
+    }
+
+    @Test
+    public void parse_emptyRoles_suggestsNoRole() {
+        assertThrows(ParseException.class, "CSV record 2, field roles: Each candidate needs "
+                + "at least one role; use [\"No role\"] if no role applies.", () -> parseRoles("[]"));
+    }
+
+    @Test
+    public void parse_invalidRoles_rejects() {
+        for (String roles : List.of("null", "[1]", "[\"\"]", "[\"QA r/Lead\"]", "[\"QA\\tLead\"]",
+                "[\"" + "a".repeat(257) + "\"]", "[" + "\"QA\",".repeat(100) + "\"QA\"]")) {
+            assertThrows(ParseException.class, () -> parseRoles(roles));
+        }
+    }
 
     @Test
     public void parse_exportFormat_preservesLiteralValuesAndNormalizesTagsAndStatus() throws Exception {
@@ -41,7 +74,7 @@ public class CandidateCsvParserTest {
     public void parse_leadingBom_acceptsHeaderAndPreservesLiteralFieldContents() throws Exception {
         String note = "Follow up, \"quoted\" feedback";
         String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com", "Address",
-                "Applied", "[]", note));
+                "Applied", "[]", note, NO_ROLES));
         assertEquals(parse(input.getBytes(StandardCharsets.UTF_8)),
                 parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8)));
         assertEquals(note, parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8))
@@ -53,15 +86,16 @@ public class CandidateCsvParserTest {
     public void parse_invalidEncodingOrDialect_rejects() {
         assertThrows(ParseException.class, () -> parse(new byte[] {(byte) 0xc3, 0x28}));
         for (String input : List.of(" ", "\ufeff", "\ufeff\ufeff" + HEADER, " \ufeff" + HEADER,
-                HEADER.replace("name", "Name"), HEADER + "trailing", HEADER + "\"unterminated")) {
+                HEADER.replace("name", "Name"), HEADER.replace(",\"roles\"", ""), HEADER + "trailing",
+                HEADER + "\"unterminated")) {
             assertThrows(ParseException.class, () -> parse(input.getBytes(StandardCharsets.UTF_8)));
         }
     }
 
     @Test
     public void parse_commonCsvFormats_acceptsEquivalentCandidates() throws Exception {
-        String header = "name,phone,email,address,status,tags,note";
-        String row = "Candidate,12345,candidate@example.com,Address,Applied,[],Follow up";
+        String header = "name,phone,email,address,status,tags,note,roles";
+        String row = "Candidate,12345,candidate@example.com,Address,Applied,[],Follow up," + NO_ROLES_CELL;
         Person expected = parseRow("[]", "Applied", "Follow up");
         for (String separator : List.of("\n", "\r\n")) {
             for (String ending : List.of("", separator, separator.repeat(3))) {
@@ -77,8 +111,8 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_unquotedLegacyNote_acceptsUnicode() throws Exception {
-        String input = "name,phone,email,address,status,tags,note\n"
-                + "Candidate,12345,candidate@example.com,Address,Applied,[],Unicode \u4e2d";
+        String input = "name,phone,email,address,status,tags,note,roles\n"
+                + "Candidate,12345,candidate@example.com,Address,Applied,[],Unicode \u4e2d," + NO_ROLES_CELL;
         assertEquals("Unicode \u4e2d", parse(input.getBytes(StandardCharsets.UTF_8))
                 .getFirst().getNote().orElseThrow().value);
     }
@@ -147,7 +181,7 @@ public class CandidateCsvParserTest {
     @Test
     public void parse_invalidCandidateField_identifiesRecordAndField() {
         String input = HEADER + record(List.of("Candidate", "invalid", "candidate@example.com", "Address",
-                "Applied", "[]", ""));
+                "Applied", "[]", "", NO_ROLES));
         assertThrows(ParseException.class, "CSV record 2, field phone: " + Phone.MESSAGE_CONSTRAINTS, () ->
                 parse(input.getBytes(StandardCharsets.UTF_8)));
     }
@@ -155,14 +189,28 @@ public class CandidateCsvParserTest {
     @Test
     public void parse_longEmail_handlesWithoutCrashing() throws Exception {
         String email = "a.".repeat(10_000) + "a@example.com";
-        String input = HEADER + record(List.of("Candidate", "12345", email, "Address", "Applied", "[]", ""));
+        String input = HEADER + record(List.of("Candidate", "12345", email, "Address", "Applied", "[]", "",
+                NO_ROLES));
         assertEquals(email, parse(input.getBytes(StandardCharsets.UTF_8)).getFirst().getEmail().value);
     }
 
     private Person parseRow(String tags, String status, String note) throws ParseException {
         String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com", "Address",
-                status, tags, note));
+                status, tags, note, NO_ROLES));
         return parse(input.getBytes(StandardCharsets.UTF_8)).getFirst();
+    }
+
+    private Person parseRoles(String roles) throws ParseException {
+        String input = HEADER + candidate("candidate@example.com", roles);
+        return parse(input.getBytes(StandardCharsets.UTF_8)).getFirst();
+    }
+
+    private static List<Person> parse(byte[] bytes) throws ParseException {
+        return CandidateCsvParser.parse(bytes, new RoleCatalog());
+    }
+
+    private static String candidate(String email, String roles) {
+        return record(List.of("Candidate", "12345", email, "Address", "Applied", "[]", "", roles));
     }
 
     private static String record(List<String> fields) {

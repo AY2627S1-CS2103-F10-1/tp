@@ -17,6 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.AclFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import seedu.address.commons.util.FileUtil;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.Role;
 
 /** Writes raw candidate data as UTF-8 CSV with a byte order mark using atomic replacement. */
 public class CsvExportWriter {
@@ -131,15 +133,18 @@ public class CsvExportWriter {
                 LinkOption.NOFOLLOW_LINKS);
     }
 
-    /** Writes seven quoted fields per record, preserving literal text and using CRLF record separators. */
+    /** Writes eight quoted fields per record, preserving literal text and using CRLF record separators. */
     void writeCsv(ReadOnlyAddressBook addressBook, Writer writer) throws IOException {
         writeRecord(writer, HEADERS);
         for (Person person : addressBook.getPersonList()) {
             String tags = JSON_MAPPER.writeValueAsString(person.getTags().stream()
                     .map(tag -> tag.tagName).sorted().toList());
+            // Roles are exported by name, in list_role order, so that import can match them to any catalog.
+            String roles = JSON_MAPPER.writeValueAsString(person.getRoles().stream()
+                    .map(Role::getName).sorted(Comparator.comparing(Role::toLookupKey)).toList());
             writeRecord(writer, List.of(person.getName().fullName, person.getPhone().value,
                     person.getEmail().value, person.getAddress().value, person.getStatus().toString(), tags,
-                    person.getNote().map(note -> note.value).orElse("")));
+                    person.getNote().map(note -> note.value).orElse(""), roles));
         }
     }
 
