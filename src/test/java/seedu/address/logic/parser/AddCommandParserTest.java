@@ -182,6 +182,12 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_addressLikeConnectorAfterNameWithoutAddress_failure() {
+        assertParseFailure(parser, " n/John a/L Street p/91234567 e/john@example.com r/No role",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+    }
+
+    @Test
     public void parse_punctuatedNameAndLabelledPhone_success() {
         Person expected = new PersonBuilder().withName("Anne O'Brien Jr.")
                 .withPhone("+65 6123 4567 (Office) ext 89").withEmail("anne.o'brien@example.com")

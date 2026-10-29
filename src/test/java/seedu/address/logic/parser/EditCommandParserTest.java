@@ -157,6 +157,41 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_addressLikeConnectorAfterNameWithoutAddress_failure() {
+        // Regression: "a/L Street" was silently read as part of the name, leaving the address unchanged.
+        assertParseFailure(parser, "1 n/John a/L Street",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+        assertParseFailure(parser, "1 n/John a/P Road",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/P"));
+        assertParseFailure(parser, "1 n/Siti a/p Ahmad",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"));
+    }
+
+    @Test
+    public void parse_addressBeforeName_editsAddressAndName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("John")
+                .withAddress("L Street").build();
+
+        assertParseSuccess(parser, "1 a/L Street n/John", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_addressLikeConnectorWithSeparateAddress_keepsConnectorInName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Siti a/p Ahmad")
+                .withAddress("1 Road").build();
+
+        assertParseSuccess(parser, "1 n/Siti a/p Ahmad a/1 Road", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+        assertParseSuccess(parser, "1 a/1 Road n/Siti a/p Ahmad", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_statusConnectorWithoutAddress_keepsConnectorInName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Ravi s/o Kumar").build();
+
+        assertParseSuccess(parser, "1 n/Ravi s/o Kumar", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_oneFieldSpecified_success() {
         // name
         Index targetIndex = INDEX_THIRD_PERSON;
