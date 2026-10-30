@@ -24,11 +24,14 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * 4. Prefixes are recognised regardless of letter case e.g. {@code T/} is treated as {@code t/}.<br>
  * 5. Within a name, the connector {@code s/o} is part of the name, not a prefix. So are {@code a/l} and
  *    {@code a/p} when an explicit {@code a/} field disambiguates the address.<br>
+ * 6. {@code \/} is read as a plain slash, so {@code a/Unit N\/A} keeps {@code N/A} in the address.<br>
  */
 public class ArgumentTokenizer {
 
     public static final String MESSAGE_AMBIGUOUS_NAME_CONNECTOR = "%1$s after a name could start the address or be "
             + "part of the name, as in Siti a/p Ahmad. Put a/ADDRESS before n/NAME to make the address explicit.";
+    public static final String MESSAGE_AMBIGUOUS_PREFIX = "%1$s in a value could be text or the %2$s prefix. "
+            + "Type %3$s to keep it as text, or %2$s to start a new field.";
 
     // Legal names such as "Ravi s/o Kumar" use these connectors, which look like the s/ and a/ prefixes.
     private static final Set<String> NAME_CONNECTORS = Set.of("s/o", "a/l", "a/p");
@@ -53,7 +56,8 @@ public class ArgumentTokenizer {
      * Preambles and unselected prefixes retain their existing validation rules.
      *
      * @throws ParseException If a selected value contains a character outside printable ASCII, or if an
-     *     {@code a/l} or {@code a/p} after a name could be either the address or part of the name.
+     *     {@code a/l} or {@code a/p} after a name could be either the address or part of the name, or if an
+     *     upper-case prefix such as {@code N/} cuts into a value given with a lower-case prefix.
      */
     public static ArgumentMultimap tokenizeWithValidation(String argsString, Set<Prefix> validatedPrefixes,
             Prefix... prefixes) throws ParseException {
@@ -61,6 +65,14 @@ public class ArgumentTokenizer {
         Optional<String> ambiguousConnector = findAmbiguousNameConnector(argsString, positions);
         if (ambiguousConnector.isPresent()) {
             throw new ParseException(String.format(MESSAGE_AMBIGUOUS_NAME_CONNECTOR, ambiguousConnector.get()));
+        }
+        positions.sort(Comparator.comparingInt(PrefixPosition::getStartPosition));
+        Optional<String> upperCasePrefix = findUpperCasePrefixInValue(argsString,
+                removeNameConnectors(argsString, positions));
+        if (upperCasePrefix.isPresent()) {
+            String typed = upperCasePrefix.get();
+            throw new ParseException(String.format(MESSAGE_AMBIGUOUS_PREFIX, typed, typed.toLowerCase(Locale.ROOT),
+                    typed.replace("/", "\\/")));
         }
         ArgumentMultimap rawArguments = extractArguments(argsString, positions);
         for (Prefix prefix : prefixes) {
@@ -232,6 +244,28 @@ public class ArgumentTokenizer {
                         candidate.getStartPosition() + NAME_CONNECTOR_LENGTH));
     }
 
+    /** Returns an upper-case prefix that cuts into a value given with a lower-case prefix, e.g. N/ in a/Unit N/A. */
+    private static Optional<String> findUpperCasePrefixInValue(String argsString, List<PrefixPosition> fields) {
+        for (int i = 1; i < fields.size(); i++) {
+            String previous = getTypedPrefix(argsString, fields.get(i - 1));
+            String current = getTypedPrefix(argsString, fields.get(i));
+            if (isLowerCase(previous) && !isLowerCase(current)) {
+                return Optional.of(current);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Returns the prefix as the user typed it at {@code position}, e.g. N/ for the name prefix. */
+    private static String getTypedPrefix(String argsString, PrefixPosition position) {
+        int start = position.getStartPosition();
+        return argsString.substring(start, start + position.getPrefix().getPrefix().length());
+    }
+
+    private static boolean isLowerCase(String text) {
+        return text.equals(text.toLowerCase(Locale.ROOT));
+    }
+
     /** Returns whether the name runs directly into an address without an earlier explicit address. */
     private static boolean isFollowedByAmbiguousAddress(PrefixPosition candidate, List<PrefixPosition> positions,
             List<PrefixPosition> candidates) {
@@ -272,7 +306,7 @@ public class ArgumentTokenizer {
 
     /**
      * Returns the untrimmed value of the argument in the arguments string specified by {@code currentPrefixPosition}.
-     * The end position of the value is determined by {@code nextPrefixPosition}.
+     * The end position of the value is determined by {@code nextPrefixPosition}. Each {@code \/} becomes {@code /}.
      */
     private static String extractArgumentValue(String argsString,
                                         PrefixPosition currentPrefixPosition,
@@ -282,7 +316,7 @@ public class ArgumentTokenizer {
         int valueStartPos = currentPrefixPosition.getStartPosition() + prefix.getPrefix().length();
         String value = argsString.substring(valueStartPos, nextPrefixPosition.getStartPosition());
 
-        return value;
+        return value.replace("\\/", "/");
     }
 
     /**

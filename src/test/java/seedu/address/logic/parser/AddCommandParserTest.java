@@ -81,6 +81,21 @@ public class AddCommandParserTest {
     }
 
     @Test
+    public void parse_uppercasePrefixInsideLowercaseValue_failure() {
+        // Regression #253: T/2 in an address silently added the tag "2".
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/Unit T/2 r/No role",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "T/", "t/", "T\\/"));
+    }
+
+    @Test
+    public void parse_escapedSlash_keepsPrefixLikeTextInAddress() {
+        Person expectedPerson = new PersonBuilder(BOB).withAddress("Unit T/2").withTags().build();
+
+        assertParseSuccess(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/Unit T\\/2 r/No role",
+                new AddCommand(expectedPerson));
+    }
+
+    @Test
     public void parse_repeatedNonTagValue_failure() {
         String validExpectedPersonString = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + TAG_DESC_FRIEND;

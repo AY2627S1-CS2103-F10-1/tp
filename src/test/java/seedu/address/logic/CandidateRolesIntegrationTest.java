@@ -53,7 +53,7 @@ class CandidateRolesIntegrationTest {
 
     @Test
     void execute_addRepeatedRoles_resolvesCanonicalEntriesAndRemovesNoRole() throws Exception {
-        logic.execute(ALICE + " R/  developer  r/Developer r/No role r/Designer");
+        logic.execute(ALICE + " r/  developer  r/Developer r/No role r/Designer");
 
         assertEquals(Set.of(getRole("Developer"), getRole("Designer")), getFirstPerson().getRoles());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());

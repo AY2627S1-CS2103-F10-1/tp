@@ -125,6 +125,37 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void tokenizeWithValidation_uppercasePrefixAfterLowercasePrefix_throwsParseException() {
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "N/", "n/", "N\\/"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" a/Unit N/A", Set.of(),
+                        CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "No/", "no/", "No\\/"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" no/Status No/go", Set.of(), CliSyntax.PREFIX_NOTE));
+    }
+
+    @Test
+    public void tokenizeWithValidation_consistentPrefixCase_noAmbiguity() throws Exception {
+        // Upper-case prefixes still work when nothing typed in lower case precedes them.
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(" N/John A/Unit 5 p/123",
+                Set.of(), CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS, CliSyntax.PREFIX_PHONE);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "John");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "Unit 5");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_PHONE, "123");
+    }
+
+    @Test
+    public void tokenize_escapedSlash_keptAsText() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" a/Unit N\\/A n\\/a n/Amy",
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "Unit N/A n/a");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Amy");
+    }
+
+    @Test
     public void tokenize_emptyArgsString_noValues() {
         String argsString = "  ";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash);
