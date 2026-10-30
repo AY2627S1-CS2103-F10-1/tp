@@ -62,7 +62,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
 * To keep text that looks like a prefix, such as `N/A`, inside a value, type `\/` for its slash.<br>
-  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. Every `\/` you type is saved as `/`. In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error shows both fixes: `n/` starts the field, and `N\/` keeps the text.
+  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses and notes, where every `\/` you type is saved as `/`. Role names and statuses keep `\/` as typed. In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error shows both fixes: `n/` starts the field, and `N\/` keeps the text.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
@@ -301,7 +301,7 @@ The role catalog is the shared collection of roles available in HRvest, includin
 * Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
 * Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent. Display spelling and role IDs are preserved. This applies to creation, assignment, filtering, renaming, and deletion.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
-* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; neither quotes nor `\/` escape it.
+* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name, and quotes do not escape it. A `\/` in a role name is kept as typed rather than read as `/`.
 
 #### Creating an unused role: `add_role`
 

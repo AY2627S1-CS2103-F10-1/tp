@@ -138,10 +138,10 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 
 #### Prefix-like text in values
 
-`ArgumentTokenizer` recognises a prefix after whitespace in any letter case, so `edit 1 a/12 Kent Ridge Drive S/Offered` sets the status instead of saving `S/Offered` in the address. The same rule used to turn `edit 1 a/Unit N/A` into a silent name change, because `N/` started a name field.
+`ArgumentTokenizer` recognises a prefix after whitespace in any letter case, so `edit 1 A/12 Kent Ridge Drive S/Offered` sets the status instead of saving `S/Offered` in the address. Before this check, the same rule also read `S/` as a field in `edit 1 a/12 Kent Ridge Drive S/Offered`, and turned `edit 1 a/Unit N/A` into a silent name change because `N/` started a name field.
 
 * `tokenizeWithValidation`, used by `add`, `edit` and `note`, rejects an upper-case prefix that directly follows a field typed with a lower-case prefix. Neither reading is safe to guess: the error names the typed prefix, its lower-case form for starting a field, and the escaped form for keeping text. Commands that type every prefix in upper case still parse normally, and name connectors such as `S/O` are removed before the check.
-* Every tokenizer reads `\/` in a value as `/`. `N\/A` is never matched as a prefix, so it stays in the current value and is saved as `N/A`. Role names still reject reserved prefix text at the model level, so the escape cannot add one.
+* `tokenizeWithValidation` reads `\/` as `/` in the values it validates: names, phones, emails, addresses, tags and notes. `N\/A` is never matched as a prefix, so it stays in the current value and is saved as `N/A`. Role and status values, including every role command, keep `\/` as typed, so a role saved with `\/` in its name by an earlier version still matches only itself.
 * A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field, as in AB3. The User Guide shows `\/` for keeping that text.
 
 #### Displayed-index validation
