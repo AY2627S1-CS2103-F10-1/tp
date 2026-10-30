@@ -321,7 +321,7 @@ public class EditCommandParserTest {
         assertParseFailure(parser, "1 a/Unit N/A",
                 String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "N/", "n/", "N\\/"));
         assertParseFailure(parser, "1 s/Applied S/Offered",
-                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "S/", "s/", "S\\/"));
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX, "S/", "s/", "S\\/"));
         assertParseFailure(parser, "1 n/John P/91234567",
                 String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "P/", "p/", "P\\/"));
     }

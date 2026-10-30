@@ -130,8 +130,21 @@ public class ArgumentTokenizerTest {
                 String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "N/", "n/", "N\\/"), () ->
                 ArgumentTokenizer.tokenizeWithValidation(" a/Unit N/A", Set.of(),
                         CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+        // Tags can repeat, so starting another t/ field is still a valid fix.
         assertThrows(ParseException.class,
-                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "No/", "no/", "No\\/"), () ->
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "T/", "t/", "T\\/"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" t/java T/backend", Set.of(),
+                        CliSyntax.PREFIX_TAG));
+    }
+
+    @Test
+    public void tokenizeWithValidation_uppercasePrefixAlreadyGiven_suggestsOnlyEscape() {
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX, "N/", "n/", "N\\/"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" n/Bob a/Unit N/A", Set.of(),
+                        CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+        assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX,
+                "No/", "no/", "No\\/"), () ->
                 ArgumentTokenizer.tokenizeWithValidation(" no/Status No/go", Set.of(), CliSyntax.PREFIX_NOTE));
     }
 

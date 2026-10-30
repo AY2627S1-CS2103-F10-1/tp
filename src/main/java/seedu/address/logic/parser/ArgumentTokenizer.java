@@ -2,6 +2,8 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,7 +35,11 @@ public class ArgumentTokenizer {
             + "part of the name, as in Siti a/p Ahmad. Put a/ADDRESS before n/NAME to make the address explicit.";
     public static final String MESSAGE_AMBIGUOUS_PREFIX = "%1$s in a value could be text or the %2$s prefix. "
             + "Type %3$s to keep it as text, or %2$s to start a new field.";
+    public static final String MESSAGE_AMBIGUOUS_REPEATED_PREFIX = "%1$s in a value could be text or another "
+            + "%2$s prefix, but %2$s can be given only once. Type %3$s to keep it as text.";
 
+    // add and edit accept repeated t/ and r/, so only these prefixes can start a second field of their kind.
+    private static final Set<Prefix> REPEATABLE_PREFIXES = Set.of(PREFIX_TAG, PREFIX_ROLE);
     // Legal names such as "Ravi s/o Kumar" use these connectors, which look like the s/ and a/ prefixes.
     private static final Set<String> NAME_CONNECTORS = Set.of("s/o", "a/l", "a/p");
     private static final Set<String> ADDRESS_LIKE_CONNECTORS = Set.of("a/l", "a/p");
@@ -68,12 +74,16 @@ public class ArgumentTokenizer {
             throw new ParseException(String.format(MESSAGE_AMBIGUOUS_NAME_CONNECTOR, ambiguousConnector.get()));
         }
         positions.sort(Comparator.comparingInt(PrefixPosition::getStartPosition));
-        Optional<String> upperCasePrefix = findUpperCasePrefixInValue(argsString,
-                removeNameConnectors(argsString, positions));
+        List<PrefixPosition> fields = removeNameConnectors(argsString, positions);
+        Optional<String> upperCasePrefix = findUpperCasePrefixInValue(argsString, fields);
         if (upperCasePrefix.isPresent()) {
             String typed = upperCasePrefix.get();
-            throw new ParseException(String.format(MESSAGE_AMBIGUOUS_PREFIX, typed, typed.toLowerCase(Locale.ROOT),
-                    typed.replace("/", "\\/")));
+            Prefix prefix = new Prefix(typed.toLowerCase(Locale.ROOT));
+            // A second single-valued field fails the duplicate check, so offer only the escape.
+            boolean isAlreadyGiven = !REPEATABLE_PREFIXES.contains(prefix)
+                    && fields.stream().filter(field -> field.getPrefix().equals(prefix)).count() > 1;
+            throw new ParseException(String.format(isAlreadyGiven ? MESSAGE_AMBIGUOUS_REPEATED_PREFIX
+                    : MESSAGE_AMBIGUOUS_PREFIX, typed, prefix.getPrefix(), typed.replace("/", "\\/")));
         }
         ArgumentMultimap rawArguments = extractArguments(argsString, positions);
         for (Prefix prefix : prefixes) {

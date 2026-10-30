@@ -85,6 +85,9 @@ public class AddCommandParserTest {
         // Regression #253: T/2 in an address silently added the tag "2".
         assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/Unit T/2 r/No role",
                 String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "T/", "t/", "T\\/"));
+        // n/ is already given, so a second n/ would only fail the duplicate check.
+        assertParseFailure(parser, NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + " a/Unit N/A r/No role",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX, "N/", "n/", "N\\/"));
     }
 
     @Test
