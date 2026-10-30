@@ -136,6 +136,14 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 * Status values, candidate indexes, and `clear confirm` retain their own validation rules rather than this character check. Command words and prefix syntax are unchanged; use ordinary spaces before prefixes.
 * This restriction applies only to new command input, not loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export retain their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
 
+#### Prefix-like text in values
+
+`ArgumentTokenizer` recognises a prefix after whitespace in any letter case, so `edit 1 a/12 Kent Ridge Drive S/Offered` sets the status instead of saving `S/Offered` in the address. The same rule used to turn `edit 1 a/Unit N/A` into a silent name change, because `N/` started a name field.
+
+* `tokenizeWithValidation`, used by `add`, `edit` and `note`, rejects an upper-case prefix that directly follows a field typed with a lower-case prefix. Neither reading is safe to guess: the error names the typed prefix, its lower-case form for starting a field, and the escaped form for keeping text. Commands that type every prefix in upper case still parse normally, and name connectors such as `S/O` are removed before the check.
+* Every tokenizer reads `\/` in a value as `/`. `N\/A` is never matched as a prefix, so it stays in the current value and is saved as `N/A`. Role names still reject reserved prefix text at the model level, so the escape cannot add one.
+* A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field, as in AB3. The User Guide shows `\/` for keeping that text.
+
 #### Displayed-index validation
 
 `status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report numeric index errors the same way. The exact messages are listed under each command in the User Guide. A rejected command leaves candidate data, filters, and the expanded view unchanged.
@@ -985,6 +993,13 @@ testers are expected to do more *exploratory* testing.
 1. In a test copy with a candidate at index `1`, run `edit 1 n/John a/L Street a/9 Road`. Expected: A clarification error asks for `a/ADDRESS` before `n/NAME`; the candidate, saved data, filter, and expanded view remain unchanged. Repeat with `a/P Lane` and with uppercase prefixes.
 1. Run `edit 1 a/L Street n/John`. Expected: The name is `John` and address is `L Street`. Run `edit 1 a/9 Road n/Siti a/p Ahmad`. Expected: The legal name remains intact and the address is `9 Road`. Close and restart; both fields retain those values.
 1. With an unused email, run `add n/Siti a/p Ahmad p/91234567 e/lineage@example.com a/1 Road r/No role`. Expected: The legal name and address are saved correctly because the phone field separates them. Run `add n/Ravi s/o Kumar p/91234567 e/lineageso@example.com a/1 Road r/No role` with another unused email; `s/o` remains in the name.
+
+### Prefix-like text in values
+
+1. Run `edit 1 a/Unit N/A`. Expected: An error says `N/` could be text or the `n/` prefix, suggests `N\/` to keep it as text, and the candidate is unchanged. Repeat with `edit 1 s/Applied S/Offered`; the status is unchanged.
+1. Run `edit 1 a/Unit N\/A`. Expected: The address is `Unit N/A` and the name is unchanged. Close and restart; the address remains `Unit N/A`.
+1. Run `edit 1 A/12 Kent Ridge Drive S/Offered`. Expected: Both upper-case prefixes are fields; the address is `12 Kent Ridge Drive` and the status is Offered.
+1. Run `note 1 no/Status NO/go`. Expected: The ambiguous `NO/` is rejected. Run `note 1 no/Status NO\/go`; the note is `Status NO/go`.
 
 ### Updating status, finding and filtering
 
