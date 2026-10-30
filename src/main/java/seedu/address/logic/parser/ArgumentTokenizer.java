@@ -24,7 +24,8 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * 4. Prefixes are recognised regardless of letter case e.g. {@code T/} is treated as {@code t/}.<br>
  * 5. Within a name, the connector {@code s/o} is part of the name, not a prefix. So are {@code a/l} and
  *    {@code a/p} when an explicit {@code a/} field disambiguates the address.<br>
- * 6. {@code \/} is read as a plain slash, so {@code a/Unit N\/A} keeps {@code N/A} in the address.<br>
+ * 6. In values checked by {@link #tokenizeWithValidation}, {@code \/} is read as a plain slash, so
+ *    {@code a/Unit N\/A} keeps {@code N/A} in the address. Other values, such as role names, keep it as typed.<br>
  */
 public class ArgumentTokenizer {
 
@@ -48,7 +49,7 @@ public class ArgumentTokenizer {
      */
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
-        return trimArguments(extractArguments(argsString, positions), prefixes);
+        return trimArguments(extractArguments(argsString, positions), Set.of(), prefixes);
     }
 
     /**
@@ -82,16 +83,18 @@ public class ArgumentTokenizer {
                 }
             }
         }
-        return trimArguments(rawArguments, prefixes);
+        return trimArguments(rawArguments, validatedPrefixes, prefixes);
     }
 
-    /** Returns a copy with surrounding whitespace removed, preserving the existing tokenizer contract. */
-    private static ArgumentMultimap trimArguments(ArgumentMultimap rawArguments, Prefix... prefixes) {
+    /** Returns a copy with surrounding whitespace removed, reading {@code \/} as {@code /} for unescaped prefixes. */
+    private static ArgumentMultimap trimArguments(ArgumentMultimap rawArguments, Set<Prefix> unescapedPrefixes,
+            Prefix... prefixes) {
         ArgumentMultimap trimmedArguments = new ArgumentMultimap();
         trimmedArguments.put(new Prefix(""), rawArguments.getPreamble().trim());
         for (Prefix prefix : Arrays.stream(prefixes).distinct().toList()) {
             for (String value : rawArguments.getAllValues(prefix)) {
-                trimmedArguments.put(prefix, value.trim());
+                trimmedArguments.put(prefix, unescapedPrefixes.contains(prefix)
+                        ? value.trim().replace("\\/", "/") : value.trim());
             }
         }
         return trimmedArguments;
@@ -306,7 +309,7 @@ public class ArgumentTokenizer {
 
     /**
      * Returns the untrimmed value of the argument in the arguments string specified by {@code currentPrefixPosition}.
-     * The end position of the value is determined by {@code nextPrefixPosition}. Each {@code \/} becomes {@code /}.
+     * The end position of the value is determined by {@code nextPrefixPosition}.
      */
     private static String extractArgumentValue(String argsString,
                                         PrefixPosition currentPrefixPosition,
@@ -316,7 +319,7 @@ public class ArgumentTokenizer {
         int valueStartPos = currentPrefixPosition.getStartPosition() + prefix.getPrefix().length();
         String value = argsString.substring(valueStartPos, nextPrefixPosition.getStartPosition());
 
-        return value.replace("\\/", "/");
+        return value;
     }
 
     /**

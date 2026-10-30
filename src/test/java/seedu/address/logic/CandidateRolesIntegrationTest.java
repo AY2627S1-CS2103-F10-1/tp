@@ -53,7 +53,9 @@ class CandidateRolesIntegrationTest {
 
     @Test
     void execute_addRepeatedRoles_resolvesCanonicalEntriesAndRemovesNoRole() throws Exception {
-        logic.execute(ALICE + " r/  developer  r/Developer r/No role r/Designer");
+        // An upper-case R/ is a field when no lower-case prefix comes before it.
+        logic.execute("add R/  developer " + ALICE.substring("add ".length())
+                + " r/Developer r/No role r/Designer");
 
         assertEquals(Set.of(getRole("Developer"), getRole("Designer")), getFirstPerson().getRoles());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());

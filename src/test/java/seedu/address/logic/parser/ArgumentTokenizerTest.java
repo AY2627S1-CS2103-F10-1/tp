@@ -147,12 +147,22 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void tokenize_escapedSlash_keptAsText() {
-        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" a/Unit N\\/A n\\/a n/Amy",
-                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS);
+    public void tokenizeWithValidation_escapedSlash_keptAsTextInValidatedValues() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(
+                " a/Unit N\\/A n\\/a n/Amy r/SRE\\/Ops", Set.of(CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS),
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS, CliSyntax.PREFIX_ROLE);
 
         assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "Unit N/A n/a");
         assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Amy");
+        // Role names are matched as typed, so an existing role containing \/ stays reachable.
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ROLE, "SRE\\/Ops");
+    }
+
+    @Test
+    public void tokenize_escapedSlash_keptAsTyped() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" r/SRE\\/Ops", CliSyntax.PREFIX_ROLE);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ROLE, "SRE\\/Ops");
     }
 
     @Test
