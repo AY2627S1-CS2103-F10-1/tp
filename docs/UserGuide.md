@@ -62,7 +62,11 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
 * To keep text that looks like a prefix, such as `N/A`, inside a value, type `\/` for its slash.<br>
-  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses and notes, where every `\/` you type is saved as `/`. Role names and statuses keep `\/` as typed. In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error shows both fixes: `n/` starts the field, and `N\/` keeps the text. If the command already has that field and it cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, the error suggests only `N\/`.
+  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses and notes, where every `\/` you type is saved as `/`. Role names and statuses keep backslashes literally. To assign an existing role named `N/A`, use `edit 1 r/N/A` with no space after `r/`; `r/ N/A` is ambiguous, and `r/N\/A` refers to a different role whose name contains a backslash.
+
+* In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error offers `n/` to start a field and `N\/` for literal text in names, phones, emails, addresses or notes. If the field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
+
+* Upper-case prefixes after other upper-case prefixes, and lower-case prefixes, still start fields. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`; `edit 1 a/Unit n/a` changes the name to `a`. To preserve the address text, use `edit 1 A/Unit N\/A` or `edit 1 a/Unit n\/a`. Check the updated details in the success message.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
@@ -466,7 +470,7 @@ The line above the candidate list shows how many candidates are displayed, so yo
 The command box remembers every command you submit in the current session so you can re-run or edit a past command without retyping it.
 
 * `Up` moves back through your submitted commands. Repeated presses walk further into the past; the earliest entry stays shown once you reach it.
-* `Down` moves forward. Pressing past the newest entry restores whatever draft you were typing before you started navigating, or clears the box if there was no draft.
+* `Down` moves forward. Pressing past the newest entry restores a fresh draft entered before navigating history, or clears the box if there was no draft. Edits to recalled or rejected commands are not preserved when navigating away; submit the corrected command before browsing history.
 * Both successful and rejected commands are recorded. A rejected command also stays in the command box, shown in red, so you can fix a typo and press Enter again; `Up` then shows the command before it. A command identical to the most recent one does not take up an extra slot.
 * Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent commands. Repeating an earlier command that is not the most recent one takes another slot.
 
