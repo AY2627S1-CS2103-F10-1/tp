@@ -62,7 +62,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
 * To keep text that looks like a prefix, such as `N/A`, inside a value, type `\/` for its slash.<br>
-  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses and notes, where every `\/` you type is saved as `/`. Role names and statuses keep `\/` as typed. In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error shows both fixes: `n/` starts the field, and `N\/` keeps the text.
+  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses and notes, where every `\/` you type is saved as `/`. Role names and statuses keep `\/` as typed. In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error shows both fixes: `n/` starts the field, and `N\/` keeps the text. If the command already has that field and it cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, the error suggests only `N\/`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.

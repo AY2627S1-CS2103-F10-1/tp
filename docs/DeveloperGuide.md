@@ -140,7 +140,7 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 
 `ArgumentTokenizer` recognises a prefix after whitespace in any letter case, so `edit 1 A/12 Kent Ridge Drive S/Offered` sets the status instead of saving `S/Offered` in the address. Before this check, the same rule also read `S/` as a field in `edit 1 a/12 Kent Ridge Drive S/Offered`, and turned `edit 1 a/Unit N/A` into a silent name change because `N/` started a name field.
 
-* `tokenizeWithValidation`, used by `add`, `edit` and `note`, rejects an upper-case prefix that directly follows a field typed with a lower-case prefix. Neither reading is safe to guess: the error names the typed prefix, its lower-case form for starting a field, and the escaped form for keeping text. Commands that type every prefix in upper case still parse normally, and name connectors such as `S/O` are removed before the check.
+* `tokenizeWithValidation`, used by `add`, `edit` and `note`, rejects an upper-case prefix that directly follows a field typed with a lower-case prefix. Neither reading is safe to guess: the error names the typed prefix, its lower-case form for starting a field, and the escaped form for keeping text. If that prefix is already a field and is not the repeatable `t/` or `r/`, a second field would fail the duplicate-prefix check, so the error suggests only the escaped form. Commands that type every prefix in upper case still parse normally, and name connectors such as `S/O` are removed before the check.
 * `tokenizeWithValidation` reads `\/` as `/` in the values it validates: names, phones, emails, addresses, tags and notes. `N\/A` is never matched as a prefix, so it stays in the current value and is saved as `N/A`. Role and status values, including every role command, keep `\/` as typed, so a role saved with `\/` in its name by an earlier version still matches only itself.
 * A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field, as in AB3. The User Guide shows `\/` for keeping that text.
 
@@ -996,7 +996,7 @@ testers are expected to do more *exploratory* testing.
 
 ### Prefix-like text in values
 
-1. Run `edit 1 a/Unit N/A`. Expected: An error says `N/` could be text or the `n/` prefix, suggests `N\/` to keep it as text, and the candidate is unchanged. Repeat with `edit 1 s/Applied S/Offered`; the status is unchanged.
+1. Run `edit 1 a/Unit N/A`. Expected: An error says `N/` could be text or the `n/` prefix, suggests `N\/` to keep it as text, and the candidate is unchanged. Repeat with `edit 1 s/Applied S/Offered`. Expected: The error says `s/` can be given only once and suggests only `S\/`; the status is unchanged.
 1. Run `edit 1 a/Unit N\/A`. Expected: The address is `Unit N/A` and the name is unchanged. Close and restart; the address remains `Unit N/A`.
 1. Run `edit 1 A/12 Kent Ridge Drive S/Offered`. Expected: Both upper-case prefixes are fields; the address is `12 Kent Ridge Drive` and the status is Offered.
 1. Run `note 1 no/Status NO/go`. Expected: The ambiguous `NO/` is rejected. Run `note 1 no/Status NO\/go`; the note is `Status NO/go`.
