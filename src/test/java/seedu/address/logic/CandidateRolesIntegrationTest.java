@@ -17,6 +17,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.ArgumentTokenizer;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ModelManager;
@@ -53,10 +54,35 @@ class CandidateRolesIntegrationTest {
 
     @Test
     void execute_addRepeatedRoles_resolvesCanonicalEntriesAndRemovesNoRole() throws Exception {
-        logic.execute(ALICE + " R/  developer  r/Developer r/No role r/Designer");
+        // An upper-case R/ is a field when no lower-case prefix comes before it.
+        logic.execute("add R/  developer " + ALICE.substring("add ".length())
+                + " r/Developer r/No role r/Designer");
 
         assertEquals(Set.of(getRole("Developer"), getRole("Designer")), getFirstPerson().getRoles());
         assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    void execute_prefixLikeRoleValues_preservesLiteralIdentitiesAndRejectedData() throws Exception {
+        logic.execute("add_role n/N/A");
+        logic.execute("add_role n/N\\/A");
+        logic.execute(ALICE + " r/N/A");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        String candidates = Files.readString(directory.resolve("HRvest.json"));
+        String roles = Files.readString(directory.resolve("roles.json"));
+
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "N/", "n/", "N\\/"), () ->
+                logic.execute("edit 1 r/ N/A"));
+        assertEquals(before, model.getAddressBook());
+        assertEquals(candidates, Files.readString(directory.resolve("HRvest.json")));
+        assertEquals(roles, Files.readString(directory.resolve("roles.json")));
+
+        logic.execute("edit 1 r/N\\/A");
+        assertEquals(Set.of(getRole("N\\/A")), getFirstPerson().getRoles());
+        logic.execute("edit 1 r/N/A");
+        assertEquals(Set.of(getRole("N/A")), getFirstPerson().getRoles());
+        assertEquals(before, storage.readAddressBook().orElseThrow());
     }
 
     @Test

@@ -2,6 +2,8 @@ package seedu.address.logic.parser;
 
 import static seedu.address.logic.parser.CliSyntax.PREFIX_ADDRESS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,12 +26,23 @@ import seedu.address.logic.parser.exceptions.ParseException;
  * 4. Prefixes are recognised regardless of letter case e.g. {@code T/} is treated as {@code t/}.<br>
  * 5. Within a name, the connector {@code s/o} is part of the name, not a prefix. So are {@code a/l} and
  *    {@code a/p} when an explicit {@code a/} field disambiguates the address.<br>
+ * 6. In values checked by {@link #tokenizeWithValidation}, {@code \/} is read as a plain slash, so
+ *    {@code a/Unit N\/A} keeps {@code N/A} in the address. Other values, such as role names, keep it as typed.<br>
  */
 public class ArgumentTokenizer {
 
     public static final String MESSAGE_AMBIGUOUS_NAME_CONNECTOR = "%1$s after a name could start the address or be "
             + "part of the name, as in Siti a/p Ahmad. Put a/ADDRESS before n/NAME to make the address explicit.";
+    public static final String MESSAGE_AMBIGUOUS_PREFIX = "%1$s in a value could be text or the %2$s prefix. "
+            + "Use %2$s to start a new field. For text in a name, phone, email, address or note, type %3$s. "
+            + "Roles and statuses keep backslashes literally.";
+    public static final String MESSAGE_AMBIGUOUS_REPEATED_PREFIX = "%1$s in a value could be text or another "
+            + "%2$s prefix, but %2$s can be given only once. "
+            + "For text in a name, phone, email, address or note, type %3$s. "
+            + "Roles and statuses keep backslashes literally.";
 
+    // add and edit accept repeated t/ and r/, so only these prefixes can start a second field of their kind.
+    private static final Set<Prefix> REPEATABLE_PREFIXES = Set.of(PREFIX_TAG, PREFIX_ROLE);
     // Legal names such as "Ravi s/o Kumar" use these connectors, which look like the s/ and a/ prefixes.
     private static final Set<String> NAME_CONNECTORS = Set.of("s/o", "a/l", "a/p");
     private static final Set<String> ADDRESS_LIKE_CONNECTORS = Set.of("a/l", "a/p");
@@ -45,7 +58,7 @@ public class ArgumentTokenizer {
      */
     public static ArgumentMultimap tokenize(String argsString, Prefix... prefixes) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, prefixes);
-        return trimArguments(extractArguments(argsString, positions), prefixes);
+        return trimArguments(extractArguments(argsString, positions), Set.of(), prefixes);
     }
 
     /**
@@ -53,7 +66,8 @@ public class ArgumentTokenizer {
      * Preambles and unselected prefixes retain their existing validation rules.
      *
      * @throws ParseException If a selected value contains a character outside printable ASCII, or if an
-     *     {@code a/l} or {@code a/p} after a name could be either the address or part of the name.
+     *     {@code a/l} or {@code a/p} after a name could be either the address or part of the name, or if an
+     *     upper-case prefix such as {@code N/} cuts into a value given with a lower-case prefix.
      */
     public static ArgumentMultimap tokenizeWithValidation(String argsString, Set<Prefix> validatedPrefixes,
             Prefix... prefixes) throws ParseException {
@@ -61,6 +75,18 @@ public class ArgumentTokenizer {
         Optional<String> ambiguousConnector = findAmbiguousNameConnector(argsString, positions);
         if (ambiguousConnector.isPresent()) {
             throw new ParseException(String.format(MESSAGE_AMBIGUOUS_NAME_CONNECTOR, ambiguousConnector.get()));
+        }
+        positions.sort(Comparator.comparingInt(PrefixPosition::getStartPosition));
+        List<PrefixPosition> fields = removeNameConnectors(argsString, positions);
+        Optional<String> upperCasePrefix = findUpperCasePrefixInValue(argsString, fields);
+        if (upperCasePrefix.isPresent()) {
+            String typed = upperCasePrefix.get();
+            Prefix prefix = new Prefix(typed.toLowerCase(Locale.ROOT));
+            // A second single-valued field fails the duplicate check, so offer only the escape.
+            boolean isAlreadyGiven = !REPEATABLE_PREFIXES.contains(prefix)
+                    && fields.stream().filter(field -> field.getPrefix().equals(prefix)).count() > 1;
+            throw new ParseException(String.format(isAlreadyGiven ? MESSAGE_AMBIGUOUS_REPEATED_PREFIX
+                    : MESSAGE_AMBIGUOUS_PREFIX, typed, prefix.getPrefix(), typed.replace("/", "\\/")));
         }
         ArgumentMultimap rawArguments = extractArguments(argsString, positions);
         for (Prefix prefix : prefixes) {
@@ -70,16 +96,18 @@ public class ArgumentTokenizer {
                 }
             }
         }
-        return trimArguments(rawArguments, prefixes);
+        return trimArguments(rawArguments, validatedPrefixes, prefixes);
     }
 
-    /** Returns a copy with surrounding whitespace removed, preserving the existing tokenizer contract. */
-    private static ArgumentMultimap trimArguments(ArgumentMultimap rawArguments, Prefix... prefixes) {
+    /** Returns a copy with surrounding whitespace removed, reading {@code \/} as {@code /} for unescaped prefixes. */
+    private static ArgumentMultimap trimArguments(ArgumentMultimap rawArguments, Set<Prefix> unescapedPrefixes,
+            Prefix... prefixes) {
         ArgumentMultimap trimmedArguments = new ArgumentMultimap();
         trimmedArguments.put(new Prefix(""), rawArguments.getPreamble().trim());
         for (Prefix prefix : Arrays.stream(prefixes).distinct().toList()) {
             for (String value : rawArguments.getAllValues(prefix)) {
-                trimmedArguments.put(prefix, value.trim());
+                trimmedArguments.put(prefix, unescapedPrefixes.contains(prefix)
+                        ? value.trim().replace("\\/", "/") : value.trim());
             }
         }
         return trimmedArguments;
@@ -230,6 +258,28 @@ public class ArgumentTokenizer {
                 .findFirst()
                 .map(candidate -> argsString.substring(candidate.getStartPosition(),
                         candidate.getStartPosition() + NAME_CONNECTOR_LENGTH));
+    }
+
+    /** Returns an upper-case prefix that cuts into a value given with a lower-case prefix, e.g. N/ in a/Unit N/A. */
+    private static Optional<String> findUpperCasePrefixInValue(String argsString, List<PrefixPosition> fields) {
+        for (int i = 1; i < fields.size(); i++) {
+            String previous = getTypedPrefix(argsString, fields.get(i - 1));
+            String current = getTypedPrefix(argsString, fields.get(i));
+            if (isLowerCase(previous) && !isLowerCase(current)) {
+                return Optional.of(current);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Returns the prefix as the user typed it at {@code position}, e.g. N/ for the name prefix. */
+    private static String getTypedPrefix(String argsString, PrefixPosition position) {
+        int start = position.getStartPosition();
+        return argsString.substring(start, start + position.getPrefix().getPrefix().length());
+    }
+
+    private static boolean isLowerCase(String text) {
+        return text.equals(text.toLowerCase(Locale.ROOT));
     }
 
     /** Returns whether the name runs directly into an address without an earlier explicit address. */

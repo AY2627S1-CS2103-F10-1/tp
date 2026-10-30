@@ -311,8 +311,28 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_uppercaseRepeatedPrefix_failure() {
-        assertParseFailure(parser, "1 s/Applied S/Offered",
+        assertParseFailure(parser, "1 S/Applied S/Offered",
                 Messages.getErrorMessageForDuplicatePrefixes(PREFIX_STATUS));
+    }
+
+    @Test
+    public void parse_uppercasePrefixInsideLowercaseValue_failure() {
+        // Regression #253: N/A in an address silently renamed the candidate to "A".
+        assertParseFailure(parser, "1 a/Unit N/A",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "N/", "n/", "N\\/"));
+        assertParseFailure(parser, "1 s/Applied S/Offered",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX, "S/", "s/", "S\\/"));
+        assertParseFailure(parser, "1 n/John P/91234567",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "P/", "p/", "P\\/"));
+    }
+
+    @Test
+    public void parse_escapedSlash_keepsPrefixLikeTextInValue() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withAddress("Unit N/A").build();
+        assertParseSuccess(parser, "1 a/Unit N\\/A", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+
+        descriptor = new EditPersonDescriptorBuilder().withAddress("Unit n/a").withName("Amy Bee").build();
+        assertParseSuccess(parser, "1 a/Unit n\\/a n/Amy Bee", new EditCommand(INDEX_FIRST_PERSON, descriptor));
     }
 
     @Test

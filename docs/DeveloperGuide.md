@@ -136,6 +136,15 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 * Status values, candidate indexes, and `clear confirm` retain their own validation rules rather than this character check. Command words and prefix syntax are unchanged; use ordinary spaces before prefixes.
 * This restriction applies only to new command input, not loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export retain their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
 
+#### Prefix-like text in values
+
+`ArgumentTokenizer` recognises a prefix after whitespace in any letter case, so users who type `S/Offered` get a status field. In v1.5, the same rule also turned text that only looks like a prefix into a new field: `edit 1 a/Unit N/A` silently renamed the candidate to `A`, and `Unit N/A` could not be saved as an address. The current behaviour is as follows.
+
+* `tokenizeWithValidation`, used by `add`, `edit` and `note`, rejects an upper-case prefix that directly follows a field typed with a lower-case prefix, such as the `N/` in `edit 1 a/Unit N/A` or the `S/` in `edit 1 a/12 Kent Ridge Drive S/Offered`. Either reading is plausible, so the error names the typed prefix, its lower-case form for starting a field, and the escaped form for text in names, phones, emails, addresses or notes. It also states that roles and statuses preserve backslashes. If that prefix is already a field and is not the repeatable `t/` or `r/`, the error omits the duplicate-field option. Commands that type every prefix in upper case, such as `edit 1 A/12 Kent Ridge Drive S/Offered`, still parse as fields, and name connectors such as `S/O` are removed before the check.
+* `tokenizeWithValidation` reads `\/` as `/` in the values it validates: names, phones, emails, addresses, tags and notes. `N\/A` is never matched as a prefix, so it stays in the current value and is saved as `N/A`. Role and status values, including every role command, keep `\/` as typed, so a role saved with `\/` in its name by an earlier version still matches only itself.
+* A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field, as in AB3. The User Guide shows `\/` for keeping that text.
+* The rejection, not the `\/` escape alone, is what fixes the silent change. A user who has not read about `\/` would still have `edit 1 a/Unit N/A` rename the candidate; the error stops the edit and shows the escape when it is needed.
+
 #### Displayed-index validation
 
 `status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report numeric index errors the same way. The exact messages are listed under each command in the User Guide. A rejected command leaves candidate data, filters, and the expanded view unchanged.
@@ -985,6 +994,13 @@ testers are expected to do more *exploratory* testing.
 1. In a test copy with a candidate at index `1`, run `edit 1 n/John a/L Street a/9 Road`. Expected: A clarification error asks for `a/ADDRESS` before `n/NAME`; the candidate, saved data, filter, and expanded view remain unchanged. Repeat with `a/P Lane` and with uppercase prefixes.
 1. Run `edit 1 a/L Street n/John`. Expected: The name is `John` and address is `L Street`. Run `edit 1 a/9 Road n/Siti a/p Ahmad`. Expected: The legal name remains intact and the address is `9 Road`. Close and restart; both fields retain those values.
 1. With an unused email, run `add n/Siti a/p Ahmad p/91234567 e/lineage@example.com a/1 Road r/No role`. Expected: The legal name and address are saved correctly because the phone field separates them. Run `add n/Ravi s/o Kumar p/91234567 e/lineageso@example.com a/1 Road r/No role` with another unused email; `s/o` remains in the name.
+
+### Prefix-like text in values
+
+1. Run `edit 1 a/Unit N/A`. Expected: An error says `N/` could be text or the `n/` prefix, suggests `N\/` to keep it as text, and the candidate is unchanged. Repeat with `edit 1 s/Applied S/Offered`. Expected: The error says `s/` can be given only once and suggests only `S\/`; the status is unchanged.
+1. Run `edit 1 a/Unit N\/A`. Expected: The address is `Unit N/A` and the name is unchanged. Close and restart; the address remains `Unit N/A`.
+1. Run `edit 1 A/12 Kent Ridge Drive S/Offered`. Expected: Both upper-case prefixes are fields; the address is `12 Kent Ridge Drive` and the status is Offered.
+1. Run `note 1 no/Status NO/go`. Expected: The ambiguous `NO/` is rejected. Run `note 1 no/Status NO\/go`; the note is `Status NO/go`.
 
 ### Updating status, finding and filtering
 

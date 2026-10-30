@@ -24,7 +24,7 @@ class CandidateRoleParsersTest {
 
     @Test
     void parse_addMultipleRoles_keepsNamesForExecutionTimeLookup() {
-        assertParseSuccess(new AddCommandParser(), DETAILS + " r/Developer R/Designer",
+        assertParseSuccess(new AddCommandParser(), " R/Designer" + DETAILS + " r/Developer",
                 new AddCommand(new PersonBuilder().build(), Set.of("Developer", "Designer")));
         assertParseSuccess(new AddCommandParser(), DETAILS + " r/未知职位",
                 new AddCommand(new PersonBuilder().build(), Set.of("未知职位")));
