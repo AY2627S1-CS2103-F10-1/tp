@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -146,6 +147,27 @@ public class ArgumentTokenizerTest {
         assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX,
                 "No/", "no/", "No\\/"), () ->
                 ArgumentTokenizer.tokenizeWithValidation(" no/Status No/go", Set.of(), CliSyntax.PREFIX_NOTE));
+    }
+
+    @Test
+    public void tokenizeWithValidation_ambiguityAfterRoleOrStatus_qualifiesEscapeAdvice() {
+        String expected = "N/ in a value could be text or the n/ prefix. Use n/ to start a new field. "
+                + "For text in a name, phone, email, address or note, type N\\/. "
+                + "Roles and statuses keep backslashes literally.";
+        for (String arguments : List.of(" r/ N/A", " s/Applied N/A")) {
+            assertThrows(ParseException.class, expected, () -> ArgumentTokenizer.tokenizeWithValidation(
+                    arguments, Set.of(CliSyntax.PREFIX_NAME), CliSyntax.PREFIX_NAME,
+                    CliSyntax.PREFIX_ROLE, CliSyntax.PREFIX_STATUS));
+        }
+    }
+
+    @Test
+    public void tokenizeWithValidation_repeatedPrefixAfterRole_qualifiesEscapeWithoutOfferingDuplicate() {
+        String expected = "N/ in a value could be text or another n/ prefix, but n/ can be given only once. "
+                + "For text in a name, phone, email, address or note, type N\\/. "
+                + "Roles and statuses keep backslashes literally.";
+        assertThrows(ParseException.class, expected, () -> ArgumentTokenizer.tokenizeWithValidation(
+                " n/Alice r/ N/A", Set.of(CliSyntax.PREFIX_NAME), CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ROLE));
     }
 
     @Test

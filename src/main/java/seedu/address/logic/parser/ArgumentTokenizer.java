@@ -34,9 +34,12 @@ public class ArgumentTokenizer {
     public static final String MESSAGE_AMBIGUOUS_NAME_CONNECTOR = "%1$s after a name could start the address or be "
             + "part of the name, as in Siti a/p Ahmad. Put a/ADDRESS before n/NAME to make the address explicit.";
     public static final String MESSAGE_AMBIGUOUS_PREFIX = "%1$s in a value could be text or the %2$s prefix. "
-            + "Type %3$s to keep it as text, or %2$s to start a new field.";
+            + "Use %2$s to start a new field. For text in a name, phone, email, address or note, type %3$s. "
+            + "Roles and statuses keep backslashes literally.";
     public static final String MESSAGE_AMBIGUOUS_REPEATED_PREFIX = "%1$s in a value could be text or another "
-            + "%2$s prefix, but %2$s can be given only once. Type %3$s to keep it as text.";
+            + "%2$s prefix, but %2$s can be given only once. "
+            + "For text in a name, phone, email, address or note, type %3$s. "
+            + "Roles and statuses keep backslashes literally.";
 
     // add and edit accept repeated t/ and r/, so only these prefixes can start a second field of their kind.
     private static final Set<Prefix> REPEATABLE_PREFIXES = Set.of(PREFIX_TAG, PREFIX_ROLE);
