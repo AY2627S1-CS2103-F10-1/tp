@@ -14,6 +14,12 @@ package "UserPrefs Storage" #F4F6F6{
 Class JsonUserPrefsStorage
 }
 
+package "CSV and locking" #F4F6F6{
+Class CsvExportWriter
+Class CsvImportReader
+Class DataDirectoryLock
+}
+
 package "AddressBook Storage" #F4F6F6{
 Class RoleDataStorage
 Class JsonRoleCatalog
@@ -28,12 +34,15 @@ Class JsonAdaptedTag
 Class HiddenOutside #FFFFFF
 HiddenOutside ..> Storage
 HiddenOutside ..> CandidateDataInitializer
+HiddenOutside ..> DataDirectoryLock
 
 CandidateDataInitializer -right-> "1" Storage
 StorageManager .up.|> Storage
 StorageManager -down-> "1" JsonUserPrefsStorage
 StorageManager -down-> "1" JsonAddressBookStorage
 StorageManager -down-> "1" RoleDataStorage
+StorageManager ..> CsvExportWriter
+StorageManager ..> CsvImportReader
 RoleDataStorage --> "1" JsonAddressBookStorage
 RoleDataStorage ..> JsonRoleCatalog : reads / writes
 note bottom of RoleDataStorage
