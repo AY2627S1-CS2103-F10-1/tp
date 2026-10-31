@@ -4,16 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
+import static seedu.address.testutil.JavaFxTestUtil.runOnFxThread;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -35,7 +32,6 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonCardTest {
     private static final int CARD_WIDTH = 320;
     private static final int CARD_HEIGHT = 300;
-    private static final int TIMEOUT_SECONDS = 10;
     private static final String NOTE_TEXT = "Follow up about interview feedback";
 
     @BeforeAll
@@ -191,17 +187,5 @@ public class PersonCardTest {
         card.resize(CARD_WIDTH, CARD_HEIGHT);
         card.applyCss();
         card.layout();
-    }
-
-    /**
-     * Runs assertions on the JavaFX application thread and propagates failures to the test thread.
-     */
-    private static void runOnFxThread(Runnable assertions) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(() -> {
-            assertions.run();
-            return null;
-        });
-        Platform.runLater(task);
-        task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 }

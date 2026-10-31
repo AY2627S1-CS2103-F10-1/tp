@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,18 +32,20 @@ public class JsonUtilTest {
 
     @Test
     public void fromJsonString_duplicateProperties_rejectsAtAnyDepth() {
-        for (String json : List.of("{\"persons\":[],\"persons\":[]}",
+        List<String> inputs = List.of("{\"persons\":[],\"persons\":[]}",
                 "{\"persons\":[{\"email\":\"first@example.com\",\"email\":\"second@example.com\"}]}",
-                "{\"unknown\":{\"name\":1,\"name\":2}}")) {
+                "{\"unknown\":{\"name\":1,\"name\":2}}");
+
+        assertAllCases(inputs, json -> {
             assertThrows(IOException.class, () -> JsonUtil.fromJsonString(json, Object.class));
-        }
+        });
     }
 
     @Test
     public void fromJsonString_trailingContent_rejectsButAllowsWhitespace() throws Exception {
-        for (String suffix : List.of(" {}", " []", " true", " null", " garbage", " {")) {
+        assertAllCases(List.of(" {}", " []", " true", " null", " garbage", " {"), suffix -> {
             assertThrows(IOException.class, () -> JsonUtil.fromJsonString("{}" + suffix, Object.class));
-        }
+        });
         assertEquals(Map.of(), JsonUtil.fromJsonString("{} \r\n\t ", Object.class));
     }
 

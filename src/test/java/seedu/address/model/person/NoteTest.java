@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +19,9 @@ public class NoteTest {
 
     @Test
     public void constructor_blankNote_throwsIllegalArgumentException() {
-        for (String text : new String[] {"", " ", "\t\r\n", "\u2003"}) {
+        assertAllCases(List.of("", " ", "\t\r\n", "\u2003"), text -> {
             assertThrows(IllegalArgumentException.class, Note.MESSAGE_BLANK, () -> new Note(text));
-        }
+        });
     }
 
     @Test
