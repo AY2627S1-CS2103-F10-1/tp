@@ -33,6 +33,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.exceptions.DataLoadingException;
+import seedu.address.commons.util.JsonUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
@@ -43,6 +44,41 @@ public class JsonAddressBookStorageTest {
 
     @TempDir
     public Path testFolder;
+
+    @Test
+    public void readAndSaveAddressBook_notesWithSpecialCharacters_preservesContents() throws Exception {
+        String text = "Feedback: \"C++\", [SQL] \\ follow-up / next\tYES\n\u4e2d\u6587 \ud83d\ude00";
+        AddressBook addressBook = getTypicalAddressBook();
+        Person candidate = new PersonBuilder(ALICE).withNote(text).build();
+        addressBook.setPerson(ALICE, candidate);
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("notes.json"));
+
+        storage.saveAddressBook(addressBook);
+
+        assertEquals(addressBook, storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void readAddressBook_overlongNote_throwsDataLoadingException() throws Exception {
+        Path path = testFolder.resolve("invalid-note.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(path);
+        JsonAdaptedPerson adapted = new JsonAdaptedPerson(ALICE.getName().fullName, ALICE.getPhone().value,
+                ALICE.getEmail().value, ALICE.getAddress().value, List.of(), "x".repeat(501));
+        Files.writeString(path, "{\"persons\":[" + JsonUtil.toJsonString(adapted) + "]}");
+
+        assertThrows(DataLoadingException.class, storage::readAddressBook);
+    }
+
+    @Test
+    public void readAddressBook_legacyJsonWithoutNotes_loadsExistingCandidates() throws Exception {
+        Path path = Path.of("src", "test", "data", "JsonSerializableAddressBookTest", "typicalPersonsAddressBook.json");
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(path);
+
+        AddressBook restored = new AddressBook(storage.readAddressBook().orElseThrow());
+
+        assertEquals(getTypicalAddressBook(), restored);
+        assertTrue(restored.getPersonList().stream().noneMatch(Person::hasNote));
+    }
 
     @Test
     public void readAddressBook_nullFilePath_throwsNullPointerException() {
@@ -173,17 +209,7 @@ public class JsonAddressBookStorageTest {
     @Test
     public void saveAddressBook_existingFile_replacesDataAndRemovesTemporaryFile() throws Exception {
         Path destination = testFolder.resolve("nested").resolve("candidates.json");
-        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
-        AddressBook addressBook = getTypicalAddressBook();
-        storage.saveAddressBook(addressBook);
-        addressBook.addPerson(HOON);
-
-        storage.saveAddressBook(addressBook);
-
-        assertEquals(addressBook, storage.readAddressBook().orElseThrow());
-        try (var files = Files.list(destination.getParent())) {
-            assertEquals(List.of(destination), files.toList());
-        }
+        assertReplacementRemovesTemporaryFile(destination);
     }
 
     @Test
@@ -224,17 +250,24 @@ public class JsonAddressBookStorageTest {
             assertFalse(fileSystem.supportedFileAttributeViews().contains("acl"));
             assertFalse(fileSystem.supportedFileAttributeViews().contains("posix"));
             Path destination = fileSystem.getPath("/candidates.json");
-            JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
-            AddressBook addressBook = getTypicalAddressBook();
-            storage.saveAddressBook(addressBook);
-            addressBook.addPerson(HOON);
+            assertReplacementRemovesTemporaryFile(destination);
+        }
+    }
 
-            storage.saveAddressBook(addressBook);
+    /**
+     * Verifies that saving over an existing file replaces its data without leaving temporary files.
+     */
+    private void assertReplacementRemovesTemporaryFile(Path destination) throws Exception {
+        JsonAddressBookStorage storage = new JsonAddressBookStorage(destination);
+        AddressBook addressBook = getTypicalAddressBook();
+        storage.saveAddressBook(addressBook);
+        addressBook.addPerson(HOON);
 
-            assertEquals(addressBook, storage.readAddressBook().orElseThrow());
-            try (var files = Files.list(destination.getParent())) {
-                assertEquals(List.of(destination), files.toList());
-            }
+        storage.saveAddressBook(addressBook);
+
+        assertEquals(addressBook, storage.readAddressBook().orElseThrow());
+        try (var files = Files.list(destination.getParent())) {
+            assertEquals(List.of(destination), files.toList());
         }
     }
 

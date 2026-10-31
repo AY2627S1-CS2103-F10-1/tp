@@ -19,9 +19,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
-import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
+import seedu.address.testutil.LogicTestFixture;
 import seedu.address.testutil.PersonBuilder;
 
 public class CandidateFilterIntegrationTest {
@@ -37,9 +35,7 @@ public class CandidateFilterIntegrationTest {
         candidates.addPerson(ALICE);
         candidates.addPerson(BENSON);
         model = new ModelManager(candidates, new UserPrefs());
-        logic = new LogicManager(model, new StorageManager(
-                new JsonAddressBookStorage(temporaryFolder.resolve("candidates.json")),
-                new JsonUserPrefsStorage(temporaryFolder.resolve("preferences.json"))));
+        logic = new LogicTestFixture(temporaryFolder, model).getLogic();
     }
 
     @Test

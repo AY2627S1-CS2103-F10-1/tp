@@ -29,6 +29,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
@@ -317,11 +318,13 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_notePrefix_failure() {
-        for (String args : List.of("1 no/Strong candidate", "1 no/", "1 NO/Strong candidate",
+        List<String> inputs = List.of("1 no/Strong candidate", "1 no/", "1 NO/Strong candidate",
                 "1" + ADDRESS_DESC_AMY + " no/hello", "1" + ADDRESS_DESC_AMY + "\tno/hello",
-                "no/Strong candidate")) {
+                "no/Strong candidate");
+
+        assertAllCases(inputs, args -> {
             assertParseFailure(parser, args, EditCommandParser.MESSAGE_UNSUPPORTED_NOTE);
-        }
+        });
     }
 
     @Test

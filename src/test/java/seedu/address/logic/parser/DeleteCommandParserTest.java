@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
@@ -35,15 +36,15 @@ public class DeleteCommandParserTest {
 
     @Test
     public void parse_zeroOrNegativeIndex_throwsInvalidIndexMessage() {
-        for (String index : List.of("0", "-1", "-0", "000")) {
+        assertAllCases(List.of("0", "-1", "-0", "000"), index -> {
             assertParseFailure(parser, index, ParserUtil.MESSAGE_INVALID_INDEX);
-        }
+        });
     }
 
     @Test
     public void parse_indexTooLarge_throwsInvalidDisplayedIndexMessage() {
-        for (String index : List.of("2147483648", "99999999999")) {
+        assertAllCases(List.of("2147483648", "99999999999"), index -> {
             assertParseFailure(parser, index, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
+        });
     }
 }

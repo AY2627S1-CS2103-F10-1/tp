@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.nio.file.Files;
@@ -39,9 +40,9 @@ public class NullCandidateDataTest {
     @Test
     public void readAddressBook_nullCandidateData_throwsDataLoadingExceptionWithoutChangingFile()
             throws Exception {
-        for (String json : List.of("null", "{\"persons\":[null]}", "{\"persons\":null}", "{}")) {
+        assertAllCases(List.of("null", "{\"persons\":[null]}", "{\"persons\":null}", "{}"), json -> {
             assertInvalidFilePreserved(json);
-        }
+        });
     }
 
     @Test

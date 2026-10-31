@@ -72,7 +72,7 @@ public class StatusContainsKeywordPredicateTest {
     }
 
     @Test
-    public void getStatuses_returnsStoredStatusesInPipelineOrder() {
+    public void getStatuses_duplicateUnorderedStatuses_returnsUniqueStatusesInPipelineOrder() {
         StatusContainsKeywordPredicate predicate =
                 new StatusContainsKeywordPredicate(List.of(Status.OFFERED, Status.APPLIED, Status.OFFERED));
         assertEquals(List.of(Status.APPLIED, Status.OFFERED), List.copyOf(predicate.getStatuses()));

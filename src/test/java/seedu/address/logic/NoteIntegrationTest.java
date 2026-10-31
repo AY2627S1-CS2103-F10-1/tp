@@ -1,8 +1,11 @@
 package seedu.address.logic;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
+import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.AddCommandParser;
 import seedu.address.logic.parser.NoteCommandParser;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -29,8 +33,7 @@ import seedu.address.model.person.Note;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
-import seedu.address.storage.StorageManager;
+import seedu.address.testutil.LogicTestFixture;
 import seedu.address.testutil.PersonBuilder;
 
 public class NoteIntegrationTest {
@@ -41,11 +44,13 @@ public class NoteIntegrationTest {
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
     private JsonAddressBookStorage addressBookStorage;
     private Logic logic;
+    private LogicTestFixture fixture;
 
     @BeforeEach
     public void setUp() {
-        addressBookStorage = new JsonAddressBookStorage(temporaryFolder.resolve("candidates.json"));
-        logic = createLogic(addressBookStorage);
+        fixture = new LogicTestFixture(temporaryFolder, model);
+        addressBookStorage = fixture.getCandidateStorage();
+        logic = fixture.getLogic();
     }
 
     @Test
@@ -200,6 +205,104 @@ public class NoteIntegrationTest {
                 String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"));
     }
 
+    @Test
+    public void execute_clearFilteredCandidate_removesOnlySelectedNoteAndPersistsAcrossReload() throws Exception {
+        prepareCandidatesWithNotes();
+        logic.execute("find Benson");
+        String address = BENSON.getAddress().value;
+
+        assertEquals(String.format(NoteCommand.MESSAGE_CLEAR_SUCCESS, BENSON.getName()),
+                logic.execute("note 1 no/").getFeedbackToUser());
+
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertEquals(BENSON.getEmail(), model.getFilteredPersonList().getFirst().getEmail());
+        assertFalse(model.getFilteredPersonList().getFirst().hasNote());
+        ReadOnlyAddressBook reloaded = addressBookStorage.readAddressBook().orElseThrow();
+        assertEquals(model.getAddressBook(), reloaded);
+        assertTrue(reloaded.getPersonList().getFirst().hasNote());
+        assertFalse(reloaded.getPersonList().get(1).hasNote());
+        assertEquals(Status.INTERVIEWING, reloaded.getPersonList().get(1).getStatus());
+        assertEquals(address, reloaded.getPersonList().get(1).getAddress().value);
+        logic.execute("list");
+        logic.execute("note 2 no/   ");
+        assertEquals(reloaded, addressBookStorage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_clearExpandedCandidate_removesSelectedNote() throws Exception {
+        prepareCandidatesWithNotes();
+        logic.execute("expand 2");
+
+        logic.execute("note 1 no/");
+
+        assertTrue(logic.isExpandedViewProperty().get());
+        assertEquals(1, model.getFilteredPersonList().size());
+        assertEquals(BENSON.getEmail(), model.getFilteredPersonList().getFirst().getEmail());
+        assertFalse(model.getFilteredPersonList().getFirst().hasNote());
+        assertFalse(addressBookStorage.readAddressBook().orElseThrow().getPersonList().get(1).hasNote());
+        assertTrue(addressBookStorage.readAddressBook().orElseThrow().getPersonList().getFirst().hasNote());
+    }
+
+    @Test
+    public void execute_clearOutsideFilteredList_preservesSavedData() throws Exception {
+        prepareCandidatesWithNotes();
+        logic.execute("find Benson");
+        String before = Files.readString(addressBookStorage.getAddressBookFilePath());
+
+        assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
+                logic.execute("note 2 no/"));
+
+        assertEquals(before, Files.readString(addressBookStorage.getAddressBookFilePath()));
+        assertTrue(model.getFilteredPersonList().getFirst().hasNote());
+    }
+
+    @Test
+    public void execute_clearSaveFailure_preservesPreviouslySavedNoteAndReportsError() throws Exception {
+        prepareCandidatesWithNotes();
+        logic.execute("list");
+        String before = Files.readString(addressBookStorage.getAddressBookFilePath());
+        JsonAddressBookStorage failing = new JsonAddressBookStorage(addressBookStorage.getAddressBookFilePath()) {
+            @Override
+            public void saveAddressBook(ReadOnlyAddressBook candidates) throws IOException {
+                throw new IOException("Test save failure");
+            }
+        };
+        Logic failingLogic = createLogic(failing);
+
+        String message = String.format(LogicManager.FILE_OPS_ERROR_FORMAT, "Test save failure");
+        assertThrows(CommandException.class, message, () -> failingLogic.execute("note 1 no/"));
+
+        assertEquals(before, Files.readString(addressBookStorage.getAddressBookFilePath()));
+        assertTrue(addressBookStorage.readAddressBook().orElseThrow().getPersonList().getFirst().hasNote());
+    }
+
+    @Test
+    public void execute_addWithNotePrefix_keepsCandidatesViewAndSavedFileUnchanged() throws Exception {
+        addressBookStorage.saveAddressBook(model.getAddressBook());
+        logic.execute("find Benson");
+
+        List<String> inputs = List.of("add n/A p/123 e/a@x.com a/Blk 1 no/great candidate",
+                "add n/A p/123 e/a@x.com a/Blk 1 no/",
+                "add n/A p/123 e/a@x.com a/Blk 1\tno/great candidate");
+
+        assertAllCases(inputs, command -> {
+            assertRejectedCommandPreservesState(command, ParseException.class,
+                    AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        });
+    }
+
+    /**
+     * Saves candidates with notes for the note-removal scenarios.
+     */
+    private void prepareCandidatesWithNotes() throws IOException {
+        AddressBook candidates = getTypicalAddressBook();
+        candidates.setPerson(ALICE, new PersonBuilder(ALICE).withNote("Keep this note").build());
+        candidates.setPerson(BENSON, new PersonBuilder(BENSON).withStatus(Status.INTERVIEWING)
+                .withNote("Remove this note").build());
+        model.setAddressBook(candidates);
+        addressBookStorage.saveAddressBook(model.getAddressBook());
+    }
+
     /**
      * Prepares a saved note and filtered selection before checking a rejected note command.
      */
@@ -249,15 +352,13 @@ public class NoteIntegrationTest {
      * Creates logic using the live model, supplied candidate storage, and temporary preferences storage.
      */
     private Logic createLogic(JsonAddressBookStorage storage) {
-        JsonUserPrefsStorage prefsStorage = new JsonUserPrefsStorage(
-                temporaryFolder.resolve("preferences.json"));
-        return new LogicManager(model, new StorageManager(storage, prefsStorage));
+        return new LogicTestFixture(temporaryFolder, model, storage).getLogic();
     }
 
     /**
      * Reads the candidate at the given zero-based index from saved data.
      */
     private Person readCandidate(int index) throws Exception {
-        return addressBookStorage.readAddressBook().orElseThrow().getPersonList().get(index);
+        return fixture.readSaved().getPersonList().get(index);
     }
 }

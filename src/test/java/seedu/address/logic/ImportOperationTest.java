@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -200,25 +201,25 @@ public class ImportOperationTest {
     public void execute_roleNamesWithNoBreakSpaces_preservesCatalogDataAndView() throws Exception {
         model.createRole("Designer");
         storage.saveAddressBook(model.getAddressBook());
-        for (String name : List.of("Designer\u00a0", "No role\u00a0", "QA\u00a0Lead")) {
+        assertAllCases(List.of("Designer\u00a0", "No role\u00a0", "QA\u00a0Lead"), name -> {
             assertInvalidRoleImportPreservesState(name,
                     String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x00a0));
-        }
+        });
     }
 
     @Test
     public void execute_roleNamesWithFormatCharacters_preservesCatalogDataAndView() throws Exception {
-        for (String name : List.of("\u200b", "QA\u200bLead")) {
+        assertAllCases(List.of("\u200b", "QA\u200bLead"), name -> {
             assertInvalidRoleImportPreservesState(name,
                     String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x200b));
-        }
+        });
     }
 
     @Test
     public void execute_roleNamesWithControlCharacters_preservesCatalogDataAndView() throws Exception {
-        for (String name : List.of("QA\tLead", "QA\rLead", "QA\nLead", "QA\u0000Lead", "QA\u007fLead")) {
+        assertAllCases(List.of("QA\tLead", "QA\rLead", "QA\nLead", "QA\u0000Lead", "QA\u007fLead"), name -> {
             assertInvalidRoleImportPreservesState(name, Role.MESSAGE_CONSTRAINTS);
-        }
+        });
     }
 
     @Test
