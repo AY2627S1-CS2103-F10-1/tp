@@ -70,6 +70,14 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
+### Filters and expanded view
+
+After `edit`, `note`, or `status`, the current name search, status filter, or role filter stays active. Candidates that no longer match disappear from the displayed list, so displayed indexes may change.
+
+`expand` replaces that filter with a selection of one candidate at index `1`. Updating the expanded candidate keeps them selected at index `1`, even if their new details would not match the earlier filter.
+
+Check the displayed list before using another index command. Use `list` to show all candidates again.
+
 ### Accepted characters in candidate inputs
 
 Names, phone numbers, emails, addresses, tags, notes, and `find` keywords accept only **printable ASCII (`U+0020–U+007E`)**: English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces, and ASCII punctuation. This keeps command input within a single, explicit character set. Existing field rules still apply afterward: for example, phone numbers need at least three ASCII digits, and names accept only the punctuation used in legal names, such as `O'Brien`, `Jr.`, `s/o` and `(Kelvin)`.
@@ -95,7 +103,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 
 | Parameter | Required? | Accepted values and behavior |
 |---|---|---|
-| `n/NAME` | Yes | A non-blank name made of words that each start with a letter or digit, e.g. `n/John Doe`. To match legal names, names can also use apostrophes, periods, hyphens and slashes between letters or digits (`n/Anne O'Brien`, `n/J.R. Tan`, `n/Kelly-Ann Tan`, `n/Ravi s/o Kumar`), one period at the end of a word (`n/Tan Ah Kow Jr.`), a comma after a word (`n/Martin Luther King, Jr.`), words in parentheses after the first word (`n/Tan Wei Ming (Kelvin)`), and an alias after a separate `@` (`n/Mohamed Ali @ Ahmad`). Lineage and gender markers such as `s/o`, `d/o`, `a/l`, `a/p` and `l/p` are accepted; within a name, `s/o` followed by a space, in any letter case, stays part of the name rather than starting a status. Because an address can start with `L` or `P`, put `a/ADDRESS` before `n/NAME` when using `a/l` or `a/p` in a name, e.g. `edit 1 a/1 Road n/Siti a/p Ahmad`. A later address is also accepted when another field, such as `p/`, separates it from the name. If a connector-looking value is immediately followed by an address field, HRvest asks you to clarify instead of guessing: `edit 1 n/John a/L Street a/9 Road` is rejected. To set an address such as `L Street` together with a name, use `edit 1 a/L Street n/John`. Other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words are rejected. Like other command input, names accept only [printable ASCII](#accepted-characters-in-candidate-inputs), so accented or non-Latin letters such as `José` or `陈` must be entered in their romanised form, e.g. `Jose`. Leading and trailing spaces are removed; internal spaces and letter case are preserved. |
+| `n/NAME` | Yes | A non-blank, printable-ASCII name that follows the [Name rules](#name-rules), e.g. `n/John Doe`. See below for punctuation, markers and parameter-ordering guidance. |
 | `p/PHONE_NUMBER` | Yes | Any printable-ASCII text containing at least three ASCII digits, e.g. `p/+65 9123 4567`, `p/(65) 6123 4567`, or `p/1234 5678 (HP) 1111-3333 (Office)`. Formatting, extensions and contact labels are accepted. Leading and trailing spaces are removed; internal text and leading zeroes are preserved. HRvest stores contact information without checking whether a number is dialable. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/anne.o'brien@example.com`. The local part allows letters, digits, and <code>!#$%&'*+/=?^_&#96;{&#124;}~-</code>, with periods separating non-empty groups. Leading, trailing, and consecutive periods are invalid. Domain labels must start and end with letters or digits and may contain internal hyphens, including consecutive hyphens (e.g. `xn--bcher-kva.de`); the final label must contain at least two characters. Spaces and quoted local parts are not accepted. |
 | `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
@@ -103,13 +111,25 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 | `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
 | `t/TAG` | No | A non-blank label containing only letters and digits, e.g. `t/backend`. Spaces and punctuation are not accepted. Repeat the prefix for multiple tags: `t/backend t/Java`. Identical tags are removed, but tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. |
 
+#### Name rules
+
+These rules apply to names supplied through `add` and `edit`.
+
+* **Punctuation between letters or digits:** Apostrophes, periods, hyphens and slashes are accepted, e.g. `Anne O'Brien`, `J.R. Tan`, `Kelly-Ann Tan` and `Ravi s/o Kumar`.
+* **Other legal-name forms:** A word may end with one period (`Tan Ah Kow Jr.`). A comma may follow a word or closing parenthesis, but must be followed by a space and another word (`Martin Luther King, Jr.` or `Tan (Kelvin), Jr.`); a trailing comma is rejected. Parenthesised words are accepted after the first word (`Tan Wei Ming (Kelvin)`), and a separate `@` may introduce an alias (`Mohamed Ali @ Ahmad`). Parentheses must enclose complete words without spaces immediately inside them; `@` needs a name on both sides.
+* **Name markers:** Accepted examples include `s/o`, `d/o`, `a/l`, `a/p` and `l/p`; slashes between letters or digits are not limited to these markers. Within a name, `s/o` followed by a space stays part of the name rather than starting a status field, regardless of letter case. `d/o` and `l/p` stay part of the name because `d/` and `l/` are not command prefixes. The markers `a/l` and `a/p` can resemble an address field and require the ordering below.
+* **Ordering names and addresses:** When using `a/l` or `a/p` in a name, put the address first, e.g. `edit 1 a/1 Road n/Siti a/p Ahmad`. A later address is also accepted if another field, such as `p/`, separates it from the name.
+* **Ambiguous addresses:** An address beginning with `L` or `P` can look like a name marker. Put the address first, e.g. `edit 1 a/L Street n/John`. An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected rather than guessed.
+* **Rejected punctuation:** Other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words are rejected.
+* **Characters and spacing:** Only [printable ASCII](#accepted-characters-in-candidate-inputs) is accepted. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Leading and trailing spaces are removed; internal spaces and letter case are preserved.
+
 **Input and results:**
 
 * Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Both `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
 * The error message lists all missing contact parameters together. For example, `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
 * Create named roles with `add_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
 * Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` identifies the matching existing record, even if hidden by a filter. The submitted candidate and current view are not changed. Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
-* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`, described in the `n/NAME` row above.
+* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`, described in [Name rules](#name-rules) above.
 * `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
 
 Examples:
@@ -136,7 +156,8 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [
 
 * Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * At least one of the optional fields must be provided.
-* Existing values will be updated to the input values. The current filter is kept; candidates that no longer match disappear from the displayed list.
+* Existing values will be updated to the input values.
+* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
 * If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` identifies the matching existing record rather than the submitted name, even if hidden by a filter. The original candidate, filter, and expanded view remain unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
 * Supplied `r/` values replace all existing roles; omitting `r/` preserves them. A bare `r/` is invalid; use `r/No role` to remove named roles. Unknown roles suggest `add_role n/NAME`, and an invalid role leaves all details unchanged.
@@ -153,8 +174,6 @@ Examples:
 *  `edit 3 s/Interviewing` Updates the status of the 3rd candidate to `Interviewing`.
 * `edit 1 r/Developer r/Designer` Replaces the 1st candidate's roles with Developer and Designer, which must already exist.
 
-After an ordinary `edit`, `note`, or `status` update, the current name, status, or role filter remains active. Displayed indexes may change when a candidate stops matching. Expanding a candidate replaces that filter with a selection of the candidate: an update keeps them expanded at index `1`, even if their new name, status, or roles would not match the earlier filter. Check the displayed list before the next index command; use `list` to show all candidates.
-
 ### Adding, replacing, or clearing a candidate's note: `note`
 
 Adds a note to the specified candidate, such as interview feedback or follow-up context.
@@ -164,10 +183,11 @@ Format: `note INDEX no/[NOTE_TEXT]`
 * Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
 * `0` or a negative index gives `Index must be a positive integer.` An index beyond the displayed list gives `The candidate index provided is invalid.` A missing or non-numeric index gives `Invalid command format!`. The current view stays unchanged.
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
-* To clear the note, enter `note INDEX no/` with no text after `no/`. Whitespace-only text also clears it. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
+* To clear the note, enter `note INDEX no/` with no text after `no/`. Text containing only ordinary spaces also clears the note. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
 * Non-empty `NOTE_TEXT` can contain at most 500 printable-ASCII characters. Leading and trailing ordinary spaces are removed; spacing, capitalisation, and ASCII punctuation within the note are kept. Tabs, line breaks, and non-ASCII characters are rejected.
 * Supply `no/` only once. Because prefixes ignore letter case, a later ` NO/` in the text also counts as a second `no/`. Other prefixes, such as `n/`, are treated as part of the note.
-* After the note is updated or cleared, the current filter is kept. When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
+* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
+* When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
 * Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
 
 Examples:
@@ -191,7 +211,8 @@ Format: `status INDEX s/STATUS`
 * `INDEX` is a positive, 1-based index in the displayed list.
 * Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
 * Candidates created with `add` start with `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
-* After an update, the current filter is kept. Candidates that no longer match a status filter disappear from the displayed list. The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
+* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
+* The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
 * If the candidate already has the requested status, the message is `No change: NAME already has status STATUS.` Their record and the current filtered or expanded view stay unchanged.
 * `0` or a negative index gives `Index must be a positive integer.` An index beyond the displayed list gives `The candidate index provided is invalid.` A missing or non-numeric index, or a missing `s/`, gives `Invalid command format!`. The candidate and current view stay unchanged.
 * An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
@@ -232,7 +253,7 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 * Each `filter` replaces the previous search or filter and considers all candidates, so `filter` and `find` cannot be combined. For example, `find Alex` followed by `filter r/Developer` shows every Developer, not only those matching `Alex`.
 * Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
 * Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalog.
-* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`. Other prefixes, such as `n/` or `t/`, are rejected with `The filter command does not support n/. Use only s/STATUS and r/ROLE.`
+* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`. Other prefixes are rejected. For example, `filter n/Alex` gives `The filter command does not support n/. Use only s/STATUS and r/ROLE.`
 * If no candidates match, the result count is zero.
 * Renaming a role keeps an active filter following that role. Deleting it removes that role's matches.
 
@@ -319,7 +340,7 @@ Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
 * The role must exist and must not be `No role`.
 * The new name must not match another role. Changing only capitalisation is allowed.
 * Other role assignments stay unchanged.
-* Keeps the current filter or expanded candidate.
+* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
 
 Example: `edit_role r/Software Engineer n/Senior Software Engineer`
 
@@ -331,7 +352,7 @@ Format: `delete_role r/NAME`
 
 * The role must exist and must not be `No role`.
 * Candidates keep their other roles. Those losing their last role receive `No role`.
-* Keeps the current filter or expanded candidate.
+* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
 
 Example: `delete_role r/Senior Software Engineer`
 
