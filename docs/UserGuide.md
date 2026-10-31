@@ -150,7 +150,7 @@ Examples:
 
 *  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
 *  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
-*  `edit 3 s/Interviewing` Updates the status of the 3rd candidate to `Interviewing`.
+*  `edit 3 s/Offered` Updates the status of the 3rd candidate to `Offered`.
 * `edit 1 r/Developer r/Designer` Replaces the 1st candidate's roles with Developer and Designer, which must already exist.
 
 After an ordinary `edit`, `note`, or `status` update, the current name, status, or role filter remains active. Displayed indexes may change when a candidate stops matching. Expanding a candidate replaces that filter with a selection of the candidate: an update keeps them expanded at index `1`, even if their new name, status, or roles would not match the earlier filter. Check the displayed list before the next index command; use `list` to show all candidates.
@@ -215,7 +215,7 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 * Each `find` replaces the previous search or filter and considers all candidates, so `find` and `filter` cannot be combined. For example, `filter s/Interviewing` followed by `find Alex` shows every candidate matching `Alex`, whatever their status.
 
 Examples:
-* `find John` returns `john` and `John Doe`
+* `find ROY` returns `Roy Balakrishnan`
 * `find ale` returns `Alex Yeoh`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
