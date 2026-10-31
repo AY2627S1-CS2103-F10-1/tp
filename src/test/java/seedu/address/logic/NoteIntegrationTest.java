@@ -86,21 +86,23 @@ public class NoteIntegrationTest {
     }
 
     @Test
-    public void execute_invalidNoteInExpandedView_keepsDataAndViewUnchanged() throws Exception {
+    public void execute_overlongNoteInExpandedView_keepsDataAndViewUnchanged() throws Exception {
         logic.execute("note 2 no/Existing note");
         logic.execute("expand 2");
-        AddressBook before = new AddressBook(model.getAddressBook());
-        List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
-        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
-
-        assertThrows(ParseException.class, Note.MESSAGE_TOO_LONG, () -> logic.execute("note 1 no/" + "x".repeat(501)));
-        assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
-                logic.execute("note 2 no/New note"));
-
-        assertEquals(before, model.getAddressBook());
-        assertEquals(displayedBefore, model.getFilteredPersonList());
         assertTrue(logic.isExpandedViewProperty().get());
-        assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
+
+        assertRejectedCommandPreservesState("note 1 no/" + "x".repeat(501), ParseException.class,
+                Note.MESSAGE_TOO_LONG);
+    }
+
+    @Test
+    public void execute_outOfRangeNoteInExpandedView_keepsDataAndViewUnchanged() throws Exception {
+        logic.execute("note 2 no/Existing note");
+        logic.execute("expand 2");
+        assertTrue(logic.isExpandedViewProperty().get());
+
+        assertRejectedCommandPreservesState("note 2 no/New note", CommandException.class,
+                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
     }
 
     @Test
@@ -135,30 +137,39 @@ public class NoteIntegrationTest {
     }
 
     @Test
-    public void execute_invalidNotes_keepsMemoryDiskAndFilterUnchanged() throws Exception {
-        logic.execute("note 2 no/Existing note");
-        logic.execute("find Benson");
-        AddressBook before = new AddressBook(model.getAddressBook());
-        List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
-        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
-        String[] commands = {"note 1", "note abc no/hi",
-            "note 1 no/" + "x".repeat(501), "note 1 no/first no/second"};
-        String[] messages = {NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE,
-            String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE),
-            Note.MESSAGE_TOO_LONG,
-            Messages.MESSAGE_DUPLICATE_FIELDS + "no/"};
-        for (int i = 0; i < commands.length; i++) {
-            String command = commands[i];
-            assertThrows(ParseException.class, messages[i], () -> logic.execute(command));
-        }
-        for (String command : new String[] {"note 2 no/New note", "note 2147483647 no/New note"}) {
-            assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
-                    logic.execute(command));
-        }
+    public void execute_missingNotePrefix_keepsMemoryDiskAndFilterUnchanged() throws Exception {
+        assertInvalidFilteredNoteRejected("note 1", ParseException.class,
+                NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE);
+    }
 
-        assertEquals(before, model.getAddressBook());
-        assertEquals(displayedBefore, model.getFilteredPersonList());
-        assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
+    @Test
+    public void execute_nonNumericNoteIndex_keepsMemoryDiskAndFilterUnchanged() throws Exception {
+        assertInvalidFilteredNoteRejected("note abc no/hi", ParseException.class,
+                String.format(Messages.MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void execute_overlongNote_keepsMemoryDiskAndFilterUnchanged() throws Exception {
+        assertInvalidFilteredNoteRejected("note 1 no/" + "x".repeat(501), ParseException.class,
+                Note.MESSAGE_TOO_LONG);
+    }
+
+    @Test
+    public void execute_duplicateNotePrefix_keepsMemoryDiskAndFilterUnchanged() throws Exception {
+        assertInvalidFilteredNoteRejected("note 1 no/first no/second", ParseException.class,
+                Messages.MESSAGE_DUPLICATE_FIELDS + "no/");
+    }
+
+    @Test
+    public void execute_noteIndexOutsideFilteredList_keepsMemoryDiskAndFilterUnchanged() throws Exception {
+        assertInvalidFilteredNoteRejected("note 2 no/New note", CommandException.class,
+                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+    }
+
+    @Test
+    public void execute_maximumIntegerNoteIndex_keepsMemoryDiskAndFilterUnchanged() throws Exception {
+        assertInvalidFilteredNoteRejected("note 2147483647 no/New note", CommandException.class,
+                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
     }
 
     @Test
@@ -187,6 +198,35 @@ public class NoteIntegrationTest {
     public void execute_storagePermissionFailure_throwsCommandException() {
         assertSaveFailure(new AccessDeniedException("Test permission failure"),
                 String.format(LogicManager.FILE_OPS_PERMISSION_ERROR_FORMAT, "Test permission failure"));
+    }
+
+    /**
+     * Prepares a saved note and filtered selection before checking a rejected note command.
+     */
+    private void assertInvalidFilteredNoteRejected(String command, Class<? extends Throwable> expectedException,
+            String expectedMessage) throws Exception {
+        logic.execute("note 2 no/Existing note");
+        logic.execute("find Benson");
+
+        assertRejectedCommandPreservesState(command, expectedException, expectedMessage);
+    }
+
+    /**
+     * Asserts that a rejected command preserves the saved data, candidates, selection, and view mode.
+     */
+    private void assertRejectedCommandPreservesState(String command, Class<? extends Throwable> expectedException,
+            String expectedMessage) throws IOException {
+        AddressBook before = new AddressBook(model.getAddressBook());
+        List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
+        String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
+        boolean wasExpanded = logic.isExpandedViewProperty().get();
+
+        assertThrows(expectedException, expectedMessage, () -> logic.execute(command));
+
+        assertEquals(before, model.getAddressBook());
+        assertEquals(displayedBefore, model.getFilteredPersonList());
+        assertEquals(wasExpanded, logic.isExpandedViewProperty().get());
+        assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
     }
 
     /**

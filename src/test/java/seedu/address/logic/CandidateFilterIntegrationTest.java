@@ -17,9 +17,12 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.PersonBuilder;
 
 public class CandidateFilterIntegrationTest {
     @TempDir
@@ -41,29 +44,32 @@ public class CandidateFilterIntegrationTest {
 
     @Test
     public void execute_noteAfterFind_nextDeleteTargetsDisplayedCandidate() throws Exception {
-        assertFindUpdateKeepsSelection("note 1 no/Follow up");
+        Person expectedCandidate = new PersonBuilder(BENSON).withNote("Follow up").build();
+        assertFindUpdateKeepsSelection("note 1 no/Follow up", expectedCandidate);
     }
 
     @Test
     public void execute_statusAfterFind_nextDeleteTargetsDisplayedCandidate() throws Exception {
-        assertFindUpdateKeepsSelection("status 1 s/Offered");
+        Person expectedCandidate = new PersonBuilder(BENSON).withStatus(Status.OFFERED).build();
+        assertFindUpdateKeepsSelection("status 1 s/Offered", expectedCandidate);
     }
 
     @Test
     public void execute_editAfterFind_nextDeleteTargetsDisplayedCandidate() throws Exception {
-        assertFindUpdateKeepsSelection("edit 1 p/91234567");
+        Person expectedCandidate = new PersonBuilder(BENSON).withPhone("91234567").build();
+        assertFindUpdateKeepsSelection("edit 1 p/91234567", expectedCandidate);
     }
 
     /**
      * Verifies that a later index command still targets the filtered candidate.
      */
-    private void assertFindUpdateKeepsSelection(String command) throws Exception {
+    private void assertFindUpdateKeepsSelection(String command, Person expectedCandidate) throws Exception {
         logic.execute("find Benson");
 
         logic.execute(command);
 
-        assertEquals(1, model.getFilteredPersonList().size());
-        assertEquals(BENSON.getEmail(), model.getFilteredPersonList().getFirst().getEmail());
+        assertEquals(List.of(expectedCandidate), model.getFilteredPersonList());
+        assertEquals(List.of(ALICE, expectedCandidate), model.getAddressBook().getPersonList());
         logic.execute("delete 1");
         assertEquals(List.of(ALICE), model.getAddressBook().getPersonList());
         assertTrue(model.getFilteredPersonList().isEmpty());
@@ -89,40 +95,42 @@ public class CandidateFilterIntegrationTest {
         logic.execute(command);
 
         assertTrue(model.getFilteredPersonList().isEmpty());
-        assertTrue(model.hasPerson(ALICE));
-        assertEquals(2, model.getAddressBook().getPersonList().size());
+        Person expectedCandidate = new PersonBuilder(BENSON).withStatus(Status.OFFERED).build();
+        assertEquals(List.of(ALICE, expectedCandidate), model.getAddressBook().getPersonList());
         logic.execute("list");
-        assertEquals(2, model.getFilteredPersonList().size());
+        assertEquals(List.of(ALICE, expectedCandidate), model.getFilteredPersonList());
         assertFalse(logic.isExpandedViewProperty().get());
     }
 
     @Test
     public void execute_noteAfterExpansion_keepsUpdatedCandidateExpanded() throws Exception {
-        assertExpandedUpdateKeepsSelection("note 1 no/Follow up");
+        Person expectedCandidate = new PersonBuilder(BENSON).withNote("Follow up").build();
+        assertExpandedUpdateKeepsSelection("note 1 no/Follow up", expectedCandidate);
     }
 
     @Test
     public void execute_statusAfterExpansion_keepsUpdatedCandidateExpanded() throws Exception {
-        assertExpandedUpdateKeepsSelection("status 1 s/Offered");
+        Person expectedCandidate = new PersonBuilder(BENSON).withStatus(Status.OFFERED).build();
+        assertExpandedUpdateKeepsSelection("status 1 s/Offered", expectedCandidate);
     }
 
     @Test
     public void execute_editAfterExpansion_keepsUpdatedCandidateExpanded() throws Exception {
-        assertExpandedUpdateKeepsSelection("edit 1 n/New Name");
+        Person expectedCandidate = new PersonBuilder(BENSON).withName("New Name").build();
+        assertExpandedUpdateKeepsSelection("edit 1 n/New Name", expectedCandidate);
     }
 
     /**
      * Verifies that replacing a candidate record does not lose the expanded selection.
      */
-    private void assertExpandedUpdateKeepsSelection(String command) throws Exception {
+    private void assertExpandedUpdateKeepsSelection(String command, Person expectedCandidate) throws Exception {
         logic.execute("filter s/Applied");
         logic.execute("expand 2");
 
         logic.execute(command);
 
         assertTrue(logic.isExpandedViewProperty().get());
-        assertEquals(1, model.getFilteredPersonList().size());
-        assertEquals(BENSON.getEmail(), model.getFilteredPersonList().getFirst().getEmail());
-        assertEquals(model.getAddressBook().getPersonList().get(1), model.getFilteredPersonList().getFirst());
+        assertEquals(List.of(expectedCandidate), model.getFilteredPersonList());
+        assertEquals(List.of(ALICE, expectedCandidate), model.getAddressBook().getPersonList());
     }
 }
