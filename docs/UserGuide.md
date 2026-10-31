@@ -72,7 +72,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
 ### Filters and expanded view
 
-After `edit`, `note`, or `status`, the current name, status, or role filter stays active. Candidates that no longer match disappear from the displayed list, so displayed indexes may change.
+After `edit`, `note`, or `status`, the current name search, status filter, or role filter stays active. Candidates that no longer match disappear from the displayed list, so displayed indexes may change.
 
 `expand` replaces that filter with a selection of one candidate at index `1`. Updating the expanded candidate keeps them selected at index `1`, even if their new details would not match the earlier filter.
 
@@ -103,7 +103,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 
 | Parameter | Required? | Accepted values and behavior |
 |---|---|---|
-| `n/NAME` | Yes | A non-blank, printable-ASCII name whose words each start with a letter or digit, e.g. `n/John Doe`. Legal-name punctuation and markers are accepted; see [Name rules](#name-rules) below for examples and parameter-ordering guidance. |
+| `n/NAME` | Yes | A non-blank, printable-ASCII name that follows the [Name rules](#name-rules), e.g. `n/John Doe`. See below for punctuation, markers and parameter-ordering guidance. |
 | `p/PHONE_NUMBER` | Yes | Any printable-ASCII text containing at least three ASCII digits, e.g. `p/+65 9123 4567`, `p/(65) 6123 4567`, or `p/1234 5678 (HP) 1111-3333 (Office)`. Formatting, extensions and contact labels are accepted. Leading and trailing spaces are removed; internal text and leading zeroes are preserved. HRvest stores contact information without checking whether a number is dialable. |
 | `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/anne.o'brien@example.com`. The local part allows letters, digits, and <code>!#$%&'*+/=?^_&#96;{&#124;}~-</code>, with periods separating non-empty groups. Leading, trailing, and consecutive periods are invalid. Domain labels must start and end with letters or digits and may contain internal hyphens, including consecutive hyphens (e.g. `xn--bcher-kva.de`); the final label must contain at least two characters. Spaces and quoted local parts are not accepted. |
 | `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
@@ -116,8 +116,8 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 These rules apply to names supplied through `add` and `edit`.
 
 * **Punctuation between letters or digits:** Apostrophes, periods, hyphens and slashes are accepted, e.g. `Anne O'Brien`, `J.R. Tan`, `Kelly-Ann Tan` and `Ravi s/o Kumar`.
-* **Other legal-name forms:** A word may end with one period (`Tan Ah Kow Jr.`) or be followed by a comma (`Martin Luther King, Jr.`). Words in parentheses are accepted after the first word (`Tan Wei Ming (Kelvin)`), as is an alias after a separate `@` (`Mohamed Ali @ Ahmad`).
-* **Name markers:** `s/o`, `d/o`, `a/l`, `a/p` and `l/p` are accepted. Within a name, `s/o` followed by a space stays part of the name rather than starting a status field, regardless of letter case.
+* **Other legal-name forms:** A word may end with one period (`Tan Ah Kow Jr.`). A comma may follow a word or closing parenthesis, but must be followed by a space and another word (`Martin Luther King, Jr.` or `Tan (Kelvin), Jr.`); a trailing comma is rejected. Parenthesised words are accepted after the first word (`Tan Wei Ming (Kelvin)`), and a separate `@` may introduce an alias (`Mohamed Ali @ Ahmad`). Parentheses must enclose complete words without spaces immediately inside them; `@` needs a name on both sides.
+* **Name markers:** Accepted examples include `s/o`, `d/o`, `a/l`, `a/p` and `l/p`; slashes between letters or digits are not limited to these markers. Within a name, `s/o` followed by a space stays part of the name rather than starting a status field, regardless of letter case. `d/o` and `l/p` stay part of the name because `d/` and `l/` are not command prefixes. The markers `a/l` and `a/p` can resemble an address field and require the ordering below.
 * **Ordering names and addresses:** When using `a/l` or `a/p` in a name, put the address first, e.g. `edit 1 a/1 Road n/Siti a/p Ahmad`. A later address is also accepted if another field, such as `p/`, separates it from the name.
 * **Ambiguous addresses:** An address beginning with `L` or `P` can look like a name marker. Put the address first, e.g. `edit 1 a/L Street n/John`. An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected rather than guessed.
 * **Rejected punctuation:** Other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words are rejected.
