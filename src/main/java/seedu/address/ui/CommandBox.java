@@ -23,6 +23,11 @@ public class CommandBox extends UiPart<Region> {
     private final CommandExecutor commandExecutor;
     private final CommandHistory history;
     private Optional<String> draft = Optional.empty();
+    // True when the current text was typed by the user (not written by applyHistoryEntry
+    // or cleared by a successful command). Lets us distinguish an unsubmitted draft from
+    // text that merely echoes a history entry.
+    private boolean editingDraft = true;
+    private boolean applyingProgrammatic = false;
 
     @FXML
     private TextField commandTextField;
@@ -42,8 +47,12 @@ public class CommandBox extends UiPart<Region> {
         super(FXML);
         this.commandExecutor = commandExecutor;
         this.history = history;
-        // calls #setStyleToDefault() whenever there is a change to the text of the command box.
-        commandTextField.textProperty().addListener((unused1, unused2, unused3) -> setStyleToDefault());
+        commandTextField.textProperty().addListener((unused1, unused2, unused3) -> {
+            setStyleToDefault();
+            if (!applyingProgrammatic) {
+                editingDraft = true;
+            }
+        });
         commandTextField.addEventFilter(KeyEvent.KEY_PRESSED, this::handleArrowNavigation);
     }
 
@@ -63,13 +72,15 @@ public class CommandBox extends UiPart<Region> {
 
         try {
             commandExecutor.execute(commandText);
-            commandTextField.setText("");
+            applyProgrammaticText("");
+            editingDraft = true;
         } catch (CommandException | ParseException e) {
             // Keep the failed text so that the user can correct it. Its history entry counts as already shown,
             // so pressing Up shows the command before it instead of appearing to do nothing.
             if (!commandText.isBlank()) {
                 history.moveCursorToNewest();
             }
+            editingDraft = false;
             setStyleToIndicateCommandFailure();
         }
     }
@@ -80,34 +91,54 @@ public class CommandBox extends UiPart<Region> {
      */
     private void handleArrowNavigation(KeyEvent event) {
         if (event.getCode() == KeyCode.UP) {
-            captureDraftIfStartingNavigation();
-            history.previous().ifPresent(this::applyHistoryEntry);
+            handleUp();
             event.consume();
         } else if (event.getCode() == KeyCode.DOWN) {
-            Optional<String> entry = history.next();
-            if (entry.isEmpty()) {
-                return;
+            if (handleDown()) {
+                event.consume();
             }
-            if (entry.get().isEmpty() && draft.isPresent()) {
-                applyHistoryEntry(draft.get());
-                draft = Optional.empty();
-            } else {
-                applyHistoryEntry(entry.get());
-            }
-            event.consume();
         }
     }
 
-    private void captureDraftIfStartingNavigation() {
-        if (draft.isEmpty() && history.getCursor() == history.getEntries().size()
-                && !commandTextField.getText().isEmpty()) {
+    private void handleUp() {
+        captureDraftIfEdited();
+        history.previous().ifPresent(this::applyHistoryEntry);
+    }
+
+    private boolean handleDown() {
+        captureDraftIfEdited();
+        Optional<String> entry = history.next();
+        if (entry.isEmpty()) {
+            return false;
+        }
+        if (entry.get().isEmpty() && draft.isPresent()) {
+            applyHistoryEntry(draft.get());
+            draft = Optional.empty();
+        } else {
+            applyHistoryEntry(entry.get());
+        }
+        return true;
+    }
+
+    private void captureDraftIfEdited() {
+        if (draft.isEmpty() && editingDraft && !commandTextField.getText().isEmpty()) {
             draft = Optional.of(commandTextField.getText());
         }
     }
 
     private void applyHistoryEntry(String entry) {
-        commandTextField.setText(entry);
+        applyProgrammaticText(entry);
         commandTextField.positionCaret(entry.length());
+        editingDraft = false;
+    }
+
+    private void applyProgrammaticText(String text) {
+        applyingProgrammatic = true;
+        try {
+            commandTextField.setText(text);
+        } finally {
+            applyingProgrammatic = false;
+        }
     }
 
     /**
