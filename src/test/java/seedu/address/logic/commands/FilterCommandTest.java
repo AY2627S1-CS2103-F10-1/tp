@@ -7,6 +7,7 @@ import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +15,10 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.CandidateMatchesFilterPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
-import seedu.address.model.person.StatusContainsKeywordPredicate;
+import seedu.address.model.role.Role;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -31,7 +33,8 @@ public class FilterCommandTest {
         Status status = Status.APPLIED;
         FilterCommand command = new FilterCommand(status);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(status));
+        expectedModel.updateFilteredPersonList(
+                new CandidateMatchesFilterPredicate(List.of(status), Set.<Role>of()));
         String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS,
                 expectedModel.getFilteredPersonList().size(), status);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
@@ -42,7 +45,8 @@ public class FilterCommandTest {
         Status status = Status.ACCEPTED;
         FilterCommand command = new FilterCommand(status);
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(status));
+        expectedModel.updateFilteredPersonList(
+                new CandidateMatchesFilterPredicate(List.of(status), Set.<Role>of()));
         assertTrue(expectedModel.getFilteredPersonList().isEmpty());
         String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 0, status);
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
@@ -62,8 +66,8 @@ public class FilterCommandTest {
         FilterCommand command = new FilterCommand(List.of(Status.OFFERED, Status.INTERVIEWING));
 
         Model expectedModel = new ModelManager(addressBook, new UserPrefs());
-        expectedModel.updateFilteredPersonList(
-                new StatusContainsKeywordPredicate(List.of(Status.INTERVIEWING, Status.OFFERED)));
+        expectedModel.updateFilteredPersonList(new CandidateMatchesFilterPredicate(
+                List.of(Status.INTERVIEWING, Status.OFFERED), Set.<Role>of()));
         String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 2,
                 Status.INTERVIEWING + " or " + Status.OFFERED);
 
@@ -75,8 +79,8 @@ public class FilterCommandTest {
     public void execute_threeStatuses_joinsWithCommasAndFinalOr() {
         FilterCommand command = new FilterCommand(List.of(Status.OFFERED, Status.APPLIED, Status.INTERVIEWING));
         Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(
-                List.of(Status.APPLIED, Status.INTERVIEWING, Status.OFFERED)));
+        expectedModel.updateFilteredPersonList(new CandidateMatchesFilterPredicate(
+                List.of(Status.APPLIED, Status.INTERVIEWING, Status.OFFERED), Set.<Role>of()));
         String expectedMessage = expectedModel.getFilteredPersonList().size()
                 + " candidate(s) filtered with status(es): Applied, Interviewing or Offered";
 
