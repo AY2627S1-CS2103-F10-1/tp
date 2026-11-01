@@ -374,11 +374,11 @@ Failures display `Export failed:` with the reason and destination when available
 
 ### User stories
 
-Priorities: High (must have) `* * *`, Medium (nice to have) `* *`, Low (unlikely to have) `*`.
+The following user stories describe supported functionality. Priorities indicate their relative importance: High `* * *`, Medium `* *`, Low `*`.
 
 Target user: a hiring manager at a tech startup who hires for one to three full-time roles at a time, tracks roughly 10 to 50 candidates, and prefers keyboard commands to mouse-driven forms.
 
-#### Must-have (MVP, `* * *`)
+#### High-priority (`* * *`)
 
 | Priority | As a …           | I want to …                                          | So that I can…                                                     |
 |----------|-------------------|-------------------------------------------------------|---------------------------------------------------------------------|
@@ -393,7 +393,7 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | `* * *`  | user              | view a candidate's full details including their note  | prepare for the next conversation with them                         |
 | `* * *`  | user              | see a confirmation when an action succeeds            | confirm that the command did what I intended                        |
 
-#### Nice-to-have (`* *`)
+#### Medium-priority (`* *`)
 
 | Priority | As a …           | I want to …                                                      | So that I can…                                                       |
 |----------|-------------------|-------------------------------------------------------------------|-----------------------------------------------------------------------|
@@ -861,11 +861,21 @@ testers are expected to do more *exploratory* testing.
    1. Test case: `delete 1`<br>
       Expected: The first candidate is deleted from the list. The status message shows the deleted candidate's details.
 
-   1. Test case: `delete 0`<br>
-      Expected: No candidate is deleted. The status message shows error details.
+   1. Test cases: Run `delete` and `delete abc` independently.<br>
+      Expected for each command: No candidate is deleted. The status message is:
 
-   1. Other incorrect delete commands to try: `delete`, `delete x`, `...` (where x is larger than the list size)<br>
-      Expected: Similar to previous.
+      ```text
+      Invalid command format!
+      delete: Deletes the candidate identified by the index number used in the displayed candidate list.
+      Parameters: INDEX (must be a positive integer)
+      Example: delete 1
+      ```
+
+   1. Test case: `delete 0`<br>
+      Expected: No candidate is deleted. The status message is `Index must be a positive integer.`
+
+   1. Test case: `delete 99999`, with fewer than 99999 candidates in the displayed list.<br>
+      Expected: No candidate is deleted. The status message is `The candidate index provided is invalid.`
 
 ### Preserving filters after candidate updates
 
