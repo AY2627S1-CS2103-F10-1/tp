@@ -16,8 +16,8 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.LogicTestFixture;
 import seedu.address.testutil.PersonBuilder;
 
 /** Checks that exported legacy data can be restored without relaxing command input rules. */
@@ -34,17 +34,18 @@ public class LegacyCsvCompatibilityTest {
         Path sourcePath = directory.resolve("original.json");
         JsonAddressBookStorage original = new JsonAddressBookStorage(sourcePath);
         original.saveAddressBook(source);
-        StorageManager storage = new StorageManager(new JsonAddressBookStorage(directory.resolve("restored.json")),
-                new JsonUserPrefsStorage(directory.resolve("prefs.json")));
+        ModelManager model = new ModelManager();
+        LogicTestFixture fixture = new LogicTestFixture(directory, model,
+                new JsonAddressBookStorage(directory.resolve("restored.json")));
+        StorageManager storage = fixture.getStorage();
         Path exported = storage.exportAddressBook(original.readAddressBook().orElseThrow());
         Files.copy(exported, directory.resolve("import.csv"));
-        ModelManager model = new ModelManager();
 
-        new LogicManager(model, storage).execute("import");
+        fixture.getLogic().execute("import");
 
         assertEquals(source, model.getAddressBook());
-        assertEquals(source, storage.readAddressBook().orElseThrow());
-        ModelManager restarted = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
+        assertEquals(source, fixture.readSaved());
+        ModelManager restarted = new ModelManager(fixture.readSaved(), new UserPrefs());
         assertEquals(source, restarted.getAddressBook());
         assertThrows(ParseException.class, () -> ParserUtil.parseAddress(candidate.getAddress().value));
         assertThrows(ParseException.class, () -> ParserUtil.parseNote(candidate.getNote().orElseThrow().value));

@@ -4,7 +4,10 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -41,9 +44,9 @@ public class NoteCommandParserTest {
     @Test
     public void parse_missingPrefix_throwsParseException() {
         String message = NoteCommandParser.MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE;
-        for (String args : new String[] { "", " 1", " 1 n/hi", " 1 hi", " 1no/hi", " 0", " 99999999999" }) {
+        assertAllCases(List.of("", " 1", " 1 n/hi", " 1 hi", " 1no/hi", " 0", " 99999999999"), args -> {
             assertParseFailure(parser, args, message);
-        }
+        });
     }
 
     @Test
@@ -55,24 +58,24 @@ public class NoteCommandParserTest {
     @Test
     public void parse_notWholeNumberIndex_throwsFormatError() {
         String message = String.format(MESSAGE_INVALID_COMMAND_FORMAT, NoteCommand.MESSAGE_USAGE);
-        for (String index : new String[] { "abc", "+1", "1.5", "1 2" }) {
+        assertAllCases(List.of("abc", "+1", "1.5", "1 2"), index -> {
             assertParseFailure(parser, " " + index + " no/hi", message);
-        }
+        });
     }
 
     @Test
     public void parse_zeroOrNegativeIndex_throwsInvalidIndex() {
-        for (String index : new String[] { "0", "000", "-0", "-1", "-99999999999" }) {
+        assertAllCases(List.of("0", "000", "-0", "-1", "-99999999999"), index -> {
             assertParseFailure(parser, " " + index + " no/hi", ParserUtil.MESSAGE_INVALID_INDEX);
-        }
+        });
     }
 
     @Test
     public void parse_indexTooLargeForAnyList_throwsInvalidDisplayedIndex() {
-        for (String index : new String[] { "2147483648", "99999999999", "9".repeat(100) }) {
+        assertAllCases(List.of("2147483648", "99999999999", "9".repeat(100)), index -> {
             assertParseFailure(parser, " " + index + " no/hi",
                     Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
+        });
     }
 
     @Test
@@ -86,19 +89,19 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_blankNote_returnsClearCommand() {
-        for (String args : new String[] { " 1 no/", " 1 no/   " }) {
+        assertAllCases(List.of(" 1 no/", " 1 no/   "), args -> {
             assertParseSuccess(parser, args, new NoteCommand(INDEX_FIRST_PERSON));
-        }
+        });
     }
 
     @Test
     public void parse_noteLengthBoundaries_validatesTrimmedLength() {
-        for (String character : new String[] { "x", "~" }) {
+        assertAllCases(List.of("x", "~"), character -> {
             String note = character.repeat(Note.MAX_LENGTH);
             assertParseSuccess(parser, " 1 no/ " + note + " ",
                     new NoteCommand(INDEX_FIRST_PERSON, new Note(note)));
             assertParseFailure(parser, " 1 no/" + note + character, Note.MESSAGE_TOO_LONG);
-        }
+        });
     }
 
     @Test
