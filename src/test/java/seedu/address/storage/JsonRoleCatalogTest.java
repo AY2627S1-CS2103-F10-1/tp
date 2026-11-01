@@ -39,6 +39,7 @@ class JsonRoleCatalogTest {
         JsonRoleCatalog invalidId = new JsonRoleCatalog(List.of(new JsonRoleCatalog.Entry("bad-id", "Engineer")));
         assertThrows(IllegalValueException.class, "Invalid role identity.", invalidId::toModelType);
     }
+
     @Test
     void toModelType_nullListOrEntry_reportsMissingCatalog() {
         assertAllCases(Arrays.asList(null, Arrays.asList((JsonRoleCatalog.Entry) null)), entries -> {

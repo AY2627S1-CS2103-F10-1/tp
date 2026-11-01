@@ -12,8 +12,12 @@ import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BOB;
 
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.testutil.PersonBuilder;
 
 public class PersonTest {
@@ -147,5 +151,27 @@ public class PersonTest {
         Person aliceCopy = new PersonBuilder(ALICE).build();
 
         assertEquals(ALICE.hashCode(), aliceCopy.hashCode());
+    }
+
+    @Test
+    public void constructor_legacyPerson_assignsNoRole() {
+        Person person = new PersonBuilder().build();
+
+        assertEquals(Set.of(Role.NO_ROLE), person.getRoles());
+    }
+
+    @Test
+    public void withRoles_emptyAssignments_rejects() {
+        Person person = new PersonBuilder().build();
+
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_ROLES_REQUIRED, () ->
+                person.withRoles(Set.of()));
+    }
+
+    @Test
+    public void getRoles_modifyAssignments_rejects() {
+        Person person = new PersonBuilder().build();
+
+        assertThrows(UnsupportedOperationException.class, null, () -> person.getRoles().clear());
     }
 }

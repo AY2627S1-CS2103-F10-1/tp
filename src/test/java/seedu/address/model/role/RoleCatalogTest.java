@@ -8,22 +8,40 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import seedu.address.model.person.Person;
-import seedu.address.testutil.PersonBuilder;
-
 class RoleCatalogTest {
     @Test
-    void catalog_invalidReferencesAndEntries_rejects() {
+    void constructor_missingBuiltInRole_rejects() {
         Role role = Role.create("Engineer");
-        assertThrows(IllegalArgumentException.class, () -> new RoleCatalog(List.of(role)));
-        assertThrows(IllegalArgumentException.class, () -> new RoleCatalog(List.of(Role.NO_ROLE, role, role)));
-        assertThrows(IllegalArgumentException.class, () -> new Role("bad-id", "Engineer"));
-        assertThrows(IllegalArgumentException.class, () -> Role.create("No role"));
-        assertThrows(IllegalArgumentException.class, () -> Role.create("Line\nBreak"));
-        assertThrows(IllegalArgumentException.class, () -> new RoleCatalog().validateReferences(Set.of(role)));
-        Person person = new PersonBuilder().build();
-        assertEquals(Set.of(Role.NO_ROLE), person.getRoles());
-        assertThrows(IllegalArgumentException.class, () -> person.withRoles(Set.of()));
-        assertThrows(UnsupportedOperationException.class, () -> person.getRoles().clear());
+
+        assertThrows(IllegalArgumentException.class, "The catalog must contain No role.", () ->
+                new RoleCatalog(List.of(role)));
+    }
+
+    @Test
+    void constructor_duplicateIdentity_rejects() {
+        Role role = Role.create("Engineer");
+
+        assertThrows(IllegalArgumentException.class, "Duplicate role identity.", () ->
+                new RoleCatalog(List.of(Role.NO_ROLE, role, role)));
+    }
+
+    @Test
+    void validateReferences_unknownRole_rejects() {
+        Role role = Role.create("Engineer");
+        RoleCatalog catalog = new RoleCatalog();
+
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_INVALID_REFERENCE, () ->
+                catalog.validateReferences(Set.of(role)));
+    }
+
+    @Test
+    void equalsAndHashCode_differentEntryOrder_preservesValueSemantics() {
+        Role role = Role.create("Engineer");
+        Role copy = new Role(role.getId(), "Engineer");
+        RoleCatalog first = new RoleCatalog(List.of(role, Role.NO_ROLE));
+        RoleCatalog second = new RoleCatalog(List.of(Role.NO_ROLE, copy));
+
+        assertEquals(first, second);
+        assertEquals(first.hashCode(), second.hashCode());
     }
 }

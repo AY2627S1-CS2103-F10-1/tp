@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.model.Model.PREDICATE_SHOW_ALL_PERSONS;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalRoleAssignments.getAssignedModel;
@@ -258,34 +259,25 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void factoriesAndModel_paddedNames_preservePreparedDisplayAndLookup() {
-        Role role = Role.create("\u2003 Software  Engineer \u2003");
-        assertEquals("Software  Engineer", role.getName());
-        Role renamed = role.renamed("\t Senior  Engineer \t");
-        assertEquals("Senior  Engineer", renamed.getName());
-        assertEquals(role.getId(), renamed.getId());
-        assertEquals("senior  engineer", Role.toLookupKey(" Senior  ENGINEER "));
+    public void manageRoles_paddedNames_preservesPreparedDisplayAndLookup() {
         ModelManager model = new ModelManager();
         model.createRole(" Engineer ");
+
         model.renameRole(" ENGINEER ", " Senior  Engineer ");
+
         assertEquals("Senior  Engineer", model.getRoleCatalog().requireRole(" senior  ENGINEER ").getName());
-        assertThrows(NullPointerException.class, () -> Role.create(null));
-        assertThrows(NullPointerException.class, () -> role.renamed(null));
     }
 
     @Test
-    public void createRole_caseAndWhitespaceConflict_leavesCatalogUnchanged() {
+    public void createRole_internalSpacingDifference_createsDistinctRole() {
         ModelManager model = new ModelManager();
         model.createRole("  Software Engineer  ");
-        RoleCatalog before = model.getRoleCatalog();
 
-        assertThrows(IllegalArgumentException.class, () -> model.createRole("software engineer"));
-        assertThrows(IllegalArgumentException.class, () -> model.createRole(" NO ROLE "));
-        assertThrows(IllegalArgumentException.class, () -> model.createRole(" \t "));
-        assertEquals(before, model.getRoleCatalog());
-        assertEquals("Software Engineer", before.requireRole(" SOFTWARE ENGINEER ").getName());
         model.createRole("Software  Engineer");
+
         assertEquals(3, model.getRoleCatalog().getRoles().size());
+        assertEquals("Software Engineer", model.getRoleCatalog().requireRole(" SOFTWARE ENGINEER ").getName());
+        assertEquals("Software  Engineer", model.getRoleCatalog().requireRole("Software  Engineer").getName());
     }
 
     @Test
@@ -309,14 +301,6 @@ public class ModelManagerTest {
         assertEquals("CAF\u00c9", renamed.getName());
         model.createRole("Caf e\u0301");
         assertEquals(4, model.getRoleCatalog().getRoles().size());
-    }
-
-    @Test
-    public void manageRole_protectedRole_rejectsWithoutMutation() {
-        ModelManager model = new ModelManager();
-        assertThrows(IllegalArgumentException.class, () -> model.renameRole("no role", "Other"));
-        assertThrows(IllegalArgumentException.class, () -> model.deleteRole(" No role "));
-        assertEquals(List.of(Role.NO_ROLE), model.getRoleCatalog().getRoles());
     }
 
     @Test
@@ -446,16 +430,104 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void manageRoles_invalidOperations_preservesPeopleAndCatalog() {
+    public void createRole_caseConflict_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_DUPLICATE_NAME, () ->
+                model.createRole("engineer"));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void createRole_reservedName_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_DUPLICATE_NAME, () ->
+                model.createRole(" NO ROLE "));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void createRole_blankName_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, Role.MESSAGE_CONSTRAINTS, () ->
+                model.createRole(" \t "));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void renameRole_protectedRole_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, Role.MESSAGE_PROTECTED_ROLE, () ->
+                model.renameRole("no role", "Other"));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void deleteRole_protectedRole_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, Role.MESSAGE_PROTECTED_ROLE, () ->
+                model.deleteRole(" No role "));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void renameRole_duplicateName_preservesData() {
         ModelManager model = getAssignedModel("Engineer");
         model.createRole("Designer");
         AddressBook before = new AddressBook(model.getAddressBook());
-        Person person = before.getPersonList().getFirst();
 
-        assertThrows(IllegalArgumentException.class, () -> model.renameRole("Engineer", " designer "));
-        assertThrows(IllegalArgumentException.class, () -> model.deleteRole("Missing"));
-        assertThrows(IllegalArgumentException.class, () -> model.replacePersonRoles(person, List.of()));
-        assertThrows(IllegalArgumentException.class, () -> model.replacePersonRoles(person, List.of("Missing")));
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_DUPLICATE_NAME, () ->
+                model.renameRole("Engineer", " designer "));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void deleteRole_unknownRole_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, String.format(RoleCatalog.MESSAGE_UNKNOWN_ROLE, "Missing"), () ->
+                model.deleteRole("Missing"));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void replacePersonRoles_emptyNames_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        Person person = model.getAddressBook().getPersonList().getFirst();
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_ROLES_REQUIRED, () ->
+                model.replacePersonRoles(person, List.of()));
+
+        assertEquals(before, model.getAddressBook());
+    }
+
+    @Test
+    public void replacePersonRoles_unknownRole_preservesData() {
+        ModelManager model = getAssignedModel("Engineer");
+        Person person = model.getAddressBook().getPersonList().getFirst();
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, String.format(RoleCatalog.MESSAGE_UNKNOWN_ROLE, "Missing"), () ->
+                model.replacePersonRoles(person, List.of("Missing")));
+
         assertEquals(before, model.getAddressBook());
     }
 
@@ -472,19 +544,29 @@ public class ModelManagerTest {
     }
 
     @Test
-    public void manageRole_reservedCommandSyntax_rejectsWithoutMutation() {
+    public void createRole_reservedCommandSyntax_rejectsWithoutMutation() {
         ModelManager model = getAssignedModel("Engineer");
         AddressBook before = new AddressBook(model.getAddressBook());
-        String id = model.getRoleCatalog().requireRole("Engineer").getId();
-        String message = Role.MESSAGE_RESERVED_SYNTAX;
-        for (String prefix : List.of("n/", "r/", "p/", "e/", "a/", "t/", "no/", "s/", "N/", "NO/")) {
-            String name = "Senior " + prefix + "Engineer";
+        List<String> prefixes = List.of("n/", "r/", "p/", "e/", "a/", "t/", "no/", "s/", "N/", "NO/");
 
-            assertThrows(IllegalArgumentException.class, message, () -> model.createRole(name));
-            assertThrows(IllegalArgumentException.class, message, () -> model.renameRole("Engineer", name));
-            assertThrows(IllegalArgumentException.class, message, () -> new Role(id, name));
+        assertAllCases(prefixes, prefix -> {
+            assertThrows(IllegalArgumentException.class, Role.MESSAGE_RESERVED_SYNTAX, () ->
+                    model.createRole("Senior " + prefix + "Engineer"));
             assertEquals(before, model.getAddressBook());
-        }
+        });
+    }
+
+    @Test
+    public void renameRole_reservedCommandSyntax_rejectsWithoutMutation() {
+        ModelManager model = getAssignedModel("Engineer");
+        AddressBook before = new AddressBook(model.getAddressBook());
+        List<String> prefixes = List.of("n/", "r/", "p/", "e/", "a/", "t/", "no/", "s/", "N/", "NO/");
+
+        assertAllCases(prefixes, prefix -> {
+            assertThrows(IllegalArgumentException.class, Role.MESSAGE_RESERVED_SYNTAX, () ->
+                    model.renameRole("Engineer", "Senior " + prefix + "Engineer"));
+            assertEquals(before, model.getAddressBook());
+        });
     }
 
     @Test

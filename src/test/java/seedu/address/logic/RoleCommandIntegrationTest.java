@@ -150,6 +150,7 @@ class RoleCommandIntegrationTest {
     private StorageManager storage() {
         return fixture(new ModelManager()).getStorage();
     }
+
     private LogicTestFixture fixture(ModelManager model) {
         return new LogicTestFixture(directory, model, "HRvest.json");
     }

@@ -364,6 +364,7 @@ public class CsvExportWriterTest {
             assertEquals(0, entries.count());
         }
     }
+
     private void assertOnlyDestinationRemains(Path destination) throws IOException {
         try (var entries = Files.list(directory)) {
             assertEquals(List.of(destination), entries.toList());
