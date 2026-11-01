@@ -228,7 +228,8 @@ public class LogicManagerTest {
 
     @Test
     public void execute_invalidAdd_doesNotChangeOrSaveData() {
-        assertParseException("add", "Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.");
+        assertParseException("add", "Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS, r/ROLE. "
+                + "Use r/No role if no role applies.");
 
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
         assertFalse(Files.exists(temporaryFolder.resolve("addressBook.json")));
@@ -244,7 +245,9 @@ public class LogicManagerTest {
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String saved = Files.readString(savedPath);
 
-        assertThrows(ParseException.class, "Missing p/PHONE_NUMBER, a/ADDRESS.", () ->
+        String expectedMessage = "Missing p/PHONE_NUMBER, a/ADDRESS, r/ROLE. "
+                + "Use r/No role if no role applies.";
+        assertThrows(ParseException.class, expectedMessage, () ->
                 logic.execute("add n/New e/new@example.com"));
 
         assertEquals(before, model.getAddressBook());
