@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -48,28 +49,30 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_invalidRoles_rejects() {
-        for (String roles : List.of("null", "[1]", "[\"\"]", "[\"QA r/Lead\"]", "[\"QA\\tLead\"]",
-                "[\"" + "a".repeat(257) + "\"]", "[" + "\"QA\",".repeat(100) + "\"QA\"]")) {
+        List<String> inputs = List.of("null", "[1]", "[\"\"]", "[\"QA r/Lead\"]", "[\"QA\\tLead\"]",
+                "[\"" + "a".repeat(257) + "\"]", "[" + "\"QA\",".repeat(100) + "\"QA\"]");
+
+        assertAllCases(inputs, roles -> {
             assertThrows(ParseException.class, () -> parseRoles(roles));
-        }
+        });
     }
 
     @Test
     public void parse_noBreakSpacesInRoleNames_identifiesRecordAndField() {
-        for (String name : List.of("Designer\u00a0", "No role\u00a0", "QA\u00a0Lead")) {
+        assertAllCases(List.of("Designer\u00a0", "No role\u00a0", "QA\u00a0Lead"), name -> {
             assertThrows(ParseException.class, "CSV record 2, field roles: "
                     + String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x00a0), () ->
                     parseRoles("[\"" + name + "\"]"));
-        }
+        });
     }
 
     @Test
     public void parse_formatCharactersInRoleNames_identifiesRecordAndField() {
-        for (String name : List.of("\u200b", "QA\u200bLead")) {
+        assertAllCases(List.of("\u200b", "QA\u200bLead"), name -> {
             assertThrows(ParseException.class, "CSV record 2, field roles: "
                     + String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x200b), () ->
                     parseRoles("[\"" + name + "\"]"));
-        }
+        });
         assertThrows(ParseException.class, "CSV record 2, field roles: "
                 + String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0xfeff), () ->
                 parseRoles("[\"QA\ufeffLead\"]"));
@@ -77,10 +80,10 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_controlCharactersInRoleNames_identifiesRecordAndField() {
-        for (String name : List.of("QA\\tLead", "QA\\rLead", "QA\\nLead", "QA\\u0000Lead", "QA\\u007fLead")) {
+        assertAllCases(List.of("QA\\tLead", "QA\\rLead", "QA\\nLead", "QA\\u0000Lead", "QA\\u007fLead"), name -> {
             assertThrows(ParseException.class, "CSV record 2, field roles: " + Role.MESSAGE_CONSTRAINTS, () ->
                     parseRoles("[\"" + name + "\"]"));
-        }
+        });
     }
 
     @Test

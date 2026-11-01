@@ -3,10 +3,9 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.JavaFxTestUtil.runOnFxThread;
 
 import java.nio.file.Path;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -44,7 +43,6 @@ import seedu.address.testutil.PersonBuilder;
 @EnabledOnOs(OS.WINDOWS)
 public class ResultDisplayTest {
     private static final double LAYOUT_TOLERANCE = 1;
-    private static final int TIMEOUT_SECONDS = 10;
     private static final int WINDOW_WIDTH = 1100;
     private static final int WINDOW_HEIGHT = 650;
 
@@ -218,14 +216,5 @@ public class ResultDisplayTest {
         Platform.enterNestedEventLoop(layoutLoop);
         root.requestLayout();
         root.layout();
-    }
-
-    private static void runOnFxThread(Runnable assertions) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(() -> {
-            assertions.run();
-            return null;
-        });
-        Platform.runLater(task);
-        task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 }

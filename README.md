@@ -8,9 +8,9 @@ HRvest is a desktop address book for hiring managers at startups who track candi
 
 ## What HRvest does
 
-* Stores each candidate's contact details, applied role, current pipeline status, notes, and tags in HRvest.
-* Supports commands to add, edit, delete, list, find, filter by status, add notes, update status, view a candidate, clear all records, exit, and open help.
-* Saves data to a JSON file next to the jar. No cloud account, database, or network connection.
+* Stores each candidate's contact details, roles, current pipeline status, note, and tags in HRvest.
+* Supports commands to add, edit, delete, list, find, filter by status or role, add notes, update status, view a candidate in full (`expand`), manage the role catalog, import and export candidates as CSV, clear all records, exit, and open help.
+* Saves candidates and roles as JSON files in a `data` folder in the folder you run HRvest from. No cloud account, database, or network connection.
 
 ## Target user
 

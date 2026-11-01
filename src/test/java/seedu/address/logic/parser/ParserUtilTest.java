@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.parser.ParserUtil.MESSAGE_INVALID_INDEX;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
@@ -121,16 +122,16 @@ public class ParserUtilTest {
 
     @Test
     public void verifyNoNotePrefix_notePrefixPresent_throwsParseException() {
-        for (String args : List.of("no/hi", " no/", " a/Blk 1 no/hi", " a/Blk 1\tno/hi", " NO/hi", " No/hi")) {
+        assertAllCases(List.of("no/hi", " no/", " a/Blk 1 no/hi", " a/Blk 1\tno/hi", " NO/hi", " No/hi"), args -> {
             assertThrows(ParseException.class, "message", () -> ParserUtil.verifyNoNotePrefix(args, "message"));
-        }
+        });
     }
 
     @Test
     public void verifyNoNotePrefix_notePrefixAbsentOrInsideWord_doesNotThrow() throws Exception {
-        for (String args : List.of("", " a/Blk 1", " a/Blk 1 yes/no/feedback", " a/techno/house", " n/Nolan")) {
+        assertAllCases(List.of("", " a/Blk 1", " a/Blk 1 yes/no/feedback", " a/techno/house", " n/Nolan"), args -> {
             ParserUtil.verifyNoNotePrefix(args, "message");
-        }
+        });
     }
 
     @Test
@@ -160,25 +161,25 @@ public class ParserUtilTest {
 
     @Test
     public void parseDisplayedIndex_notWholeNumber_throwsFormatMessage() {
-        for (String index : List.of("", WHITESPACE, "a", "10 a", "1.5", "+1", "1-", "--1")) {
+        assertAllCases(List.of("", WHITESPACE, "a", "10 a", "1.5", "+1", "1-", "--1"), index -> {
             assertThrows(ParseException.class, "format", () -> ParserUtil.parseDisplayedIndex(index, "format"));
-        }
+        });
     }
 
     @Test
     public void parseDisplayedIndex_zeroOrNegative_throwsInvalidIndexMessage() {
-        for (String index : List.of("0", "000", "-0", "-1", "-99999999999")) {
+        assertAllCases(List.of("0", "000", "-0", "-1", "-99999999999"), index -> {
             assertThrows(ParseException.class, MESSAGE_INVALID_INDEX, () ->
                     ParserUtil.parseDisplayedIndex(index, "format"));
-        }
+        });
     }
 
     @Test
     public void parseDisplayedIndex_tooLarge_throwsInvalidDisplayedIndexMessage() {
-        for (String index : List.of(Long.toString(Integer.MAX_VALUE + 1L), "99999999999999999999")) {
+        assertAllCases(List.of(Long.toString(Integer.MAX_VALUE + 1L), "99999999999999999999"), index -> {
             assertThrows(ParseException.class, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX, () ->
                     ParserUtil.parseDisplayedIndex(index, "format"));
-        }
+        });
     }
 
     @Test

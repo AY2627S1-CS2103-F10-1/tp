@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 
@@ -25,7 +26,7 @@ public class CandidateDataNormalizationTest {
     @Test
     public void readAndSaveAddressBook_emptyNoteAndPaddedStatus_preservesAllCandidates() throws Exception {
         Path path = temporaryFolder.resolve("candidates.json");
-        for (String note : List.of("", " \t ")) {
+        assertAllCases(List.of("", " \t "), note -> {
             JsonAdaptedPerson edited = new JsonAdaptedPerson(BENSON.getName().fullName, BENSON.getPhone().value,
                     BENSON.getEmail().value, BENSON.getAddress().value, List.of(), " Applied ", note);
             Files.writeString(path, "{\"persons\":[" + JsonUtil.toJsonString(new JsonAdaptedPerson(ALICE))
@@ -40,7 +41,7 @@ public class CandidateDataNormalizationTest {
             assertEquals(Status.APPLIED, loaded.getPersonList().get(1).getStatus());
             storage.saveAddressBook(loaded);
             assertEquals(loaded, storage.readAddressBook().orElseThrow());
-        }
+        });
     }
 
     @Test
