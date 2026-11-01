@@ -69,6 +69,29 @@ class RoleFoundationTest {
     }
 
     @Test
+    void createAndRenameRole_canonicalUnicodeNames_shareLookupWithoutChangingDisplayOrIdentity() {
+        ModelManager model = new ModelManager();
+        model.createRole("Cafe\u0301");
+        Role original = model.getRoleCatalog().requireRole("CAF\u00c9");
+        assertEquals("Cafe\u0301", original.getName());
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_DUPLICATE_NAME, () ->
+                model.createRole("Caf\u00e9"));
+        model.createRole("Other");
+        RoleCatalog before = model.getRoleCatalog();
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_DUPLICATE_NAME, () ->
+                model.renameRole("Other", "Caf\u00e9"));
+        assertEquals(before, model.getRoleCatalog());
+
+        model.renameRole("Caf\u00e9", "CAF\u00c9");
+
+        Role renamed = model.getRoleCatalog().requireRole("Cafe\u0301");
+        assertEquals(original.getId(), renamed.getId());
+        assertEquals("CAF\u00c9", renamed.getName());
+        model.createRole("Caf e\u0301");
+        assertEquals(4, model.getRoleCatalog().getRoles().size());
+    }
+
+    @Test
     void manageRole_protectedRole_rejectsWithoutMutation() {
         ModelManager model = new ModelManager();
         assertThrows(IllegalArgumentException.class, () -> model.renameRole("no role", "Other"));

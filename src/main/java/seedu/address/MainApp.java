@@ -1,12 +1,17 @@
 package seedu.address;
 
+import static java.util.Objects.requireNonNull;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
@@ -18,6 +23,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.UserPrefs;
 import seedu.address.storage.CandidateDataInitializer;
+import seedu.address.storage.DataDirectoryLock;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.Storage;
@@ -40,23 +46,50 @@ public class MainApp extends Application {
     protected Logic logic;
     protected Storage storage;
     protected Model model;
+    private final Path preferencesPath;
+    private final Path candidatesPath;
     private Optional<Path> recoveryBackup = Optional.empty();
+    private DataDirectoryLock dataDirectoryLock;
+    private String startupError;
+
+    /** Creates the application using its standard data and preference locations. */
+    public MainApp() {
+        this(USER_PREFS_FILE_PATH, ADDRESS_BOOK_FILE_PATH);
+    }
+
+    /** Creates an application with isolated storage locations for lifecycle tests. */
+    MainApp(Path preferencesPath, Path candidatesPath) {
+        this.preferencesPath = requireNonNull(preferencesPath);
+        this.candidatesPath = requireNonNull(candidatesPath);
+    }
 
     @Override
     public void init() throws Exception {
         logger.info("=============================[ Initializing HRvest ]===========================");
         super.init();
-
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(USER_PREFS_FILE_PATH);
-        UserPrefs userPrefs = initPrefs(userPrefsStorage);
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(ADDRESS_BOOK_FILE_PATH);
-        storage = new StorageManager(addressBookStorage, userPrefsStorage);
-
-        model = initModelManager(storage, userPrefs);
-
-        logic = new LogicManager(model, storage);
-
-        ui = new UiManager(logic, storage.getAddressBookFilePath());
+        try {
+            dataDirectoryLock = DataDirectoryLock.acquire(candidatesPath.toAbsolutePath().getParent());
+            JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(preferencesPath);
+            UserPrefs userPrefs = initPrefs(userPrefsStorage);
+            JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(candidatesPath);
+            storage = new StorageManager(addressBookStorage, userPrefsStorage);
+            model = initModelManager(storage, userPrefs);
+            logic = new LogicManager(model, storage);
+            ui = new UiManager(logic, storage.getAddressBookFilePath());
+        } catch (IOException | RuntimeException e) {
+            startupError = "HRvest could not start: " + e.getMessage();
+            logger.severe(startupError);
+            System.err.println(startupError);
+            if (dataDirectoryLock != null) {
+                try {
+                    dataDirectoryLock.close();
+                } catch (IOException closeError) {
+                    logger.warning("Failed to release startup lock: " + StringUtil.getDetails(closeError));
+                } finally {
+                    dataDirectoryLock = null;
+                }
+            }
+        }
     }
 
     /**
@@ -79,9 +112,7 @@ public class MainApp extends Application {
                     + ". Startup stopped; no commands can overwrite the original file."
                     + " Check file and folder permissions, repair the data file, and restart."
                     + initializer.getRecoveryBackup().map(path -> " Backup retained at: " + path).orElse("");
-            logger.severe(message);
-            System.err.println(message);
-            throw e;
+            throw new IOException(message, e);
         }
     }
 
@@ -120,17 +151,45 @@ public class MainApp extends Application {
     @Override
     public void start(Stage primaryStage) {
         logger.info("Starting HRvest " + MainApp.VERSION);
+        if (startupError != null) {
+            showStartupError(startupError);
+            return;
+        }
         ui.start(primaryStage);
         recoveryBackup.ifPresent(ui::showRecoveryWarning);
     }
 
-    @Override
-    public void stop() {
-        logger.info("============================ [ Stopping HRvest ] =============================");
+    /** Shows a startup failure on the JavaFX thread and exits after it is dismissed. */
+    void showStartupError(String message) {
+        showStartupError(message, Alert::showAndWait, Platform::exit);
+    }
+
+    /** Displays the startup alert and always requests exit, even if displaying it fails. */
+    void showStartupError(String message, Consumer<Alert> display, Runnable exit) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("HRvest could not start");
+        alert.setHeaderText("HRvest could not start");
+        alert.setContentText(message);
         try {
-            storage.saveUserPrefs(model.getUserPrefs());
-        } catch (IOException e) {
-            logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
+            display.accept(alert);
+        } finally {
+            exit.run();
+        }
+    }
+
+    @Override
+    public void stop() throws IOException {
+        logger.info("============================ [ Stopping HRvest ] =============================");
+        try (DataDirectoryLock lock = dataDirectoryLock) {
+            try {
+                if (storage != null && model != null) {
+                    storage.saveUserPrefs(model.getUserPrefs());
+                }
+            } catch (IOException e) {
+                logger.severe("Failed to save preferences " + StringUtil.getDetails(e));
+            }
+        } finally {
+            dataDirectoryLock = null;
         }
     }
 }

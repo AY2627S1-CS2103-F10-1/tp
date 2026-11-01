@@ -29,6 +29,7 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_THIRD_PERSON;
@@ -157,6 +158,78 @@ public class EditCommandParserTest {
     }
 
     @Test
+    public void parse_addressLikeConnectorAfterNameWithoutAddress_failure() {
+        // Regression: "a/L Street" was silently read as part of the name, leaving the address unchanged.
+        assertParseFailure(parser, "1 n/John a/L Street",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+        assertParseFailure(parser, "1 n/John a/P Road",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/P"));
+        assertParseFailure(parser, "1 n/Siti a/p Ahmad",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"));
+    }
+
+    @Test
+    public void parse_twoAddressLikeConnectorsWithoutAddress_failure() {
+        // Regression: each a/ counted as the other's address, so both were swallowed into the name.
+        assertParseFailure(parser, "1 n/Siti a/p Ahmad a/L Street",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"));
+        assertParseFailure(parser, "1 n/Siti a/l Ahmad a/P Road",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/l"));
+        assertParseFailure(parser, "1 n/Ravi s/o Kumar a/L Street",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+    }
+
+    @Test
+    public void parse_connectorImmediatelyBeforeAddress_failure() {
+        assertParseFailure(parser, "1 n/John a/L Street a/9 Road",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/L"));
+        assertParseFailure(parser, "1 n/John A/P Road A/9 Road",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "A/P"));
+        assertParseFailure(parser, "1 n/Siti a/p Ahmad a/1 Road",
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_NAME_CONNECTOR, "a/p"));
+    }
+
+    @Test
+    public void parse_addressLikeAddressBeforeConnectorName_editsAddressAndName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Siti a/p Ahmad")
+                .withAddress("L Street").build();
+
+        assertParseSuccess(parser, "1 a/L Street n/Siti a/p Ahmad", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_addressBeforeName_editsAddressAndName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("John")
+                .withAddress("L Street").build();
+
+        assertParseSuccess(parser, "1 a/L Street n/John", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_addressLikeConnectorWithSeparatedAddress_keepsConnectorInName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Siti a/p Ahmad")
+                .withAddress("1 Road").build();
+
+        assertParseSuccess(parser, "1 n/Siti a/p Ahmad s/Applied a/1 Road",
+                new EditCommand(INDEX_FIRST_PERSON,
+                        new EditPersonDescriptorBuilder(descriptor).withStatus(Status.APPLIED).build()));
+        assertParseSuccess(parser, "1 a/1 Road n/Siti a/p Ahmad", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
+    public void parse_connectorWithTwoExplicitAddresses_failure() {
+        assertParseFailure(parser, "1 a/1 Road n/Siti a/p Ahmad a/9 Road",
+                Messages.getErrorMessageForDuplicatePrefixes(PREFIX_ADDRESS));
+    }
+
+    @Test
+    public void parse_statusConnectorWithoutAddress_keepsConnectorInName() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptorBuilder().withName("Ravi s/o Kumar").build();
+
+        assertParseSuccess(parser, "1 n/Ravi s/o Kumar", new EditCommand(INDEX_FIRST_PERSON, descriptor));
+    }
+
+    @Test
     public void parse_oneFieldSpecified_success() {
         // name
         Index targetIndex = INDEX_THIRD_PERSON;
@@ -245,11 +318,13 @@ public class EditCommandParserTest {
 
     @Test
     public void parse_notePrefix_failure() {
-        for (String args : List.of("1 no/Strong candidate", "1 no/", "1 NO/Strong candidate",
+        List<String> inputs = List.of("1 no/Strong candidate", "1 no/", "1 NO/Strong candidate",
                 "1" + ADDRESS_DESC_AMY + " no/hello", "1" + ADDRESS_DESC_AMY + "\tno/hello",
-                "no/Strong candidate")) {
+                "no/Strong candidate");
+
+        assertAllCases(inputs, args -> {
             assertParseFailure(parser, args, EditCommandParser.MESSAGE_UNSUPPORTED_NOTE);
-        }
+        });
     }
 
     @Test

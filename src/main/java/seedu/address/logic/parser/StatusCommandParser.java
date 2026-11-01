@@ -17,12 +17,8 @@ public class StatusCommandParser implements Parser<StatusCommand> {
     public StatusCommand parse(String args) throws ParseException {
         requireNonNull(args);
         ArgumentMultimap arguments = ArgumentTokenizer.tokenize(args, PREFIX_STATUS);
-        Index index;
-        try {
-            index = ParserUtil.parseIndex(arguments.getPreamble());
-        } catch (ParseException e) {
-            throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE), e);
-        }
+        Index index = ParserUtil.parseDisplayedIndex(arguments.getPreamble(),
+                String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
         if (arguments.getValue(PREFIX_STATUS).isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
         }

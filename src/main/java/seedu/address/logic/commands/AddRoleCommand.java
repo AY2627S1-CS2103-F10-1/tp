@@ -7,8 +7,8 @@ import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 
 /** Creates an unused catalog role. */
-public class CreateRoleCommand extends Command {
-    public static final String COMMAND_WORD = "create_role";
+public class AddRoleCommand extends Command {
+    public static final String COMMAND_WORD = "add_role";
     public static final String MESSAGE_USAGE = COMMAND_WORD + " " + PREFIX_NAME + "NAME";
 
     public static final String MESSAGE_SUCCESS = "Created role: %1$s";
@@ -16,7 +16,7 @@ public class CreateRoleCommand extends Command {
     private final String name;
 
     /** Creates a command for the prepared role display name. */
-    public CreateRoleCommand(String name) {
+    public AddRoleCommand(String name) {
         this.name = requireNonNull(name);
     }
 
@@ -33,7 +33,7 @@ public class CreateRoleCommand extends Command {
 
     @Override
     public boolean equals(Object other) {
-        return other == this || other instanceof CreateRoleCommand command && name.equals(command.name);
+        return other == this || other instanceof AddRoleCommand command && name.equals(command.name);
     }
 
     @Override

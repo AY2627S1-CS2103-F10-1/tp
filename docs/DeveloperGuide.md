@@ -13,7 +13,9 @@
 
 ## **Acknowledgements**
 
-* HRvest is a fork of [AddressBook-Level3](https://github.com/se-edu/addressbook-level3). Most of the original code remains unchanged; changes so far have focused on user-facing aspects of the application. The design descriptions and diagrams are also initially inherited from AddressBook-Level3.
+* HRvest is based on [AddressBook-Level3](https://github.com/se-edu/addressbook-level3) (AB3) by the SE-EDU initiative. HRvest keeps AB3's architecture, and parts of its code, documentation and diagrams are adapted from AB3.
+* HRvest uses [JavaFX](https://openjfx.io/) for its GUI, [Jackson](https://github.com/FasterXML/jackson) for JSON and CSV tag data, and [JUnit 5](https://junit.org/junit5/) for testing.
+* Team members used AI coding assistants for parts of the code, tests and documentation, guided by the repository's `AGENTS.md`.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -71,7 +73,11 @@ The **API** of this component is specified in [`Ui.java`](https://github.com/AY2
 
 <puml src="diagrams/UiClassDiagram.puml" alt="Structure of the UI Component"/>
 
-The UI consists of a `MainWindow` and its parts, such as `CandidateSummaryHeader`, `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. `CandidateSummaryHeader` composes the top row from an `AppLogo` and a group of summary cards: one `CandidateSummaryCard` for all candidates and a `StatusSummaryCard` for each recruitment status. These UI parts, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+The UI consists of a `MainWindow` and its parts, such as `CandidateSummaryHeader`, `CommandBox`, `ResultDisplay`, `PersonListPanel`, and `StatusBarFooter`. These UI parts, including `MainWindow`, inherit from the abstract `UiPart` class, which captures common behavior among classes that represent visible GUI parts.
+
+The following diagram details `CandidateSummaryHeader`, which composes the top row from an `AppLogo` and a group of summary cards: one `CandidateSummaryCard` for all candidates and a `StatusSummaryCard` for each recruitment status. These parts also inherit from `UiPart`.
+
+<puml src="diagrams/CandidateSummaryHeaderClassDiagram.puml" alt="Structure of the candidate summary header"/>
 
 The `UI` component uses the JavaFX UI framework. The layouts of these UI parts are defined in matching `.fxml` files in `src/main/resources/view`. For example, [`MainWindow.fxml`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/resources/view/MainWindow.fxml) specifies the layout of [`MainWindow`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/ui/MainWindow.java).
 
@@ -96,9 +102,8 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 
 <box type="info" seamless>
 
-**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, the lifeline continues till the end of diagram.
+**Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
 </box>
-
 
 How the `Logic` component works:
 
@@ -131,6 +136,14 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 * Status values, candidate indexes, and `clear confirm` retain their own validation rules rather than this character check. Command words and prefix syntax are unchanged; use ordinary spaces before prefixes.
 * This restriction applies only to new command input, not loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export retain their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
 
+#### Displayed-index validation
+
+`status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report numeric index errors the same way. The exact messages are listed under each command in the User Guide. A rejected command leaves candidate data, filters, and the expanded view unchanged.
+
+* A number too large for an `int` is reported as an out-of-range index rather than a format error, because no displayed list can be that long.
+* A known numeric problem, such as `0`, is reported instead of the generic `Invalid command format!`, so the user knows exactly what to fix.
+* Each command keeps its own validation order. For example, `note` still reports a missing `no/` before an invalid index. This keeps the change limited to index errors.
+
 ### Model component
 **API** : [`Model.java`](https://github.com/AY2627S1-CS2103-F10-1/tp/tree/master/src/main/java/seedu/address/model/Model.java)
 
@@ -154,7 +167,9 @@ The catalog stores roles independently of candidates so that unused roles remain
 
 * Each candidate has at least one role from the catalog. `Person` removes `No role` whenever named roles are assigned, including when loading older mixed assignments. The protected `No role` entry provides a fallback when deleting the candidate's last role.
 * Roles keep a stable identity across renames. A rename updates the catalog and all assigned candidates together, including candidates outside the displayed list.
+* Role lookup keys use Unicode NFC before case conversion; display names and IDs retain their stored values. Catalogs with canonical name collisions are rejected through the existing paired-file backup path, rather than silently merging identities and assignments.
 * Parsers validate role names through `ParserUtil.parseRoleName`; commands resolve membership through `RoleCatalog` before changing any data. Person edits replace all assignments in one `setPerson` call.
+* `ParserUtil.parseRoleName` also rejects no-break, zero-width and other invisible spaces, because they would let a pasted name look blank or identical to an existing role. As with the printable-ASCII check for candidate fields, this check is parser-only, so catalog entries saved by earlier versions still load.
 * Role filters retain IDs rather than `Role` objects because role equality includes the display name. A rename therefore keeps matching the same role; a newly created role with a deleted role's name does not inherit its filter. Status and role groups combine with `AND`, with `OR` within each group.
 * The model validates catalog and assignment changes together before applying them, preventing inconsistent references or partial updates. Global role updates retain the current filter or reselect the expanded candidate with their updated roles.
 
@@ -171,11 +186,13 @@ The `Storage` component,
 
 `JsonAddressBookStorage` never overwrites the data file in place, so a failed or interrupted save leaves the previous file intact. It writes the JSON to a uniquely named `HRvest-<random>.tmp` file in the same folder, gives it the existing file's access permissions, and then atomically replaces the data file with it. Filesystems that cannot replace a file atomically reject the save, and permission errors abort it; `LogicManager` reports either error. A symbolic link to the data file is kept, and its target is replaced. The temporary file is deleted if the save fails, but a crash or power loss can leave it behind; later saves ignore such files, and they can be deleted once HRvest is closed.
 
-During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalog. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
+Before loading preferences, recovering files or constructing storage, `MainApp` acquires a `DataDirectoryLock` on `data/.hrvest.lock`. The OS lock is held through preference saving at shutdown and released on failed initialization. This prevents a second process from loading stale candidates and later overwriting newer data, even through a read command that triggers saving. The lock file stays in place after release: deleting it could let two processes lock different files with the same path. Separate data folders remain independent, and process termination releases the OS lock automatically.
 
-Both backup and replacement saving must finish before commands become available. Otherwise startup aborts with an actionable terminal error, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
+During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalogue. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
 
-The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data, and null entries rejected during deserialization or validation.
+Both backup and replacement saving must finish before commands become available. Otherwise startup shows an actionable error dialog and exits after dismissal, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
+
+The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data or role catalog entries, unknown role IDs, and null entries rejected during deserialization or validation.
 
 <puml src="diagrams/DataRecoveryActivityDiagram.puml" alt="Startup candidate data loading and recovery, including backup and replacement save failures" />
 
@@ -189,6 +206,7 @@ The two files must stay consistent, but a filesystem rename can replace only one
 * Invalid journals or incomplete rollback block further saves, preserving the recovery data. Candidate, catalog, and journal paths must identify different files, and concurrent HRvest instances are unsupported.
 * Recovery from invalid candidate or catalog data backs up both originals before saving an empty candidate list and the built-in catalog. The catalog backup uses the candidate backup name with `.roles.json` appended; a catalog-only backup is used when no candidate file exists.
 * If saving a command fails, `LogicManager` restores the previous model data, filter, and expanded view so that memory and saved data remain consistent after successful rollback.
+* `LogicManager` compares the immutable candidate records and role catalog before and after execution. It saves only when persisted data changes, so a storage error cannot block view changes, help, or exit. Import retains its separate save and rollback pipeline, including empty imports.
 
 ### Common classes
 
@@ -217,7 +235,7 @@ The sequence diagram below shows how `note 2 no/Strong on SQL` is executed. `p` 
 
 <puml src="diagrams/NoteSequenceDiagram.puml" alt="Interactions inside the Logic and Model components for the note 2 no/Strong on SQL command" />
 
-After the note command returns, `LogicManager` saves the address book.
+After the note command returns, `LogicManager` saves the address book if its data changed.
 
 #### Design considerations
 
@@ -247,7 +265,7 @@ The command history feature lets a user walk through commands they submitted ear
 
 `CommandBox` already owns the JavaFX `TextField` and runs user input through `CommandExecutor` on Enter. The new field reuses that path:
 
-1. On Enter, `CommandBox#handleCommandEntered` records the raw text with `CommandHistory#add` **before** dispatching to the executor. Rejected commands are recorded too so the user can press Up and fix a typo. The text field is cleared on both success and failure so the next Up press shows the command from history instead of appearing to do nothing.
+1. On Enter, `CommandBox#handleCommandEntered` records the raw text with `CommandHistory#add` **before** dispatching to the executor. Rejected commands are recorded too. The text field is cleared after a successful command. After a rejected command, the text stays so that the user can fix it, and `CommandHistory#moveCursorToNewest` marks that entry as already shown, so the next Up press shows the command before it instead of appearing to do nothing.
 2. A `KEY_PRESSED` event filter on `commandTextField` catches `UP` and `DOWN` presses, calls `history.previous()` or `history.next()`, and swaps the text field's contents with the result. The event is consumed so the caret does not move within the text field.
 3. When the user presses `Up` while composing a fresh command, `CommandBox` captures the current text as a `draft` before replacing the field with a past entry. Pressing `Down` back past the newest entry restores that draft.
 
@@ -259,6 +277,7 @@ The command history feature lets a user walk through commands they submitted ear
 * `previous()` moves the cursor one step back and returns the command there, or `Optional.empty()` when already at the oldest entry.
 * `next()` moves the cursor forward. On reaching the past-the-end position it returns an empty string so the UI knows to clear or restore the field.
 * Entries are capped at `MAX_ENTRIES` (100) to bound memory for long-running sessions. The oldest entry is dropped when the cap is reached.
+* `moveCursorToNewest()` moves the cursor onto the newest entry when the command box keeps a rejected command on screen.
 
 The class diagram below shows the collaborator relationship:
 
@@ -285,6 +304,10 @@ HRvest does not lock the file or check for concurrent changes: these may cause a
 
 `ImportOperation` checks for duplicates within the batch and against existing candidates before updating the model and saving through storage. It manages its own rollback because import bypasses `LogicManager`'s ordinary save path. Reading or validation failures leave the model unchanged; application or save failures trigger restoration of the previous data and view. Success shows the full candidate list and exits expanded view.
 
+The CSV identifies roles by name, not by catalog ID, because the file may be imported into an HRvest whose catalog has different IDs or lacks those roles. `ImportOperation` passes the current catalog to `CandidateCsvParser`, which matches names as role commands do and creates each unknown name once, so records naming `QA` and `qa` share one new role. `ImportOperation` adds the new roles to the catalog in the same model update and save as the candidates, so a failure rolls both back. Creating roles, rather than rejecting the import as `add` does, lets an export restore on a fresh installation; the success message names the created roles so that a misspelt name is noticed.
+
+Batch combination installs the validated list once, preserving existing and CSV order. `UniquePersonList` checks bulk replacements with a case-insensitive email set instead of comparing every pair. This keeps the same identity rule while avoiding quadratic validation during import, snapshots, and saves.
+
 Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash/power-loss recovery is not an in-memory rollback guarantee.
 
 See the [User Guide](UserGuide.md#importing-candidates-import) for import limits and usage restrictions.
@@ -294,13 +317,13 @@ See the [User Guide](UserGuide.md#importing-candidates-import) for import limits
 **Required CSV template:** UTF-8 with or without a single leading byte order mark (BOM), and exact lowercase headers in the order below. Fields may be unquoted or double-quoted. Fields containing commas or quotes must be double-quoted; double any embedded quotes. Quotes must enclose the entire field, with no extra text or spaces outside the closing quote. Quoting does not bypass field validation. LF (`\n`) and CRLF (`\r\n`) record endings are accepted, and the last record need not end with a newline. Empty trailing lines are allowed, but blank lines before the header or between records, whitespace-only trailing lines, bare CR separators, alternate delimiters, and incorrect column counts are rejected.
 
 ```csv
-"name","phone","email","address","status","tags","note"
-"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[""Java"",""backend""]",""
+"name","phone","email","address","status","tags","note","roles"
+"Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[""Java"",""backend""]","","[""No role""]"
 ```
 
 Configure your editor to save the example as UTF-8 with LF or CRLF line endings. Excel's optional quoting is accepted when saving as comma-delimited UTF-8 CSV; other encodings or delimiters are not. HRvest accepts the leading BOM written by `export`, so you can copy or rename `data/export.csv` to `data/import.csv` without removing it. The file must still meet validation, duplicate, and resource-limit rules. A BOM-only file or repeated leading BOMs are rejected. Only one encoding marker immediately before the header is ignored; markers inside quoted fields are literal data subject to field validation.
 
-Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. An empty or whitespace-only note means no note. Nonblank notes follow the same validation as the `note` command: only printable ASCII is accepted, surrounding ordinary spaces are trimmed, and the trimmed text must not exceed 500 characters. Tabs, line breaks, and non-ASCII characters in nonblank notes are rejected. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
+Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. Roles use the same JSON array form and limits but must name at least one role; names follow the role name rules, and `No role` is dropped when named roles are present, as in `add`. An empty or whitespace-only note means no note. Addresses and notes use their model validation rather than the command-only printable-ASCII check, so supported legacy Unicode data can be exported and imported again. Addresses retain command-style surrounding-space trimming. Nonblank notes are stripped of surrounding whitespace and limited to 500 Unicode code points; tabs, line breaks, and non-ASCII text inside a quoted note are preserved. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
 
 CSV syntax errors identify the record (the header is record 1) and, for field-specific syntax errors, the one-based field number and name. Messages distinguish missing or extra columns, misplaced or unclosed quotes, content after a closing quote, and unsupported bare CR endings, with guidance on correcting the file. Record numbers count CSV records, not physical lines inside quoted fields.
 
@@ -314,13 +337,13 @@ You can refer to the diagram below as a reference.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
 
-The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags and note fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`.
+The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`. Roles use the same form, with names in `list_role` order, ignoring case; a candidate without a named role gives `["No role"]`.
 
 **Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users instead. Spreadsheet auto-detection can still alter values when the file is opened directly.
 
-HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. It is non-destructive to HRvest's stored records: the CSV is a separate copy of data that remains available in the application. For this reason, export uses direct writing with failure reporting rather than rollback or deletion of a failed output file; the user can retry after resolving the problem. This differs from saving HRvest's source data, where atomic replacement protects the existing records. The non-destructive guarantee does not extend to an earlier CSV: each export directly overwrites it, so an interrupted or failed write may destroy the previous export and leave an empty or incomplete file.
+HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. To protect an earlier CSV snapshot, it writes a temporary sibling file, preserving the destination's existing access permissions, closes and flushes it to disk, then atomically replaces `export.csv`. There is no non-atomic fallback: unsupported atomic replacement fails while retaining the previous CSV. Handled failures attempt to remove the temporary file. If cleanup also fails, the original export failure remains the cause of the reported error, with the cleanup failure attached to it as a suppressed exception. Cleanup failure or process termination may leave the temporary file behind, but cannot expose a partially written replacement as `export.csv`.
 
-Failures display `Export failed:` with the reason and destination when available. Check that the file/folder is writable. Directories, symbolic links (including dangling links), and other non-regular destinations are rejected without deleting them. A missing data directory is created first, as JSON saving does. If the required parent directory cannot be determined or created, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged; a failure after opening the destination warns that the export may be incomplete and the previous export may be lost.
+Failures display `Export failed:` with the reason and destination when available. Check that the file/folder is writable. Directories, symbolic links (including dangling links), and other non-regular destinations are rejected without deleting them. A missing data directory is created first, as JSON saving does. If the required parent directory cannot be determined or created, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged. Write, close and replacement failures leave the previous export intact.
 
 
 --------------------------------------------------------------------------------------------------------------------
@@ -780,7 +803,6 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, roles, tags or notes, affect duplicate detection.
 * **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
-* **Private contact detail**: A contact detail that is not meant to be shared with others
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -800,14 +822,22 @@ testers are expected to do more *exploratory* testing.
 
    1. Download the JAR file and copy it into an empty folder.
 
-   1. Double-click the JAR file.<br>
-      Expected: The GUI opens with a set of sample contacts. The window size may not be optimal.
+   1. Open a terminal in that folder and run `java -jar HRvest.jar`.<br>
+      Expected: The GUI opens with a set of sample candidates. The window size may not be optimal.
+
+1. Launching a second instance
+
+   1. Keep HRvest running, open another terminal in the same folder and run `java -jar HRvest.jar` again.<br>
+      Expected: An error dialog asks you to close the first instance. Dismissing it exits the second instance; the first remains usable and its data is unchanged.
+
+   1. Close the first instance and launch the JAR again.<br>
+      Expected: HRvest opens normally with the saved data.
 
 1. Saving window preferences
 
    1. Resize the window to an optimal size. Move the window to a different location. Close the window.
 
-   1. Relaunch the app by double-clicking the JAR file.<br>
+   1. Relaunch the app with `java -jar HRvest.jar`.<br>
        Expected: The most recent window size and location are retained.
 
 ### Rejecting note input in `add`
@@ -824,7 +854,7 @@ testers are expected to do more *exploratory* testing.
    1. Prerequisites: List all candidates using the `list` command, with multiple candidates in the list.
 
    1. Test case: `delete 1`<br>
-      Expected: The first contact is deleted from the list. The status message shows the deleted contact's details.
+      Expected: The first candidate is deleted from the list. The status message shows the deleted candidate's details.
 
    1. Test case: `delete 0`<br>
       Expected: No candidate is deleted. The status message shows error details.
@@ -838,6 +868,44 @@ testers are expected to do more *exploratory* testing.
 1. Run `filter s/Applied`, then `status 1 s/Offered`. Expected: The updated candidate disappears, and only remaining Applied candidates are shown. The line above the list reads `Showing N of M candidates (filtered). Type list to show all.`, where `M` still counts the updated candidate. Repeat with `edit 1 s/Offered`.
 1. Run `find Betsy`, then change that candidate's name with `edit 1 n/Other Name`. Expected: The candidate disappears if the new name does not match.
 1. Run `filter s/Applied`, `expand 1`, then `note 1 no/Updated feedback`, `status 1 s/Offered`, and `edit 1 p/91234567`. Expected: The same candidate remains expanded at index `1` after each update, including the Offered status change. Expansion replaces the earlier status filter with a selection of the candidate. Run `list` to show all candidates again.
+
+### Legal-name markers and address ambiguity
+
+1. In a test copy with a candidate at index `1`, run `edit 1 n/John a/L Street a/9 Road`. Expected: A clarification error asks for `a/ADDRESS` before `n/NAME`; the candidate, saved data, filter, and expanded view remain unchanged. Repeat with `a/P Lane` and with uppercase prefixes.
+1. Run `edit 1 a/L Street n/John`. Expected: The name is `John` and address is `L Street`. Run `edit 1 a/9 Road n/Siti a/p Ahmad`. Expected: The legal name remains intact and the address is `9 Road`. Close and restart; both fields retain those values.
+1. With an unused email, run `add n/Siti a/p Ahmad p/91234567 e/lineage@example.com a/1 Road r/No role`. Expected: The legal name and address are saved correctly because the phone field separates them. Run `add n/Ravi s/o Kumar p/91234567 e/lineageso@example.com a/1 Road r/No role` with another unused email; `s/o` remains in the name.
+
+### Updating status, finding and filtering
+
+1. Run `list`, then `status 1 s/Interviewing`. Expected: The message is `Updated status of NAME: OLD_STATUS -> Interviewing`, and the first card shows Interviewing.
+1. Run `status 1 s/Hired`, then `status 1`. Expected: The first lists the valid statuses and the second gives the command format. The candidate is unchanged.
+1. With the sample candidates, run `find ale`. Expected: Alex Yeoh is listed, because `ale` starts a word in the name. Run `find eoh`. Expected: `0 candidate(s) listed!`
+1. In a test copy, add candidates named `Tan Wei Ming (Kelvin)` and `Martin Luther King, Jr.` with distinct emails. Run `find (Kelvin)` and `find King,`. Expected: Each finds the corresponding candidate, as `find Kelvin` and `find King` do. Run `find (),`. Expected: No candidates match.
+1. Run `filter s/Interviewing s/Offered`. Expected: Only candidates with either status are listed. Run `filter s/Hired`. Expected: The valid statuses are listed, and the displayed list is unchanged.
+
+### Viewing a candidate's full record
+
+1. Run `list`, and check that at least two candidates are listed. Give the second candidate a note with `note 2 no/Strong on SQL`, then run `expand 2`. Expected: Only that candidate is shown, at index `1`, with `Note: Strong on SQL`. The line above the list reads `Expanded view of 1 of N candidates. Type list to show all.`
+1. Run `list`, clear the first candidate's note with `note 1 no/`, then run `expand 1`. Expected: `Cleared note for NAME` after the `note` command, and `No note recorded.` in the expanded record.
+1. Run `expand 0` and `expand abc`. Expected: Each gives an error, and the displayed list is unchanged.
+
+### Exporting and importing candidates
+
+1. Run `export`. Expected: `Exported successfully to PATH.`, where `PATH` ends in `export.csv` inside the `data` folder. In a text editor, the file starts with the header `"name","phone","email","address","status","tags","note","roles"` and has one row per candidate, including candidates hidden by a filter.
+1. Copy the template from the User Guide's `import` section into `data/import.csv`, using an email that no candidate has, and run `import`. Expected: `Imported 1 candidate successfully.` The candidate appears at the end of the full list with `No role`.
+1. Run `import` again without changing the file. Expected: An error names the CSV record whose email is a duplicate, and no candidate is added.
+1. Run `add_role n/Developer` if that role does not exist, then `edit 1 r/Developer` and `export`. Replace `data/import.csv` with a copy of `data/export.csv`, run `clear confirm`, then run `import`. Expected: Every candidate returns with the roles it had before, and the first candidate still has Developer.
+1. In a separate test copy of that CSV, insert a no-break space (`U+00A0`) after a role name in a later record's `roles` array, then run `import`. Expected: An error identifies that record and the `roles` field. No candidates or roles are added; the previous filter or expanded view and both saved JSON files remain unchanged. Repeat with `No role` followed by a no-break space and a zero-width-space-only (`U+200B`) role.
+
+### Clearing all candidates
+
+1. Run `clear`. Expected: The message gives the number of candidates and asks you to enter `clear confirm`. Nothing is deleted.
+1. Run `clear 1`. Expected: An invalid-command-format error. Nothing is deleted.
+1. Run `clear confirm`. Expected: `All candidates have been cleared.` The list is empty, and `list_role` still shows any roles you created.
+
+### Viewing help
+
+1. Run `help`, or press `F1`. Expected: A help window shows the User Guide's URL and a **Copy URL** button.
 
 ### Header summary cards
 
@@ -864,10 +932,11 @@ testers are expected to do more *exploratory* testing.
 
 ### Assigning and filtering candidate roles
 
-1. In a test copy without Developer or Designer roles, run `create_role n/Developer` and `create_role n/Designer`. Run `add n/Role Tester p/91234567 e/roles@example.com a/Test Street r/Developer r/developer r/No role` with an unused email, then `find Role Tester`. Expected: The new candidate has only one Developer badge and no No role badge. Restart and find the candidate again; the assignment remains. Use their displayed index in place of `1` below.
+1. In a test copy without Developer or Designer roles, run `add_role n/Developer` and `add_role n/Designer`. Run `add n/Role Tester p/91234567 e/roles@example.com a/Test Street r/Developer r/developer r/No role` with an unused email, then `find Role Tester`. Expected: The new candidate has only one Developer badge and no No role badge. Restart and find the candidate again; the assignment remains. Use their displayed index in place of `1` below.
 1. Run `edit 1 r/Developer r/Designer`, then `edit 1 p/91234567`. Expected: Both roles remain after the phone edit. Run `edit 1 r/No role`; only No role remains.
 1. Try `add n/Missing Role p/91234567 e/missingrole@example.com a/Test Street` with an unused email, `edit 1 r/`, and `edit 1 p/98765432 r/Missing`. Expected: Specific errors leave all candidates unchanged; the missing-role error suggests `r/No role`.
 1. Assign the Developer role and Interviewing status to one candidate and the Designer role and Applied status to another. Run `filter r/Developer r/Designer s/Interviewing s/Offered`. Expected: Only candidates in either role with status Interviewing or Offered appear. Run `filter r/Designer`; the Applied candidate appears because each filter starts from all candidates.
+1. Run `filter r/Developer`, then `find NAME` using the Designer candidate's name. Expected: The Designer candidate appears, because `find` replaces the filter and searches all candidates. Run `find NAME` using the Developer candidate's name, then `filter r/Designer`. Expected: The Designer candidate appears and the Developer candidate does not.
 1. Run `filter r/Missing`. Expected: An error suggests `list_role` and preserves the displayed list. Filter by an unused existing role; expect zero results.
 1. Filter by Developer, then rename Developer. Expected: The same candidate still matches. Change their assignments so they no longer have that role; they disappear. In expanded view, an assignment edit keeps the candidate expanded instead.
 1. Create and assign a long multiword role. Resize the window and expand the candidate. Expected: All role badges remain readable and wrap within the card.
@@ -876,8 +945,9 @@ testers are expected to do more *exploratory* testing.
 
 Use a separate test folder and keep a matching backup of candidate and catalog files.
 
-1. Run `create_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
-1. Run `create_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalog.
+1. Run `add_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
+1. Create at least five short roles and run `list_role` at the default window size. Expected: The result area grows so more than two role names are visible without scrolling, while candidate cards remain visible. Run `list`; the result area returns to its ordinary height. Repeat with many roles or a long wrapping name; the result area stays bounded and scrolling reaches the final role. Resize the window and confirm neither feedback nor candidate cards become inaccessible.
+1. Run `add_role n/documentation tester`, `edit_role r/No role n/Other`, and `list_role extra`. Expected: Each fails without changing candidates or the catalog.
 1. Run `edit_role r/Documentation Tester n/Senior Documentation Tester`. Expected: The renamed entry appears in `list_role`; its ID in `roles.json` is unchanged.
 1. Assign `Senior Documentation Tester` to two candidates with `edit INDEX r/Senior Documentation Tester`; give one another existing role using a second `r/` in the same edit. Filter so one candidate is hidden, then rename the role again. Expected: Both assignments update, their role IDs stay unchanged, and other fields and assignments are preserved.
 1. Restart and delete the renamed role with `delete_role r/NAME`, substituting its current name. Expected: The catalog entry disappears; a candidate losing their last role receives `no-role`, while a candidate with another role retains it. Close and inspect the saved assignments, then restart to confirm they load.

@@ -3,4 +3,4 @@
 <?import javafx.scene.text.Text?>
 
 <Text xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:id="logo" text="HRVest" styleClass="header-logo" />
+      fx:id="logo" text="HRvest" styleClass="header-logo" />

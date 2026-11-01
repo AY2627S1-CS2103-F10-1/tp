@@ -84,6 +84,17 @@ public class CommandHistory {
     }
 
     /**
+     * Moves the cursor onto the newest entry, as if the user had just navigated to it.
+     * The command box calls this when a rejected command stays in the text field, so that
+     * {@link #previous()} returns the entry before it. Does nothing if the history is empty.
+     */
+    public void moveCursorToNewest() {
+        if (!entries.isEmpty()) {
+            cursor = entries.size() - 1;
+        }
+    }
+
+    /**
      * Returns an immutable copy of the recorded entries, oldest first.
      * Changes to the history after this call do not appear in the returned list.
      */

@@ -46,9 +46,9 @@ class CandidateRolesIntegrationTest {
                 new JsonUserPrefsStorage(directory.resolve("preferences.json")));
         model = new ModelManager();
         logic = new LogicManager(model, storage);
-        logic.execute("create_role n/Developer");
-        logic.execute("create_role n/Designer");
-        logic.execute("create_role n/Unused");
+        logic.execute("add_role n/Developer");
+        logic.execute("add_role n/Designer");
+        logic.execute("add_role n/Unused");
     }
 
     @Test
@@ -68,13 +68,13 @@ class CandidateRolesIntegrationTest {
     @Test
     void execute_addUnknownRole_preservesBothFiles() throws Exception {
         assertRejectedWithoutChanges(ALICE + " r/Developer r/Missing",
-                "Role does not exist: Missing. Use create_role n/NAME.");
+                "Role does not exist: Missing. Use add_role n/NAME.");
     }
 
     @Test
     void execute_addUnicodeAndMultiwordRoles_preservesNames() throws Exception {
-        logic.execute("create_role n/工程师");
-        logic.execute("create_role n/Senior Developer");
+        logic.execute("add_role n/工程师");
+        logic.execute("add_role n/Senior Developer");
         logic.execute(ALICE + " r/工程师 r/ senior developer ");
 
         assertEquals(Set.of(getRole("工程师"), getRole("Senior Developer")), getFirstPerson().getRoles());
@@ -102,7 +102,7 @@ class CandidateRolesIntegrationTest {
     void execute_editUnknownRole_rejectsOtherFieldChangesToo() throws Exception {
         logic.execute(ALICE + " r/Developer");
         assertRejectedWithoutChanges("edit 1 p/789 r/Designer r/Missing",
-                "Role does not exist: Missing. Use create_role n/NAME.");
+                "Role does not exist: Missing. Use add_role n/NAME.");
     }
 
     @Test
@@ -178,7 +178,7 @@ class CandidateRolesIntegrationTest {
         logic.execute("delete_role r/Senior Developer");
         assertTrue(model.getFilteredPersonList().isEmpty());
         assertEquals(Set.of(Role.NO_ROLE), getFirstPerson().getRoles());
-        logic.execute("create_role n/Developer");
+        logic.execute("add_role n/Developer");
         logic.execute("list");
         logic.execute("edit 1 r/Developer");
         assertFalse(identity.equals(getRole("Developer").getId()));

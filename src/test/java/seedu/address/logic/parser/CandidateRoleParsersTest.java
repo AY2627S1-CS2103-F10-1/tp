@@ -52,6 +52,22 @@ class CandidateRoleParsersTest {
     }
 
     @Test
+    void parse_invisibleRoleCharacters_rejectsEveryCommand() {
+        String noBreakSpaceError = String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x00A0);
+        assertParseFailure(new AddCommandParser(), DETAILS + " r/Designer\u00A0", noBreakSpaceError);
+        assertParseFailure(new EditCommandParser(), "1 r/No\u00A0role", noBreakSpaceError);
+        assertParseFailure(new FilterCommandParser(), " r/\u00A0", noBreakSpaceError);
+        assertParseFailure(new AddRoleCommandParser(), " n/Design\u200Ber",
+                String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x200B));
+    }
+
+    @Test
+    void parse_unicodeSpacesAroundRole_trimsThem() {
+        assertParseSuccess(new FilterCommandParser(), " r/\u2003Designer\u2003",
+                new FilterCommand(List.of(), Set.of("Designer")));
+    }
+
+    @Test
     void parse_editRoles_followsDescriptorReplacementPattern() {
         EditPersonDescriptor expected = new EditPersonDescriptor();
         expected.setRoleNames(Set.of("Developer", "Designer"));

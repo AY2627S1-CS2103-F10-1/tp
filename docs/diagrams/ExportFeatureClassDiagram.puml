@@ -6,6 +6,7 @@ skinparam classBackgroundColor STORAGE_COLOR
 skinparam classFontColor #FFFFFF
 skinparam classAttributeFontColor #FFFFFF
 skinparam classStereotypeFontColor #FFFFFF
+skinparam classAttributeIconSize 0
 
 package Logic as LogicPackage {
     Class LogicManager LOGIC_COLOR
@@ -54,12 +55,12 @@ show ExportCommandParser methods
 show ExportCommand methods
 show CommandResult members
 
-ExportCommandParser ..> ExportCommand : creates
-ExportCommand ..> CommandResult : creates with export = true
+ExportCommandParser ..> ExportCommand : <<create>>
+ExportCommand ..> CommandResult : <<create>> with export = true
 LogicManager ..> CommandResult : checks isExport()
 LogicManager --> "1" Storage : storage
 StorageManager .up.|> Storage
-StorageManager ..> CsvExportWriter : creates / calls export()
+StorageManager ..> CsvExportWriter : <<create>>, calls export()
 CsvExportWriter ..> Writer : opens / writes CSV through
 
 @enduml

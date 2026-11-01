@@ -1,0 +1,30 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor UI_COLOR_T4
+skinparam classBackgroundColor UI_COLOR
+
+package UI <<Rectangle>> {
+Class "{abstract}\nUiPart" as UiPart
+Class CandidateSummaryHeader
+Class AppLogo
+Class CandidateSummaryCard
+Class StatusSummaryCard
+}
+
+package Model <<Rectangle>> {
+Class HiddenModel #FFFFFF
+}
+
+CandidateSummaryHeader *-down-> "1" AppLogo
+CandidateSummaryHeader *-down-> "1" CandidateSummaryCard
+CandidateSummaryHeader *-down-> "7" StatusSummaryCard
+
+CandidateSummaryHeader --|> UiPart
+AppLogo --|> UiPart
+CandidateSummaryCard --|> UiPart
+StatusSummaryCard --|> UiPart
+
+CandidateSummaryCard ..> Model
+StatusSummaryCard ..> Model
+@enduml

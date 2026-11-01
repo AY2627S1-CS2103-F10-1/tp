@@ -25,6 +25,7 @@ public class StatusCommandParserTest {
     @Test
     public void parse_validStatus_returnsCommand() {
         assertParseSuccess(parser, "1 s/iNtErViEwInG", new StatusCommand(INDEX_FIRST_PERSON, Status.INTERVIEWING));
+        assertParseSuccess(parser, "01 s/Applied", new StatusCommand(INDEX_FIRST_PERSON, Status.APPLIED));
     }
 
     @Test
@@ -57,22 +58,24 @@ public class StatusCommandParserTest {
 
     @Test
     public void parse_nonIntegerIndex_throwsParseException() {
-        assertParseFailure(parser, "abc s/Applied",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
+        for (String index : List.of("abc", "1.5", "+1", "1 2")) {
+            assertParseFailure(parser, index + " s/Applied",
+                    String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
+        }
     }
 
     @Test
     public void parse_nonPositiveIndex_throwsParseException() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE);
-
-        assertParseFailure(parser, "0 s/Applied", expectedMessage);
-        assertParseFailure(parser, "-1 s/Applied", expectedMessage);
+        for (String index : List.of("0", "000", "-0", "-1", "-99999999999")) {
+            assertParseFailure(parser, index + " s/Applied", ParserUtil.MESSAGE_INVALID_INDEX);
+        }
     }
 
     @Test
     public void parse_indexOverflow_throwsParseException() {
-        assertParseFailure(parser, "99999999999 s/Applied",
-                String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
+        for (String index : List.of("2147483648", "99999999999", "9".repeat(100))) {
+            assertParseFailure(parser, index + " s/Applied", Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        }
     }
 
     @Test
@@ -130,10 +133,10 @@ public class StatusCommandParserTest {
     }
 
     @Test
-    public void parse_invalidIndexWithInvalidStatusOrPrefixes_reportsInvalidCommandFormat() {
-        String expectedMessage = String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE);
-
-        assertParseFailure(parser, "0 s/Hired", expectedMessage);
-        assertParseFailure(parser, "0 s/Applied s/Rejected", expectedMessage);
+    public void parse_invalidIndexWithInvalidStatusOrPrefixes_reportsIndexFirst() {
+        assertParseFailure(parser, "0 s/Hired", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "0 s/Applied s/Rejected", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "0", ParserUtil.MESSAGE_INVALID_INDEX);
+        assertParseFailure(parser, "99999999999 s/Hired s/", Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 }

@@ -11,9 +11,9 @@ import java.util.regex.Pattern;
 
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.AddRoleCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.Command;
-import seedu.address.logic.commands.CreateRoleCommand;
 import seedu.address.logic.commands.DeleteCommand;
 import seedu.address.logic.commands.DeleteRoleCommand;
 import seedu.address.logic.commands.EditCommand;
@@ -56,7 +56,7 @@ public class AddressBookParser {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, HelpCommand.MESSAGE_USAGE));
         }
 
-        final String commandWord = matcher.group("commandWord");
+        final String commandWord = matcher.group("commandWord").toLowerCase(Locale.ROOT);
         final String arguments = matcher.group("arguments");
 
         // Note to developers: Change LOG_LEVEL in LogsCenter to enable lower level (i.e., FINE, FINER and lower)
@@ -65,12 +65,12 @@ public class AddressBookParser {
         logger.fine("Command word: " + commandWord);
 
         String roleCommand = commandWord.toLowerCase(Locale.ROOT);
-        String dispatchWord = Set.of(CreateRoleCommand.COMMAND_WORD, EditRoleCommand.COMMAND_WORD,
+        String dispatchWord = Set.of(AddRoleCommand.COMMAND_WORD, EditRoleCommand.COMMAND_WORD,
                 DeleteRoleCommand.COMMAND_WORD, ListRoleCommand.COMMAND_WORD).contains(roleCommand)
                 ? roleCommand : commandWord;
 
         return switch (dispatchWord) {
-            case CreateRoleCommand.COMMAND_WORD -> new CreateRoleCommandParser().parse(arguments);
+            case AddRoleCommand.COMMAND_WORD -> new AddRoleCommandParser().parse(arguments);
             case EditRoleCommand.COMMAND_WORD -> new EditRoleCommandParser().parse(arguments);
             case DeleteRoleCommand.COMMAND_WORD -> new DeleteRoleCommandParser().parse(arguments);
             case ListRoleCommand.COMMAND_WORD -> new ListRoleCommandParser().parse(arguments);

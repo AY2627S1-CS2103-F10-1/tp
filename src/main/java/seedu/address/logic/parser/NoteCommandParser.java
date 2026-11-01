@@ -15,13 +15,14 @@ import seedu.address.logic.parser.exceptions.ParseException;
  */
 public class NoteCommandParser implements Parser<NoteCommand> {
 
-    public static final String MESSAGE_MISSING_PREFIX =
-            "The note prefix " + PREFIX_NOTE.getPrefix() + " is required.";
+    public static final String MESSAGE_MISSING_PREFIX = "The note prefix " + PREFIX_NOTE.getPrefix()
+            + " is required.";
 
     @Override
     public NoteCommand parse(String args) throws ParseException {
         requireNonNull(args);
-        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeWithValidation(args, Set.of(PREFIX_NOTE), PREFIX_NOTE);
+        ArgumentMultimap arguments = ArgumentTokenizer.tokenizeWithValidation(args, Set.of(PREFIX_NOTE),
+                PREFIX_NOTE);
         if (arguments.getValue(PREFIX_NOTE).isEmpty()) {
             throw new ParseException(MESSAGE_MISSING_PREFIX + "\n" + NoteCommand.MESSAGE_USAGE);
         }
@@ -31,6 +32,7 @@ public class NoteCommandParser implements Parser<NoteCommand> {
 
         arguments.verifyNoDuplicatePrefixesFor(PREFIX_NOTE);
         String noteText = arguments.getValue(PREFIX_NOTE).orElseThrow();
-        return noteText.isBlank() ? new NoteCommand(index) : new NoteCommand(index, ParserUtil.parseNote(noteText));
+        return noteText.isBlank() ? new NoteCommand(index)
+                : new NoteCommand(index, ParserUtil.parseNote(noteText));
     }
 }

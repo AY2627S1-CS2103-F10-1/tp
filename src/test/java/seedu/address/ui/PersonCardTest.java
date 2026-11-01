@@ -4,18 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.testutil.JavaFxTestUtil.runOnFxThread;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import javafx.application.Platform;
 import javafx.geometry.Bounds;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -26,6 +21,7 @@ import javafx.scene.paint.Color;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
 import seedu.address.model.role.Role;
+import seedu.address.testutil.JavaFxTestUtil;
 import seedu.address.testutil.PersonBuilder;
 
 /**
@@ -36,19 +32,11 @@ import seedu.address.testutil.PersonBuilder;
 public class PersonCardTest {
     private static final int CARD_WIDTH = 320;
     private static final int CARD_HEIGHT = 300;
-    private static final int TIMEOUT_SECONDS = 10;
     private static final String NOTE_TEXT = "Follow up about interview feedback";
 
     @BeforeAll
     public static void setUpToolkit() throws Exception {
-        CompletableFuture<Void> ready = new CompletableFuture<>();
-        Platform.startup(() -> ready.complete(null));
-        ready.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    }
-
-    @AfterAll
-    public static void tearDownToolkit() {
-        Platform.exit();
+        JavaFxTestUtil.initializeToolkit();
     }
 
     @Test
@@ -199,17 +187,5 @@ public class PersonCardTest {
         card.resize(CARD_WIDTH, CARD_HEIGHT);
         card.applyCss();
         card.layout();
-    }
-
-    /**
-     * Runs assertions on the JavaFX application thread and propagates failures to the test thread.
-     */
-    private static void runOnFxThread(Runnable assertions) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(() -> {
-            assertions.run();
-            return null;
-        });
-        Platform.runLater(task);
-        task.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     }
 }

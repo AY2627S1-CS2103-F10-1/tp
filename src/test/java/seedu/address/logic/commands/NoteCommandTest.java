@@ -39,8 +39,7 @@ public class NoteCommandTest {
         Person original = model.getFilteredPersonList().getFirst();
         Person noted = new PersonBuilder(original).withStatus(Status.INTERVIEWING).withNote(NOTE_TEXT).build();
         model.setPerson(original, noted);
-        Person cleared = new Person(original.getName(), original.getPhone(), original.getEmail(), original.getAddress(),
-                original.getTags(), Status.INTERVIEWING);
+        Person cleared = new PersonBuilder(original).withStatus(Status.INTERVIEWING).build();
         Model expected = new ModelManager(model.getAddressBook(), model.getUserPrefs());
         expected.setPerson(noted, cleared);
 
@@ -84,8 +83,12 @@ public class NoteCommandTest {
     }
 
     @Test
-    public void execute_firstAndLastUnfilteredIndexes_updatesOnlySelectedCandidate() {
+    public void execute_firstUnfilteredIndex_updatesOnlySelectedCandidate() {
         assertNoteUpdateSuccess(INDEX_FIRST_PERSON, NOTE_TEXT);
+    }
+
+    @Test
+    public void execute_lastUnfilteredIndex_updatesOnlySelectedCandidate() {
         assertNoteUpdateSuccess(Index.fromOneBased(model.getFilteredPersonList().size()), "Schedule final interview");
     }
 
@@ -100,8 +103,7 @@ public class NoteCommandTest {
     @Test
     public void execute_candidateWithStatus_preservesStatus() {
         Person original = model.getFilteredPersonList().getFirst();
-        Person interviewingCandidate = new Person(original.getName(), original.getPhone(), original.getEmail(),
-                original.getAddress(), original.getTags(), Status.INTERVIEWING, original.getNote());
+        Person interviewingCandidate = new PersonBuilder(original).withStatus(Status.INTERVIEWING).build();
         model.setPerson(original, interviewingCandidate);
 
         assertNoteUpdateSuccess(INDEX_FIRST_PERSON, NOTE_TEXT);
@@ -115,9 +117,11 @@ public class NoteCommandTest {
 
     @Test
     public void execute_filteredIndex_updatesDisplayedCandidateAndKeepsFilter() {
+        Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
 
-        assertNoteUpdateSuccess(INDEX_FIRST_PERSON, NOTE_TEXT);
+        assertNoteUpdateSuccess(INDEX_FIRST_PERSON, NOTE_TEXT, expectedModel);
         assertEquals(1, model.getFilteredPersonList().size());
         assertTrue(model.getAddressBook().getPersonList().get(1).hasNote());
         assertFalse(model.getAddressBook().getPersonList().getFirst().hasNote());
@@ -164,16 +168,19 @@ public class NoteCommandTest {
     }
 
     /**
-     * Asserts that a note update succeeds and preserves the candidate's other details.
+     * Asserts that an unfiltered note update succeeds and preserves the candidate's other details.
      */
     private void assertNoteUpdateSuccess(Index index, String text) {
+        Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
+        assertNoteUpdateSuccess(index, text, expectedModel);
+    }
+
+    /**
+     * Asserts that a note update succeeds with the explicitly prepared expected filter.
+     */
+    private void assertNoteUpdateSuccess(Index index, String text, Model expectedModel) {
         Person original = model.getFilteredPersonList().get(index.getZeroBased());
         Person updated = new PersonBuilder(original).withNote(text).build();
-        Model expectedModel = new ModelManager(model.getAddressBook(), model.getUserPrefs());
-        if (model.getFilteredPersonList().size() == 1) {
-            Index originalIndex = Index.fromZeroBased(model.getAddressBook().getPersonList().indexOf(original));
-            showPersonAtIndex(expectedModel, originalIndex);
-        }
         expectedModel.setPerson(original, updated);
         String expectedMessage = String.format(NoteCommand.MESSAGE_SUCCESS, original.getName(), text);
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -13,8 +14,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,11 +27,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
+import seedu.address.logic.parser.ParserUtil;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
@@ -70,8 +76,28 @@ public class ImportOperationTest {
     }
 
     @Test
+    public void execute_maximumBatch_preservesOrderInputAndSavedData() throws Exception {
+        List<Person> imported = IntStream.range(0, 10_000)
+                .mapToObj(index -> new PersonBuilder(incoming).withEmail("batch" + index + "@example.com").build())
+                .toList();
+        writeInput(imported.toArray(Person[]::new));
+        byte[] originalInput = Files.readAllBytes(inputPath());
+        model.expandPerson(existing);
+
+        assertEquals("Imported 10000 candidates successfully.", logic.execute("import").getFeedbackToUser());
+
+        assertEquals(existing, model.getAddressBook().getPersonList().getFirst());
+        assertEquals(imported, model.getAddressBook().getPersonList().subList(1, imported.size() + 1));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+        assertFalse(model.isExpandedViewProperty().get());
+        assertArrayEquals(originalInput, Files.readAllBytes(inputPath()));
+    }
+
+    @Test
     public void execute_exportClearConfirmImport_preservesCandidatesWithBom() throws Exception {
-        model.addPerson(incoming);
+        model.createRole("Developer");
+        Role developer = model.getRoleCatalog().requireRole("Developer");
+        model.addPerson(new PersonBuilder(incoming).withRoles(developer).build());
         List<Person> expected = List.copyOf(model.getAddressBook().getPersonList());
         logic.execute("export");
         Files.copy(directory.resolve("data/export.csv"), inputPath());
@@ -92,18 +118,21 @@ public class ImportOperationTest {
     }
 
     @Test
-    public void execute_invalidNote_rejectsWithoutChangingSavedData() throws Exception {
-        byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
+    public void execute_legacyNoteText_importsWithoutChangingInput() throws Exception {
         model.expandPerson(existing);
+        int index = 0;
         for (String note : List.of("Unicode \u4e2d\u6587", "First\r\nsecond", "Tab\there")) {
-            writeInput(new PersonBuilder(incoming).withNote(note).build());
+            Person candidate = new PersonBuilder(incoming).withEmail("legacy" + index++ + "@example.com")
+                    .withNote(note).build();
+            writeInput(candidate);
+            byte[] input = Files.readAllBytes(inputPath());
 
-            assertThrows(CommandException.class, () -> logic.execute("import"));
+            logic.execute("import");
 
-            assertEquals(List.of(existing), model.getAddressBook().getPersonList());
-            assertEquals(List.of(existing), model.getFilteredPersonList());
-            assertTrue(model.isExpandedViewProperty().get());
-            assertArrayEquals(disk, Files.readAllBytes(storage.getAddressBookFilePath()));
+            assertEquals(candidate, model.getAddressBook().getPersonList().getLast());
+            assertFalse(model.isExpandedViewProperty().get());
+            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+            assertArrayEquals(input, Files.readAllBytes(inputPath()));
         }
     }
 
@@ -153,6 +182,71 @@ public class ImportOperationTest {
         storage.failure = null;
         logic.execute("import");
         assertEquals(List.of(existing, unsaved, incoming), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_unknownRoles_createsEachRoleOnceAndReportsThem() throws Exception {
+        writeInput(new PersonBuilder(incoming).withRoles(Role.create("QA"), Role.create("Designer")).build(),
+                new PersonBuilder(incoming).withEmail("qa@example.com").withRoles(Role.create("qa")).build());
+
+        assertEquals("Imported 2 candidates successfully. Created roles: Designer, QA.",
+                logic.execute("import").getFeedbackToUser());
+
+        assertEquals(List.of("Designer", "No role", "QA"),
+                model.getRoleCatalog().getRoles().stream().map(Role::getName).toList());
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_roleNamesWithNoBreakSpaces_preservesCatalogDataAndView() throws Exception {
+        model.createRole("Designer");
+        storage.saveAddressBook(model.getAddressBook());
+        assertAllCases(List.of("Designer\u00a0", "No role\u00a0", "QA\u00a0Lead"), name -> {
+            assertInvalidRoleImportPreservesState(name,
+                    String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x00a0));
+        });
+    }
+
+    @Test
+    public void execute_roleNamesWithFormatCharacters_preservesCatalogDataAndView() throws Exception {
+        assertAllCases(List.of("\u200b", "QA\u200bLead"), name -> {
+            assertInvalidRoleImportPreservesState(name,
+                    String.format(ParserUtil.MESSAGE_INVISIBLE_ROLE_CHARACTER, 0x200b));
+        });
+    }
+
+    @Test
+    public void execute_roleNamesWithControlCharacters_preservesCatalogDataAndView() throws Exception {
+        assertAllCases(List.of("QA\tLead", "QA\rLead", "QA\nLead", "QA\u0000Lead", "QA\u007fLead"), name -> {
+            assertInvalidRoleImportPreservesState(name, Role.MESSAGE_CONSTRAINTS);
+        });
+    }
+
+    @Test
+    public void execute_visibleUnicodeAndQuotedRoleNames_savesAndReloads() throws Exception {
+        List<String> names = List.of("Caf\u00e9, \"Design\"", "R\\D");
+        Role[] roles = names.stream().map(Role::create).toArray(Role[]::new);
+        writeInput(new PersonBuilder(incoming).withRoles(roles).build());
+
+        logic.execute("import");
+
+        assertEquals(Set.copyOf(names), model.getAddressBook().getPersonList().getLast().getRoles().stream()
+                .map(Role::getName).collect(Collectors.toSet()));
+        assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_saveFailureAfterCreatingRole_restoresCatalogAndAllowsRetry() throws Exception {
+        writeInput(new PersonBuilder(incoming).withRoles(Role.create("QA")).build());
+        RoleCatalog catalog = model.getRoleCatalog();
+        storage.failure = new IOException("Injected write failure");
+
+        assertThrows(CommandException.class, () -> logic.execute("import"));
+
+        assertEquals(catalog, model.getRoleCatalog());
+        storage.failure = null;
+        assertEquals("Imported 1 candidate successfully. Created role: QA.",
+                logic.execute("import").getFeedbackToUser());
     }
 
     @Test
@@ -355,6 +449,33 @@ public class ImportOperationTest {
         assertEquals(0, failure.getSuppressed().length);
     }
 
+    private void assertInvalidRoleImportPreservesState(String name, String error) throws Exception {
+        writeInput(new PersonBuilder(incoming).withRoles(Role.create("QA")).build());
+        String roles = new ObjectMapper().writeValueAsString(List.of("New role", name));
+        Files.writeString(inputPath(), record(List.of("Another Candidate", "12345", "another@example.com",
+                "Address", "Applied", "[]", "", roles)), StandardOpenOption.APPEND);
+        model.expandPerson(existing);
+        AddressBook original = new AddressBook(model.getAddressBook());
+        Predicate<? super Person> filter = model.getPersonFilter();
+        byte[] candidates = Files.readAllBytes(storage.getAddressBookFilePath());
+        byte[] catalog = Files.readAllBytes(directory.resolve("data/roles.json"));
+        byte[] input = Files.readAllBytes(inputPath());
+        int saves = storage.saves;
+
+        assertThrows(CommandException.class, "Import failed: CSV record 3, field roles: " + error, () ->
+                logic.execute("import"));
+
+        assertEquals(original, model.getAddressBook());
+        assertEquals(original.getRoleCatalog(), model.getRoleCatalog());
+        assertSame(filter, model.getPersonFilter());
+        assertEquals(List.of(existing), model.getFilteredPersonList());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(saves, storage.saves);
+        assertArrayEquals(candidates, Files.readAllBytes(storage.getAddressBookFilePath()));
+        assertArrayEquals(catalog, Files.readAllBytes(directory.resolve("data/roles.json")));
+        assertArrayEquals(input, Files.readAllBytes(inputPath()));
+    }
+
     private void assertRollbackVerificationFailure(Model failingModel) throws Exception {
         byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
         CommandException thrown = org.junit.jupiter.api.Assertions.assertThrows(CommandException.class, () ->
@@ -370,13 +491,14 @@ public class ImportOperationTest {
 
     private void writeInput(Person... persons) throws IOException {
         StringBuilder csv = new StringBuilder(record(List.of("name", "phone", "email", "address", "status",
-                "tags", "note")));
+                "tags", "note", "roles")));
         ObjectMapper mapper = new ObjectMapper();
         for (Person person : persons) {
             String tags = mapper.writeValueAsString(person.getTags().stream().map(tag -> tag.tagName).toList());
+            String roles = mapper.writeValueAsString(person.getRoles().stream().map(Role::getName).toList());
             csv.append(record(List.of(person.getName().fullName, person.getPhone().value, person.getEmail().value,
                     person.getAddress().value, person.getStatus().toString(), tags,
-                    person.getNote().map(note -> note.value).orElse(""))));
+                    person.getNote().map(note -> note.value).orElse(""), roles)));
         }
         Files.writeString(inputPath(), csv);
     }

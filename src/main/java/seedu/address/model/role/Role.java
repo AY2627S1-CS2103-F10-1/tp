@@ -3,6 +3,7 @@ package seedu.address.model.role;
 import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.text.Normalizer;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
@@ -64,9 +65,9 @@ public final class Role {
         return requireNonNull(name).strip();
     }
 
-    /** Returns the case-insensitive lookup key; internal whitespace remains significant. */
+    /** Returns a case-insensitive NFC lookup key; display text and internal whitespace remain unchanged. */
     public static String toLookupKey(String name) {
-        return prepareName(name).toLowerCase(Locale.ROOT);
+        return Normalizer.normalize(prepareName(name), Normalizer.Form.NFC).toLowerCase(Locale.ROOT);
     }
 
     /** Returns whether a name has no surrounding whitespace, is nonblank, and contains no control characters. */

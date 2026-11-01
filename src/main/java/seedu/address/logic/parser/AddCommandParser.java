@@ -9,8 +9,9 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_ROLE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -30,6 +31,10 @@ public class AddCommandParser implements Parser<AddCommand> {
     public static final String MESSAGE_UNSUPPORTED_NOTE = "The add command does not support no/. "
             + "Add the candidate first, then use note INDEX no/NOTE_TEXT.";
 
+    private static final List<Map.Entry<Prefix, String>> REQUIRED_FIELDS = List.of(
+            Map.entry(PREFIX_NAME, "n/NAME"), Map.entry(PREFIX_PHONE, "p/PHONE_NUMBER"),
+            Map.entry(PREFIX_EMAIL, "e/EMAIL"), Map.entry(PREFIX_ADDRESS, "a/ADDRESS"));
+
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
      * and returns an AddCommand object for execution.
@@ -44,9 +49,14 @@ public class AddCommandParser implements Parser<AddCommand> {
                         PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
                         PREFIX_STATUS, PREFIX_TAG, PREFIX_ROLE);
 
-        if (!arePrefixesPresent(argMultimap, PREFIX_NAME, PREFIX_ADDRESS, PREFIX_PHONE, PREFIX_EMAIL)
-                || !argMultimap.getPreamble().isEmpty()) {
+        if (!argMultimap.getPreamble().isEmpty()) {
             throw new ParseException(String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+        }
+        List<String> missingFields = REQUIRED_FIELDS.stream()
+                .filter(field -> argMultimap.getValue(field.getKey()).isEmpty())
+                .map(Map.Entry::getValue).toList();
+        if (!missingFields.isEmpty()) {
+            throw new ParseException("Missing " + String.join(", ", missingFields) + ".");
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
@@ -67,13 +77,4 @@ public class AddCommandParser implements Parser<AddCommand> {
         }
         return new AddCommand(person, roleNames);
     }
-
-    /**
-     * Returns true if none of the prefixes contains empty {@code Optional} values in the given
-     * {@code ArgumentMultimap}.
-     */
-    private static boolean arePrefixesPresent(ArgumentMultimap argumentMultimap, Prefix... prefixes) {
-        return Stream.of(prefixes).allMatch(prefix -> argumentMultimap.getValue(prefix).isPresent());
-    }
-
 }

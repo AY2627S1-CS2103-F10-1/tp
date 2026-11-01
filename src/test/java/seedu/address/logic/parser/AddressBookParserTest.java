@@ -43,8 +43,12 @@ public class AddressBookParserTest {
     }
 
     @Test
-    public void parseCommand_uppercaseNote_throwsParseException() {
-        assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("NOTE 1 no/x"));
+    public void parseCommand_uppercaseOrMixedCaseCommandWord_dispatchesCommand() throws Exception {
+        assertEquals(new NoteCommand(INDEX_FIRST_PERSON, new Note("x")), parser.parseCommand("NOTE 1 no/x"));
+        assertTrue(parser.parseCommand("LIST") instanceof ListCommand);
+        assertTrue(parser.parseCommand("Help") instanceof HelpCommand);
+        assertEquals(new DeleteCommand(INDEX_FIRST_PERSON), parser.parseCommand("Delete 1"));
+        assertEquals(new ClearCommand(true), parser.parseCommand("CLEAR confirm"));
     }
 
     @Test

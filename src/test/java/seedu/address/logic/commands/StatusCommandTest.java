@@ -2,6 +2,7 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
@@ -23,6 +24,37 @@ import seedu.address.testutil.PersonBuilder;
 
 public class StatusCommandTest {
     private final Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+
+    @Test
+    public void execute_sameStatus_retainsRecordAndFilteredView() throws Exception {
+        showPersonAtIndex(model, INDEX_SECOND_PERSON);
+        Person candidate = model.getFilteredPersonList().getFirst();
+        Model expectedModel = new ModelManager(model.getAddressBook(), new UserPrefs());
+        showPersonAtIndex(expectedModel, INDEX_SECOND_PERSON);
+        String expectedMessage = String.format("No change: %s already has status %s.",
+                candidate.getName(), candidate.getStatus());
+
+        assertCommandSuccess(new StatusCommand(INDEX_FIRST_PERSON, candidate.getStatus()),
+                model, expectedMessage, expectedModel);
+
+        assertSame(candidate, model.getFilteredPersonList().getFirst());
+    }
+
+    @Test
+    public void execute_sameStatusExpanded_retainsFullRecordAndExpandedView() throws Exception {
+        Person original = model.getFilteredPersonList().getFirst();
+        Person candidate = new PersonBuilder(original).withNote("Keep interview feedback").withTags("backend").build();
+        model.setPerson(original, candidate);
+        model.expandPerson(candidate);
+
+        CommandResult result = new StatusCommand(INDEX_FIRST_PERSON, candidate.getStatus()).execute(model);
+
+        assertEquals(String.format(StatusCommand.MESSAGE_UNCHANGED, candidate.getName(), candidate.getStatus()),
+                result.getFeedbackToUser());
+        assertSame(candidate, model.getFilteredPersonList().getFirst());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(1, model.getFilteredPersonList().size());
+    }
 
     @Test
     public void execute_candidateWithNote_preservesNote() throws Exception {

@@ -258,7 +258,7 @@ public class JsonAddressBookStorage {
      *
      * @throws IOException if reading or applying the permissions fails.
      */
-    private static void copyExistingPosixPermissions(Path destination, Path temporaryFile) throws IOException {
+    static void copyExistingPosixPermissions(Path destination, Path temporaryFile) throws IOException {
         PosixFileAttributeView posixView = Files.getFileAttributeView(destination, PosixFileAttributeView.class);
         if (posixView == null) {
             return;

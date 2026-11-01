@@ -4,19 +4,23 @@ skinparam ActivityFontSize 15
 skinparam ArrowFontSize 12
 
 start
-:Read and validate saved candidate data;
+:Restore the previous files if a save was
+interrupted (roles-transaction.json);
+:Read and validate the role catalog
+and saved candidate data;
 
 'Keep guards on the outgoing edges, as in CommitActivityDiagram.
 switch ()
-case ([valid file])
+case ([valid files])
     :Start with loaded candidates;
     stop
-case ([missing file])
+case ([candidate file missing])
     :Start with sample candidates;
     stop
 case ([load failure])
-    :Back up original bytes to a unique
-timestamped file beside the data file;
+    :Back up the original candidate and role
+files to unique timestamped files
+beside the data file;
     if () then ([backup succeeds])
     else ([backup fails])
         :Report error and abort startup
@@ -24,7 +28,8 @@ before UI or commands;
         stop
     endif
 
-    :Save empty candidate data atomically;
+    :Save an empty candidate list and
+the built-in role catalog;
     if () then ([save succeeds])
     else ([save fails])
         :Report error with backup path and abort

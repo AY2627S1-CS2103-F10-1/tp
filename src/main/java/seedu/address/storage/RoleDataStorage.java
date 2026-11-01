@@ -9,10 +9,12 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import seedu.address.commons.core.LogsCenter;
 import seedu.address.commons.exceptions.DataLoadingException;
 import seedu.address.commons.exceptions.IllegalValueException;
 import seedu.address.commons.util.JsonUtil;
@@ -26,6 +28,7 @@ class RoleDataStorage {
     private static final int JOURNAL_VERSION = 1;
     private static final String ROLES_FILE_NAME = "roles.json";
     private static final String JOURNAL_FILE_NAME = "roles-transaction.json";
+    private static final Logger logger = LogsCenter.getLogger(RoleDataStorage.class);
     private final JsonAddressBookStorage candidates;
     private final Path rolesPath;
     private final Path journalPath;
@@ -45,6 +48,8 @@ class RoleDataStorage {
             Optional<ReadOnlyAddressBook> loaded = candidates.readAddressBook(candidates.getAddressBookFilePath(),
                     catalog);
             if (loaded.isEmpty() && exists(rolesPath)) {
+                logger.info("No candidate data file found."
+                        + " Starting with sample candidates and the saved role catalog.");
                 AddressBook sample = new AddressBook(SampleDataUtil.getSampleAddressBook());
                 sample.setRoleCatalog(catalog);
                 return Optional.of(sample);

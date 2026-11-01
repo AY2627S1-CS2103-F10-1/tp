@@ -12,6 +12,7 @@ import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -86,6 +87,35 @@ public class AddressBookTest {
         Person editedAlice = new PersonBuilder(ALICE).withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND)
                 .build();
         assertTrue(addressBook.hasPerson(editedAlice));
+    }
+
+    @Test
+    public void findSamePerson_nullPerson_throwsNullPointerException() {
+        assertThrows(NullPointerException.class, () -> addressBook.findSamePerson(null));
+    }
+
+    @Test
+    public void findSamePerson_emptyAddressBook_returnsEmpty() {
+        assertEquals(Optional.empty(), addressBook.findSamePerson(ALICE));
+    }
+
+    @Test
+    public void findSamePerson_distinctEmail_returnsEmpty() {
+        addressBook.addPerson(ALICE);
+        Person distinct = new PersonBuilder(ALICE).withEmail("other@example.com").build();
+
+        assertEquals(Optional.empty(), addressBook.findSamePerson(distinct));
+        assertFalse(addressBook.hasPerson(distinct));
+    }
+
+    @Test
+    public void findSamePerson_sameEmailIgnoringCase_returnsStoredPerson() {
+        addressBook.addPerson(ALICE);
+        Person candidate = new PersonBuilder(ALICE).withName("Different Name")
+                .withEmail(ALICE.getEmail().value.toUpperCase(Locale.ROOT)).build();
+
+        assertEquals(Optional.of(ALICE), addressBook.findSamePerson(candidate));
+        assertTrue(addressBook.hasPerson(candidate));
     }
 
     @Test
