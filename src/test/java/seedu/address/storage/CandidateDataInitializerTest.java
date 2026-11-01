@@ -3,6 +3,7 @@ package seedu.address.storage;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
@@ -25,38 +26,26 @@ import seedu.address.model.UserPrefs;
 import seedu.address.model.util.SampleDataUtil;
 
 public class CandidateDataInitializerTest {
+    private static final Path TEST_DATA_FOLDER = Path.of("src", "test", "data");
+
     @TempDir
     Path temporaryFolder;
 
     @Test
-    public void load_rejectedFiles_preservesOriginalBeforeCommandsCanSave() throws Exception {
-        Path fixtures = Path.of("src", "test", "data");
-        List<String> invalidData = List.of("{invalid JSON",
-                Files.readString(fixtures.resolve("JsonAddressBookStorageTest/invalidAndValidPersonAddressBook.json")),
-                Files.readString(fixtures.resolve("JsonSerializableAddressBookTest/duplicatePersonAddressBook.json")));
-        for (String json : invalidData) {
-            Path path = temporaryFolder.resolve("candidates.json");
-            Files.writeString(path, json);
-            byte[] original = Files.readAllBytes(path);
-            JsonAddressBookStorage dataStorage = new JsonAddressBookStorage(path);
-            StorageManager storage = createStorage(dataStorage);
-            CandidateDataInitializer initializer = new CandidateDataInitializer(storage);
+    public void load_malformedJson_preservesOriginalBeforeCommandsCanSave() throws Exception {
+        assertRejectedFileBackedUpBeforeCommands("{invalid JSON");
+    }
 
-            ReadOnlyAddressBook replacement = initializer.load();
+    @Test
+    public void load_invalidCandidate_preservesOriginalBeforeCommandsCanSave() throws Exception {
+        Path fixture = TEST_DATA_FOLDER.resolve("JsonAddressBookStorageTest/invalidAndValidPersonAddressBook.json");
+        assertRejectedFileBackedUpBeforeCommands(Files.readString(fixture));
+    }
 
-            assertEquals(new AddressBook(), replacement);
-            Path backup = initializer.getRecoveryBackup().orElseThrow();
-            assertArrayEquals(original, Files.readAllBytes(backup));
-            assertEquals(replacement, dataStorage.readAddressBook().orElseThrow());
-            Logic logic = new LogicManager(new ModelManager(replacement, new UserPrefs()), storage);
-            for (String command : List.of("list", "find Alice", "help")) {
-                logic.execute(command);
-                assertArrayEquals(original, Files.readAllBytes(backup));
-            }
-            CandidateDataInitializer nextLaunch = new CandidateDataInitializer(storage);
-            assertEquals(new AddressBook(), nextLaunch.load());
-            assertTrue(nextLaunch.getRecoveryBackup().isEmpty());
-        }
+    @Test
+    public void load_duplicateCandidate_preservesOriginalBeforeCommandsCanSave() throws Exception {
+        Path fixture = TEST_DATA_FOLDER.resolve("JsonSerializableAddressBookTest/duplicatePersonAddressBook.json");
+        assertRejectedFileBackedUpBeforeCommands(Files.readString(fixture));
     }
 
     @Test
@@ -71,9 +60,10 @@ public class CandidateDataInitializerTest {
 
         second.load();
 
-        assertFalse(firstBackup.equals(second.getRecoveryBackup().orElseThrow()));
+        Path secondBackup = second.getRecoveryBackup().orElseThrow();
+        assertNotEquals(firstBackup, secondBackup);
         assertEquals("first invalid file", Files.readString(firstBackup));
-        assertEquals("second invalid file", Files.readString(second.getRecoveryBackup().orElseThrow()));
+        assertEquals("second invalid file", Files.readString(secondBackup));
     }
 
     @Test
@@ -141,6 +131,33 @@ public class CandidateDataInitializerTest {
         assertEquals(getTypicalAddressBook(), initializer.load());
         assertTrue(initializer.getRecoveryBackup().isEmpty());
         assertArrayEquals(original, Files.readAllBytes(path));
+    }
+
+    /**
+     * Verifies that recovery backs up rejected data before later commands save the replacement.
+     */
+    private void assertRejectedFileBackedUpBeforeCommands(String json) throws Exception {
+        Path path = temporaryFolder.resolve("candidates.json");
+        Files.writeString(path, json);
+        byte[] original = Files.readAllBytes(path);
+        JsonAddressBookStorage dataStorage = new JsonAddressBookStorage(path);
+        StorageManager storage = createStorage(dataStorage);
+        CandidateDataInitializer initializer = new CandidateDataInitializer(storage);
+
+        ReadOnlyAddressBook replacement = initializer.load();
+
+        assertEquals(new AddressBook(), replacement);
+        Path backup = initializer.getRecoveryBackup().orElseThrow();
+        assertArrayEquals(original, Files.readAllBytes(backup));
+        assertEquals(replacement, dataStorage.readAddressBook().orElseThrow());
+        Logic logic = new LogicManager(new ModelManager(replacement, new UserPrefs()), storage);
+        for (String command : List.of("list", "find Alice", "help")) {
+            logic.execute(command);
+            assertArrayEquals(original, Files.readAllBytes(backup), command);
+        }
+        CandidateDataInitializer nextLaunch = new CandidateDataInitializer(storage);
+        assertEquals(new AddressBook(), nextLaunch.load());
+        assertTrue(nextLaunch.getRecoveryBackup().isEmpty());
     }
 
     private StorageManager createStorage(JsonAddressBookStorage dataStorage) {

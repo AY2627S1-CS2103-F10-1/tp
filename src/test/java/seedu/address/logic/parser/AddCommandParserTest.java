@@ -31,8 +31,11 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalPersons.AMY;
 import static seedu.address.testutil.TypicalPersons.BOB;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -48,6 +51,8 @@ import seedu.address.model.tag.Tag;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandParserTest {
+    private static final String NOTE_REQUIRED_FIELDS = " n/A p/123 e/a@x.com a/Blk 1";
+
     private AddCommandParser parser = new AddCommandParser();
 
     @Test
@@ -352,5 +357,49 @@ public class AddCommandParserTest {
         assertParseFailure(parser, PREAMBLE_NON_EMPTY + NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB
                 + ADDRESS_DESC_BOB + TAG_DESC_HUSBAND + TAG_DESC_FRIEND,
                 String.format(MESSAGE_INVALID_COMMAND_FORMAT, AddCommand.MESSAGE_USAGE));
+    }
+
+    @Test
+    public void parse_notePrefixAfterAddress_reportsUnsupportedNoteInsteadOfStoringIt() {
+        assertAllCases(List.of("great candidate", "", " \t ", "first no/second"), note -> {
+            assertParseFailure(parser, NOTE_REQUIRED_FIELDS + " no/" + note,
+                    AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        });
+    }
+
+    @Test
+    public void parse_notePrefixAmongOtherFields_reportsUnsupportedNote() {
+        List<String> inputs = List.of(" no/feedback" + NOTE_REQUIRED_FIELDS,
+                " n/A no/feedback p/123 e/a@x.com a/Blk 1",
+                NOTE_REQUIRED_FIELDS + " s/Applied no/feedback t/backend",
+                NOTE_REQUIRED_FIELDS + " t/backend no/feedback");
+
+        assertAllCases(inputs, args -> {
+            assertParseFailure(parser, args, AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        });
+    }
+
+    @Test
+    public void parse_notePrefixAfterNonSpaceWhitespace_reportsUnsupportedNote() {
+        assertAllCases(List.of("\t", "\n", " \t"), separator -> {
+            assertParseFailure(parser, NOTE_REQUIRED_FIELDS + separator + "no/feedback",
+                    AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        });
+    }
+
+    @Test
+    public void parse_notePrefixInOtherCase_reportsUnsupportedNote() {
+        assertAllCases(List.of("NO/", "No/", "nO/"), prefix -> {
+            assertParseFailure(parser, NOTE_REQUIRED_FIELDS + " " + prefix + "feedback",
+                    AddCommandParser.MESSAGE_UNSUPPORTED_NOTE);
+        });
+    }
+
+    @Test
+    public void parse_notePrefixInsideAddressWord_preservesLiteralAddress() {
+        AddCommand expected = new AddCommand(new PersonBuilder().withName("A").withPhone("123")
+                .withEmail("a@x.com").withAddress("Blk 1 yes/no/feedback").build());
+
+        assertParseSuccess(parser, NOTE_REQUIRED_FIELDS + " yes/no/feedback" + " r/No role", expected);
     }
 }
