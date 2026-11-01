@@ -201,6 +201,26 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
+    public void getUpperCasePrefixWarning_uppercaseFields_namesFirstPossibleAmbiguity() {
+        String expected = "Warning: N/ was read as the n/ field prefix. "
+                + "To keep it in a name, phone, email or address, type N\\/. "
+                + "Roles and statuses keep backslashes literally.";
+
+        assertEquals(expected, ArgumentTokenizer.getUpperCasePrefixWarning("edit 1 A/Unit N/A P/123")
+                .orElseThrow());
+        assertEquals(expected, ArgumentTokenizer.getUpperCasePrefixWarning("edit 1 R/ N/A")
+                .orElseThrow());
+    }
+
+    @Test
+    public void getUpperCasePrefixWarning_noAmbiguousUppercaseField_returnsEmpty() {
+        for (String input : List.of("edit 1 A/Unit N\\/A", "edit 1 A/Unit n/John", "edit 1 n/Ravi S/O Kumar",
+                "edit 1 A/9 Road n/Siti A/P Ahmad", "edit 1 a/Unit X/A", "edit 1 n/John p/123")) {
+            assertTrue(ArgumentTokenizer.getUpperCasePrefixWarning(input).isEmpty(), input);
+        }
+    }
+
+    @Test
     public void tokenize_emptyArgsString_noValues() {
         String argsString = "  ";
         ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(argsString, pSlash);

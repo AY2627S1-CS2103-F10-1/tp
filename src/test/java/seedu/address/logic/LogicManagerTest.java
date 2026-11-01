@@ -91,6 +91,58 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_uppercaseAddressAndName_warnsBeforeSuccessAndPersistsEdit() throws Exception {
+        model.addPerson(AMY);
+        model.expandPerson(AMY);
+        Person expected = new PersonBuilder(AMY).withAddress("Unit").withName("A").build();
+        String warning = "Warning: N/ was read as the n/ field prefix. "
+                + "To keep it in a name, phone, email or address, type N\\/. "
+                + "Roles and statuses keep backslashes literally.";
+
+        CommandResult result = logic.execute("edit 1 A/Unit N/A");
+
+        assertEquals(warning + "\n" + String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS,
+                Messages.format(expected)), result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertTrue(model.isExpandedViewProperty().get());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+
+        result = logic.execute("edit 1 A/Unit N/A");
+        assertEquals(warning + "\n" + String.format(EditCommand.MESSAGE_NOT_CHANGED, expected.getName()),
+                result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_uppercaseAdd_warnsAndPreservesAllFields() throws Exception {
+        CommandResult result = logic.execute("ADD N/Upper Candidate P/123 E/upper@example.com A/Unit "
+                + "S/Offered R/No role");
+
+        Person expected = new PersonBuilder().withName("Upper Candidate").withPhone("123")
+                .withEmail("upper@example.com").withAddress("Unit").withStatus(Status.OFFERED).withTags().build();
+        String warning = "Warning: P/ was read as the p/ field prefix. "
+                + "To keep it in a name, phone, email or address, type P\\/. "
+                + "Roles and statuses keep backslashes literally.";
+        assertEquals(warning + "\n" + String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getAddressBook().getPersonList());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_escapedAddressAndNameConnector_succeedsWithoutWarning() throws Exception {
+        model.addPerson(AMY);
+        Person expected = new PersonBuilder(AMY).withAddress("Unit N/A").withName("Ravi S/O Kumar").build();
+
+        CommandResult result = logic.execute("edit 1 A/Unit N\\/A n/Ravi S/O Kumar");
+
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(expected)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+    }
+
+    @Test
     public void execute_formattedPhoneExport_preservesCsvValue() throws Exception {
         model.addPerson(new PersonBuilder().withPhone("001-234 567 (Office)").build());
 
