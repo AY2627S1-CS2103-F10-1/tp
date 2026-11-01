@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.JavaFxTestUtil.runOnFxThread;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -143,6 +145,27 @@ public class PersonCardTest {
             Label tag = (Label) ((FlowPane) card.lookup("#tags")).getChildren().getFirst();
             assertNotEquals(tag.getBackground(), firstRole.getBackground());
             assertEquals(tag.getPadding(), firstRole.getPadding());
+        });
+    }
+
+    @Test
+    public void constructor_technicalSkillTags_displaysWithinOrdinaryAndExpandedCards() throws Exception {
+        runOnFxThread(() -> {
+            List<String> skills = List.of(".NET", "C#", "C++", "Node.js", "machine learning");
+            Person candidate = new PersonBuilder().withTags(skills.toArray(String[]::new)).build();
+            for (boolean expanded : new boolean[] {false, true}) {
+                Region card = new PersonCard(candidate, 1, expanded).getRoot();
+                layoutCard(card);
+                FlowPane tags = (FlowPane) card.lookup("#tags");
+                assertEquals(skills, tags.getChildren().stream().map(node -> ((Label) node).getText()).toList());
+                for (var node : tags.getChildren()) {
+                    Label badge = (Label) node;
+                    Bounds bounds = badge.localToScene(badge.getBoundsInLocal());
+                    assertTrue(bounds.getMinX() >= 0, badge.getText());
+                    assertTrue(bounds.getMaxX() <= CARD_WIDTH, badge.getText());
+                    assertTrue(badge.getWidth() >= badge.prefWidth(-1), badge.getText());
+                }
+            }
         });
     }
 
