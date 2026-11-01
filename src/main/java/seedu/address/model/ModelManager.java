@@ -4,11 +4,7 @@ import static java.util.Objects.requireNonNull;
 import static seedu.address.commons.util.AppUtil.checkArgument;
 import static seedu.address.commons.util.CollectionUtil.requireAllNonNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
 
@@ -20,8 +16,6 @@ import javafx.collections.transformation.FilteredList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
 import seedu.address.model.person.Person;
-import seedu.address.model.role.Role;
-import seedu.address.model.role.RoleCatalog;
 
 /**
  * Represents the in-memory model of the address book data.
@@ -138,55 +132,26 @@ public class ModelManager implements Model {
 
     @Override
     public void createRole(String name) {
-        List<Role> roles = new ArrayList<>(getRoleCatalog().getRoles());
-        checkArgument(getRoleCatalog().find(name).isEmpty(), RoleCatalog.MESSAGE_DUPLICATE_NAME);
-        roles.add(Role.create(name));
-        addressBook.setRoleCatalog(new RoleCatalog(roles));
+        addressBook.createRole(name);
     }
 
     @Override
     public void renameRole(String oldName, String newName) {
-        Role oldRole = getRoleCatalog().requireRole(oldName);
-        Role renamed = oldRole.renamed(newName);
-        List<Role> roles = getRoleCatalog().getRoles().stream()
-                .map(role -> role.equals(oldRole) ? renamed : role).toList();
-        replaceRoleData(oldRole, renamed, new RoleCatalog(roles));
+        updateRoleData(() -> addressBook.renameRole(oldName, newName));
     }
 
     @Override
     public void deleteRole(String name) {
-        Role role = getRoleCatalog().requireRole(name);
-        checkArgument(!role.equals(Role.NO_ROLE), Role.MESSAGE_PROTECTED_ROLE);
-        List<Role> remaining = getRoleCatalog().getRoles().stream()
-                .filter(entry -> !entry.equals(role)).toList();
-        replaceRoleData(role, null, new RoleCatalog(remaining));
+        updateRoleData(() -> addressBook.deleteRole(name));
     }
 
-    /** Validates a complete replacement before updating live catalog and person references. */
-    private void replaceRoleData(Role oldRole, Role renamed, RoleCatalog catalog) {
-        AddressBook replacement = new AddressBook();
-        replacement.setRoleCatalog(catalog);
-        for (Person person : addressBook.getPersonList()) {
-            replacement.addPerson(createPersonWithUpdatedRoles(person, oldRole, renamed));
-        }
+    /** Preserves the expanded selection while the address book rewrites role assignments. */
+    private void updateRoleData(Runnable update) {
+        assert !isExpandedView.get() || filteredPersons.size() == 1 : "Expanded view must contain one candidate";
         Optional<Person> expandedPerson = isExpandedView.get()
                 ? Optional.of(filteredPersons.getFirst()) : Optional.empty();
-        addressBook.resetData(replacement);
-        expandedPerson.ifPresent(person ->
-                expandPersonAfterEdit(createPersonWithUpdatedRoles(person, oldRole, renamed)));
-    }
-
-    /** Returns a person with the old role removed, or replaced when renamed is non-null. */
-    private static Person createPersonWithUpdatedRoles(Person person, Role oldRole, Role renamed) {
-        Set<Role> assignments = new HashSet<>(person.getRoles());
-        boolean hasOldRole = assignments.remove(oldRole);
-        if (hasOldRole && renamed != null) {
-            assignments.add(renamed);
-        }
-        if (assignments.isEmpty()) {
-            assignments.add(Role.NO_ROLE);
-        }
-        return person.withRoles(assignments);
+        update.run();
+        expandedPerson.flatMap(addressBook::findSamePerson).ifPresent(this::expandPersonAfterEdit);
     }
 
     //=========== Filtered Person List Accessors =============================================================

@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.exceptions.DuplicatePersonException;
+import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddressBookTest {
@@ -143,6 +146,35 @@ public class AddressBookTest {
         public ObservableList<Person> getPersonList() {
             return persons;
         }
+    }
+
+    @Test
+    public void renameRole_duplicateName_preservesCatalogAndAssignments() {
+        addressBook.createRole("Engineer");
+        addressBook.createRole("Designer");
+        addressBook.addPerson(new PersonBuilder().withRoles(addressBook.getRoleCatalog().requireRole("Engineer"))
+                .build());
+        AddressBook before = new AddressBook(addressBook);
+
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_DUPLICATE_NAME, () ->
+                addressBook.renameRole("Engineer", "designer"));
+
+        assertEquals(before, addressBook);
+    }
+
+    @Test
+    public void deleteRole_lastAssignment_preservesUnassignedCandidateAndUsesFallback() {
+        addressBook.createRole("Engineer");
+        addressBook.addPerson(new PersonBuilder().withRoles(addressBook.getRoleCatalog().requireRole("Engineer"))
+                .build());
+        Person unassigned = new PersonBuilder().withEmail("unassigned@example.com").build();
+        addressBook.addPerson(unassigned);
+
+        addressBook.deleteRole("Engineer");
+
+        assertEquals(Set.of(Role.NO_ROLE), addressBook.getPersonList().getFirst().getRoles());
+        assertEquals(unassigned, addressBook.getPersonList().get(1));
+        assertEquals(List.of(Role.NO_ROLE), addressBook.getRoleCatalog().getRoles());
     }
 
 }

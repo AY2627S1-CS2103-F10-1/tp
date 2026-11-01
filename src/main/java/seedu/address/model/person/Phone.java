@@ -12,7 +12,7 @@ public class Phone {
 
     public static final String MESSAGE_CONSTRAINTS =
             "Phone numbers must contain at least 3 ASCII digits and only printable ASCII characters. "
-                    + "Formatting, extensions and contact labels are allowed";
+                    + "Formatting, extensions and contact labels are allowed.";
     public static final String VALIDATION_REGEX = "[\\x20-\\x7E]+";
     public final String value;
 

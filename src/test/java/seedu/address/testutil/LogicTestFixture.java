@@ -20,7 +20,12 @@ public final class LogicTestFixture {
 
     /** Creates a fixture without reading or saving candidate data. */
     public LogicTestFixture(Path directory, Model model) {
-        this(directory, model, new JsonAddressBookStorage(directory.resolve("candidates.json")));
+        this(directory, model, "candidates.json");
+    }
+
+    /** Creates a fixture using the candidate filename required by an existing scenario. */
+    public LogicTestFixture(Path directory, Model model, String candidateFileName) {
+        this(directory, model, new JsonAddressBookStorage(directory.resolve(candidateFileName)));
     }
 
     /** Creates a fixture with supplied candidate storage, including storage that injects a failure. */

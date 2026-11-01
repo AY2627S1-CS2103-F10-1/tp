@@ -24,13 +24,16 @@ class JsonRoleCatalog {
     }
 
     RoleCatalog toModelType() throws IllegalValueException {
+        if (roles == null || roles.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalValueException("The role catalog must contain a non-null roles list.");
+        }
+        if (roles.stream().anyMatch(entry -> entry.id == null || entry.name == null)) {
+            throw new IllegalValueException("Role identities and names must not be null.");
+        }
         try {
-            if (roles == null || roles.stream().anyMatch(Objects::isNull)) {
-                throw new IllegalArgumentException("The role catalog must contain a non-null roles list.");
-            }
             return new RoleCatalog(roles.stream()
                     .map(entry -> new Role(entry.id, Role.prepareName(entry.name))).toList());
-        } catch (IllegalArgumentException | NullPointerException e) {
+        } catch (IllegalArgumentException e) {
             throw new IllegalValueException(e.getMessage());
         }
     }

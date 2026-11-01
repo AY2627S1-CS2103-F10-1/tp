@@ -1,15 +1,20 @@
 package seedu.address.model;
 
 import static java.util.Objects.requireNonNull;
+import static seedu.address.commons.util.AppUtil.checkArgument;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import javafx.collections.ObservableList;
 import seedu.address.commons.util.ToStringBuilder;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.UniquePersonList;
+import seedu.address.model.role.Role;
 import seedu.address.model.role.RoleCatalog;
 
 /**
@@ -66,6 +71,49 @@ public class AddressBook implements ReadOnlyAddressBook {
         requireNonNull(catalog);
         persons.asUnmodifiableObservableList().forEach(person -> catalog.validateReferences(person.getRoles()));
         roleCatalog = catalog;
+    }
+
+    /** Creates a role without changing candidate assignments. */
+    public void createRole(String name) {
+        List<Role> roles = new ArrayList<>(roleCatalog.getRoles());
+        checkArgument(roleCatalog.find(name).isEmpty(), RoleCatalog.MESSAGE_DUPLICATE_NAME);
+        roles.add(Role.create(name));
+        setRoleCatalog(new RoleCatalog(roles));
+    }
+
+    /** Renames a role and all its assignments, preserving its identity. */
+    public void renameRole(String oldName, String newName) {
+        Role oldRole = roleCatalog.requireRole(oldName);
+        Role renamed = oldRole.renamed(newName);
+        RoleCatalog catalog = new RoleCatalog(roleCatalog.getRoles().stream()
+                .map(role -> role.equals(oldRole) ? renamed : role).toList());
+        replaceRoleData(oldRole, Set.of(renamed), catalog);
+    }
+
+    /** Deletes a role, assigning No role to candidates whose last assignment is removed. */
+    public void deleteRole(String name) {
+        Role role = roleCatalog.requireRole(name);
+        checkArgument(!role.equals(Role.NO_ROLE), Role.MESSAGE_PROTECTED_ROLE);
+        RoleCatalog catalog = new RoleCatalog(roleCatalog.getRoles().stream()
+                .filter(entry -> !entry.equals(role)).toList());
+        replaceRoleData(role, Set.of(), catalog);
+    }
+
+    /** Validates the complete replacement before updating the live catalog and candidates. */
+    private void replaceRoleData(Role oldRole, Set<Role> replacements, RoleCatalog catalog) {
+        AddressBook replacement = new AddressBook();
+        replacement.setRoleCatalog(catalog);
+        for (Person person : getPersonList()) {
+            Set<Role> assignments = new HashSet<>(person.getRoles());
+            if (assignments.remove(oldRole)) {
+                assignments.addAll(replacements);
+            }
+            if (assignments.isEmpty()) {
+                assignments.add(Role.NO_ROLE);
+            }
+            replacement.addPerson(person.withRoles(assignments));
+        }
+        resetData(replacement);
     }
 
     //// person-level operations

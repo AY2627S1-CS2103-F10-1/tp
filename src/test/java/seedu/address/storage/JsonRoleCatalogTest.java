@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.util.Arrays;
 import java.util.List;
@@ -29,13 +30,35 @@ class JsonRoleCatalogTest {
 
     @Test
     void toModelType_invalidStoredEntry_translatesToCheckedError() {
-        for (String name : Arrays.asList(null, " ", "Line\nBreak", "Senior N/Engineer", "NO ROLE")) {
+        assertAllCases(Arrays.asList(null, " ", "Line\nBreak", "Senior N/Engineer", "NO ROLE"), name -> {
             JsonRoleCatalog stored = new JsonRoleCatalog(List.of(
                     new JsonRoleCatalog.Entry(Role.NO_ROLE_ID, Role.NO_ROLE_NAME),
                     new JsonRoleCatalog.Entry(ID, name)));
             assertThrows(IllegalValueException.class, stored::toModelType);
-        }
+        });
         JsonRoleCatalog invalidId = new JsonRoleCatalog(List.of(new JsonRoleCatalog.Entry("bad-id", "Engineer")));
         assertThrows(IllegalValueException.class, "Invalid role identity.", invalidId::toModelType);
     }
+
+    @Test
+    void toModelType_nullListOrEntry_reportsMissingCatalog() {
+        assertAllCases(Arrays.asList(null, Arrays.asList((JsonRoleCatalog.Entry) null)), entries -> {
+            JsonRoleCatalog stored = new JsonRoleCatalog(entries);
+
+            assertThrows(IllegalValueException.class, "The role catalog must contain a non-null roles list.",
+                    stored::toModelType);
+        });
+    }
+
+    @Test
+    void toModelType_nullIdentityOrName_reportsMissingEntryFields() {
+        assertAllCases(List.of(new JsonRoleCatalog.Entry(null, "Engineer"),
+                new JsonRoleCatalog.Entry(ID, null)), entry -> {
+                    JsonRoleCatalog stored = new JsonRoleCatalog(List.of(entry));
+
+                    assertThrows(IllegalValueException.class, "Role identities and names must not be null.",
+                            stored::toModelType);
+                });
+    }
+
 }

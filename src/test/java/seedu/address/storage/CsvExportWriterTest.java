@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -39,6 +40,8 @@ import seedu.address.testutil.PersonBuilder;
 public class CsvExportWriterTest {
     private static final String HEADER = "\"name\",\"phone\",\"email\",\"address\",\"status\","
             + "\"tags\",\"note\",\"roles\"\r\n";
+    private static final String EXPORT_FILE_NAME = "export.csv";
+    private static final String PREVIOUS_EXPORT = "previous successful export";
     private static final String NO_ROLES = "[\"No role\"]";
 
     @TempDir
@@ -119,7 +122,7 @@ public class CsvExportWriterTest {
 
     @Test
     public void export_repeatedAndEmpty_replacesWithoutTrailingBytes() throws Exception {
-        Path destination = directory.resolve("export.csv");
+        Path destination = directory.resolve(EXPORT_FILE_NAME);
         AddressBook book = new AddressBook();
         book.addPerson(new PersonBuilder().withEmail("alice@example.com").build());
         book.addPerson(new PersonBuilder().withEmail("bob@example.com").build());
@@ -136,7 +139,7 @@ public class CsvExportWriterTest {
 
     @Test
     public void export_nonAsciiText_startsWithUtf8ByteOrderMark() throws Exception {
-        Path destination = directory.resolve("export.csv");
+        Path destination = directory.resolve(EXPORT_FILE_NAME);
         AddressBook book = new AddressBook();
         book.addPerson(new PersonBuilder().withAddress("Zürich 街").withNote("réalisé café").build());
 
@@ -164,7 +167,7 @@ public class CsvExportWriterTest {
 
     @Test
     public void export_directoryDestination_failsWithoutDeleting() throws Exception {
-        Path destination = Files.createDirectory(directory.resolve("export.csv"));
+        Path destination = Files.createDirectory(directory.resolve(EXPORT_FILE_NAME));
         assertThrows(IOException.class, () -> new CsvExportWriter().export(new AddressBook(), destination));
         assertTrue(Files.isDirectory(destination));
     }
@@ -188,7 +191,7 @@ public class CsvExportWriterTest {
     public void export_symbolicLinks_rejectsWithoutFollowing() throws Exception {
         assumeTrue(directory.getFileSystem().supportedFileAttributeViews().contains("posix"));
         Path target = Files.writeString(directory.resolve("target"), "original");
-        Path link = Files.createSymbolicLink(directory.resolve("export.csv"), target);
+        Path link = Files.createSymbolicLink(directory.resolve(EXPORT_FILE_NAME), target);
         CsvExportWriter exporter = new CsvExportWriter();
         assertThrows(IOException.class, () -> exporter.export(new AddressBook(), link));
         assertEquals("original", Files.readString(target));
@@ -205,7 +208,7 @@ public class CsvExportWriterTest {
     public void export_permissions_defaultsAndExistingModeRetained() throws Exception {
         assumeTrue(directory.getFileSystem().supportedFileAttributeViews().contains("posix"));
         Path ordinary = Files.createTempFile(directory, "permissions-", ".tmp");
-        Path destination = directory.resolve("export.csv");
+        Path destination = directory.resolve(EXPORT_FILE_NAME);
         CsvExportWriter exporter = new CsvExportWriter();
         exporter.export(new AddressBook(), destination);
         assertEquals(Files.getPosixFilePermissions(ordinary), Files.getPosixFilePermissions(destination));
@@ -217,7 +220,7 @@ public class CsvExportWriterTest {
 
     @Test
     public void export_openFailure_reportsPermissionReason() {
-        Path destination = directory.resolve("export.csv");
+        Path destination = directory.resolve(EXPORT_FILE_NAME);
         CsvExportWriter exporter = new CsvExportWriter() {
             @Override
             protected Writer openWriter(Path path) throws IOException {
@@ -232,7 +235,7 @@ public class CsvExportWriterTest {
 
     @Test
     public void export_missingFolder_reportsReasonWithoutRepeatingPath() {
-        Path destination = directory.resolve("export.csv");
+        Path destination = directory.resolve(EXPORT_FILE_NAME);
         CsvExportWriter exporter = new CsvExportWriter() {
             @Override
             protected Writer openWriter(Path path) throws IOException {
@@ -246,7 +249,7 @@ public class CsvExportWriterTest {
 
     @Test
     public void describeFailure_fileSystemException_usesReasonNotPath() {
-        String path = directory.resolve("export.csv").toString();
+        String path = directory.resolve(EXPORT_FILE_NAME).toString();
         String lockedReason = "The process cannot access the file because it is being used by another process";
         assertEquals(lockedReason, CsvExportWriter.describeFailure(
                 new FileSystemException(path, null, lockedReason)));
@@ -262,9 +265,9 @@ public class CsvExportWriterTest {
 
     @Test
     public void export_writeOrCloseFailure_preservesPreviousExportAndCleansTemporaryFile() throws Exception {
-        for (boolean failOnWrite : new boolean[] {true, false}) {
-            Path destination = directory.resolve("export.csv");
-            Files.writeString(destination, "previous successful export");
+        assertAllCases(List.of(true, false), failOnWrite -> {
+            Path destination = directory.resolve(EXPORT_FILE_NAME);
+            Files.writeString(destination, PREVIOUS_EXPORT);
             CsvExportWriter exporter = new CsvExportWriter() {
                 @Override
                 protected Writer openWriter(Path path) throws IOException {
@@ -290,16 +293,14 @@ public class CsvExportWriterTest {
             String reason = failOnWrite ? "write failed" : "close failed";
             assertThrows(IOException.class, "Could not export to " + destination + ": " + reason, () ->
                     exporter.export(new AddressBook(), destination));
-            assertEquals("previous successful export", Files.readString(destination));
-            try (var entries = Files.list(directory)) {
-                assertEquals(List.of(destination), entries.toList());
-            }
-        }
+            assertEquals(PREVIOUS_EXPORT, Files.readString(destination));
+            assertOnlyDestinationRemains(destination);
+        });
     }
 
     @Test
     public void export_replacementFailure_preservesPreviousExportAndCleansTemporaryFile() throws Exception {
-        Path destination = Files.writeString(directory.resolve("export.csv"), "previous successful export");
+        Path destination = Files.writeString(directory.resolve(EXPORT_FILE_NAME), PREVIOUS_EXPORT);
         CsvExportWriter exporter = new CsvExportWriter() {
             @Override
             protected void replaceFile(Path temporary, Path target) throws IOException {
@@ -311,18 +312,17 @@ public class CsvExportWriterTest {
         assertThrows(IOException.class, "Could not export to " + destination + ": replacement failed", () ->
                 exporter.export(new AddressBook(), destination));
 
-        assertEquals("previous successful export", Files.readString(destination));
-        try (var entries = Files.list(directory)) {
-            assertEquals(List.of(destination), entries.toList());
-        }
+        assertEquals(PREVIOUS_EXPORT, Files.readString(destination));
+        assertOnlyDestinationRemains(destination);
     }
 
     @Test
     public void export_cleanupFailure_preservesOriginalFailureAndPreviousExport() throws Exception {
-        Path destination = Files.writeString(directory.resolve("export.csv"), "previous successful export");
-        for (Exception failure : List.of(new IOException("replacement failed"),
+        Path destination = Files.writeString(directory.resolve(EXPORT_FILE_NAME), PREVIOUS_EXPORT);
+        List<Exception> failures = List.of(new IOException("replacement failed"),
                 new UnsupportedOperationException("atomic replacement unsupported"),
-                new SecurityException("replacement denied"))) {
+                new SecurityException("replacement denied"));
+        assertAllCases(failures, failure -> {
             CsvExportWriter exporter = new CsvExportWriter() {
                 @Override
                 protected void replaceFile(Path temporary, Path target) throws IOException {
@@ -336,24 +336,20 @@ public class CsvExportWriterTest {
                 }
             };
 
-            assertThrows(IOException.class, "Could not export to " + destination + ": " + failure.getMessage(), () -> {
-                try {
-                    exporter.export(new AddressBook(), destination);
-                } catch (IOException e) {
-                    assertSame(failure, e.getCause());
-                    assertEquals(1, failure.getSuppressed().length);
-                    assertTrue(failure.getSuppressed()[0] instanceof DirectoryNotEmptyException);
-                    throw e;
-                }
-            });
+            IOException actual = assertThrows(IOException.class, () ->
+                    exporter.export(new AddressBook(), destination));
 
-            assertEquals("previous successful export", Files.readString(destination));
-        }
+            assertEquals("Could not export to " + destination + ": " + failure.getMessage(), actual.getMessage());
+            assertSame(failure, actual.getCause());
+            assertEquals(1, failure.getSuppressed().length);
+            assertTrue(failure.getSuppressed()[0] instanceof DirectoryNotEmptyException);
+            assertEquals(PREVIOUS_EXPORT, Files.readString(destination));
+        });
     }
 
     @Test
     public void export_writeFailureWithoutPreviousExport_leavesNoOutput() throws Exception {
-        Path destination = directory.resolve("export.csv");
+        Path destination = directory.resolve(EXPORT_FILE_NAME);
         CsvExportWriter exporter = new CsvExportWriter() {
             @Override
             protected Writer openWriter(Path temporary) throws IOException {
@@ -368,4 +364,11 @@ public class CsvExportWriterTest {
             assertEquals(0, entries.count());
         }
     }
+
+    private void assertOnlyDestinationRemains(Path destination) throws IOException {
+        try (var entries = Files.list(directory)) {
+            assertEquals(List.of(destination), entries.toList());
+        }
+    }
+
 }

@@ -2,7 +2,9 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
+import static seedu.address.testutil.Assert.assertThrows;
 
 import java.util.List;
 import java.util.Set;
@@ -135,4 +137,25 @@ public class FilterCommandTest {
         assertEquals(expected, filterCommand.toString());
     }
 
+    @Test
+    public void constructor_emptyFilterCriteria_rejectsUnrestrictedFilter() {
+        assertThrows(IllegalArgumentException.class, "At least one filter criterion is required.", () ->
+                new FilterCommand(List.of(), Set.of()));
+    }
+
+    @Test
+    public void equals_sameDetailsDifferentRoles_returnsFalse() {
+        assertFalse(new FilterCommand(List.of(Status.APPLIED), Set.of("Developer"))
+                .equals(new FilterCommand(List.of(Status.APPLIED), Set.of("Designer"))));
+    }
+
+    @Test
+    public void execute_invalidRoleNameWithoutParser_reportsCommandErrorAndPreservesModel() {
+        Person person = new PersonBuilder().build();
+        Set<String> invalidNames = Set.of("Developer\tRole");
+        ModelManager model = new ModelManager();
+        model.addPerson(person);
+
+        assertCommandFailure(new FilterCommand(List.of(), invalidNames), model, Role.MESSAGE_CONSTRAINTS);
+    }
 }

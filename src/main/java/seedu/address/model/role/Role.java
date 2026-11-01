@@ -9,12 +9,14 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import seedu.address.commons.core.CommandPrefixes;
+
 /** Represents an immutable catalog entry with a stable identity across renames. */
 public final class Role {
     public static final String MESSAGE_CONSTRAINTS =
             "Role names must not be blank or contain control characters (e.g. tabs, newlines, or carriage returns).";
     public static final String MESSAGE_RESERVED_SYNTAX =
-            "Role names must not contain whitespace followed by n/, r/, p/, e/, a/, t/, no/, or s/ (ignoring case).";
+            "Role names must not contain whitespace followed by " + CommandPrefixes.DESCRIPTION + " (ignoring case).";
     public static final String NO_ROLE_ID = "no-role";
     public static final String NO_ROLE_NAME = "No role";
     public static final String MESSAGE_PROTECTED_ROLE = NO_ROLE_NAME + " cannot be renamed or deleted.";
@@ -22,7 +24,7 @@ public final class Role {
             "The built-in " + NO_ROLE_NAME + " identity and name are reserved.";
     public static final Role NO_ROLE;
 
-    private static final Pattern RESERVED_SYNTAX = Pattern.compile("(?i)\\s(?:n/|r/|p/|e/|a/|t/|no/|s/)");
+    private static final Pattern RESERVED_SYNTAX = Pattern.compile("(?i)\\s(?:" + CommandPrefixes.REGEX + ")");
 
     static {
         NO_ROLE = new Role(NO_ROLE_ID, NO_ROLE_NAME);
