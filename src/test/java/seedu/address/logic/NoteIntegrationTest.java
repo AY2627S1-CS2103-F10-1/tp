@@ -107,7 +107,7 @@ public class NoteIntegrationTest {
         assertTrue(logic.isExpandedViewProperty().get());
 
         assertRejectedCommandPreservesState("note 2 no/New note", CommandException.class,
-                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -168,13 +168,13 @@ public class NoteIntegrationTest {
     @Test
     public void execute_noteIndexOutsideFilteredList_keepsMemoryDiskAndFilterUnchanged() throws Exception {
         assertInvalidFilteredNoteRejected("note 2 no/New note", CommandException.class,
-                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void execute_maximumIntegerNoteIndex_keepsMemoryDiskAndFilterUnchanged() throws Exception {
         assertInvalidFilteredNoteRejected("note 2147483647 no/New note", CommandException.class,
-                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+                Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -249,7 +249,7 @@ public class NoteIntegrationTest {
         logic.execute("find Benson");
         String before = Files.readString(addressBookStorage.getAddressBookFilePath());
 
-        assertThrows(CommandException.class, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX, () ->
+        assertThrows(CommandException.class, Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX, () ->
                 logic.execute("note 2 no/"));
 
         assertEquals(before, Files.readString(addressBookStorage.getAddressBookFilePath()));

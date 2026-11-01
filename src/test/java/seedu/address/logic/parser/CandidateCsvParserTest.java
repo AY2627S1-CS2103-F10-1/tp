@@ -170,7 +170,7 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_invalidTags_rejectsWithoutExposingValues() {
-        for (String tags : List.of("null", "{}", "[null]", "[1]", "[[\"java\"]]", "[{}]", "[\"bad tag\"]",
+        for (String tags : List.of("null", "{}", "[null]", "[1]", "[[\"java\"]]", "[{}]", "[\"   \"]",
                 "[\"java\"] true", "[\"private", "[\"java\",]")) {
             assertThrows(ParseException.class, () -> parseRow(tags, "Applied", ""));
         }

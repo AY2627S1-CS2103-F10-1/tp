@@ -1,5 +1,7 @@
 package seedu.address.logic.commands;
 
+import seedu.address.commons.core.index.Index;
+import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.Model;
 
@@ -16,5 +18,18 @@ public abstract class Command {
      * @throws CommandException If an error occurs during command execution.
      */
     public abstract CommandResult execute(Model model) throws CommandException;
+
+    /**
+     * Checks that the index refers to a candidate in the displayed list.
+     *
+     * @param index Displayed index of the candidate.
+     * @param displayedListSize Number of candidates in the displayed list.
+     * @throws CommandException If the index is beyond the displayed list.
+     */
+    protected static void checkDisplayedIndex(Index index, int displayedListSize) throws CommandException {
+        if (index.getZeroBased() >= displayedListSize) {
+            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
+        }
+    }
 
 }

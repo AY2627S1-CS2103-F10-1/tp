@@ -10,7 +10,7 @@ public class Note {
 
     public static final int MAX_LENGTH = 500;
     public static final String MESSAGE_BLANK = "Note cannot be blank.";
-    public static final String MESSAGE_TOO_LONG = "Note cannot exceed 500 characters.";
+    public static final String MESSAGE_TOO_LONG = "Note cannot exceed " + MAX_LENGTH + " characters.";
 
     public final String value;
 

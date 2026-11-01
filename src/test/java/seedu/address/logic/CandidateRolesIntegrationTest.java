@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.AddressBook;
@@ -61,7 +60,8 @@ class CandidateRolesIntegrationTest {
 
     @Test
     void execute_addMissingRole_reportsExplicitRoleRequirement() {
-        assertThrows(ParseException.class, AddCommand.MESSAGE_MISSING_ROLE, () -> logic.execute(ALICE));
+        String expectedMessage = "Missing r/ROLE. Use r/No role if no role applies.";
+        assertThrows(ParseException.class, expectedMessage, () -> logic.execute(ALICE));
         assertTrue(model.getAddressBook().getPersonList().isEmpty());
     }
 

@@ -3,6 +3,7 @@ package seedu.address.logic.commands;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
@@ -61,7 +62,7 @@ public class NoteCommandTest {
     public void execute_clearOutsideDisplayedList_keepsDataAndFilterUnchanged() {
         showPersonAtIndex(model, INDEX_FIRST_PERSON);
 
-        assertCommandFailure(new NoteCommand(INDEX_SECOND_PERSON), model, NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+        assertCommandFailure(new NoteCommand(INDEX_SECOND_PERSON), model, MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
@@ -131,21 +132,21 @@ public class NoteCommandTest {
     public void execute_outOfRangeUnfilteredIndex_keepsDataUnchanged() {
         Index invalidIndex = Index.fromOneBased(model.getFilteredPersonList().size() + 1);
         assertCommandFailure(new NoteCommand(invalidIndex, new Note(NOTE_TEXT)), model,
-                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+                MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void execute_outOfRangeFilteredIndex_keepsDataAndFilterUnchanged() {
         showPersonAtIndex(model, INDEX_SECOND_PERSON);
         assertCommandFailure(new NoteCommand(INDEX_SECOND_PERSON, new Note(NOTE_TEXT)), model,
-                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+                MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
     public void execute_emptyDisplayedList_keepsDataUnchanged() {
         model.updateFilteredPersonList(candidate -> false);
         assertCommandFailure(new NoteCommand(INDEX_FIRST_PERSON, new Note(NOTE_TEXT)), model,
-                NoteCommand.MESSAGE_INVALID_CANDIDATE_INDEX);
+                MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
     }
 
     @Test
