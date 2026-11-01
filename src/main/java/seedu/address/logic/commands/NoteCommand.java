@@ -25,11 +25,10 @@ public class NoteCommand extends Command {
     public static final String MESSAGE_USAGE = COMMAND_WORD
             + ": Replaces or clears the note of the candidate identified by the displayed index.\n"
             + "Parameters: INDEX (must be a positive integer) " + PREFIX_NOTE
-            + "[NOTE_TEXT] (at most 500 characters after trimming; omit to clear the note)\n"
+            + "[NOTE_TEXT] (at most " + Note.MAX_LENGTH + " characters after trimming; omit to clear the note)\n"
             + "Example: " + COMMAND_WORD + " 2 " + PREFIX_NOTE + "Strong on system design, weak on SQL";
     public static final String MESSAGE_SUCCESS = "Updated note for %1$s: %2$s";
     public static final String MESSAGE_CLEAR_SUCCESS = "Cleared note for %1$s";
-    public static final String MESSAGE_INVALID_CANDIDATE_INDEX = "The candidate index provided is invalid.";
 
     private static final Logger logger = LogsCenter.getLogger(NoteCommand.class);
 
@@ -58,9 +57,7 @@ public class NoteCommand extends Command {
     public CommandResult execute(Model model) throws CommandException {
         requireAllNonNull(model);
         List<Person> displayedCandidates = model.getFilteredPersonList();
-        if (index.getZeroBased() >= displayedCandidates.size()) {
-            throw new CommandException(MESSAGE_INVALID_CANDIDATE_INDEX);
-        }
+        checkDisplayedIndex(index, displayedCandidates.size());
 
         Person candidate = displayedCandidates.get(index.getZeroBased());
         Person updatedCandidate = new Person(candidate.getName(), candidate.getPhone(), candidate.getEmail(),
