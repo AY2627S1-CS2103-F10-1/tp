@@ -201,22 +201,30 @@ public class ArgumentTokenizerTest {
     }
 
     @Test
-    public void getUpperCasePrefixWarning_uppercaseFields_namesFirstPossibleAmbiguity() {
-        String expected = "Warning: N/ was read as the n/ field prefix. "
-                + "To keep it in a name, phone, email or address, type N\\/. "
+    public void getPrefixWarning_multipleFields_namesEveryAdditionalPrefixInOrder() {
+        String expected = "Warning: Prefixes read as additional fields: N/, p/, t/, t/, r/. "
+                + "Check the candidate details below. "
+                + "For literal prefix-like text in names, phones, emails, addresses or tags, replace / with \\/. "
                 + "Roles and statuses keep backslashes literally.";
 
-        assertEquals(expected, ArgumentTokenizer.getUpperCasePrefixWarning("edit 1 A/Unit N/A P/123")
-                .orElseThrow());
-        assertEquals(expected, ArgumentTokenizer.getUpperCasePrefixWarning("edit 1 R/ N/A")
-                .orElseThrow());
+        assertEquals(expected, ArgumentTokenizer.getPrefixWarning(
+                "edit 1 A/Unit N/A p/123 t/C++ t/N\\/A r/No role").orElseThrow());
     }
 
     @Test
-    public void getUpperCasePrefixWarning_noAmbiguousUppercaseField_returnsEmpty() {
-        for (String input : List.of("edit 1 A/Unit N\\/A", "edit 1 A/Unit n/John", "edit 1 n/Ravi S/O Kumar",
-                "edit 1 A/9 Road n/Siti A/P Ahmad", "edit 1 a/Unit X/A", "edit 1 n/John p/123")) {
-            assertTrue(ArgumentTokenizer.getUpperCasePrefixWarning(input).isEmpty(), input);
+    public void getPrefixWarning_singleFieldOrNoField_returnsEmpty() {
+        for (String input : List.of("", "edit 1", "edit 1 A/Unit N\\/A", "edit 1 n/Ravi S/O Kumar",
+                "edit 1 a/Unit X/A", "edit 1 t/N\\/A", "edit 1 A/Unit N\\\\/A")) {
+            assertTrue(ArgumentTokenizer.getPrefixWarning(input).isEmpty(), input);
+        }
+    }
+
+    @Test
+    public void getPrefixWarning_nameConnectorsAndEscapes_listsOnlyRealPrefixes() {
+        for (String input : List.of("edit 1 A/9 Road n/Siti A/P Ahmad", "edit 1 a/9 Road n/Ravi A/L Kumar",
+                "edit 1 a/Unit N\\/A n/Ravi S/O Kumar", "edit 1 a/Unit X/A n/A")) {
+            String warning = ArgumentTokenizer.getPrefixWarning(input).orElseThrow();
+            assertTrue(warning.startsWith("Warning: Prefixes read as additional fields: n/. "), input);
         }
     }
 

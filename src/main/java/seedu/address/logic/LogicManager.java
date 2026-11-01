@@ -85,12 +85,12 @@ public class LogicManager implements Logic {
         return commandResult;
     }
 
-    /** Makes a possible field/text ambiguity prominent without changing successful uppercase command behavior. */
+    /** Makes possible field/text ambiguities prominent while preserving one-shot commands. */
     private CommandResult addPrefixWarning(String commandText, Command command, CommandResult result) {
         if (!(command instanceof AddCommand || command instanceof EditCommand)) {
             return result;
         }
-        return ArgumentTokenizer.getUpperCasePrefixWarning(commandText)
+        return ArgumentTokenizer.getPrefixWarning(commandText)
                 .map(warning -> new CommandResult(warning + "\n" + result.getFeedbackToUser()))
                 .orElse(result);
     }

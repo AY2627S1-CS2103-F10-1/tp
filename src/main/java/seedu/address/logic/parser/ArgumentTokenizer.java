@@ -43,8 +43,9 @@ public class ArgumentTokenizer {
             + "%2$s prefix, but %2$s can be given only once. "
             + "For text in a name, phone, email, address or note, type %3$s. "
             + "Roles and statuses keep backslashes literally.";
-    public static final String MESSAGE_UPPER_CASE_PREFIX_WARNING = "Warning: %1$s was read as the %2$s field prefix. "
-            + "To keep it in a name, phone, email or address, type %3$s. "
+    public static final String MESSAGE_PREFIX_WARNING = "Warning: Prefixes read as additional fields: %s. "
+            + "Check the candidate details below. "
+            + "For literal prefix-like text in names, phones, emails, addresses or tags, replace / with \\/. "
             + "Roles and statuses keep backslashes literally.";
 
     // add and edit accept repeated t/ and r/, so only these prefixes can start a second field of their kind.
@@ -84,7 +85,7 @@ public class ArgumentTokenizer {
         }
         positions.sort(Comparator.comparingInt(PrefixPosition::getStartPosition));
         List<PrefixPosition> fields = removeNameConnectors(argsString, positions);
-        Optional<String> upperCasePrefix = findUpperCasePrefixInValue(argsString, fields, false);
+        Optional<String> upperCasePrefix = findUpperCasePrefixInValue(argsString, fields);
         if (upperCasePrefix.isPresent()) {
             String typed = upperCasePrefix.get();
             Prefix prefix = new Prefix(typed.toLowerCase(Locale.ROOT));
@@ -106,17 +107,19 @@ public class ArgumentTokenizer {
     }
 
     /**
-     * Returns a warning when a successful add or edit used an upper-case prefix inside another field's value.
+     * Returns a warning listing every prefix after the first field in a successful add or edit, in input order.
      * The caller must validate and execute the command first, so rejected input keeps its existing error.
      * Legal-name connectors and escaped slashes do not start fields and do not produce a warning.
      */
-    public static Optional<String> getUpperCasePrefixWarning(String argsString) {
+    public static Optional<String> getPrefixWarning(String argsString) {
         List<PrefixPosition> positions = findAllPrefixPositions(argsString, PREFIX_NAME, PREFIX_PHONE,
                 PREFIX_EMAIL, PREFIX_ADDRESS, PREFIX_STATUS, PREFIX_TAG, PREFIX_ROLE);
         positions.sort(Comparator.comparingInt(PrefixPosition::getStartPosition));
-        return findUpperCasePrefixInValue(argsString, removeNameConnectors(argsString, positions), true)
-                .map(typed -> String.format(MESSAGE_UPPER_CASE_PREFIX_WARNING, typed,
-                        typed.toLowerCase(Locale.ROOT), typed.replace("/", "\\/")));
+        String additionalPrefixes = removeNameConnectors(argsString, positions).stream().skip(1)
+                .map(position -> getTypedPrefix(argsString, position))
+                .collect(Collectors.joining(", "));
+        return additionalPrefixes.isEmpty() ? Optional.empty()
+                : Optional.of(String.format(MESSAGE_PREFIX_WARNING, additionalPrefixes));
     }
 
     /** Returns a copy with surrounding whitespace removed, reading {@code \/} as {@code /} for unescaped prefixes. */
@@ -280,13 +283,12 @@ public class ArgumentTokenizer {
                         candidate.getStartPosition() + NAME_CONNECTOR_LENGTH));
     }
 
-    /** Finds an upper-case prefix after a field, optionally including fields typed with upper-case prefixes. */
-    private static Optional<String> findUpperCasePrefixInValue(String argsString, List<PrefixPosition> fields,
-            boolean includeUpperCaseFields) {
+    /** Returns an upper-case prefix that cuts into a value given with a lower-case prefix, e.g. N/ in a/Unit N/A. */
+    private static Optional<String> findUpperCasePrefixInValue(String argsString, List<PrefixPosition> fields) {
         for (int i = 1; i < fields.size(); i++) {
             String previous = getTypedPrefix(argsString, fields.get(i - 1));
             String current = getTypedPrefix(argsString, fields.get(i));
-            if ((includeUpperCaseFields || isLowerCase(previous)) && !isLowerCase(current)) {
+            if (isLowerCase(previous) && !isLowerCase(current)) {
                 return Optional.of(current);
             }
         }
