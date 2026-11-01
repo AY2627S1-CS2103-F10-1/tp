@@ -2,11 +2,10 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
-import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,73 +13,89 @@ import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
 import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
+import seedu.address.model.person.CandidateMatchesFilterPredicate;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
-import seedu.address.model.person.StatusContainsKeywordPredicate;
+import seedu.address.model.role.Role;
 import seedu.address.testutil.PersonBuilder;
 
 /**
  * Contains integration tests (interaction with the Model) and unit tests for FilterCommand.
+ * Each pipeline test builds a candidate set with varied statuses and asserts an explicit
+ * expected list so a filter that matches everything or nothing would still fail.
  */
 public class FilterCommandTest {
 
-    private Model model = new ModelManager(getTypicalAddressBook(), new UserPrefs());
+    private static final Person APPLIED_ONE = new PersonBuilder().withName("Amy Ng")
+            .withEmail("amy@example.com").withStatus(Status.APPLIED).build();
+    private static final Person APPLIED_TWO = new PersonBuilder().withName("Alex Lim")
+            .withEmail("alex@example.com").withStatus(Status.APPLIED).build();
+    private static final Person INTERVIEWING = new PersonBuilder().withName("Ivy Tan")
+            .withEmail("ivy@example.com").withStatus(Status.INTERVIEWING).build();
+    private static final Person OFFERED = new PersonBuilder().withName("Omar Lee")
+            .withEmail("omar@example.com").withStatus(Status.OFFERED).build();
+    private static final Person ACCEPTED = new PersonBuilder().withName("Carol Lim")
+            .withEmail("carol@example.com").withStatus(Status.ACCEPTED).build();
+
+    private Model pipelineModel() {
+        AddressBook ab = new AddressBook();
+        ab.setPersons(List.of(APPLIED_ONE, APPLIED_TWO, INTERVIEWING, OFFERED, ACCEPTED));
+        return new ModelManager(ab, new UserPrefs());
+    }
 
     @Test
-    public void execute_filterByStatus_success() {
-        Status status = Status.APPLIED;
-        FilterCommand command = new FilterCommand(status);
-        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(status));
-        String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS,
-                expectedModel.getFilteredPersonList().size(), status);
+    public void execute_filterByStatus_showsOnlyMatchingCandidates() {
+        Model model = pipelineModel();
+        Model expectedModel = pipelineModel();
+        FilterCommand command = new FilterCommand(Status.APPLIED);
+        expectedModel.updateFilteredPersonList(
+                new CandidateMatchesFilterPredicate(List.of(Status.APPLIED), Set.<Role>of()));
+        String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 2, Status.APPLIED);
+
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(APPLIED_ONE, APPLIED_TWO), model.getFilteredPersonList());
     }
 
     @Test
     public void execute_filterByStatusNoMatch_showsZeroCount() {
-        Status status = Status.ACCEPTED;
-        FilterCommand command = new FilterCommand(status);
-        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(status));
-        assertTrue(expectedModel.getFilteredPersonList().isEmpty());
-        String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 0, status);
+        Model model = pipelineModel();
+        Model expectedModel = pipelineModel();
+        FilterCommand command = new FilterCommand(Status.REJECTED);
+        expectedModel.updateFilteredPersonList(
+                new CandidateMatchesFilterPredicate(List.of(Status.REJECTED), Set.<Role>of()));
+        String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 0, Status.REJECTED);
+
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(), model.getFilteredPersonList());
     }
 
     @Test
     public void execute_multipleStatuses_showsCandidatesWithAnyStatus() {
-        Person interviewing = new PersonBuilder().withName("Ivy Tan").withEmail("ivy@example.com")
-                .withStatus(Status.INTERVIEWING).build();
-        Person offered = new PersonBuilder().withName("Omar Lee").withEmail("omar@example.com")
-                .withStatus(Status.OFFERED).build();
-        Person applied = new PersonBuilder().withName("Amy Ng").withEmail("amy@example.com")
-                .withStatus(Status.APPLIED).build();
-        AddressBook addressBook = new AddressBook();
-        addressBook.setPersons(List.of(interviewing, offered, applied));
-        Model pipelineModel = new ModelManager(addressBook, new UserPrefs());
+        Model model = pipelineModel();
+        Model expectedModel = pipelineModel();
         FilterCommand command = new FilterCommand(List.of(Status.OFFERED, Status.INTERVIEWING));
-
-        Model expectedModel = new ModelManager(addressBook, new UserPrefs());
-        expectedModel.updateFilteredPersonList(
-                new StatusContainsKeywordPredicate(List.of(Status.INTERVIEWING, Status.OFFERED)));
+        expectedModel.updateFilteredPersonList(new CandidateMatchesFilterPredicate(
+                List.of(Status.INTERVIEWING, Status.OFFERED), Set.<Role>of()));
         String expectedMessage = String.format(FilterCommand.MESSAGE_SUCCESS, 2,
                 Status.INTERVIEWING + " or " + Status.OFFERED);
 
-        assertCommandSuccess(command, pipelineModel, expectedMessage, expectedModel);
-        assertEquals(List.of(interviewing, offered), pipelineModel.getFilteredPersonList());
+        assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(INTERVIEWING, OFFERED), model.getFilteredPersonList());
     }
 
     @Test
     public void execute_threeStatuses_joinsWithCommasAndFinalOr() {
-        FilterCommand command = new FilterCommand(List.of(Status.OFFERED, Status.APPLIED, Status.INTERVIEWING));
-        Model expectedModel = new ModelManager(getTypicalAddressBook(), new UserPrefs());
-        expectedModel.updateFilteredPersonList(new StatusContainsKeywordPredicate(
-                List.of(Status.APPLIED, Status.INTERVIEWING, Status.OFFERED)));
-        String expectedMessage = expectedModel.getFilteredPersonList().size()
-                + " candidate(s) filtered with status(es): Applied, Interviewing or Offered";
+        Model model = pipelineModel();
+        Model expectedModel = pipelineModel();
+        FilterCommand command = new FilterCommand(
+                List.of(Status.OFFERED, Status.APPLIED, Status.INTERVIEWING));
+        expectedModel.updateFilteredPersonList(new CandidateMatchesFilterPredicate(
+                List.of(Status.APPLIED, Status.INTERVIEWING, Status.OFFERED), Set.<Role>of()));
+        String expectedMessage = "4 candidate(s) filtered with status(es): Applied, Interviewing or Offered";
 
         assertCommandSuccess(command, model, expectedMessage, expectedModel);
+        assertEquals(List.of(APPLIED_ONE, APPLIED_TWO, INTERVIEWING, OFFERED),
+                model.getFilteredPersonList());
     }
 
     @Test
