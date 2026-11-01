@@ -5,8 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,13 +22,13 @@ public class ClearCommandTest {
 
     @Test
     public void execute_emptyAddressBook_reportsNothingToClear() {
-        for (boolean isConfirmed : new boolean[] {false, true}) {
+        assertAllCases(List.of(false, true), isConfirmed -> {
             Model model = new ModelManager();
             Model expectedModel = new ModelManager();
 
             assertCommandSuccess(new ClearCommand(isConfirmed), model, ClearCommand.MESSAGE_NO_CANDIDATES,
                     expectedModel);
-        }
+        });
     }
 
     @Test
@@ -70,7 +73,7 @@ public class ClearCommandTest {
     }
 
     @Test
-    public void equals() {
+    public void equals_sameAndDifferentConfirmation_returnsExpectedResult() {
         ClearCommand confirmed = new ClearCommand(true);
 
         assertEquals(confirmed, confirmed);
@@ -82,7 +85,7 @@ public class ClearCommandTest {
     }
 
     @Test
-    public void toStringMethod() {
+    public void toString_confirmedCommand_includesConfirmation() {
         assertEquals(ClearCommand.class.getCanonicalName() + "{isConfirmed=true}", new ClearCommand(true).toString());
     }
 }
