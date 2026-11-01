@@ -130,11 +130,13 @@ public final class CandidateCsvParser {
                             + " must contain strings only, without nested arrays or objects.");
                 }
                 if (names.size() >= MAX_NAMES) {
-                    throw new ParseException(field + " exceed the 100-entry limit.");
+                    throw new ParseException(String.format(Locale.ROOT,
+                            "%s exceed the %d-entry limit.", field, MAX_NAMES));
                 }
                 String name = parser.getText();
                 if (name.codePointCount(0, name.length()) > MAX_NAME_LENGTH) {
-                    throw new ParseException(field + " must not contain a name longer than 256 characters.");
+                    throw new ParseException(String.format(Locale.ROOT,
+                            "%s must not contain a name longer than %d characters.", field, MAX_NAME_LENGTH));
                 }
                 names.add(name);
             }

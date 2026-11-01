@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import seedu.address.commons.core.CandidateCsvFormat;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -27,28 +28,34 @@ final class StrictCsvParser {
                 readTrailingBlankLines(records.isEmpty());
                 break;
             }
+            // Records include the header, so allow one more record than MAX_CANDIDATES.
             if (records.size() > MAX_CANDIDATES) {
-                throw error("Candidate count exceeds 10,000.");
+                throw error(String.format(Locale.ROOT, "Candidate count exceeds %,d.", MAX_CANDIDATES));
             }
-            List<String> fields = new ArrayList<>();
-            for (int column = 0; column < COLUMN_COUNT; column++) {
-                fields.add(readField(column));
-                if (column < COLUMN_COUNT - 1) {
-                    readColumnSeparator(column);
-                }
-            }
-            if (position < input.length()) {
-                if (input.charAt(position) == ',') {
-                    throw error("Too many columns: expected " + COLUMN_COUNT
-                            + "; found an extra column after field " + COLUMN_COUNT + " ("
-                            + CandidateCsvFormat.HEADERS.getLast() + ").");
-                }
-                readLineEnding();
-            }
-            records.add(fields);
+            records.add(readRecord());
             record++;
         }
         return records;
+    }
+
+    /** Reads one record, including its separators and optional line ending. */
+    private List<String> readRecord() throws ParseException {
+        List<String> fields = new ArrayList<>();
+        for (int column = 0; column < COLUMN_COUNT; column++) {
+            fields.add(readField(column));
+            if (column < COLUMN_COUNT - 1) {
+                readColumnSeparator(column);
+            }
+        }
+        if (position < input.length()) {
+            if (input.charAt(position) == ',') {
+                throw error(String.format(Locale.ROOT,
+                        "Too many columns: expected %d; found an extra column after field %d (%s).",
+                        COLUMN_COUNT, COLUMN_COUNT, CandidateCsvFormat.HEADERS.getLast()));
+            }
+            readLineEnding();
+        }
+        return fields;
     }
 
     /** Reads a field without consuming its delimiter, counting decoded Unicode code points. */
@@ -65,22 +72,11 @@ final class StrictCsvParser {
                 return value.toString();
             }
             position += Character.charCount(codePoint);
-            if (codePoint == '"') {
-                if (!quoted) {
-                    throw fieldError(column, "Unexpected quote in an unquoted field. Enclose the entire field "
-                            + "in double quotes and escape embedded quotes by doubling them.");
-                }
-                if (position >= input.length() || input.charAt(position) != '"') {
-                    if (position < input.length() && input.charAt(position) != ',' && !isLineEnding()) {
-                        throw fieldError(column, "Unexpected content after a closing quote. Expected a comma, "
-                                + "LF/CRLF record ending, or end of file; remove text or spaces outside the quotes.");
-                    }
-                    return value.toString();
-                }
-                position++;
+            if (codePoint == '"' && readQuote(column, quoted)) {
+                return value.toString();
             }
             if (++length > MAX_FIELD_LENGTH) {
-                throw fieldError(column, "Field exceeds 65,536 characters.");
+                throw fieldError(column, String.format(Locale.ROOT, "Field exceeds %,d characters.", MAX_FIELD_LENGTH));
             }
             value.appendCodePoint(codePoint);
         }
@@ -89,6 +85,23 @@ final class StrictCsvParser {
                     + "escape embedded quotes by doubling them.");
         }
         return value.toString();
+    }
+
+    /** Consumes an escaped quote or validates a closing quote, returning whether the field ends. */
+    private boolean readQuote(int column, boolean quoted) throws ParseException {
+        if (!quoted) {
+            throw fieldError(column, "Unexpected quote in an unquoted field. Enclose the entire field "
+                    + "in double quotes and escape embedded quotes by doubling them.");
+        }
+        if (position < input.length() && input.charAt(position) == '"') {
+            position++;
+            return false;
+        }
+        if (position < input.length() && input.charAt(position) != ',' && !isLineEnding()) {
+            throw fieldError(column, "Unexpected content after a closing quote. Expected a comma, "
+                    + "LF/CRLF record ending, or end of file; remove text or spaces outside the quotes.");
+        }
+        return true;
     }
 
     /** Allows empty lines only after at least one complete record and only at the end of input. */
