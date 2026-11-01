@@ -87,17 +87,23 @@ public class FilterCommand extends Command {
 
     /** Creates feedback describing the result count and selected filter criteria. */
     private CommandResult createFilterResult(int count, Set<Role> roles) {
-        if (roles.isEmpty()) {
-            return new CommandResult(String.format(MESSAGE_SUCCESS, count,
-                    joinNames(statuses.stream().map(Status::toString).toList())));
+        boolean hasStatuses = !statuses.isEmpty();
+        boolean hasRoles = !roles.isEmpty();
+        String statusSummary = hasStatuses
+                ? joinNames(statuses.stream().map(Status::toString).toList())
+                : "";
+        String roleSummary = hasRoles
+                ? joinNames(roles.stream()
+                        .sorted(Comparator.comparing(role -> Role.toLookupKey(role.getName())))
+                        .map(Role::getName).toList())
+                : "";
+        if (hasStatuses && hasRoles) {
+            return new CommandResult(String.format(MESSAGE_COMBINED_SUCCESS, count, statusSummary, roleSummary));
         }
-        String roleSummary = joinNames(roles.stream().sorted(Comparator.comparing(role ->
-                Role.toLookupKey(role.getName()))).map(Role::getName).toList());
-        if (statuses.isEmpty()) {
+        if (hasRoles) {
             return new CommandResult(String.format(MESSAGE_ROLE_SUCCESS, count, roleSummary));
         }
-        return new CommandResult(String.format(MESSAGE_COMBINED_SUCCESS, count,
-                joinNames(statuses.stream().map(Status::toString).toList()), roleSummary));
+        return new CommandResult(String.format(MESSAGE_SUCCESS, count, statusSummary));
     }
 
     /**
@@ -116,15 +122,10 @@ public class FilterCommand extends Command {
 
     @Override
     public boolean equals(Object other) {
-        if (other == this) {
-            return true;
-        }
-        if (!(other instanceof FilterCommand)) {
-            return false;
-        }
-        FilterCommand otherCommand = (FilterCommand) other;
-        return statuses.equals(otherCommand.statuses)
-                && roleNames.equals(otherCommand.roleNames);
+        return other == this
+                || (other instanceof FilterCommand otherCommand
+                        && statuses.equals(otherCommand.statuses)
+                        && roleNames.equals(otherCommand.roleNames));
     }
 
     @Override
