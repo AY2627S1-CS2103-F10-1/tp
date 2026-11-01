@@ -9,6 +9,7 @@ import static seedu.address.testutil.TypicalPersons.ALICE;
 import static seedu.address.testutil.TypicalPersons.BENSON;
 import static seedu.address.testutil.TypicalRoleAssignments.getAssignedModel;
 
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import javafx.beans.property.ReadOnlyBooleanWrapper;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.index.Index;
 import seedu.address.logic.commands.ClearCommand;
@@ -348,6 +350,42 @@ public class ModelManagerTest {
         assertEquals(List.of(model.getAddressBook().getPersonList().getFirst()), model.getFilteredPersonList());
         assertEquals(Set.of(model.getRoleCatalog().requireRole("Senior Engineer")),
                 model.getFilteredPersonList().getFirst().getRoles());
+    }
+
+    @Test
+    public void renameRole_invalidExpandedSelection_rejectsBeforeMutation() throws Exception {
+        ModelManager model = getAssignedModel("Engineer");
+        model.updateFilteredPersonList(person -> false);
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        // Normal list changes clear expanded view; inject a broken invariant to test its safeguard.
+        Field expandedView = ModelManager.class.getDeclaredField("isExpandedView");
+        expandedView.setAccessible(true);
+        ReadOnlyBooleanWrapper isExpanded = (ReadOnlyBooleanWrapper) expandedView.get(model);
+        isExpanded.set(true);
+
+        assertThrows(AssertionError.class, "Expanded view must contain one candidate", () ->
+                model.renameRole("Engineer", "Senior Engineer"));
+
+        assertEquals(before, model.getAddressBook());
+        assertTrue(model.getFilteredPersonList().isEmpty());
+    }
+
+    @Test
+    public void renameRole_duplicateNameWhileExpanded_preservesDataAndSelection() {
+        ModelManager model = getAssignedModel("Engineer");
+        model.createRole("Designer");
+        model.addPerson(new PersonBuilder().withEmail("other@example.com").build());
+        Person expandedPerson = model.getFilteredPersonList().getFirst();
+        model.expandPerson(expandedPerson);
+        AddressBook before = new AddressBook(model.getAddressBook());
+
+        assertThrows(IllegalArgumentException.class, RoleCatalog.MESSAGE_DUPLICATE_NAME, () ->
+                model.renameRole("Engineer", "designer"));
+
+        assertEquals(before, model.getAddressBook());
+        assertTrue(model.isExpandedViewProperty().get());
+        assertEquals(List.of(expandedPerson), model.getFilteredPersonList());
     }
 
     @Test
