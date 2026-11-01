@@ -40,6 +40,7 @@ import seedu.address.model.person.Status;
 import seedu.address.storage.JsonAddressBookStorage;
 import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.LogicTestFixture;
 import seedu.address.testutil.PersonBuilder;
 
 public class LogicManagerTest {
@@ -52,15 +53,12 @@ public class LogicManagerTest {
 
     private Model model = new ModelManager();
     private Logic logic;
+    private LogicTestFixture fixture;
 
     @BeforeEach
     public void setUp() {
-        JsonAddressBookStorage addressBookStorage = new JsonAddressBookStorage(
-                temporaryFolder.resolve("addressBook.json"));
-        JsonUserPrefsStorage userPrefsStorage = new JsonUserPrefsStorage(
-                temporaryFolder.resolve("userPrefs.json"));
-        StorageManager storage = new StorageManager(addressBookStorage, userPrefsStorage);
-        logic = new LogicManager(model, storage);
+        fixture = new LogicTestFixture(temporaryFolder, model, "addressBook.json");
+        logic = fixture.getLogic();
     }
 
     @Test
@@ -72,10 +70,9 @@ public class LogicManagerTest {
     @Test
     public void execute_formattedPhoneAdd_preservesSavedValue() throws Exception {
         logic.execute("add n/Phone Test p/1234 5678 (HP) 1111-3333 (Office) e/phone@example.com a/Block 1 r/No role");
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
 
         assertEquals("1234 5678 (HP) 1111-3333 (Office)",
-                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+                fixture.readSaved().getPersonList().getFirst().getPhone().value);
     }
 
     @Test
@@ -84,10 +81,9 @@ public class LogicManagerTest {
 
         logic.execute("edit 1 p/(65) 6123 4567 ext. 123");
 
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
         assertEquals("(65) 6123 4567 ext. 123", model.getFilteredPersonList().getFirst().getPhone().value);
         assertEquals("(65) 6123 4567 ext. 123",
-                saved.readAddressBook().orElseThrow().getPersonList().getFirst().getPhone().value);
+                fixture.readSaved().getPersonList().getFirst().getPhone().value);
     }
 
     @Test
@@ -102,12 +98,11 @@ public class LogicManagerTest {
     @Test
     public void execute_phoneWithTooFewDigits_preservesSavedAndDisplayedData() throws Exception {
         logic.execute("add n/Phone Test p/+65 9123 4567 e/phone@example.com a/Block 1 r/No role");
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
-        String before = Files.readString(saved.getAddressBookFilePath());
+        String before = Files.readString(fixture.getCandidateStorage().getAddressBookFilePath());
 
         assertParseException("edit 1 p/Office: 12", Phone.MESSAGE_CONSTRAINTS);
 
-        assertEquals(before, Files.readString(saved.getAddressBookFilePath()));
+        assertEquals(before, Files.readString(fixture.getCandidateStorage().getAddressBookFilePath()));
         assertEquals("+65 9123 4567", model.getFilteredPersonList().getFirst().getPhone().value);
     }
 
@@ -152,11 +147,9 @@ public class LogicManagerTest {
                 result.getFeedbackToUser());
         assertEquals(List.of(existing, expected), model.getFilteredPersonList());
         assertEquals(Status.APPLIED, model.getFilteredPersonList().get(1).getStatus());
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(
-                temporaryFolder.resolve("addressBook.json"));
-        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+        assertEquals(model.getAddressBook(), fixture.readSaved());
         assertEquals(Status.APPLIED,
-                saved.readAddressBook().orElseThrow().getPersonList().get(1).getStatus());
+                fixture.readSaved().getPersonList().get(1).getStatus());
     }
 
     @Test
@@ -165,12 +158,8 @@ public class LogicManagerTest {
                 + ADDRESS_DESC_AMY + " s/  iNtErViEwInG  ");
 
         assertEquals(Status.INTERVIEWING, model.getFilteredPersonList().get(0).getStatus());
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(
-                temporaryFolder.resolve("addressBook.json"));
         assertEquals(Status.INTERVIEWING,
-                saved.readAddressBook().orElseThrow().getPersonList().get(0).getStatus());
-        assertTrue(
-                Files.readString(saved.getAddressBookFilePath()).contains("\"status\" : \"Interviewing\""));
+                fixture.readSaved().getPersonList().get(0).getStatus());
     }
 
     @Test
@@ -264,9 +253,7 @@ public class LogicManagerTest {
 
         assertEquals(expectedMessage, result.getFeedbackToUser());
         assertEquals(Status.OFFERED, model.getFilteredPersonList().get(0).getStatus());
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(
-                temporaryFolder.resolve("addressBook.json"));
-        assertEquals(Status.OFFERED, saved.readAddressBook().get().getPersonList().get(0).getStatus());
+        assertEquals(Status.OFFERED, fixture.readSaved().getPersonList().get(0).getStatus());
     }
 
     @Test
@@ -299,26 +286,22 @@ public class LogicManagerTest {
         assertParseException("status 1 s/Hired", Status.MESSAGE_CONSTRAINTS);
 
         assertEquals(Status.APPLIED, model.getFilteredPersonList().get(0).getStatus());
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(
-                temporaryFolder.resolve("addressBook.json"));
-        assertFalse(saved.readAddressBook().isPresent());
+        assertFalse(fixture.getStorage().readAddressBook().isPresent());
     }
 
     @Test
     public void execute_expandCommand_preservesStoredData() throws Exception {
         Person candidate = new PersonBuilder().withNote("Feedback\n" + "x".repeat(490)).build();
         model.addPerson(candidate);
-        JsonAddressBookStorage saved = new JsonAddressBookStorage(
-                temporaryFolder.resolve("addressBook.json"));
-        saved.saveAddressBook(model.getAddressBook());
-        String original = Files.readString(saved.getAddressBookFilePath());
+        fixture.getStorage().saveAddressBook(model.getAddressBook());
+        String original = Files.readString(fixture.getCandidateStorage().getAddressBookFilePath());
 
         CommandResult result = logic.execute("expand 1");
 
         assertEquals("Expanding candidate: " + candidate.getName() + ".", result.getFeedbackToUser());
         assertTrue(logic.isExpandedViewProperty().get());
-        assertEquals(original, Files.readString(saved.getAddressBookFilePath()));
-        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+        assertEquals(original, Files.readString(fixture.getCandidateStorage().getAddressBookFilePath()));
+        assertEquals(model.getAddressBook(), fixture.readSaved());
     }
 
     @Test

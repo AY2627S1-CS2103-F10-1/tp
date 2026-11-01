@@ -4,12 +4,14 @@ import static java.util.Objects.requireNonNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalPersons.ALICE;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
@@ -21,10 +23,12 @@ import seedu.address.logic.Messages;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
+import seedu.address.model.ModelManager;
 import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.ReadOnlyUserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
 import seedu.address.testutil.PersonBuilder;
 
 public class AddCommandTest {
@@ -237,4 +241,27 @@ public class AddCommandTest {
         }
     }
 
+    @Test
+    public void constructor_emptyAddRoles_rejectsMissingAssignments() {
+        Person person = new PersonBuilder().build();
+        assertThrows(IllegalArgumentException.class, AddCommand.MESSAGE_MISSING_ROLE, () ->
+                new AddCommand(person, Set.of()));
+    }
+
+    @Test
+    public void equals_sameDetailsDifferentRoles_returnsFalse() {
+        Person person = new PersonBuilder().build();
+        assertFalse(new AddCommand(person, Set.of("Developer"))
+                .equals(new AddCommand(person, Set.of("Designer"))));
+    }
+
+    @Test
+    public void execute_invalidRoleNameWithoutParser_reportsCommandErrorAndPreservesModel() {
+        Person person = new PersonBuilder().build();
+        Set<String> invalidNames = Set.of("Developer\tRole");
+        ModelManager model = new ModelManager();
+        model.addPerson(person);
+
+        assertCommandFailure(new AddCommand(person, invalidNames), model, Role.MESSAGE_CONSTRAINTS);
+    }
 }

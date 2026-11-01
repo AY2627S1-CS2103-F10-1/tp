@@ -13,15 +13,19 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 import seedu.address.logic.commands.AddCommand;
+import seedu.address.logic.commands.AddRoleCommand;
 import seedu.address.logic.commands.ClearCommand;
 import seedu.address.logic.commands.DeleteCommand;
+import seedu.address.logic.commands.DeleteRoleCommand;
 import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.EditCommand.EditPersonDescriptor;
+import seedu.address.logic.commands.EditRoleCommand;
 import seedu.address.logic.commands.ExitCommand;
 import seedu.address.logic.commands.FilterCommand;
 import seedu.address.logic.commands.FindCommand;
 import seedu.address.logic.commands.HelpCommand;
 import seedu.address.logic.commands.ListCommand;
+import seedu.address.logic.commands.ListRoleCommand;
 import seedu.address.logic.commands.NoteCommand;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.person.NameContainsKeywordsPredicate;
@@ -142,5 +146,39 @@ public class AddressBookParserTest {
     @Test
     public void parseCommand_unknownCommand_throwsParseException() {
         assertThrows(ParseException.class, MESSAGE_UNKNOWN_COMMAND, () -> parser.parseCommand("unknownCommand"));
+    }
+
+    @Test
+    public void parseCommand_uppercaseAndMixedCaseCommands_preservesNameCase() throws Exception {
+        for (String command : new String[] {"ADD_ROLE", "Add_Role"}) {
+            assertEquals(new AddRoleCommand("Engineer"), parser.parseCommand(command + " N/Engineer"));
+        }
+        for (String command : new String[] {"EDIT_ROLE", "Edit_Role"}) {
+            assertEquals(new EditRoleCommand("Engineer", "Designer"),
+                    parser.parseCommand(command + " R/Engineer N/Designer"));
+        }
+        for (String command : new String[] {"DELETE_ROLE", "Delete_Role"}) {
+            assertEquals(new DeleteRoleCommand("Engineer"), parser.parseCommand(command + " R/Engineer"));
+        }
+        for (String command : new String[] {"LIST_ROLE", "List_Role"}) {
+            assertEquals(new ListRoleCommand(), parser.parseCommand(command));
+        }
+    }
+
+    @Test
+    public void parseCommand_lowercaseCommandAndUppercasePrefixes_preservesNameCase() throws Exception {
+        assertEquals(new AddRoleCommand("Engineer"), parser.parseCommand("add_role N/Engineer"));
+        assertEquals(new EditRoleCommand("Engineer", "Designer"),
+                parser.parseCommand("edit_role R/Engineer N/Designer"));
+        assertEquals(new DeleteRoleCommand("Engineer"), parser.parseCommand("delete_role R/Engineer"));
+        assertEquals(new ListRoleCommand(), parser.parseCommand("list_role"));
+    }
+
+    @Test
+    public void parseCommand_surroundingWhitespace_preservesInternalSpacing() throws Exception {
+        assertEquals(new AddRoleCommand("Software  Engineer"),
+                parser.parseCommand("  add_role   n/ Software  Engineer   "));
+        assertEquals(new AddRoleCommand("Engineer"), parser.parseCommand("add_role\tn/Engineer"));
+        assertEquals(new EditRoleCommand("Old", "New"), parser.parseCommand("edit_role\tr/Old\tn/New"));
     }
 }

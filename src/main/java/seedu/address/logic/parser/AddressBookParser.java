@@ -4,7 +4,6 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 
 import java.util.Locale;
-import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,12 +63,7 @@ public class AddressBookParser {
         // Lower level log messages are used sparingly to minimize noise in the code.
         logger.fine("Command word: " + commandWord);
 
-        String roleCommand = commandWord.toLowerCase(Locale.ROOT);
-        String dispatchWord = Set.of(AddRoleCommand.COMMAND_WORD, EditRoleCommand.COMMAND_WORD,
-                DeleteRoleCommand.COMMAND_WORD, ListRoleCommand.COMMAND_WORD).contains(roleCommand)
-                ? roleCommand : commandWord;
-
-        return switch (dispatchWord) {
+        return switch (commandWord) {
             case AddRoleCommand.COMMAND_WORD -> new AddRoleCommandParser().parse(arguments);
             case EditRoleCommand.COMMAND_WORD -> new EditRoleCommandParser().parse(arguments);
             case DeleteRoleCommand.COMMAND_WORD -> new DeleteRoleCommandParser().parse(arguments);

@@ -4,9 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.JavaFxTestUtil.runOnFxThread;
 
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -67,11 +66,5 @@ public class MainAppDialogTest {
                     }, () -> hasExited.set(true)));
             assertTrue(hasExited.get());
         });
-    }
-
-    private void runOnFxThread(Runnable action) throws Exception {
-        FutureTask<Void> task = new FutureTask<>(action, null);
-        Platform.runLater(task);
-        task.get(10, TimeUnit.SECONDS);
     }
 }
