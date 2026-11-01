@@ -374,7 +374,7 @@ Failures display `Export failed:` with the reason and destination when available
 
 ### User stories
 
-The following user stories describe supported functionality. Priorities indicate their relative importance: High `* * *`, Medium `* *`, Low `*`.
+Priorities: High (must have) `* * *`, Medium (nice to have) `* *`, Low (unlikely to have) `*`.
 
 Target user: a hiring manager at a tech startup who hires for one to three full-time roles at a time, tracks roughly 10 to 50 candidates, and prefers keyboard commands to mouse-driven forms.
 
@@ -402,7 +402,10 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | `* *`    | familiar user     | list all available roles, including unused ones                   | reuse an existing role instead of creating a duplicate                |
 | `* *`    | familiar user     | rename a role across all assigned candidates                      | correct a job title consistently                                      |
 | `* *`    | familiar user     | remove an obsolete role while keeping candidates' other roles     | keep the catalog relevant without losing unrelated hiring details   |
+| `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
+| `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
+| `* *`    | expert user       | import a batch of shortlisted applicants from an external source  | avoid retyping candidates sourced from LinkedIn, Indeed, or email     |
 
 #### Low-priority (`*`)
 
