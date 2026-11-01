@@ -413,6 +413,8 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 |----------|-------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
 | `*`      | expert user       | export candidate records as CSV                          | share candidate records with people outside the app                   |
 
+*See [the full brainstormed list in the project notes](https://docs.google.com/spreadsheets/d/1N5Ji0Wl8ai_IVu94vVavK0b_f5AiQSDjcHCVw-pA5EM/edit) for stories we considered and dropped.*
+
 ### Use cases
 
 (For all use cases below, the **System** is `HRvest` and the **Actor** is the `user`, a hiring manager, unless specified otherwise)
