@@ -32,7 +32,7 @@ class CandidateRoleParsersTest {
 
     @Test
     void parse_addWithoutRoles_failsWithNoRoleSuggestion() {
-        assertParseFailure(new AddCommandParser(), DETAILS, AddCommand.MESSAGE_MISSING_ROLE);
+        assertParseFailure(new AddCommandParser(), DETAILS, "Missing r/ROLE. Use r/No role if no role applies.");
     }
 
     @Test

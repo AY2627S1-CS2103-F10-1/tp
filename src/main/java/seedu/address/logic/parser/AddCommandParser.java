@@ -33,7 +33,8 @@ public class AddCommandParser implements Parser<AddCommand> {
 
     private static final List<Map.Entry<Prefix, String>> REQUIRED_FIELDS = List.of(
             Map.entry(PREFIX_NAME, "n/NAME"), Map.entry(PREFIX_PHONE, "p/PHONE_NUMBER"),
-            Map.entry(PREFIX_EMAIL, "e/EMAIL"), Map.entry(PREFIX_ADDRESS, "a/ADDRESS"));
+            Map.entry(PREFIX_EMAIL, "e/EMAIL"), Map.entry(PREFIX_ADDRESS, "a/ADDRESS"),
+            Map.entry(PREFIX_ROLE, "r/ROLE"));
 
     /**
      * Parses the given {@code String} of arguments in the context of the AddCommand
@@ -56,7 +57,9 @@ public class AddCommandParser implements Parser<AddCommand> {
                 .filter(field -> argMultimap.getValue(field.getKey()).isEmpty())
                 .map(Map.Entry::getValue).toList();
         if (!missingFields.isEmpty()) {
-            throw new ParseException("Missing " + String.join(", ", missingFields) + ".");
+            String roleGuidance = argMultimap.getValue(PREFIX_ROLE).isEmpty()
+                    ? " Use r/No role if no role applies." : "";
+            throw new ParseException("Missing " + String.join(", ", missingFields) + "." + roleGuidance);
         }
 
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_ADDRESS,
@@ -72,9 +75,6 @@ public class AddCommandParser implements Parser<AddCommand> {
         Person person = new Person(name, phone, email, address, tagList, status);
 
         Set<String> roleNames = ParserUtil.parseRoleNames(argMultimap.getAllValues(PREFIX_ROLE));
-        if (roleNames.isEmpty()) {
-            throw new ParseException(AddCommand.MESSAGE_MISSING_ROLE);
-        }
         return new AddCommand(person, roleNames);
     }
 }

@@ -20,6 +20,8 @@ import seedu.address.model.role.Role;
 public class PersonCard extends UiPart<Region> {
 
     private static final String FXML = "PersonListCard.fxml";
+    private static final String NOTE_PREFIX = "Note: ";
+    private static final String MESSAGE_NO_NOTE = "No note recorded.";
 
     /**
      * Note: Certain keywords such as "location" and "resources" are reserved keywords in JavaFX.
@@ -82,29 +84,43 @@ public class PersonCard extends UiPart<Region> {
                 .forEach(this::addRoleBadge);
         person.getTags().stream()
                 .sorted(Comparator.comparing(tag -> tag.tagName))
-                .forEach(tag -> addBadge(tags, tag.tagName, isExpanded));
+                .forEach(tag -> addTagBadge(tag.tagName, isExpanded));
     }
 
     /** Adds a role badge, highlighting the built-in fallback separately. */
     private void addRoleBadge(Role role) {
-        Label label = addBadge(roles, role.getName(), true);
+        Label label = addWrappingBadge(roles, role.getName());
         if (role.equals(Role.NO_ROLE)) {
             label.getStyleClass().add("no-role");
         }
     }
 
-    /** Adds a badge using the shared layout and returns it for further styling. */
-    private Label addBadge(FlowPane pane, String text, boolean shouldWrapText) {
-        Label label = new Label(text);
-        if (shouldWrapText) {
-            label.setWrapText(true);
-            label.setMinWidth(0);
-            label.maxWidthProperty().bind(pane.widthProperty());
-            // FlowPane measures children without a width, so reserve the wrapped badge height.
-            label.minHeightProperty().bind(Bindings.createDoubleBinding(() ->
-                    label.prefHeight(pane.getWidth()), pane.widthProperty(),
-                    label.fontProperty(), label.insetsProperty()));
+    /** Adds a tag badge, wrapping its text only in the expanded view. */
+    private void addTagBadge(String tagName, boolean isExpanded) {
+        if (isExpanded) {
+            addWrappingBadge(tags, tagName);
+        } else {
+            addBadge(tags, tagName);
         }
+    }
+
+    /** Adds a single-line badge and returns it for further styling. */
+    private Label addBadge(FlowPane pane, String text) {
+        Label label = new Label(text);
+        pane.getChildren().add(label);
+        return label;
+    }
+
+    /** Adds a badge whose text wraps within the pane width and returns it for further styling. */
+    private Label addWrappingBadge(FlowPane pane, String text) {
+        Label label = new Label(text);
+        label.setWrapText(true);
+        label.setMinWidth(0);
+        label.maxWidthProperty().bind(pane.widthProperty());
+        // FlowPane measures children without a width, so reserve the wrapped badge height.
+        label.minHeightProperty().bind(Bindings.createDoubleBinding(() ->
+                label.prefHeight(pane.getWidth()), pane.widthProperty(),
+                label.fontProperty(), label.insetsProperty()));
         pane.getChildren().add(label);
         return label;
     }
@@ -121,17 +137,23 @@ public class PersonCard extends UiPart<Region> {
     private void configureExpandedView(boolean isExpanded) {
         note.setVisible(isExpanded);
         note.setManaged(isExpanded);
-        if (isExpanded) {
-            cardPane.setMinWidth(0);
-            configureBadgePane(tags);
-            details.prefWidthProperty().bind(cardPane.prefWidthProperty());
-            note.setText(person.getNote().map(value -> "Note: " + value.value).orElse("No note recorded."));
-            for (Label field : new Label[] {name, phone, address, email, status, note}) {
-                field.setWrapText(true);
-                field.setMinWidth(0);
-                field.setMaxWidth(Double.MAX_VALUE);
-            }
-            HBox.setHgrow(name, Priority.ALWAYS);
+        if (!isExpanded) {
+            return;
+        }
+        cardPane.setMinWidth(0);
+        configureBadgePane(tags);
+        details.prefWidthProperty().bind(cardPane.prefWidthProperty());
+        note.setText(person.getNote().map(value -> NOTE_PREFIX + value.value).orElse(MESSAGE_NO_NOTE));
+        enableWrapping(name, phone, address, email, status, note);
+        HBox.setHgrow(name, Priority.ALWAYS);
+    }
+
+    /** Lets each label shrink below its text width and wrap onto further lines. */
+    private static void enableWrapping(Label... fields) {
+        for (Label field : fields) {
+            field.setWrapText(true);
+            field.setMinWidth(0);
+            field.setMaxWidth(Double.MAX_VALUE);
         }
     }
 
