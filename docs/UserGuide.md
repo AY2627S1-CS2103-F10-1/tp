@@ -66,7 +66,9 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
 * In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error offers `n/` to start a field and `N\/` for literal text in names, phones, emails, addresses or notes. If the field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
 
-* Upper-case prefixes after other upper-case prefixes, and lower-case prefixes, still start fields. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`; `edit 1 a/Unit n/a` changes the name to `a`. To preserve the address text, use `edit 1 A/Unit N\/A` or `edit 1 a/Unit n\/a`. Check the updated details in the success message.
+* Upper-case prefixes after other upper-case prefixes still start fields. In `add` and `edit`, a warning appears before the success message and identifies the first upper-case prefix interpreted as another field. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: N/ was read as the n/ field prefix.` The command is applied and saved; check the updated candidate below the warning. To preserve the address text, use `edit 1 A/Unit N\/A`. A single upper-case field, escaped text and legal-name connectors do not trigger this warning.
+
+* Lower-case prefixes still start fields without this warning. For example, `edit 1 a/Unit n/a` changes the address to `Unit` and the name to `a`. To keep that text in the address, use `edit 1 a/Unit n\/a`.
 
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
