@@ -146,18 +146,17 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 | Missing or non-numeric index (`note`, `status`, `delete`) | `Invalid command format!` followed by the usage |
 | Non-numeric index (`expand`) | `Invalid index! Index must be a positive integer.` |
 
-
 ### Typing values
 
 * Names, phone numbers, emails, addresses, tags, notes and `find` keywords accept **printable ASCII only**. Type accented names in plain letters (`José` as `Jose`).
 * A prefix such as `n/` after a space starts a new field, in any letter case. To keep text like `N/A` inside a value, type `\/` for its slash: `edit 1 a/Unit N\/A`.
-* Commands that could be read two ways, such as `edit 1 a/Unit N/A`, are rejected and nothing changes. The rejected command stays in the command box in red so you can fix it.
+* An upper-case prefix right after a lower-case field, such as the `N/` in `edit 1 a/Unit N/A`, could be text or a new field, so the command is rejected and nothing changes. The rejected command stays in the command box in red so you can fix it.
 
 ![A rejected command stays in the command box in red](images/prefix-error.png)
 
 <panel header="Accepted characters" type="seamless">
 
-names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces and ASCII punctuation. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
+Names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces and ASCII punctuation. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
 </panel>
 
 <panel header="Text that looks like a prefix, and the multi-field warning" type="seamless">
@@ -181,7 +180,6 @@ A prefix such as `n/` that follows a space starts a new field, in any letter cas
 * **Spacing:** leading and trailing spaces are removed; internal spaces and letter case are preserved.
 </panel>
 
-
 ### Viewing help: `help`
 
 Shows a message explaining how to access the help page.
@@ -201,7 +199,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 | `n/NAME` | Yes | A name following the [name rules](#typing-values), e.g. `n/John Doe` |
 | `p/PHONE_NUMBER` | Yes | Text with at least three digits; spaces, `+`, brackets and labels are allowed, e.g. `p/+65 9123 4567` |
 | `e/EMAIL` | Yes | `local-part@domain`, e.g. `e/anne.o'brien@example.com` |
-| `a/ADDRESS` | Yes | Any non-blank text, e.g. `a/John street, block 123, #01-01` |
+| `a/ADDRESS` | Yes | Any non-blank printable-ASCII text, e.g. `a/John street, block 123, #01-01` |
 | `r/ROLE` | Yes | An existing [role](#managing-the-role-catalog); repeat `r/` for several. Use `r/No role` if none applies |
 | `s/STATUS` | No | `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected` or `Withdrawn`; defaults to `Applied` |
 | `t/TAG` | No | A short label, e.g. `t/C++` or `t/machine learning`; repeat `t/` for several |
@@ -329,7 +327,7 @@ Examples:
 
 <panel header="Defaults and error messages for status" type="seamless">
 
-* Candidates created with `add` start as `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
+* Candidates created with `add` start as `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
 * A missing `s/` gives `Invalid command format!`. An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`. The candidate and current view stay unchanged. Index errors are in the [common rules](#common-rules).
 </panel>
 
@@ -368,7 +366,7 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 
 * Supply at least one status or role.
 * Repeat `s/` or `r/` to match any value within that field (`OR`). If both fields are supplied, a candidate must match a specified status **and** a specified role (`AND`).
-* Status and role matching ignore case. Roles must exist in the catalog.
+* Valid statuses are the same as for `status`. Status and role matching ignore case. Roles must exist in the catalog.
 * Invalid input leaves the displayed list unchanged. If no candidates match, the result count is zero.
 
 <box type="info">
@@ -596,7 +594,7 @@ Limits are enforced while reading the file; exceeding any limit rejects the whol
 * Other field, duplicate and import size rules still apply. Extra arguments after `import` are ignored. An empty (zero-byte) file or a valid header-only file imports 0 candidates, saves normally and resets the view. Whitespace-only files are invalid.
 * Only readable regular files are accepted; symbolic links, directories and special files are rejected.
 * Finish saving `import.csv` before running `import` and leave it unchanged until the import finishes. Editing, replacing or deleting it during import gives unpredictable results.
-* CSV addresses and notes may contain Unicode that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 characters; quoted notes may contain tabs or line breaks. The printable-ASCII rule still applies when you type these values as commands.
+* CSV addresses and notes may contain Unicode that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 Unicode code points; quoted notes may contain tabs or line breaks. The printable-ASCII rule still applies when you type these values as commands.
 * Role names follow the same [role name rules](#managing-the-role-catalog) as `add`. A role name containing an invisible character is rejected with its CSV record and `roles` field identified, and no candidates or roles from that file are added.
 * For CSV formatting and validation rules, see the [Developer Guide](DeveloperGuide.md#import-csv-format-and-validation).
 </panel>
@@ -613,7 +611,7 @@ Format: `exit`
 
 ### Saving the data
 
-HRvest automatically saves data after each command that changes candidates or the role catalog, and after every successful import. Viewing, searching, filtering, help and exit do not rewrite the data files. Use [`export`](#exporting-candidates-export) to create a CSV copy.
+HRvest automatically saves data after each command that changes candidates or the role catalog, and after every successful import. Viewing, searching, filtering, help, exit and commands that leave the stored data unchanged do not rewrite the data files. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
 * HRvest allows only one running instance per data folder. A second instance stops before reading or writing candidate data or preferences and shows an error dialog asking you to close the first; dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
@@ -645,7 +643,7 @@ Advanced users may edit the JSON files in the `data` folder. Invalid edits can m
 
 * Keep candidate emails unique, ignoring case.
 * Role names must be unique ignoring case and Unicode composition. If an older catalog contains both composed and decomposed spellings of the same name, loading rejects the catalog and backs up both files. In copies of the backups, give one entry a distinct name, keep its ID and candidate assignments, then restore the candidate and catalog files together.
-* Each file must contain exactly one JSON object. Do not repeat a property name within an object or append anything after it. Surrounding whitespace is allowed.
+* Each file must contain exactly one JSON object. Do not repeat a property name within an object or append anything after it. Surrounding whitespace is allowed. Invalid JSON follows the backup and recovery process below.
 * A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Use `no-role` for `No role`, not its display name. Loading a mix of `no-role` and named role IDs removes `no-role`.
 * In `roles.json`, keep the entry with the ID `no-role` and the name `No role`. Give each role you add a new, unique ID in UUID format (a standard unique identifier), such as `3f2b6c1e-8d4a-4b7e-9c2f-1a2b3c4d5e6f`. Any other ID, or a missing or renamed `no-role` entry, stops both files from loading.
 * Use the same field values that commands allow. To clear a note, set `note` to an empty string. Spaces around a value are removed, as in commands.
