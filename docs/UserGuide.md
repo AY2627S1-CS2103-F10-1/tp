@@ -493,7 +493,7 @@ The line above the candidate list shows how many candidates are displayed, so yo
 The command box remembers every command you submit in the current session so you can re-run or edit a past command without retyping it.
 
 * `Up` moves back through your submitted commands. Repeated presses walk further into the past; the earliest entry stays shown once you reach it.
-* `Down` moves forward. Pressing past the newest entry restores a fresh draft entered before navigating history, or clears the box if there was no draft. Edits to recalled or rejected commands are not preserved when navigating away; submit the corrected command before browsing history.
+* `Down` moves forward. Pressing past the newest entry restores whatever draft you were typing before you started navigating, or clears the box if there was no draft.
 * Both successful and rejected commands are recorded. A rejected command also stays in the command box, shown in red, so you can fix a typo and press Enter again; `Up` then shows the command before it. A command identical to the most recent one does not take up an extra slot.
 * Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent commands. Repeating an earlier command that is not the most recent one takes another slot.
 
