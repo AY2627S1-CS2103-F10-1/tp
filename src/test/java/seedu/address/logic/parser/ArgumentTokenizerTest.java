@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -122,6 +123,110 @@ public class ArgumentTokenizerTest {
         assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Ravi S/O Kumar");
         assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "1 Road");
         assertArgumentAbsent(argMultimap, CliSyntax.PREFIX_STATUS);
+    }
+
+    @Test
+    public void tokenizeWithValidation_uppercasePrefixAfterLowercasePrefix_throwsParseException() {
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "N/", "n/", "N\\/"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" a/Unit N/A", Set.of(),
+                        CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+        // Tags can repeat, so starting another t/ field is still a valid fix, and the escape works for tags too.
+        assertThrows(ParseException.class, "T/ in a value could be text or the t/ prefix. Use t/ to start a new "
+                + "field. For text in a name, phone, email, address, tag or note, type T\\/. "
+                + "Roles and statuses keep backslashes literally.", () ->
+                ArgumentTokenizer.tokenizeWithValidation(" t/java T/backend", Set.of(),
+                        CliSyntax.PREFIX_TAG));
+    }
+
+    @Test
+    public void tokenizeWithValidation_uppercasePrefixAlreadyGiven_suggestsOnlyEscape() {
+        assertThrows(ParseException.class,
+                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX, "N/", "n/", "N\\/"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" n/Bob a/Unit N/A", Set.of(),
+                        CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
+        assertThrows(ParseException.class, String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_REPEATED_PREFIX,
+                "No/", "no/", "No\\/"), () ->
+                ArgumentTokenizer.tokenizeWithValidation(" no/Status No/go", Set.of(), CliSyntax.PREFIX_NOTE));
+    }
+
+    @Test
+    public void tokenizeWithValidation_ambiguityAfterRoleOrStatus_qualifiesEscapeAdvice() {
+        String expected = "N/ in a value could be text or the n/ prefix. Use n/ to start a new field. "
+                + "For text in a name, phone, email, address, tag or note, type N\\/. "
+                + "Roles and statuses keep backslashes literally.";
+        for (String arguments : List.of(" r/ N/A", " s/Applied N/A")) {
+            assertThrows(ParseException.class, expected, () -> ArgumentTokenizer.tokenizeWithValidation(
+                    arguments, Set.of(CliSyntax.PREFIX_NAME), CliSyntax.PREFIX_NAME,
+                    CliSyntax.PREFIX_ROLE, CliSyntax.PREFIX_STATUS));
+        }
+    }
+
+    @Test
+    public void tokenizeWithValidation_repeatedPrefixAfterRole_qualifiesEscapeWithoutOfferingDuplicate() {
+        String expected = "N/ in a value could be text or another n/ prefix, but n/ can be given only once. "
+                + "For text in a name, phone, email, address, tag or note, type N\\/. "
+                + "Roles and statuses keep backslashes literally.";
+        assertThrows(ParseException.class, expected, () -> ArgumentTokenizer.tokenizeWithValidation(
+                " n/Alice r/ N/A", Set.of(CliSyntax.PREFIX_NAME), CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ROLE));
+    }
+
+    @Test
+    public void tokenizeWithValidation_consistentPrefixCase_noAmbiguity() throws Exception {
+        // Upper-case prefixes still work when nothing typed in lower case precedes them.
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(" N/John A/Unit 5 p/123",
+                Set.of(), CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS, CliSyntax.PREFIX_PHONE);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "John");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "Unit 5");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_PHONE, "123");
+    }
+
+    @Test
+    public void tokenizeWithValidation_escapedSlash_keptAsTextInValidatedValues() throws Exception {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenizeWithValidation(
+                " a/Unit N\\/A n\\/a n/Amy r/SRE\\/Ops", Set.of(CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS),
+                CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS, CliSyntax.PREFIX_ROLE);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ADDRESS, "Unit N/A n/a");
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_NAME, "Amy");
+        // Role names are matched as typed, so an existing role containing \/ stays reachable.
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ROLE, "SRE\\/Ops");
+    }
+
+    @Test
+    public void tokenize_escapedSlash_keptAsTyped() {
+        ArgumentMultimap argMultimap = ArgumentTokenizer.tokenize(" r/SRE\\/Ops", CliSyntax.PREFIX_ROLE);
+
+        assertArgumentPresent(argMultimap, CliSyntax.PREFIX_ROLE, "SRE\\/Ops");
+    }
+
+    @Test
+    public void getPrefixWarning_multipleFields_namesEveryAdditionalPrefixInOrder() {
+        String expected = "Warning: Prefixes read as additional fields: N/, p/, t/, t/, r/. "
+                + "Check the candidate details below. "
+                + "For literal prefix-like text in names, phones, emails, addresses or tags, replace / with \\/. "
+                + "Roles and statuses keep backslashes literally.";
+
+        assertEquals(expected, ArgumentTokenizer.getPrefixWarning(
+                "edit 1 A/Unit N/A p/123 t/C++ t/N\\/A r/No role").orElseThrow());
+    }
+
+    @Test
+    public void getPrefixWarning_singleFieldOrNoField_returnsEmpty() {
+        for (String input : List.of("", "edit 1", "edit 1 A/Unit N\\/A", "edit 1 n/Ravi S/O Kumar",
+                "edit 1 a/Unit X/A", "edit 1 t/N\\/A", "edit 1 A/Unit N\\\\/A")) {
+            assertTrue(ArgumentTokenizer.getPrefixWarning(input).isEmpty(), input);
+        }
+    }
+
+    @Test
+    public void getPrefixWarning_nameConnectorsAndEscapes_listsOnlyRealPrefixes() {
+        for (String input : List.of("edit 1 A/9 Road n/Siti A/P Ahmad", "edit 1 a/9 Road n/Ravi A/L Kumar",
+                "edit 1 a/Unit N\\/A n/Ravi S/O Kumar", "edit 1 a/Unit X/A n/A")) {
+            String warning = ArgumentTokenizer.getPrefixWarning(input).orElseThrow();
+            assertTrue(warning.startsWith("Warning: Prefixes read as additional fields: n/. "), input);
+        }
     }
 
     @Test

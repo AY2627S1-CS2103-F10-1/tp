@@ -32,6 +32,9 @@ class RoleCommandParsersTest {
                 new AddRoleCommand("C/C++ Engineer"));
         assertParseSuccess(new AddRoleCommandParser(), " n/C++ / .NET Engineer",
                 new AddRoleCommand("C++ / .NET Engineer"));
+        // Role names keep \/ as typed, so a role saved as SRE\/Ops is not confused with SRE/Ops.
+        assertParseSuccess(new DeleteRoleCommandParser(), " r/SRE\\/Ops",
+                new DeleteRoleCommand("SRE\\/Ops"));
     }
 
     @Test
