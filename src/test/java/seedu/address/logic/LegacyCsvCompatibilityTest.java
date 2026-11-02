@@ -28,8 +28,8 @@ public class LegacyCsvCompatibilityTest {
     public Path directory;
 
     @Test
-    public void execute_exportedLegacyUnicode_preservesJsonAndExportButRejectsImport() throws Exception {
-        Person candidate = new PersonBuilder().withAddress("Caf\u00e9 Road")
+    public void execute_exportedUnicodeNote_preservesJsonAndExportButRejectsImport() throws Exception {
+        Person candidate = new PersonBuilder().withAddress("Cafe Road")
                 .withNote("R\u00e9sum\u00e9 reviewed\nFollow up").build();
         AddressBook source = new AddressBook();
         source.addPerson(candidate);
@@ -45,8 +45,8 @@ public class LegacyCsvCompatibilityTest {
         byte[] exportedBytes = Files.readAllBytes(exported);
         byte[] originalBytes = Files.readAllBytes(sourcePath);
 
-        assertThrows(CommandException.class, "Import failed: CSV record 2, field address: "
-                + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Address", 0x00e9), () ->
+        assertThrows(CommandException.class, "Import failed: CSV record 2, field note: "
+                + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", 0x00e9), () ->
                 fixture.getLogic().execute("import"));
 
         assertEquals(new AddressBook(), model.getAddressBook());
@@ -55,7 +55,7 @@ public class LegacyCsvCompatibilityTest {
         assertArrayEquals(originalBytes, Files.readAllBytes(sourcePath));
         assertArrayEquals(exportedBytes, Files.readAllBytes(exported));
         assertArrayEquals(exportedBytes, Files.readAllBytes(directory.resolve("import.csv")));
-        assertThrows(ParseException.class, () -> ParserUtil.parseAddress(candidate.getAddress().value));
+        assertEquals(candidate.getAddress(), ParserUtil.parseAddress(candidate.getAddress().value));
         assertThrows(ParseException.class, () -> ParserUtil.parseNote(candidate.getNote().orElseThrow().value));
     }
 }

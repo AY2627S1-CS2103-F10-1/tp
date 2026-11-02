@@ -54,13 +54,13 @@ public class CsvExportWriterTest {
         AddressBook book = new AddressBook();
         book.setRoleCatalog(new RoleCatalog(List.of(Role.NO_ROLE, designer, developer)));
         book.addPerson(new PersonBuilder().withName("Alice").withPhone("00123").withEmail("alice@example.com")
-                .withAddress("=1+1, \"街\"").withTags("java", "backend", "Java")
+                .withAddress("=1+1, \"Street\"").withTags("java", "backend", "Java")
                 .withNote("@literal\r\nnext, \"quoted\"").withRoles(designer, developer).build());
         StringWriter output = new StringWriter();
 
         new CsvExportWriter().writeCsv(book, output);
 
-        assertEquals(HEADER + "\"Alice\",\"00123\",\"alice@example.com\",\"=1+1, \"\"街\"\"\","
+        assertEquals(HEADER + "\"Alice\",\"00123\",\"alice@example.com\",\"=1+1, \"\"Street\"\"\","
                 + "\"Applied\",\"[\"\"Java\"\",\"\"backend\"\",\"\"java\"\"]\","
                 + "\"@literal\r\nnext, \"\"quoted\"\"\",\"[\"\"backend Developer\"\",\"\"Designer\"\"]\"\r\n",
                 output.toString());
@@ -139,7 +139,7 @@ public class CsvExportWriterTest {
     public void export_nonAsciiText_startsWithUtf8ByteOrderMark() throws Exception {
         Path destination = directory.resolve(EXPORT_FILE_NAME);
         AddressBook book = new AddressBook();
-        book.addPerson(new PersonBuilder().withAddress("Zürich 街").withNote("réalisé café").build());
+        book.addPerson(new PersonBuilder().withAddress("Zurich Street").withNote("réalisé café").build());
 
         new CsvExportWriter().export(book, destination);
 
@@ -149,7 +149,7 @@ public class CsvExportWriterTest {
         String content = Files.readString(destination);
         assertEquals(1, content.chars().filter(c -> c == CsvExportWriter.BYTE_ORDER_MARK).count());
         assertTrue(content.startsWith(CsvExportWriter.BYTE_ORDER_MARK + HEADER));
-        assertTrue(content.contains("\"Zürich 街\"") && content.contains("\"réalisé café\""));
+        assertTrue(content.contains("\"Zurich Street\"") && content.contains("\"réalisé café\""));
     }
 
     @Test

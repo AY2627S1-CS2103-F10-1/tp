@@ -186,6 +186,15 @@ public class JsonAdaptedPersonTest {
     }
 
     @Test
+    public void toModelType_unsupportedAddressCharacters_throwsIllegalValueException() {
+        for (String address : List.of("Caf\u00e9 Road", "Street\t1", "Street\u007f")) {
+            JsonAdaptedPerson person = new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL,
+                    address, VALID_TAGS, null);
+            assertThrows(IllegalValueException.class, Address.MESSAGE_CONSTRAINTS, person::toModelType);
+        }
+    }
+
+    @Test
     public void toModelType_nullAddress_throwsIllegalValueException() {
         JsonAdaptedPerson person =
                 new JsonAdaptedPerson(VALID_NAME, VALID_PHONE, VALID_EMAIL, null, VALID_TAGS, null);

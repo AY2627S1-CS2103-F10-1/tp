@@ -144,8 +144,9 @@ public class ImportOperationTest {
     @Test
     public void execute_unicodeAddress_rejectsWholeBatchWithoutChangingDataOrView() throws Exception {
         Person candidate = new PersonBuilder(incoming).withEmail("invalid@example.com")
-                .withAddress("Street \u4e2d").build();
+                .withAddress("Street PLACEHOLDER").build();
         writeInput(incoming, candidate);
+        Files.writeString(inputPath(), Files.readString(inputPath()).replace("Street PLACEHOLDER", "Street \u4e2d"));
         model.updateFilteredPersonList(person -> false);
         byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
         byte[] roles = Files.readAllBytes(directory.resolve("data/roles.json"));

@@ -9,7 +9,8 @@ import static seedu.address.commons.util.AppUtil.checkArgument;
  */
 public class Address {
 
-    public static final String MESSAGE_CONSTRAINTS = "Addresses can take any values, and should not be blank";
+    public static final String MESSAGE_CONSTRAINTS =
+            "Addresses must contain only printable ASCII characters and should not be blank";
 
     /*
      * The first character of the address must not be a whitespace,
@@ -34,7 +35,8 @@ public class Address {
      * Returns true if a given string is a valid address.
      */
     public static boolean isValidAddress(String test) {
-        return test.matches(VALIDATION_REGEX);
+        return test.matches(VALIDATION_REGEX)
+                && test.chars().allMatch(character -> character >= 0x20 && character <= 0x7e);
     }
 
     @Override

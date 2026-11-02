@@ -167,7 +167,7 @@ public class JsonAddressBookStorageTest {
     }
 
     @Test
-    public void readAndSaveAddressBook_printableAsciiAndLegacyUnicode_preservesValues() throws Exception {
+    public void readAndSaveAddressBook_printableAsciiAndUnicodeNote_preservesValues() throws Exception {
         StringBuilder printable = new StringBuilder("Block ");
         for (int codePoint = 0x20; codePoint <= 0x7E; codePoint++) {
             printable.appendCodePoint(codePoint);
@@ -176,7 +176,7 @@ public class JsonAddressBookStorageTest {
         original.addPerson(new PersonBuilder().withAddress(printable.toString())
                 .withNote(printable.toString()).build());
         original.addPerson(new PersonBuilder().withEmail("legacy@example.com")
-                .withAddress("Zürich\u00A0街").withNote("Legacy\u200Btext\nNext line").build());
+                .withAddress("Zurich Street").withNote("Legacy\u200Btext\nNext line").build());
         JsonAddressBookStorage storage = new JsonAddressBookStorage(testFolder.resolve("characters.json"));
 
         storage.saveAddressBook(original);

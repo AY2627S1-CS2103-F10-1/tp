@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 public class AddressTest {
@@ -32,6 +34,22 @@ public class AddressTest {
         assertTrue(Address.isValidAddress("Blk 456, Den Road, #01-355"));
         assertTrue(Address.isValidAddress("-")); // one character
         assertTrue(Address.isValidAddress("Leng Inc; 1234 Market St; San Francisco CA 2349879; USA")); // long address
+    }
+
+    @Test
+    public void isValidAddress_unsupportedCharacters_rejects() {
+        for (String address : List.of("Caf\u00e9 Road", "Street\t1", "Street\n1", "Street\r1",
+                "Street\u007f", "Street\u0000", "Street\u200b", "Street\ud83d\ude00")) {
+            assertFalse(Address.isValidAddress(address));
+            assertThrows(IllegalArgumentException.class, Address.MESSAGE_CONSTRAINTS, () -> new Address(address));
+        }
+    }
+
+    @Test
+    public void isValidAddress_printableAscii_preservesExistingRules() {
+        assertTrue(Address.isValidAddress("!"));
+        assertTrue(Address.isValidAddress("~ "));
+        assertFalse(Address.isValidAddress(" Street"));
     }
 
     @Test
