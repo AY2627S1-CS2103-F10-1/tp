@@ -157,7 +157,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 <panel header="Accepted characters" type="seamless">
 
-names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters, digits, ordinary spaces and ASCII punctuation. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. For example, enter `José` as `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
+names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces and ASCII punctuation. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
 </panel>
 
 <panel header="Text that looks like a prefix, and the multi-field warning" type="seamless">
@@ -167,7 +167,7 @@ A prefix such as `n/` that follows a space starts a new field, in any letter cas
 * `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses, tags and notes, where every `\/` you type is saved as `/`.
 * Role names and statuses keep backslashes literally. To assign an existing role named `N/A`, use `edit 1 r/N/A` with no space after `r/`; `r/ N/A` is ambiguous, and `r/N\/A` refers to a different role whose name contains a backslash.
 * In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A` or the `T/` in `a/Unit T/2`, could be text or a new field, so HRvest rejects the command and changes nothing (`a/Unit T\/2` saves the address `Unit T/2`). The error offers `n/` to start a field and `N\/` for literal text. If that field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
-* A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field: the address becomes `Unit` and the name becomes `a`. Use `edit 1 a/Unit n\/a` to keep it in the address.
+* A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field: `edit 1 a/Unit n/a` changes the address to `Unit` and the name to `a`, with a warning listing `n/`. Use `edit 1 a/Unit n\/a` to keep it in the address.
 * Successful `add` and `edit` commands with several fields show a warning before the success message, listing every prefix after the first field in input order, including lower-case and repeated ones. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: Prefixes read as additional fields: N/.` The command is applied and saved immediately; the warning does not ask for confirmation, so check the updated details. It also appears for intentional multi-field commands and unchanged edits (`edit 1 A/Unit P/123 N/A` lists both `P/` and `N/`). A single-field edit produces no warning, and escaped text and legal-name connectors are not listed: `edit 1 A/Unit N\/A` saves the whole address without a warning.
 </panel>
 
@@ -176,7 +176,7 @@ A prefix such as `n/` that follows a space starts a new field, in any letter cas
 * **Punctuation between letters or digits:** apostrophes, periods, hyphens and slashes are accepted, for example `Anne O'Brien`, `J.R. Tan`, `Kelly-Ann Tan` and `Ravi s/o Kumar`.
 * **Other legal-name forms:** a word may end with one period (`Tan Ah Kow Jr.`). A comma may follow a word or closing parenthesis, but must be followed by a space and another word (`Martin Luther King, Jr.` or `Tan (Kelvin), Jr.`); a trailing comma is rejected. Parenthesised words are accepted after the first word (`Tan Wei Ming (Kelvin)`), and a separate `@` may introduce an alias (`Mohamed Ali @ Ahmad`). Parentheses must enclose complete words with no spaces immediately inside them, and `@` needs a name on both sides.
 * **Name markers:** `s/o`, `d/o`, `a/l`, `a/p` and `l/p` are accepted; slashes between letters or digits are not limited to these. Within a name, `s/o` followed by a space stays part of the name rather than starting a status field, in any letter case. `d/o` and `l/p` stay in the name because `d/` and `l/` are not command prefixes.
-* **Names and addresses:** `a/l` and `a/p` can look like an address field, so when using them in a name, put the address first, for example `edit 1 a/1 Road n/Siti a/p Ahmad`. A later address is also accepted if another field, such as `p/`, separates it from the name. An address beginning with `L` or `P` can look like a name marker, so put the address first (`edit 1 a/L Street n/John`). An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected rather than guessed.
+* **Names and addresses:** `a/l` and `a/p` can look like an address field, so when using them in a name, put the address first, for example `edit 1 a/1 Road n/Siti a/p Ahmad` or `edit 1 a/9 Road n/Siti a/p Ahmad`. A later address is also accepted if another field, such as `p/`, separates it from the name. An address beginning with `L` or `P` can look like a name marker, so put the address first (`edit 1 a/L Street n/John`). An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected rather than guessed.
 * **Rejected:** other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words.
 * **Spacing:** leading and trailing spaces are removed; internal spaces and letter case are preserved.
 </panel>
@@ -340,7 +340,7 @@ Finds candidates with a word in their name that starts with any of the given key
 Format: `find KEYWORD [MORE_KEYWORDS]`
 
 * The search is case-insensitive (`hans` matches `Hans`) and keyword order does not matter (`Hans Bo` matches `Bo Hans`).
-* Only names are searched. A keyword matches the **start** of any word in a name: `Han` matches `Hans`, but `ans` does not.
+* Only names are searched. A keyword matches the **start** of any word in a name: `Han` matches `Hans`, and `Gru` matches `Hans Gruber`, but text inside a word does not match (`ans` does not match `Hans`).
 * Candidates matching at least one keyword are returned (an `OR` search): `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 
 <box type="info">
@@ -523,7 +523,7 @@ Format: `clear confirm`
 
 ### Exporting candidates: `export`
 
-Exports every candidate to `data/export.csv`, next to the data file `data/HRvest.json`, in the folder you run HRvest from. Candidates are exported regardless of the current search or filter, and your data, filter and expanded view are unchanged.
+Exports every candidate to `data/export.csv`, next to the data file `data/HRvest.json`, in the folder you run HRvest from. Candidates are exported in address-book order, regardless of the current search or filter, and your data, filter and expanded view are unchanged.
 
 Format: `export`
 
@@ -541,7 +541,7 @@ Format: `export`
 * Tags appear as a list such as `["Java","backend"]` in the tags column. Roles appear the same way, in `list_role` order, such as `["Designer","Developer"]`, or `["No role"]` for a candidate without a named role. Unused roles are not exported, so back up both JSON files to keep the complete role catalog.
 * The file is UTF-8 with a byte order mark (a hidden marker at the start of the file), so spreadsheet programs such as Excel show accented and non-Latin text correctly.
 * Surrounding whitespace after `export` is accepted.
-* HRvest writes a temporary file and then replaces `export.csv`, so a failed export leaves the previous CSV intact. An interrupted export may leave a `HRvest-export-*.tmp` file in the data folder; after closing HRvest you may delete it. A filesystem that cannot replace files in one step reports an export error.
+* HRvest writes a temporary file and then atomically replaces `export.csv`, so a failed export leaves the previous CSV intact. An interrupted export may leave a `HRvest-export-*.tmp` file in the data folder; after closing HRvest you may delete it. A filesystem that cannot replace files in one step reports an export error.
 
 **Opening the CSV in a spreadsheet.** The CSV holds your data exactly as stored, but spreadsheet programs change some values when you double-click to open the file:
 
@@ -593,7 +593,7 @@ Limits are enforced while reading the file; exceeding any limit rejects the whol
 
 <panel header="More import rules" type="seamless">
 
-* Other field, duplicate and import size rules still apply. Extra arguments after `import` are ignored. An empty (zero-byte) file or a valid header-only file imports 0 candidates and resets the view. Whitespace-only files are invalid.
+* Other field, duplicate and import size rules still apply. Extra arguments after `import` are ignored. An empty (zero-byte) file or a valid header-only file imports 0 candidates, saves normally and resets the view. Whitespace-only files are invalid.
 * Only readable regular files are accepted; symbolic links, directories and special files are rejected.
 * Finish saving `import.csv` before running `import` and leave it unchanged until the import finishes. Editing, replacing or deleting it during import gives unpredictable results.
 * CSV addresses and notes may contain Unicode that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 characters; quoted notes may contain tabs or line breaks. The printable-ASCII rule still applies when you type these values as commands.
