@@ -6,6 +6,9 @@ import static seedu.address.logic.Messages.MESSAGE_UNKNOWN_COMMAND;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,23 +35,23 @@ public class ExpandCommandParserTest {
 
     @Test
     public void parse_malformedIndex_reportsExpandGuidance() {
-        for (String input : new String[] {"1.5", "abc", "+1", "1 2", "1 n/Alice"}) {
+        assertAllCases(List.of("1.5", "abc", "+1", "1 2", "1 n/Alice"), input -> {
             assertParseFailure(parser, input, ExpandCommandParser.MESSAGE_INVALID_INDEX);
-        }
+        });
     }
 
     @Test
     public void parse_nonPositiveIndex_reportsPositiveIntegerRequirement() {
-        for (String input : new String[] {"0", "00", "000", "-0", "-1", "-2147483649", "-99999999999"}) {
+        assertAllCases(List.of("0", "00", "000", "-0", "-1", "-2147483649", "-99999999999"), input -> {
             assertParseFailure(parser, input, ParserUtil.MESSAGE_INVALID_INDEX);
-        }
+        });
     }
 
     @Test
     public void parse_positiveOverflow_reportsInvalidDisplayedIndex() {
-        for (String input : new String[] {"2147483648", "99999999999", "999999999999999999999", "9".repeat(100)}) {
+        assertAllCases(List.of("2147483648", "99999999999", "999999999999999999999", "9".repeat(100)), input -> {
             assertParseFailure(parser, input, MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
+        });
     }
 
     @Test

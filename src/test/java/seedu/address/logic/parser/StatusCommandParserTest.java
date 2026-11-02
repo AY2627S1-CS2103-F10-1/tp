@@ -6,6 +6,7 @@ import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseFailure;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 
 import java.util.List;
@@ -58,24 +59,24 @@ public class StatusCommandParserTest {
 
     @Test
     public void parse_nonIntegerIndex_throwsParseException() {
-        for (String index : List.of("abc", "1.5", "+1", "1 2")) {
+        assertAllCases(List.of("abc", "1.5", "+1", "1 2"), index -> {
             assertParseFailure(parser, index + " s/Applied",
                     String.format(MESSAGE_INVALID_COMMAND_FORMAT, StatusCommand.MESSAGE_USAGE));
-        }
+        });
     }
 
     @Test
     public void parse_nonPositiveIndex_throwsParseException() {
-        for (String index : List.of("0", "000", "-0", "-1", "-99999999999")) {
+        assertAllCases(List.of("0", "000", "-0", "-1", "-99999999999"), index -> {
             assertParseFailure(parser, index + " s/Applied", ParserUtil.MESSAGE_INVALID_INDEX);
-        }
+        });
     }
 
     @Test
     public void parse_indexOverflow_throwsParseException() {
-        for (String index : List.of("2147483648", "99999999999", "9".repeat(100))) {
+        assertAllCases(List.of("2147483648", "99999999999", "9".repeat(100)), index -> {
             assertParseFailure(parser, index + " s/Applied", Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
+        });
     }
 
     @Test

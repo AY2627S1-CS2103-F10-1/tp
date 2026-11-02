@@ -3,6 +3,8 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TypicalPersons.APPLIED_CANDIDATE;
+import static seedu.address.testutil.TypicalPersons.INTERVIEWING_CANDIDATE;
 
 import java.util.Collections;
 
@@ -57,16 +59,13 @@ public class CandidateSummaryCardTest {
         ModelManager model = new ModelManager();
         CandidateSummaryCard total = new CandidateSummaryCard(
                 model.getFilteredPersonList(), model.getAddressBook().getPersonList());
-        Person applied = new PersonBuilder().withEmail("applied@example.com").build();
-        Person interviewing = new PersonBuilder().withEmail("interviewing@example.com")
-                .withStatus(Status.INTERVIEWING).build();
-        model.addPerson(applied);
-        model.addPerson(interviewing);
+        model.addPerson(APPLIED_CANDIDATE);
+        model.addPerson(INTERVIEWING_CANDIDATE);
         model.updateFilteredPersonList(person -> person.getStatus() == Status.INTERVIEWING);
         assertCount(total, "1 / 2");
 
-        Person offered = new PersonBuilder(interviewing).withStatus(Status.OFFERED).build();
-        model.setPerson(interviewing, offered);
+        Person offered = new PersonBuilder(INTERVIEWING_CANDIDATE).withStatus(Status.OFFERED).build();
+        model.setPerson(INTERVIEWING_CANDIDATE, offered);
         assertCount(total, "0 / 2");
 
         model.updateFilteredPersonList(person -> true);

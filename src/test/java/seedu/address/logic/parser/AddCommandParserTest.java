@@ -223,11 +223,11 @@ public class AddCommandParserTest {
     @Test
     public void parse_eachExplicitStatus_success() {
         String details = NAME_DESC_BOB + PHONE_DESC_BOB + EMAIL_DESC_BOB + ADDRESS_DESC_BOB;
-        for (Status status : Status.values()) {
+        assertAllCases(List.of(Status.values()), status -> {
             Person expected = new PersonBuilder(BOB).withTags().withStatus(status).build();
 
             assertParseSuccess(parser, details + " s/" + status + " r/No role", new AddCommand(expected));
-        }
+        });
     }
 
     @Test

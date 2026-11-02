@@ -3,6 +3,9 @@ package seedu.address.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -24,10 +27,10 @@ public class ExportCommandParserTest {
 
     @Test
     public void parse_extraArguments_returnsExportCommand() throws Exception {
-        for (String args : new String[] {" file.csv", " data/", " p/output.csv", " junk",
-            " ../../other.csv", " data/elsewhere p/other.csv", " \t junk\nmore"}) {
-            assertParseSuccess(parser, args, new ExportCommand());
-            assertEquals(new ExportCommand(), new AddressBookParser().parseCommand("export" + args));
-        }
+        assertAllCases(List.of(" file.csv", " data/", " p/output.csv", " junk",
+                " ../../other.csv", " data/elsewhere p/other.csv", " \t junk\nmore"), args -> {
+                assertParseSuccess(parser, args, new ExportCommand());
+                assertEquals(new ExportCommand(), new AddressBookParser().parseCommand("export" + args));
+            });
     }
 }

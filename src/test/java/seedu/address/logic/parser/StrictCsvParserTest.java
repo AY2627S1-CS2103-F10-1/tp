@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.util.List;
 
@@ -12,10 +13,15 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class StrictCsvParserTest {
     private static final String EMPTY_RECORD = "\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\r\n";
 
+    // The header counts as a record, but not as a candidate.
+    private static final int MAX_RECORDS = StrictCsvParser.MAX_CANDIDATES + 1;
+
     @Test
-    public void parse_recordCountBoundary_acceptsLimitRejectsExtraRecord() throws Exception {
-        assertEquals(10_001, new StrictCsvParser(EMPTY_RECORD.repeat(10_001)).parse().size());
-        assertThrows(ParseException.class, () -> new StrictCsvParser(EMPTY_RECORD.repeat(10_002)).parse());
+    public void parse_recordCountBoundary_acceptsHeaderPlusLimitRejectsExtraCandidate() throws Exception {
+        assertEquals(MAX_RECORDS, new StrictCsvParser(EMPTY_RECORD.repeat(MAX_RECORDS)).parse().size());
+        assertThrows(ParseException.class, "CSV record " + (MAX_RECORDS + 1)
+                + ": Candidate count exceeds 10,000.", () ->
+                new StrictCsvParser(EMPTY_RECORD.repeat(MAX_RECORDS + 1)).parse());
     }
 
     @Test
@@ -41,29 +47,30 @@ public class StrictCsvParserTest {
         assertEquals(text, new StrictCsvParser(text + ",,,,,,,").parse().getFirst().getFirst());
         assertThrows(ParseException.class, () -> new StrictCsvParser(text + "a,,,,,,,").parse());
         String row = ",,,,,,,\n";
-        assertEquals(10_001, new StrictCsvParser(row.repeat(10_001) + "\n\n").parse().size());
-        assertThrows(ParseException.class, () -> new StrictCsvParser(row.repeat(10_002)).parse());
+        assertEquals(MAX_RECORDS, new StrictCsvParser(row.repeat(MAX_RECORDS) + "\n\n").parse().size());
+        assertThrows(ParseException.class, "CSV record " + (MAX_RECORDS + 1)
+                + ": Candidate count exceeds 10,000.", () -> new StrictCsvParser(row.repeat(MAX_RECORDS + 1)).parse());
     }
 
     @Test
     public void parse_malformedFlexibleCsv_rejects() {
-        for (String input : List.of("\n", "\r\n", "\n" + EMPTY_RECORD, EMPTY_RECORD + "\n" + EMPTY_RECORD,
+        assertAllCases(List.of("\n", "\r\n", "\n" + EMPTY_RECORD, EMPTY_RECORD + "\n" + EMPTY_RECORD,
                 EMPTY_RECORD + " \n", "a,b,c,d,e,f", "a,b,c,d,e,f,g,h,i", "a,b,c,d,e,f,g,h\r",
                 "a,b,c,d,e,f,g,h\rx", "un\"quoted,b,c,d,e,f,g", "\"closed\"junk,b,c,d,e,f,g",
-                "a,b,c,d,e,f,\"unterminated", "a,b,c,d,e,f,\"closed\"junk", EMPTY_RECORD + "\r")) {
-            assertThrows(ParseException.class, () -> new StrictCsvParser(input).parse());
-        }
+                "a,b,c,d,e,f,\"unterminated", "a,b,c,d,e,f,\"closed\"junk", EMPTY_RECORD + "\r"), input -> {
+                    assertThrows(ParseException.class, () -> new StrictCsvParser(input).parse());
+                });
     }
 
     @Test
     public void parse_missingColumns_identifiesFieldAndEnding() {
-        for (String ending : List.of("", "\n", "\r\n")) {
+        assertAllCases(List.of("", "\n", "\r\n"), ending -> {
             String reason = ending.isEmpty() ? "end of file" : "record ending";
             assertThrows(ParseException.class, "CSV record 2, field 6 (tags): Too few columns: expected 8, "
                     + "found 6 before " + reason + ". Add the missing comma-separated fields; use an empty field "
                     + "for an absent optional value.", () ->
                     new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f" + ending).parse());
-        }
+        });
     }
 
     @Test
@@ -82,12 +89,12 @@ public class StrictCsvParserTest {
 
     @Test
     public void parse_contentAfterClosingQuote_identifiesFieldAndExpectedDelimiter() {
-        for (String suffix : List.of("private", " ")) {
+        assertAllCases(List.of("private", " "), suffix -> {
             assertThrows(ParseException.class, "CSV record 2, field 7 (note): Unexpected content after a closing "
                     + "quote. Expected a comma, LF/CRLF record ending, or end of file; remove text or spaces "
                     + "outside the quotes.", () ->
                     new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f,\"note\"" + suffix).parse());
-        }
+        });
     }
 
     @Test
@@ -99,11 +106,11 @@ public class StrictCsvParserTest {
 
     @Test
     public void parse_bareCr_identifiesRecordAndSupportedEndings() {
-        for (String suffix : List.of("", "x")) {
+        assertAllCases(List.of("", "x"), suffix -> {
             assertThrows(ParseException.class, "CSV record 2: Bare CR record ending. "
                     + "Use LF or CRLF line endings instead.", () ->
                     new StrictCsvParser(EMPTY_RECORD + "a,b,c,d,e,f,g,h\r" + suffix).parse());
-        }
+        });
     }
 
     @Test
@@ -114,9 +121,9 @@ public class StrictCsvParserTest {
 
     @Test
     public void parse_wrongColumnCountOrEscaping_rejects() {
-        for (String input : new String[] {"\"\"\r\n", EMPTY_RECORD.replace("\r\n", ",\"\"\r\n"),
-            "\"bad\"quote\",\"\",\"\",\"\",\"\",\"\",\"\"\r\n"}) {
-            assertThrows(ParseException.class, () -> new StrictCsvParser(input).parse());
-        }
+        assertAllCases(List.of("\"\"\r\n", EMPTY_RECORD.replace("\r\n", ",\"\"\r\n"),
+                "\"bad\"quote\",\"\",\"\",\"\",\"\",\"\",\"\"\r\n"), input -> {
+                    assertThrows(ParseException.class, () -> new StrictCsvParser(input).parse());
+                });
     }
 }

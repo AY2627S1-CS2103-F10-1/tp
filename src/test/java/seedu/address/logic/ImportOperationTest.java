@@ -129,10 +129,10 @@ public class ImportOperationTest {
 
             logic.execute("import");
 
-            assertEquals(candidate, model.getAddressBook().getPersonList().getLast());
-            assertFalse(model.isExpandedViewProperty().get());
-            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow());
-            assertArrayEquals(input, Files.readAllBytes(inputPath()));
+            assertEquals(candidate, model.getAddressBook().getPersonList().getLast(), candidate.getEmail().value);
+            assertFalse(model.isExpandedViewProperty().get(), candidate.getEmail().value);
+            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow(), candidate.getEmail().value);
+            assertArrayEquals(input, Files.readAllBytes(inputPath()), candidate.getEmail().value);
         }
     }
 
@@ -265,7 +265,8 @@ public class ImportOperationTest {
 
     @Test
     public void execute_emptyAndHeaderOnly_runsSaveAndResetsView() throws Exception {
-        for (boolean header : List.of(false, true)) {
+        assertAllCases(List.of("empty", "header only"), inputType -> {
+            boolean header = inputType.equals("header only");
             if (header) {
                 writeInput();
             } else {
@@ -277,7 +278,7 @@ public class ImportOperationTest {
             assertEquals(saves + 1, storage.saves);
             assertEquals(List.of(existing), model.getFilteredPersonList());
             assertFalse(model.isExpandedViewProperty().get());
-        }
+        });
     }
 
     @Test

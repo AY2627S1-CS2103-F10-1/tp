@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -114,7 +115,7 @@ public class CsvImportReaderTest {
         Path input = Files.writeString(directory.resolve("import.csv"), "content");
         List<IOException> failures = List.of(new IOException("Injected read failure"),
                 new AccessDeniedException("input"));
-        for (IOException failure : failures) {
+        assertAllCases(failures, failure -> {
             TrackingReader failingReader = new TrackingReader();
             failingReader.failure = failure;
             String reason = failure instanceof AccessDeniedException ? "Read permission denied." : failure.getMessage();
@@ -123,7 +124,7 @@ public class CsvImportReaderTest {
                     failingReader.read(dataFile()));
             assertFalse(failingReader.channel.isOpen());
             assertArrayEquals("content".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(input));
-        }
+        });
     }
 
     @Test
@@ -137,7 +138,7 @@ public class CsvImportReaderTest {
     @Test
     public void read_failureWithoutMessage_reportsFallbackAndClosesChannel() throws Exception {
         Path input = Files.writeString(directory.resolve("import.csv"), "content");
-        for (IOException failure : List.of(new IOException(), new IOException("   "))) {
+        assertAllCases(List.of(new IOException(), new IOException("   ")), failure -> {
             TrackingReader failingReader = new TrackingReader();
             failingReader.failure = failure;
 
@@ -146,7 +147,7 @@ public class CsvImportReaderTest {
                     failingReader.read(dataFile()));
             assertFalse(failingReader.channel.isOpen());
             assertArrayEquals("content".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(input));
-        }
+        });
     }
 
     private CsvImportReader reader() {

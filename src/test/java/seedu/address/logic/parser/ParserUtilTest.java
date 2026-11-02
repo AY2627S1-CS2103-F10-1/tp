@@ -63,9 +63,9 @@ public class ParserUtilTest {
 
     @Test
     public void parseNote_blank_throwsParseException() {
-        for (String note : List.of("", " ", "   ")) {
+        assertAllCases(List.of("", " ", "   "), note -> {
             assertThrows(ParseException.class, Note.MESSAGE_BLANK, () -> ParserUtil.parseNote(note));
-        }
+        });
     }
 
     @Test
@@ -84,13 +84,13 @@ public class ParserUtilTest {
 
     @Test
     public void parseNote_unsupportedCharacters_throwsParseException() {
-        for (String character : List.of("\t", "\r", "\n", "\u2003", "\u4e2d", "\ud83d\ude00")) {
+        assertAllCases(List.of("\t", "\r", "\n", "\u2003", "\u4e2d", "\ud83d\ude00"), character -> {
             String message = String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER,
                     "Note", character.codePointAt(0));
-            for (String note : List.of(character, character + "text", "text" + character, "a" + character + "b")) {
+            assertAllCases(List.of(character, character + "text", "text" + character, "a" + character + "b"), note -> {
                 assertThrows(ParseException.class, message, () -> ParserUtil.parseNote(note));
-            }
-        }
+            });
+        });
     }
 
     @Test
@@ -100,19 +100,19 @@ public class ParserUtilTest {
 
     @Test
     public void parseStatus_invalidValue_throwsParseException() {
-        for (String status : List.of("", WHITESPACE, "Unknown", "Short listed")) {
+        assertAllCases(List.of("", WHITESPACE, "Unknown", "Short listed"), status -> {
             assertThrows(ParseException.class, Status.MESSAGE_CONSTRAINTS, () ->
                     ParserUtil.parseStatus(status));
-        }
+        });
     }
 
     @Test
     public void parseStatus_validValues_returnsStatus() throws Exception {
-        for (Status status : Status.values()) {
+        assertAllCases(List.of(Status.values()), status -> {
             assertEquals(status, ParserUtil.parseStatus(status.toString()));
             assertEquals(status, ParserUtil.parseStatus(status.toString().toLowerCase(Locale.ROOT)));
             assertEquals(status, ParserUtil.parseStatus(status.toString().toUpperCase(Locale.ROOT)));
-        }
+        });
     }
 
     @Test

@@ -17,6 +17,7 @@ import java.util.List;
 
 import seedu.address.model.AddressBook;
 import seedu.address.model.person.Person;
+import seedu.address.model.person.Status;
 
 /**
  * A utility class containing a list of {@code Person} objects to be used in tests.
@@ -54,6 +55,11 @@ public class TypicalPersons {
     public static final Person BOB = new PersonBuilder().withName(VALID_NAME_BOB).withPhone(VALID_PHONE_BOB)
             .withEmail(VALID_EMAIL_BOB).withAddress(VALID_ADDRESS_BOB).withTags(VALID_TAG_HUSBAND, VALID_TAG_FRIEND)
             .build();
+
+    // Distinct candidates for status-summary transitions; each test owns its own model.
+    public static final Person APPLIED_CANDIDATE = new PersonBuilder().withEmail("applied@example.com").build();
+    public static final Person INTERVIEWING_CANDIDATE = new PersonBuilder().withEmail("interviewing@example.com")
+            .withStatus(Status.INTERVIEWING).build();
 
     public static final String KEYWORD_MATCHING_MEIER = "Meier"; // A keyword that matches MEIER
 
