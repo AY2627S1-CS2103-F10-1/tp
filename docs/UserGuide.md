@@ -473,7 +473,7 @@ The role catalog is the shared collection of roles available in HRvest, includin
 
 <panel header="Role name rules" type="seamless">
 
-* Use nonblank role names containing only printable ASCII (`U+0020-U+007E`): English letters, digits, ordinary spaces and ASCII punctuation. Non-ASCII role names are unsupported. Control characters such as tabs or newlines are not allowed.
+* Names must not be blank or contain control characters such as tabs or newlines. Printable ASCII characters, including punctuation, are accepted.
 * Invisible characters, such as no-break spaces (`U+00A0`) and zero-width spaces (`U+200B`), are rejected, even when text copied from a web page looks normal. Use ordinary spaces.
 * For supported ASCII role names, matching ignores surrounding spaces and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display. This applies to creation, assignment, filtering, renaming and deletion. Display spelling and role IDs are preserved.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
