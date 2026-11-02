@@ -164,7 +164,7 @@ A prefix such as `n/` that follows a space starts a new field, in any letter cas
 <panel header="Name rules (add and edit)" type="seamless">
 
 * **Punctuation between letters or digits:** apostrophes, periods, hyphens and slashes are accepted, for example `Anne O'Brien`, `J.R. Tan`, `Kelly-Ann Tan` and `Ravi s/o Kumar`.
-* **Other legal-name forms:** a word may end with one period (`Tan Ah Kow Jr.`). A comma may follow a word or closing parenthesis, but must be followed by a space and another word (`Martin Luther King, Jr.`); a trailing comma is rejected. Parenthesised words are accepted after the first word (`Tan Wei Ming (Kelvin)`), and a separate `@` may introduce an alias (`Mohamed Ali @ Ahmad`). Parentheses must enclose complete words with no spaces immediately inside them, and `@` needs a name on both sides.
+* **Other legal-name forms:** a word may end with one period (`Tan Ah Kow Jr.`). A comma may follow a word or closing parenthesis, but must be followed by a space and another word (`Martin Luther King, Jr.` or `Tan (Kelvin), Jr.`); a trailing comma is rejected. Parenthesised words are accepted after the first word (`Tan Wei Ming (Kelvin)`), and a separate `@` may introduce an alias (`Mohamed Ali @ Ahmad`). Parentheses must enclose complete words with no spaces immediately inside them, and `@` needs a name on both sides.
 * **Name markers:** `s/o`, `d/o`, `a/l`, `a/p` and `l/p` are accepted; slashes between letters or digits are not limited to these. Within a name, `s/o` followed by a space stays part of the name rather than starting a status field, in any letter case. `d/o` and `l/p` stay in the name because `d/` and `l/` are not command prefixes.
 * **Names and addresses:** `a/l` and `a/p` can look like an address field, so when using them in a name, put the address first, for example `edit 1 a/1 Road n/Siti a/p Ahmad`. A later address is also accepted if another field, such as `p/`, separates it from the name. An address beginning with `L` or `P` can look like a name marker, so put the address first (`edit 1 a/L Street n/John`). An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected rather than guessed.
 * **Rejected:** other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words.
@@ -214,7 +214,7 @@ Examples:
 * **Address:** spaces and punctuation are allowed.
 * **Role:** matching ignores case and surrounding whitespace.
 * **Status:** input ignores letter case, so `s/interviewing` is saved and shown as `Interviewing`. A bare `s/` is invalid rather than using the default.
-* **Tags:** a non-blank label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`.
+* **Tags:** a non-blank label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Repeat the prefix for several tags: `t/C++ t/machine learning`. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`. A recognised prefix preceded by a space starts another field even inside a tag: `t/machine learning n/Alice` sets the tag to `machine learning` and the name to `Alice`. Quoting does not escape prefixes.
 </panel>
 
 <panel header="Errors, duplicates and unknown prefixes" type="seamless">
@@ -539,7 +539,7 @@ Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the h
 
 <panel header="Import limits" type="seamless">
 
-Limits are enforced while reading the file; exceeding any limit rejects the whole import with an error. These are import limits, not new `add`/`edit` restrictions.
+Limits are enforced while reading the file; exceeding any limit rejects the whole import with an error. These are import limits, not new `add`/`edit` restrictions. Files exceeding them cannot be imported even if their contents originated in HRvest.
 
 | Resource | Maximum |
 |------|------|
