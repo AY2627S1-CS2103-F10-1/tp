@@ -582,7 +582,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User performs <u>List candidates (UC02)</u>.
+1. User views the current candidate list, optionally after searching or filtering.
 1. User requests to change the status of a specific candidate in the list to a new candidate status.
 1. HRvest updates the candidate's status and shows a success message identifying the candidate.
 
@@ -612,7 +612,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-* 3a. The updated candidate no longer matches the current filter.
+* 3a. The candidate is not in expanded view and their updated details no longer match the active search or filter.
 
     * 3a1. HRvest shows the success message, but the candidate no longer appears in the filtered results.
 
@@ -622,7 +622,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User performs <u>List candidates (UC02)</u>.
+1. User views the current candidate list, optionally after searching or filtering.
 1. User requests to change one or more of the candidate details of a specific candidate in the list.
 1. HRvest updates the candidate's details and shows a success message identifying the candidate.
 
@@ -664,7 +664,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
-* 3a. The updated candidate no longer matches the current filter.
+* 3a. The candidate is not in expanded view and their updated details no longer match the active search or filter.
 
     * 3a1. HRvest shows the success message, but the candidate no longer appears in the filtered results.
 
