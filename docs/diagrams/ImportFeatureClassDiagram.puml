@@ -1,0 +1,91 @@
+@startuml
+!include style.puml
+skinparam arrowThickness 1.1
+skinparam arrowColor STORAGE_COLOR
+skinparam classBackgroundColor STORAGE_COLOR
+skinparam classFontColor #FFFFFF
+skinparam classAttributeFontColor #FFFFFF
+skinparam classStereotypeFontColor #FFFFFF
+skinparam classAttributeIconSize 0
+
+package Logic as LogicPackage {
+    class LogicManager LOGIC_COLOR {
+        +execute()
+    }
+    class ImportOperation LOGIC_COLOR {
+        ~execute()
+        -readCandidates()
+        -combine()
+        -save()
+        -restore()
+        {static} -describeCreatedRoles()
+    }
+
+    package Parser as ParserPackage #F4F6F6 {
+        class ImportCommandParser LOGIC_COLOR {
+            +parse()
+        }
+        class CandidateCsvParser LOGIC_COLOR {
+            {static} +parse()
+            {static} -parsePerson()
+            {static} -parseField()
+            {static} -parseNote()
+            {static} -parseTags()
+            {static} -parseRoles()
+            {static} -parseNames()
+        }
+    }
+
+    package Commands as CommandsPackage #F4F6F6 {
+        class ImportCommand LOGIC_COLOR {
+            +execute()
+        }
+        class CommandResult LOGIC_COLOR {
+            {static} +createImportRequest()
+            +isImport()
+        }
+    }
+}
+
+package Model as ModelPackage {
+    class "<<interface>>\nModel" as Model MODEL_COLOR
+}
+
+package Storage as StoragePackage {
+    class "<<interface>>\nStorage" as Storage {
+        +readImport()
+        +saveAddressBook()
+    }
+    class StorageManager {
+        +readImport()
+        +saveAddressBook()
+    }
+    class CsvImportReader {
+        +read()
+        -checkInput()
+        #readBytes()
+        {static} -describeFailure()
+    }
+}
+
+show LogicManager methods
+show ImportOperation methods
+show ImportCommandParser methods
+show CandidateCsvParser methods
+show ImportCommand methods
+show CommandResult methods
+show Storage methods
+show StorageManager methods
+show CsvImportReader methods
+
+ImportCommandParser ..> ImportCommand : <<create>>
+ImportCommand ..> CommandResult : calls createImportRequest()
+LogicManager ..> CommandResult : checks isImport()
+LogicManager ..> ImportOperation : <<create>>, calls execute()
+ImportOperation ..> CandidateCsvParser : calls parse()
+ImportOperation --> "1" Model : model
+ImportOperation --> "1" Storage : storage
+StorageManager .up.|> Storage
+StorageManager ..> CsvImportReader : <<create>>, calls read()
+
+@enduml

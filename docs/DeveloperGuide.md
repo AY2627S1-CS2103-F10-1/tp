@@ -309,6 +309,14 @@ The sequence diagram below shows the flow for a user pressing `Up` twice then `D
 
 Import adds a batch of candidates to the complete address book, regardless of the current filter. `AddressBookParser` uses `ImportCommandParser` to create an `ImportCommand`, and `LogicManager` delegates the operation to `ImportOperation`.
 
+The class diagram below gives a high-level visual overview of the import implementation and its relevant methods, helping developers identify which class to inspect for a particular behaviour. `ImportCommand` requests the operation, while `ImportOperation` coordinates batch combination, model updates, saving and rollback through the `Model` and `Storage` interfaces. Look at `CandidateCsvParser` for candidate validation and role resolution, and `CsvImportReader` for file reading and input checks. Method parameters and return types are omitted to keep the diagram compact; the existing `Model` interface is shown without its methods.
+
+<puml src="diagrams/ImportFeatureClassDiagram.puml" alt="CSV import classes showing command delegation, candidate parsing, and model and storage interfaces" />
+
+The following sequence diagram shows how an import request reaches storage and updates the model. It highlights the boundary between validation, which does not mutate the model, and application and saving, which require rollback on failure. Command parsing and lower-level CSV and JSON processing are omitted to focus on this coordination.
+
+<puml src="diagrams/ImportSequenceDiagram.puml" alt="CSV import sequence showing validation before model updates, saving, and the rollback boundary" />
+
 `StorageManager` delegates reading `import.csv` to `CsvImportReader`. Missing files and read failures produce an error explaining the problem and expected path. HRvest reads the file into a bounded buffer and parses only that copy; later edits do not affect the buffered data. `CandidateCsvParser` uses `StrictCsvParser` to parse the buffered CSV and validates candidate fields through the existing command/model rules. Import and export share their headers through `CandidateCsvFormat`.
 
 HRvest does not lock the file or check for concurrent changes: these may cause a normal read/validation error or go undetected and import valid-looking altered data. HRvest does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify saved JSON or run another HRvest instance against the same saved data during import.
