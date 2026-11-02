@@ -197,7 +197,7 @@ The `Model` enforces email-only uniqueness through `Person.isSamePerson`, using 
 
 <panel header="Name matching and validation" type="seamless">
 
-* Role lookup keys use Unicode NFC before case conversion; display names and IDs retain their stored values. Catalogs with canonical name collisions are rejected through the existing paired-file backup path, rather than silently merging identities and assignments.
+* Supported role names use printable ASCII (`U+0020-U+007E`); case-insensitive matching is guaranteed only for ASCII letters. Role lookup keys normalise stored names before case conversion; display names and IDs retain their stored values. Catalogs with normalised name collisions are rejected through the existing paired-file backup path, rather than silently merging identities and assignments.
 * Parsers validate role names through `ParserUtil.parseRoleName`; commands resolve membership through `RoleCatalog` before changing any data. Person edits replace all assignments in one `setPerson` call.
 * `ParserUtil.parseRoleName` also rejects no-break, zero-width and other invisible spaces, because they would let a pasted name look blank or identical to an existing role. As with the printable-ASCII check for candidate fields, this check is parser-only, so catalog entries saved by earlier versions still load.
 </panel>
