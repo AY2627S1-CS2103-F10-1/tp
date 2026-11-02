@@ -318,6 +318,14 @@ The sequence diagram below shows the flow for a user pressing `Up` twice then `D
 
 Import adds a batch of candidates to the complete address book, regardless of the current filter. `AddressBookParser` uses `ImportCommandParser` to create an `ImportCommand`, and `LogicManager` delegates the operation to `ImportOperation`. `StorageManager` delegates reading `import.csv` to `CsvImportReader`, which reads the file into a bounded buffer so that later edits do not affect the data being parsed. `CandidateCsvParser` uses `StrictCsvParser` on that buffer and validates candidate fields through the existing command and model rules. Import and export share their headers through `CandidateCsvFormat`.
 
+The class diagram below gives a high-level visual overview of the import implementation and its relevant methods, helping developers identify which class to inspect for a particular behaviour. `ImportCommand` requests the operation, while `ImportOperation` coordinates batch combination, model updates, saving and rollback through the `Model` and `Storage` interfaces. Look at `CandidateCsvParser` for candidate validation and role resolution, and `CsvImportReader` for file reading and input checks. Method parameters and return types are omitted to keep the diagram compact; the existing `Model` interface is shown without its methods.
+
+<puml src="diagrams/ImportFeatureClassDiagram.puml" alt="CSV import classes showing command delegation, candidate parsing, and model and storage interfaces" />
+
+The following sequence diagram shows how an import request reaches storage and updates the model. It highlights the boundary between validation, which does not mutate the model, and application and saving, which require rollback on failure. Command parsing and lower-level CSV and JSON processing are omitted to focus on this coordination.
+
+<puml src="diagrams/ImportSequenceDiagram.puml" alt="CSV import sequence showing validation before model updates, saving, and the rollback boundary" />
+
 `ImportOperation` validates the whole file, then checks for duplicates within the batch and against existing candidates, before updating the model and saving through storage. It manages its own rollback because import bypasses `LogicManager`'s ordinary save path: reading or validation failures leave the model unchanged, and application or save failures restore the previous data and view. Success shows the full candidate list and exits expanded view.
 
 **Why roles are matched by name.** The CSV identifies roles by name, not by catalog ID, because the file may be imported into an HRvest whose catalog has different IDs or lacks those roles. `ImportOperation` passes the current catalog to `CandidateCsvParser`, which matches names as role commands do and creates each unknown name once, so records naming `QA` and `qa` share one new role. The new roles are added to the catalog in the same model update and save as the candidates, so a failure rolls both back. Creating roles, rather than rejecting the import as `add` does, lets an export restore on a fresh installation; the success message names the created roles so that a misspelt name is noticed.
@@ -330,6 +338,10 @@ Import adds a batch of candidates to the complete address book, regardless of th
 </panel>
 
 See the [User Guide](UserGuide.md#importing-candidates-import) for import limits and usage restrictions.
+
+#### Design considerations
+
+**Generous but bounded imports:** The resource limits are intended to accommodate reasonable candidate batches and field values for HRvest's target users, rather than narrowly restrict valid recruitment data. For example, an import can contain up to 10,000 candidates in a 10 MiB file, with up to 65,536 Unicode characters per decoded field before trimming. Inputs beyond these bounds are considered outside the reasonable workload supported by this desktop application; rejecting them during reading or parsing bounds resource use instead of allowing arbitrarily large inputs to consume memory or processing time. This is a supported-workload decision, not a claim that larger datasets are inherently invalid. Existing field-validation rules still apply, and even files exported by HRvest must satisfy the import limits before they can be imported again.
 
 #### Import CSV format and validation
 
@@ -363,9 +375,17 @@ Existing field rules apply, including trimming as in commands. The file must sti
 
 ### CSV export
 
-The `export` command creates a CSV copy of all candidate records, regardless of the current search or filter. It leaves the application's data and current view unchanged. `ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
+The `export` command creates a CSV copy of all candidate records, regardless of the current search or filter. It leaves the application's data and current view unchanged.
+
+`ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
+
+The class diagram below gives a high-level visual overview of the export implementation and its relevant methods, helping developers identify which class to inspect for a particular behaviour. Look at `ExportCommandParser` for command parsing, `ExportCommand` and `CommandResult` for requesting an export, and `LogicManager` for coordinating the operation and reporting its result. `StorageManager` delegates the export to `CsvExportWriter`, which handles destination resolution, CSV formatting and file writing. Method parameters and return types are omitted to keep the diagram compact.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
+
+The sequence diagram below shows how the export request reaches storage and returns the destination path. `LogicManager` returns the export result immediately, bypassing ordinary JSON saving because export does not change persisted candidate data. Command parsing and file-handling internals are omitted.
+
+<puml src="diagrams/ExportSequenceDiagram.puml" alt="CSV export sequence showing command delegation to storage and the return path without JSON saving" />
 
 The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark because, without it, Excel reads the file as ANSI and garbles non-ASCII text.
 

@@ -39,7 +39,7 @@ HRvest is a **desktop application that helps hiring managers at startups track c
 
    * `exit` : Exits the app.
 
-1. Refer to [Understanding the screen](#understanding-the-screen) and the [Features](#features) section below for details of each command.
+1. Refer to [Understanding the screen](#understanding-the-screen) and the [Commands](#commands) section below for details of each command, and [Your data](#your-data) for saving and editing the data file.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 --------------------------------------------------------------------------------------------------------------------
 
-## Features
+## Commands
 
 <box type="info" seamless>
 

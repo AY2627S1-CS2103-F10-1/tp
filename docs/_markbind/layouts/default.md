@@ -30,7 +30,7 @@
 * [User Guide]({{ baseUrl }}/UserGuide.html) :expanded:
   * [Quick Start]({{ baseUrl }}/UserGuide.html#quick-start)
   * [Understanding the screen]({{ baseUrl }}/UserGuide.html#understanding-the-screen)
-  * [Features]({{ baseUrl }}/UserGuide.html#features)
+  * [Commands]({{ baseUrl }}/UserGuide.html#commands)
   * [Your data]({{ baseUrl }}/UserGuide.html#your-data)
   * [FAQ]({{ baseUrl }}/UserGuide.html#faq)
   * [Command Summary]({{ baseUrl }}/UserGuide.html#command-summary)

@@ -15,6 +15,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import seedu.address.logic.commands.AddRoleCommand;
+import seedu.address.logic.commands.FilterCommand;
+import seedu.address.logic.commands.ListRoleCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.ArgumentTokenizer;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -24,9 +27,10 @@ import seedu.address.model.ReadOnlyAddressBook;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.role.Role;
+import seedu.address.model.role.RoleCatalog;
 import seedu.address.storage.JsonAddressBookStorage;
-import seedu.address.storage.JsonUserPrefsStorage;
 import seedu.address.storage.StorageManager;
+import seedu.address.testutil.LogicTestFixture;
 
 /** Exercises role assignment commands, active filters, and coordinated persistence together. */
 class CandidateRolesIntegrationTest {
@@ -37,15 +41,15 @@ class CandidateRolesIntegrationTest {
     Path directory;
 
     private ModelManager model;
-    private LogicManager logic;
+    private Logic logic;
     private StorageManager storage;
 
     @BeforeEach
     void setUp() throws Exception {
-        storage = new StorageManager(new JsonAddressBookStorage(directory.resolve("HRvest.json")),
-                new JsonUserPrefsStorage(directory.resolve("preferences.json")));
         model = new ModelManager();
-        logic = new LogicManager(model, storage);
+        LogicTestFixture fixture = new LogicTestFixture(directory, model, "HRvest.json");
+        storage = fixture.getStorage();
+        logic = fixture.getLogic();
         logic.execute("add_role n/Developer");
         logic.execute("add_role n/Designer");
         logic.execute("add_role n/Unused");
@@ -94,7 +98,7 @@ class CandidateRolesIntegrationTest {
     @Test
     void execute_addUnknownRole_preservesBothFiles() throws Exception {
         assertRejectedWithoutChanges(ALICE + " r/Developer r/Missing",
-                "Role does not exist: Missing. Use add_role n/NAME.");
+                unknownRoleMessage("Missing", AddRoleCommand.MESSAGE_USAGE));
     }
 
     @Test
@@ -128,7 +132,7 @@ class CandidateRolesIntegrationTest {
     void execute_editUnknownRole_rejectsOtherFieldChangesToo() throws Exception {
         logic.execute(ALICE + " r/Developer");
         assertRejectedWithoutChanges("edit 1 p/789 r/Designer r/Missing",
-                "Role does not exist: Missing. Use add_role n/NAME.");
+                unknownRoleMessage("Missing", AddRoleCommand.MESSAGE_USAGE));
     }
 
     @Test
@@ -137,10 +141,10 @@ class CandidateRolesIntegrationTest {
         logic.execute(BOB + " r/Designer");
         logic.execute("find Nobody");
 
-        assertEquals("2 candidate(s) filtered with role(s): Designer or Developer",
+        assertEquals(String.format(FilterCommand.MESSAGE_ROLE_SUCCESS, 2, "Designer or Developer"),
                 logic.execute("filter r/developer r/Developer r/Designer").getFeedbackToUser());
         assertEquals(2, model.getFilteredPersonList().size());
-        assertEquals("0 candidate(s) filtered with role(s): Unused",
+        assertEquals(String.format(FilterCommand.MESSAGE_ROLE_SUCCESS, 0, "Unused"),
                 logic.execute("filter r/Unused").getFeedbackToUser());
         assertTrue(model.getFilteredPersonList().isEmpty());
     }
@@ -150,8 +154,8 @@ class CandidateRolesIntegrationTest {
         logic.execute(ALICE + " r/Developer s/Interviewing");
         logic.execute(BOB + " r/Designer s/Applied");
 
-        assertEquals("1 candidate(s) filtered with status(es): Interviewing or Offered"
-                + " and role(s): Designer or Developer",
+        assertEquals(String.format(FilterCommand.MESSAGE_COMBINED_SUCCESS, 1, "Interviewing or Offered",
+                "Designer or Developer"),
                 logic.execute("filter r/Developer r/Designer s/Interviewing s/Offered").getFeedbackToUser());
         assertEquals(List.of(getFirstPerson()), model.getFilteredPersonList());
     }
@@ -173,7 +177,7 @@ class CandidateRolesIntegrationTest {
         logic.execute(ALICE + " r/Developer");
         logic.execute("expand 1");
         assertRejectedWithoutChanges("filter r/Developer r/Missing",
-                "Role does not exist: Missing. Use list_role.");
+                unknownRoleMessage("Missing", ListRoleCommand.COMMAND_WORD));
         assertTrue(model.isExpandedViewProperty().get());
         assertEquals(List.of(getFirstPerson()), model.getFilteredPersonList());
     }
@@ -245,8 +249,7 @@ class CandidateRolesIntegrationTest {
                 throw new IOException("Test save failure");
             }
         };
-        LogicManager failingLogic = new LogicManager(model, new StorageManager(failingStorage,
-                new JsonUserPrefsStorage(directory.resolve("preferences.json"))));
+        Logic failingLogic = new LogicTestFixture(directory, model, failingStorage).getLogic();
 
         assertThrows(CommandException.class, () -> failingLogic.execute("edit 1 r/Designer"));
 
@@ -260,13 +263,17 @@ class CandidateRolesIntegrationTest {
     void execute_restart_preservesAssignmentsAndAllowsFurtherEdits() throws Exception {
         logic.execute(ALICE + " r/Developer r/Designer");
         ModelManager restarted = new ModelManager(storage.readAddressBook().orElseThrow(), new UserPrefs());
-        LogicManager restartedLogic = new LogicManager(restarted, storage);
+        Logic restartedLogic = new LogicTestFixture(directory, restarted, "HRvest.json").getLogic();
 
         restartedLogic.execute("filter r/developer");
         assertEquals(List.of(getFirstPerson()), restarted.getFilteredPersonList());
         restartedLogic.execute("edit 1 r/No role");
         assertEquals(Set.of(Role.NO_ROLE), storage.readAddressBook().orElseThrow()
                 .getPersonList().getFirst().getRoles());
+    }
+
+    private static String unknownRoleMessage(String name, String suggestion) {
+        return String.format(RoleCatalog.MESSAGE_UNKNOWN_ROLE, name) + ". Use " + suggestion + ".";
     }
 
     private Role getRole(String name) {
