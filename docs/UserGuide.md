@@ -124,7 +124,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 * Extraneous parameters for `help`, `list`, `exit`, `export` and `import` are ignored. For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and `list_role` rejects all arguments.
 
-* If you copy commands from the PDF version of this document, spaces around line breaks may be lost.
+* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines, as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
 <box type="warning">
@@ -226,14 +226,14 @@ Examples:
 * **Address:** spaces and punctuation are allowed.
 * **Role:** matching ignores case and surrounding whitespace.
 * **Status:** input ignores letter case, so `s/interviewing` is saved and shown as `Interviewing`. A bare `s/` is invalid rather than using the default.
-* **Tags:** a non-blank label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`, `t/machine learning`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Repeat the prefix for several tags: `t/C++ t/machine learning`. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`. A recognised prefix preceded by a space starts another field even inside a tag: `t/machine learning n/Alice` sets the tag to `machine learning` and the name to `Alice`. Quoting does not escape prefixes.
+* **Tags:** a non-blank printable-ASCII label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`, `t/machine learning`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Repeat the prefix for several tags: `t/C++ t/machine learning`. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`. A recognised prefix preceded by a space starts another field even inside a tag: `t/machine learning n/Alice` sets the tag to `machine learning` and the name to `Alice`. Quoting does not escape prefixes.
 </panel>
 
 <panel header="Errors, duplicates and unknown prefixes" type="seamless">
 
 * The error message lists all missing required parameters together. Bare `add` reports `Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS, r/ROLE. Use r/No role if no role applies.` The command `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
 * **Duplicates:** email alone identifies duplicates. Surrounding whitespace is trimmed and the whole email is compared ignoring case, so `Alice@Example.com` and `alice@example.com` are the same candidate. A duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` is the existing matching record, even if hidden by a filter. Nothing is changed. Names, phones, addresses, statuses, roles, tags and notes do not affect duplicate detection, so two candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
-* **Unknown prefixes** such as `x/` are treated as part of the preceding value. A recognised prefix preceded by whitespace starts a new field even inside an address: `a/Unit n/a` sets the name to `a`. See [Typing values](#typing-values) for how to keep such text.
+* **Unknown prefixes** such as `x/` are treated as part of the preceding value. A recognised prefix preceded by whitespace starts a new field even inside an address: `a/Unit n/a` sets the name to `a`. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`. See [Typing values](#typing-values) for how to keep such text.
 * `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Text such as `yes/no/feedback` inside an address word remains literal address text.
 </panel>
 
