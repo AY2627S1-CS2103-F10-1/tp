@@ -100,7 +100,7 @@ The sequence diagram below illustrates the interactions within the `Logic` compo
 
 <puml src="diagrams/DeleteSequenceDiagram.puml" alt="Interactions Inside the Logic Component for the `delete 1` Command" />
 
-<box type="info" seamless>
+<box type="info">
 
 **Note:** The lifeline for `DeleteCommandParser` should end at the destroy marker (X), but due to a limitation of PlantUML, it continues to the end of the diagram.
 </box>
@@ -199,7 +199,10 @@ The `Storage` component,
 * is implemented by `StorageManager`, which coordinates candidate and role files through `RoleDataStorage` and delegates preference storage to `JsonUserPrefsStorage`.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
-Storage favours not losing data. Saves never overwrite a file in place (they write a temporary file and atomically replace the original), `MainApp` takes an operating-system lock on the data folder so two instances cannot corrupt each other, and an unreadable data file is backed up before HRvest starts with an empty list.
+<box type="info">
+
+**Design goal:** Storage favours not losing data. Saves never overwrite a file in place (they write a temporary file and atomically replace the original), `MainApp` takes an operating-system lock on the data folder so two instances cannot corrupt each other, and an unreadable data file is backed up before HRvest starts with an empty list.
+</box>
 
 <panel header="Storage safety details: atomic saves, the data-directory lock, and startup recovery" type="seamless">
 
@@ -389,7 +392,10 @@ The sequence diagram below shows how the export request reaches storage and retu
 
 The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark because, without it, Excel reads the file as ANSI and garbles non-ASCII text.
 
+<box type="warning">
+
 **Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users to import columns as text instead, which preserves leading zeroes in phone numbers and stops formula-like stored text from being interpreted as formulas. Spreadsheet auto-detection can still alter values when the file is opened directly.
+</box>
 
 <panel header="Output format and failure handling" type="seamless">
 
@@ -678,7 +684,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User requests to view the full details of a candidate.
+1. User requests to view the full details of a candidate profile.
 1. HRvest shows the candidate's full details, including their note.
 
    Use case ends.
@@ -876,10 +882,15 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 ### Glossary
 
 * **Candidate**: A person being considered for an open role.
+* **Open role**: A position for which the startup is currently recruiting.
 * **Role catalog**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
+* **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
+* **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
+* **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
 * **Candidate details**: A candidate's name, phone number, email address, address, status, roles and tags.
 * **Candidate status**: One of Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, or Withdrawn.
 * **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, roles, tags or notes, affect duplicate detection.
+* **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
 
 --------------------------------------------------------------------------------------------------------------------
@@ -888,7 +899,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 Given below are instructions to test the app manually.
 
-<box type="info" seamless>
+<box type="info">
 
 **Note:** These instructions only provide a starting point for testers to work on;
 testers are expected to do more *exploratory* testing.
@@ -1040,7 +1051,10 @@ testers are expected to do more *exploratory* testing.
 
 ### Managing roles
 
-Use a separate test folder and keep a matching backup of candidate and catalog files.
+<box type="warning">
+
+**Caution:** Use a separate test folder and keep a matching backup of candidate and catalog files.
+</box>
 
 1. Run `add_role n/Documentation Tester`, then `list_role`. Expected: The unused role appears once. Restart and list again; it remains available.
 1. Create at least five short roles and run `list_role` at the default window size. Expected: The result area grows so more than two role names are visible without scrolling, while candidate cards remain visible. Run `list`; the result area returns to its ordinary height. Repeat with many roles or a long wrapping name; the result area stays bounded and scrolling reaches the final role. Resize the window and confirm neither feedback nor candidate cards become inaccessible.
@@ -1052,6 +1066,11 @@ Use a separate test folder and keep a matching backup of candidate and catalog f
 1. Run `delete_role r/No role`. Expected: An error leaves the built-in role intact. Run `clear confirm`, then `list_role`. Expected: Candidates are removed while remaining catalog entries survive. Restore both test files together after testing.
 
 ### Saving data
+
+<box type="warning">
+
+**Caution:** These tests deliberately damage data files. Run them only on a copy, and restore the matching backups of `data/HRvest.json` and `data/roles.json` together afterwards.
+</box>
 
 1. Checking null entries in a test copy of the data file
 

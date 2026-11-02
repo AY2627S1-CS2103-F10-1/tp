@@ -41,6 +41,11 @@ HRvest is a **desktop application that helps hiring managers at startups track c
 
 1. Refer to [Understanding the screen](#understanding-the-screen) and the [Commands](#commands) section below for details of each command, and [Your data](#your-data) for saving and editing the data file.
 
+<box type="tip">
+
+**Tip:** The sample candidates appear only when HRvest has no saved data yet. Run `clear confirm` to start with an empty list, then add your own candidates.
+</box>
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Understanding the screen
@@ -53,6 +58,11 @@ HRvest is a **desktop application that helps hiring managers at startups track c
 1. **Count line:** How many candidates are displayed, so you can tell when some are hidden rather than deleted.
 1. **Candidate list:** Each card shows the candidate's index, name, roles (purple badges; `No role` is red), tags (blue badges), phone, address, email and status.
 1. **Note icon:** A sticky note beside a name means the candidate has a note. Hover over it to see `Note available`. Use `expand INDEX` to read the note.
+
+<box type="tip">
+
+**Tip:** The summary cards (1) and the count line (4) show when a search or filter is hiding candidates. Type `list` to show everyone again.
+</box>
 
 <panel header="Summary cards in detail" type="seamless">
 
@@ -91,7 +101,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 ## Commands
 
-<box type="info" seamless>
+<box type="info">
 
 **Notes about the command format:**
 
@@ -117,7 +127,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 * If you copy commands from the PDF version of this document, spaces around line breaks may be lost.
 </box>
 
-<box type="warning" seamless>
+<box type="warning">
 
 **Check your list before using an index.** `edit`, `note`, `status`, `delete` and `expand` all act on the displayed list, which changes after `find`, `filter`, `expand` and updates that make a candidate stop matching. Look at the list, then pick the index. Use `list` to show all candidates again.
 </box>
@@ -197,8 +207,12 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 | `t/TAG` | No | A short label, e.g. `t/C++` or `t/machine learning`; repeat `t/` for several |
 
 * Supply each of `n/`, `p/`, `e/`, `a/` and `s/` at most once; `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even with identical values.
-* Create named roles with `add_role` before assigning them. An unknown role or a bare `r/` is rejected.
 * An email already used by another candidate is rejected (see the details below).
+
+<box type="tip">
+
+**Tip:** Create named roles with `add_role` before assigning them, or use `r/No role`. An unknown role or a bare `r/` is rejected.
+</box>
 
 Examples:
 
@@ -242,10 +256,13 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [
 
 * Edits the candidate at the specified `INDEX` in the displayed list. At least one optional field must be provided.
 * Existing values are replaced by the input values.
-* Supplied `r/` values replace all existing roles; omitting `r/` keeps them. A bare `r/` is invalid; use `r/No role` to remove named roles.
-* Supplied `t/` values replace all existing tags (they do not add to them). Enter `t/` with nothing after it to remove all tags.
 * Keeps the current filter or expanded view (see [common rules](#common-rules)).
 * `edit` does not change notes; use the `note` command.
+
+<box type="warning">
+
+**Caution:** `edit` **replaces** roles and tags instead of adding to them. Supplied `r/` values replace all existing roles (omit `r/` to keep them; a bare `r/` is invalid, so use `r/No role` to remove named roles). Supplied `t/` values replace all existing tags; enter `t/` with nothing after it to remove all tags. To keep existing ones, include them again.
+</box>
 
 Examples:
 
@@ -281,7 +298,7 @@ Examples:
 * `note 2 no/` clears the 2nd displayed candidate's note. The note icon disappears; expanding the candidate shows `No note recorded.`
 * `find Betsy` followed by `note 1 no/Follow up next week` adds a note to the 1st candidate in the `find` results.
 
-<box type="warning" seamless>
+<box type="warning">
 
 **Caution:** Replacing or removing a note deletes the previous note permanently. To keep earlier information, include it in the new note.
 </box>
@@ -325,7 +342,11 @@ Format: `find KEYWORD [MORE_KEYWORDS]`
 * The search is case-insensitive (`hans` matches `Hans`) and keyword order does not matter (`Hans Bo` matches `Bo Hans`).
 * Only names are searched. A keyword matches the **start** of any word in a name: `Han` matches `Hans`, but `ans` does not.
 * Candidates matching at least one keyword are returned (an `OR` search): `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
-* Each `find` replaces the previous search or filter and considers all candidates, so `find` and `filter` cannot be combined. For example, `filter s/Interviewing` followed by `find Alex` shows every candidate matching `Alex`, whatever their status.
+
+<box type="info">
+
+**Note:** Each `find` replaces the previous search or filter and considers all candidates, so `find` and `filter` cannot be combined. For example, `filter s/Interviewing` followed by `find Alex` shows every candidate matching `Alex`, whatever their status.
+</box>
 
 Examples:
 
@@ -348,8 +369,12 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 * Supply at least one status or role.
 * Repeat `s/` or `r/` to match any value within that field (`OR`). If both fields are supplied, a candidate must match a specified status **and** a specified role (`AND`).
 * Status and role matching ignore case. Roles must exist in the catalog.
-* Each `filter` replaces the previous search or filter and considers all candidates, so `filter` and `find` cannot be combined. For example, `find Alex` followed by `filter r/Developer` shows every Developer, not only those matching `Alex`.
 * Invalid input leaves the displayed list unchanged. If no candidates match, the result count is zero.
+
+<box type="info">
+
+**Note:** Each `filter` replaces the previous search or filter and considers all candidates, so `filter` and `find` cannot be combined. For example, `find Alex` followed by `filter r/Developer` shows every Developer, not only those matching `Alex`.
+</box>
 
 Examples (create `Developer` and `Designer` first):
 
@@ -379,6 +404,11 @@ Format: `delete INDEX`
 
 * Deletes the candidate at the specified `INDEX` in the displayed list.
 * After `expand`, deleting the expanded candidate shows all remaining candidates again.
+
+<box type="warning">
+
+**Caution:** Deleting a candidate also deletes their note, and cannot be undone. Use `export` first if you may need the record again.
+</box>
 
 Examples:
 
@@ -458,6 +488,11 @@ Format: `delete_role r/NAME`
 * The role must exist and must not be `No role`.
 * Candidates keep their other roles. Those losing their last role receive `No role`. Keeps the current filter or expanded view.
 
+<box type="warning">
+
+**Caution:** The role is removed from every candidate who has it, and this cannot be undone.
+</box>
+
 Example: `delete_role r/Senior Software Engineer`
 
 #### Listing the complete catalog: `list_role`
@@ -481,7 +516,7 @@ Format: `clear confirm`
 * `clear confirm` deletes every candidate, including those hidden by the current `find` or `filter`. The message is `All candidates have been cleared.`
 * `confirm` ignores letter case. Any other text after `clear` is rejected. If there are no candidates, both forms reply `There are no candidates to clear.`
 
-<box type="warning" seamless>
+<box type="warning">
 
 **Caution:** Clearing cannot be undone. Use `export` first if you may need the candidates again.
 </box>
@@ -496,7 +531,7 @@ Format: `export`
 * The CSV has the columns `name,phone,email,address,status,tags,note,roles`, in that order.
 * Success displays `Exported successfully to PATH.` with the absolute destination, only after the file has been written and closed. If the address book is empty, `export` writes only the header row.
 
-<box type="warning" seamless>
+<box type="warning">
 
 **Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking and without a backup. Copy or rename the CSV first if you need to keep it.
 </box>
@@ -525,10 +560,14 @@ Appends candidates from `import.csv` to the candidates already in HRvest, keepin
 Format: `import`
 
 * Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is `data/import.csv` in the folder you run HRvest from. The location cannot be changed.
-* The **entire import fails** if any record is invalid or duplicates an email (ignoring case) in the CSV or in **any** HRvest candidate, including those hidden by filters. Records are never skipped or merged.
 * The `roles` column lists at least one role name; use `["No role"]` if none applies. A name that matches no existing role is created as a new role, so an export can be imported into an HRvest that does not have its roles yet.
 * Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.`), saves, clears filters, leaves expanded view and shows all candidates. If the import created roles, the message names them, for example `Imported 2 candidates successfully. Created role: QA.`
 * `import.csv` is never modified. On failure, HRvest reports the error and restores your data, filter and expanded view as they were.
+
+<box type="info">
+
+**Note:** The **entire import fails** if any record is invalid or duplicates an email (ignoring case) in the CSV or in **any** HRvest candidate, including those hidden by filters. Records are never skipped or merged.
+</box>
 
 Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the header unchanged, and replace the example row with your candidate's details. An empty note means no note; use `[]` for no tags and `["No role"]` for no role.
 
@@ -597,7 +636,7 @@ Advanced users may edit the JSON files in the `data` folder. Invalid edits can m
 1. Back up both data files together.
 1. Edit the files, then restart HRvest to check your changes.
 
-<box type="warning" seamless>
+<box type="warning">
 
 **Caution:** One invalid value in **any** candidate, such as a phone number with fewer than three digits, stops the whole file from loading. HRvest then starts with an empty candidate list and the default role catalog, after backing up your files and showing their location.
 </box>
