@@ -157,7 +157,7 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 
 #### Displayed-index validation
 
-`status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report non-positive and out-of-range indexes the same way (`expand` has its own message for a non-numeric index). The exact messages are in the User Guide's [common rules](UserGuide.md#common-rules). A rejected command leaves candidate data, filters, and the expanded view unchanged.
+`status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report non-positive indexes, and indexes too large for an `int`, the same way. `expand` differs in two respects: it has its own message for a non-numeric index, and it checks the displayed list itself, so an index beyond the list gives `No candidate found with that index. Enter an index between 1 and N.` instead of the shared invalid-index message. The exact messages are in the User Guide's [common rules](UserGuide.md#common-rules). A rejected command leaves candidate data, filters, and the expanded view unchanged.
 
 * A number too large for an `int` is reported as an out-of-range index rather than a format error, because no displayed list can be that long.
 * A known numeric problem, such as `0`, is reported instead of the generic `Invalid command format!`, so the user knows exactly what to fix.
@@ -1110,7 +1110,7 @@ Given below are instructions to test the app manually.
    Expected: A help window shows the User Guide's URL and a **Copy URL** button.
 1. Summary cards: Widen the window until all cards appear, then run `filter s/Interviewing` and `find Alex`; add, update a status, delete and clear candidates; then narrow the window.<br>
    Expected: One Total candidates card and one card per status appear, including statuses with zero. Shown counts match the displayed list while overall counts include hidden candidates, and all counts update after each change. When the window is too narrow, all cards disappear together and the logo stays; widening restores them with current counts.
-1. Command history: Run `list`, then `find Alex`, then type `fin` without pressing Enter. Press `Up` three times, then `Down` twice.<br>
+1. Command history: Restart HRvest so that the history is empty, then run `list`, then `find Alex`, then type `fin` without pressing Enter. Press `Up` three times, then `Down` twice.<br>
    Expected: `Up` shows `find Alex`, then `list`, and stays on `list` at the earliest entry. `Down` returns to `find Alex`, then restores the `fin` draft (or clears the box if there was none).
 1. Run a mistyped command such as `filtwr s/Applied`, then press `Up`.<br>
    Expected: The rejected command stays in the box in red so that you can fix it, and `Up` shows the command before it (`find Alex`).
