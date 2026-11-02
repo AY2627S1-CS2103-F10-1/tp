@@ -29,8 +29,9 @@
 * [Home]({{ baseUrl }}/index.html)
 * [User Guide]({{ baseUrl }}/UserGuide.html) :expanded:
   * [Quick Start]({{ baseUrl }}/UserGuide.html#quick-start)
+  * [Understanding the screen]({{ baseUrl }}/UserGuide.html#understanding-the-screen)
   * [Commands]({{ baseUrl }}/UserGuide.html#commands)
-  * [Other Features]({{ baseUrl }}/UserGuide.html#other-features)
+  * [Your data]({{ baseUrl }}/UserGuide.html#your-data)
   * [FAQ]({{ baseUrl }}/UserGuide.html#faq)
   * [Command Summary]({{ baseUrl }}/UserGuide.html#command-summary)
 * [Developer Guide]({{ baseUrl }}/DeveloperGuide.html) :expanded:
