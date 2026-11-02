@@ -219,6 +219,11 @@ Role filters retain IDs rather than `Role` objects because role equality include
 
 <puml src="diagrams/StorageClassDiagram.puml" width="700" />
 
+<box type="info">
+
+**Note:** The `reads / writes` label applies only to the dashed arrow from `RoleDataStorage` to `JsonRoleCatalog`. Due to a limitation of PlantUML, it is drawn between that arrow and the solid arrow to `JsonAddressBookStorage`.
+</box>
+
 The `Storage` component,
 * can save both address book data and user preference data in JSON format, and read them back into corresponding objects.
 * is implemented by `StorageManager`, which coordinates candidate and role files through `RoleDataStorage` and delegates preference storage to `JsonUserPrefsStorage`.

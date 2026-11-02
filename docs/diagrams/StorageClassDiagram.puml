@@ -44,7 +44,7 @@ StorageManager -down-> "1" RoleDataStorage
 StorageManager ..> CsvExportWriter
 StorageManager ..> CsvImportReader
 RoleDataStorage --> "1" JsonAddressBookStorage
-RoleDataStorage ..> JsonRoleCatalog : reads / writes
+RoleDataStorage .down.> JsonRoleCatalog : "reads / writes     "
 note bottom of RoleDataStorage
   Rollback journal coordinates
   two atomic file replacements;
