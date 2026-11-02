@@ -94,6 +94,16 @@ public class CommandHistory {
         }
     }
 
+    /** Returns true if {@link #previous()} would move the cursor onto an earlier entry. */
+    public boolean canGoBack() {
+        return cursor > 0;
+    }
+
+    /** Returns true if {@link #next()} would move the cursor forward, including to past-the-end. */
+    public boolean canGoForward() {
+        return cursor < entries.size();
+    }
+
     /**
      * Returns an immutable copy of the recorded entries, oldest first.
      * Changes to the history after this call do not appear in the returned list.
