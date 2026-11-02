@@ -11,6 +11,7 @@ import static seedu.address.logic.commands.CommandTestUtil.NAME_DESC_AMY;
 import static seedu.address.logic.commands.CommandTestUtil.PHONE_DESC_AMY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_STATUS;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 import static seedu.address.testutil.TypicalPersons.AMY;
 
 import java.io.IOException;
@@ -200,11 +201,12 @@ public class LogicManagerTest {
     @Test
     public void execute_phoneWithTooFewDigits_preservesSavedAndDisplayedData() throws Exception {
         logic.execute("add n/Phone Test p/+65 9123 4567 e/phone@example.com a/Block 1 r/No role");
-        String before = Files.readString(fixture.getCandidateStorage().getAddressBookFilePath());
+        Path savedPath = fixture.getCandidateStorage().getAddressBookFilePath();
+        String before = Files.readString(savedPath);
 
         assertParseException("edit 1 p/Office: 12", Phone.MESSAGE_CONSTRAINTS);
 
-        assertEquals(before, Files.readString(fixture.getCandidateStorage().getAddressBookFilePath()));
+        assertEquals(before, Files.readString(savedPath));
         assertEquals("+65 9123 4567", model.getFilteredPersonList().getFirst().getPhone().value);
     }
 
@@ -250,9 +252,9 @@ public class LogicManagerTest {
                 result.getFeedbackToUser());
         assertEquals(List.of(existing, expected), model.getFilteredPersonList());
         assertEquals(Status.APPLIED, model.getFilteredPersonList().get(1).getStatus());
-        assertEquals(model.getAddressBook(), fixture.readSaved());
-        assertEquals(Status.APPLIED,
-                fixture.readSaved().getPersonList().get(1).getStatus());
+        ReadOnlyAddressBook saved = fixture.readSaved();
+        assertEquals(model.getAddressBook(), saved);
+        assertEquals(Status.APPLIED, saved.getPersonList().get(1).getStatus());
     }
 
     @Test
@@ -261,8 +263,9 @@ public class LogicManagerTest {
                 + ADDRESS_DESC_AMY + " s/  iNtErViEwInG  ");
 
         assertEquals(Status.INTERVIEWING, model.getFilteredPersonList().get(0).getStatus());
-        assertEquals(Status.INTERVIEWING,
-                fixture.readSaved().getPersonList().get(0).getStatus());
+        Status savedStatus = fixture.readSaved().getPersonList().getFirst().getStatus();
+        assertEquals(Status.INTERVIEWING, savedStatus);
+        assertEquals("Interviewing", savedStatus.toString());
     }
 
     @Test
@@ -359,7 +362,7 @@ public class LogicManagerTest {
 
         assertEquals(expectedMessage, result.getFeedbackToUser());
         assertEquals(Status.OFFERED, model.getFilteredPersonList().get(0).getStatus());
-        assertEquals(Status.OFFERED, fixture.readSaved().getPersonList().get(0).getStatus());
+        assertEquals(Status.OFFERED, fixture.readSaved().getPersonList().getFirst().getStatus());
     }
 
     @Test
@@ -392,28 +395,29 @@ public class LogicManagerTest {
         assertParseException("status 1 s/Hired", Status.MESSAGE_CONSTRAINTS);
 
         assertEquals(Status.APPLIED, model.getFilteredPersonList().get(0).getStatus());
-        assertFalse(fixture.getStorage().readAddressBook().isPresent());
+        assertFalse(fixture.getCandidateStorage().readAddressBook().isPresent());
     }
 
     @Test
     public void execute_expandCommand_preservesStoredData() throws Exception {
         Person candidate = new PersonBuilder().withNote("Feedback\n" + "x".repeat(490)).build();
         model.addPerson(candidate);
-        fixture.getStorage().saveAddressBook(model.getAddressBook());
-        String original = Files.readString(fixture.getCandidateStorage().getAddressBookFilePath());
+        JsonAddressBookStorage saved = fixture.getCandidateStorage();
+        saved.saveAddressBook(model.getAddressBook());
+        String original = Files.readString(saved.getAddressBookFilePath());
 
         CommandResult result = logic.execute("expand 1");
 
         assertEquals("Expanding candidate: " + candidate.getName() + ".", result.getFeedbackToUser());
         assertTrue(logic.isExpandedViewProperty().get());
-        assertEquals(original, Files.readString(fixture.getCandidateStorage().getAddressBookFilePath()));
+        assertEquals(original, Files.readString(saved.getAddressBookFilePath()));
         assertEquals(model.getAddressBook(), fixture.readSaved());
     }
 
     @Test
     public void execute_invalidExpand_preservesCurrentView() throws Exception {
         model.addPerson(new PersonBuilder().build());
-        new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")).saveAddressBook(model.getAddressBook());
+        fixture.getCandidateStorage().saveAddressBook(model.getAddressBook());
         logic.execute("expand 1");
         Path savedPath = temporaryFolder.resolve("addressBook.json");
         String savedData = Files.readString(savedPath);
@@ -522,8 +526,7 @@ public class LogicManagerTest {
         Person first = new PersonBuilder().withNote("Keep this note").build();
         model.addPerson(first);
         model.addPerson(new PersonBuilder().withEmail("other@example.com").build());
-        new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"))
-                .saveAddressBook(model.getAddressBook());
+        fixture.getCandidateStorage().saveAddressBook(model.getAddressBook());
         return first;
     }
 
@@ -535,23 +538,23 @@ public class LogicManagerTest {
         List<Person> displayed = List.copyOf(model.getFilteredPersonList());
         boolean expanded = model.isExpandedViewProperty().get();
 
-        for (String command : List.of("status 0 s/Offered", "status -1 s/Offered",
+        assertAllCases(List.of("status 0 s/Offered", "status -1 s/Offered",
                 "status 99999999999 s/Offered", "note 0 no/replacement",
-                "note 99999999999 no/replacement", "expand 0", "expand 99999999999")) {
-            assertThrows(ParseException.class, () -> logic.execute(command));
-            assertEquals(before, model.getAddressBook());
-            assertEquals(displayed, model.getFilteredPersonList());
-            assertEquals(expanded, model.isExpandedViewProperty().get());
-            assertEquals(saved, Files.readString(savedPath));
-        }
-        for (String command : List.of("status 2147483647 s/Offered", "note 2147483647 no/replacement",
-                "expand 2147483647")) {
-            assertThrows(CommandException.class, () -> logic.execute(command));
-            assertEquals(before, model.getAddressBook());
-            assertEquals(displayed, model.getFilteredPersonList());
-            assertEquals(expanded, model.isExpandedViewProperty().get());
-            assertEquals(saved, Files.readString(savedPath));
-        }
+                "note 99999999999 no/replacement", "expand 0", "expand 99999999999"), command -> {
+                assertThrows(ParseException.class, () -> logic.execute(command));
+                assertEquals(before, model.getAddressBook());
+                assertEquals(displayed, model.getFilteredPersonList());
+                assertEquals(expanded, model.isExpandedViewProperty().get());
+                assertEquals(saved, Files.readString(savedPath));
+            });
+        assertAllCases(List.of("status 2147483647 s/Offered", "note 2147483647 no/replacement",
+                "expand 2147483647"), command -> {
+                assertThrows(CommandException.class, () -> logic.execute(command));
+                assertEquals(before, model.getAddressBook());
+                assertEquals(displayed, model.getFilteredPersonList());
+                assertEquals(expanded, model.isExpandedViewProperty().get());
+                assertEquals(saved, Files.readString(savedPath));
+            });
     }
 
     /**

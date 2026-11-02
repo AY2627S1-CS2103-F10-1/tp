@@ -184,13 +184,13 @@ public class NoteIntegrationTest {
         AddressBook before = new AddressBook(model.getAddressBook());
         List<Person> displayedBefore = List.copyOf(model.getFilteredPersonList());
         String fileBefore = Files.readString(addressBookStorage.getAddressBookFilePath());
-        for (String command : List.of("add n/Alice p/123 e/alice@example.com a/Block\u00A01",
-                "edit 1 a/Block\u200B1", "note 1 no/\u200B", "note 1 no/\t", "find Ben\u00A0son")) {
-            assertThrows(ParseException.class, () -> logic.execute(command));
-            assertEquals(before, model.getAddressBook());
-            assertEquals(displayedBefore, model.getFilteredPersonList());
-            assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
-        }
+        assertAllCases(List.of("add n/Alice p/123 e/alice@example.com a/Block\u00A01",
+                "edit 1 a/Block\u200B1", "note 1 no/\u200B", "note 1 no/\t", "find Ben\u00A0son"), command -> {
+                assertThrows(ParseException.class, () -> logic.execute(command));
+                assertEquals(before, model.getAddressBook());
+                assertEquals(displayedBefore, model.getFilteredPersonList());
+                assertEquals(fileBefore, Files.readString(addressBookStorage.getAddressBookFilePath()));
+            });
     }
 
     @Test

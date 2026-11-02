@@ -3,9 +3,13 @@ package seedu.address.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
+import static seedu.address.testutil.TypicalPersons.APPLIED_CANDIDATE;
+import static seedu.address.testutil.TypicalPersons.INTERVIEWING_CANDIDATE;
 
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -38,12 +42,12 @@ public class StatusSummaryCardTest {
     @Test
     public void constructor_emptyLists_includesEveryStatusWithZeroCounts() {
         ObservableList<Person> persons = FXCollections.observableArrayList();
-        for (Status status : Status.values()) {
+        assertAllCases(List.of(Status.values()), status -> {
             StatusSummaryCard card = new StatusSummaryCard(status, persons, persons);
             assertEquals(status.toString(), ((Text) card.getRoot().lookup("#heading")).getText());
             assertEquals(status.name().toLowerCase(Locale.ROOT) + "SummaryCard", card.getRoot().getId());
             assertCount(card, "0 / 0");
-        }
+        });
     }
 
     @Test
@@ -83,17 +87,14 @@ public class StatusSummaryCardTest {
         StatusSummaryCard appliedCard = new StatusSummaryCard(Status.APPLIED, shownPersons, allPersons);
         StatusSummaryCard interviewingCard = new StatusSummaryCard(Status.INTERVIEWING, shownPersons, allPersons);
         StatusSummaryCard offeredCard = new StatusSummaryCard(Status.OFFERED, shownPersons, allPersons);
-        Person applied = new PersonBuilder().withEmail("applied@example.com").build();
-        Person interviewing = new PersonBuilder().withEmail("interviewing@example.com")
-                .withStatus(Status.INTERVIEWING).build();
-        model.addPerson(applied);
-        model.addPerson(interviewing);
+        model.addPerson(APPLIED_CANDIDATE);
+        model.addPerson(INTERVIEWING_CANDIDATE);
         model.updateFilteredPersonList(person -> person.getStatus() == Status.INTERVIEWING);
         assertCount(appliedCard, "0 / 1");
         assertCount(interviewingCard, "1 / 1");
 
-        Person offered = new PersonBuilder(interviewing).withStatus(Status.OFFERED).build();
-        model.setPerson(interviewing, offered);
+        Person offered = new PersonBuilder(INTERVIEWING_CANDIDATE).withStatus(Status.OFFERED).build();
+        model.setPerson(INTERVIEWING_CANDIDATE, offered);
         assertCount(interviewingCard, "0 / 0");
         assertCount(offeredCard, "0 / 1");
 
@@ -127,6 +128,6 @@ public class StatusSummaryCardTest {
     }
 
     private static void assertCount(StatusSummaryCard card, String expected) {
-        assertEquals(expected, card.countTextProperty().get());
+        assertEquals(expected, card.countTextProperty().get(), card.getRoot().getId());
     }
 }

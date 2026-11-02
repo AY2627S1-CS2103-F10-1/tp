@@ -136,11 +136,11 @@ public class CandidateCsvParserTest {
     @Test
     public void parse_invalidEncodingOrDialect_rejects() {
         assertThrows(ParseException.class, () -> parse(new byte[] {(byte) 0xc3, 0x28}));
-        for (String input : List.of(" ", "\ufeff", "\ufeff\ufeff" + HEADER, " \ufeff" + HEADER,
+        assertAllCases(List.of(" ", "\ufeff", "\ufeff\ufeff" + HEADER, " \ufeff" + HEADER,
                 HEADER.replace("name", "Name"), HEADER.replace(",\"roles\"", ""), HEADER + "trailing",
-                HEADER + "\"unterminated")) {
-            assertThrows(ParseException.class, () -> parse(input.getBytes(StandardCharsets.UTF_8)));
-        }
+                HEADER + "\"unterminated"), input -> {
+                    assertThrows(ParseException.class, () -> parse(input.getBytes(StandardCharsets.UTF_8)));
+                });
     }
 
     @Test
@@ -148,16 +148,16 @@ public class CandidateCsvParserTest {
         String header = "name,phone,email,address,status,tags,note,roles";
         String row = "Candidate,12345,candidate@example.com,Address,Applied,[],Follow up," + NO_ROLES_CELL;
         Person expected = parseRow("[]", "Applied", "Follow up");
-        for (String separator : List.of("\n", "\r\n")) {
-            for (String ending : List.of("", separator, separator.repeat(3))) {
+        assertAllCases(List.of("\n", "\r\n"), separator -> {
+            assertAllCases(List.of("", separator, separator.repeat(3)), ending -> {
                 String input = header + separator + row + ending;
                 assertEquals(List.of(expected), parse(input.getBytes(StandardCharsets.UTF_8)));
                 assertEquals(List.of(expected), parse(("\ufeff" + input).getBytes(StandardCharsets.UTF_8)));
-            }
-        }
-        for (String input : List.of(HEADER.stripTrailing(), HEADER + "\n", HEADER.replace("\r\n", "\n"))) {
+            });
+        });
+        assertAllCases(List.of(HEADER.stripTrailing(), HEADER + "\n", HEADER.replace("\r\n", "\n")), input -> {
             assertEquals(List.of(), parse(input.getBytes(StandardCharsets.UTF_8)));
-        }
+        });
     }
 
     @Test
@@ -170,10 +170,10 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_invalidTags_rejectsWithoutExposingValues() {
-        for (String tags : List.of("null", "{}", "[null]", "[1]", "[[\"java\"]]", "[{}]", "[\"   \"]",
-                "[\"java\"] true", "[\"private", "[\"java\",]")) {
-            assertThrows(ParseException.class, () -> parseRow(tags, "Applied", ""));
-        }
+        assertAllCases(List.of("null", "{}", "[null]", "[1]", "[[\"java\"]]", "[{}]", "[\"   \"]",
+                "[\"java\"] true", "[\"private", "[\"java\",]"), tags -> {
+                    assertThrows(ParseException.class, () -> parseRow(tags, "Applied", ""));
+                });
     }
 
     @Test
@@ -206,9 +206,9 @@ public class CandidateCsvParserTest {
         assertThrows(ParseException.class, () -> parseRow("[]", "Applied", "a".repeat(501)));
         assertThrows(ParseException.class, () -> parseRow("[]", "", ""));
         assertThrows(ParseException.class, () -> parseRow("[]", "Hired", ""));
-        for (Status status : Status.values()) {
+        assertAllCases(List.of(Status.values()), status -> {
             assertEquals(status, parseRow("[]", status.toString(), "").getStatus());
-        }
+        });
     }
 
     @Test
@@ -223,17 +223,17 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_blankNote_returnsNoNote() throws Exception {
-        for (String note : List.of("", "   ", "\t\r\n")) {
+        assertAllCases(List.of("", "   ", "\t\r\n"), note -> {
             assertEquals(Optional.empty(), parseRow("[]", "Applied", note).getNote());
-        }
+        });
     }
 
     @Test
     public void parse_legacyNoteCharacters_preservesInternalContents() throws Exception {
-        for (String character : List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f")) {
+        assertAllCases(List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f"), character -> {
             String note = "Note" + character + "text";
             assertEquals(note, parseRow("[]", "Applied", note).getNote().orElseThrow().value);
-        }
+        });
     }
 
     @Test

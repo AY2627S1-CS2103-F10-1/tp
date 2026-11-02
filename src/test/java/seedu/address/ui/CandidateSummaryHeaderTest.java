@@ -40,7 +40,7 @@ public class CandidateSummaryHeaderTest {
         assertCount(header, "total", "0 / 0");
         for (Status status : Status.values()) {
             String id = status.name().toLowerCase(Locale.ROOT);
-            assertEquals(id + "SummaryCard", cards.getChildrenUnmodifiable().get(status.ordinal() + 1).getId());
+            assertEquals(id + "SummaryCard", cards.getChildrenUnmodifiable().get(status.ordinal() + 1).getId(), id);
             assertCount(header, id, "0 / 0");
         }
     }
@@ -119,8 +119,8 @@ public class CandidateSummaryHeaderTest {
         assertTrue(cards.isVisible());
         assertTrue(cards.isManaged());
         for (Node card : cards.getChildrenUnmodifiable()) {
-            assertTrue(card.isVisible());
-            assertTrue(((Region) card).getWidth() >= card.minWidth(-1));
+            assertTrue(card.isVisible(), card.getId());
+            assertTrue(((Region) card).getWidth() >= card.minWidth(-1), card.getId());
         }
         assertTrue(cards.getLayoutX() + cards.getWidth() <= header.getWidth());
 
@@ -165,7 +165,7 @@ public class CandidateSummaryHeaderTest {
     }
 
     private static void assertCount(Region header, String id, String expected) {
-        assertEquals(expected, ((Text) header.lookup("#" + id + "Count")).getText());
+        assertEquals(expected, ((Text) header.lookup("#" + id + "Count")).getText(), id);
     }
 
     private static void layout(Region header, double width) {

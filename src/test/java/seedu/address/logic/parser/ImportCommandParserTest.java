@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static seedu.address.logic.parser.CommandParserTestUtil.assertParseSuccess;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.util.List;
 
@@ -24,9 +25,9 @@ public class ImportCommandParserTest {
 
     @Test
     public void parse_extraArguments_ignoresArguments() throws Exception {
-        for (String args : List.of(" other.csv", " ../../other.csv", " n/ignored p/123", " extra\narguments")) {
+        assertAllCases(List.of(" other.csv", " ../../other.csv", " n/ignored p/123", " extra\narguments"), args -> {
             assertParseSuccess(parser, args, new ImportCommand());
             assertEquals(new ImportCommand(), new AddressBookParser().parseCommand("import" + args));
-        }
+        });
     }
 }

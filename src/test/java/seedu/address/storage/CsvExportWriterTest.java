@@ -132,9 +132,7 @@ public class CsvExportWriterTest {
         assertTrue(Files.readString(destination).endsWith("\"[]\",\"\",\"[\"\"No role\"\"]\"\r\n"));
         exporter.export(new AddressBook(), destination);
         assertEquals(CsvExportWriter.BYTE_ORDER_MARK + HEADER, Files.readString(destination));
-        try (var entries = Files.list(directory)) {
-            assertEquals(1, entries.count());
-        }
+        assertOnlyDestinationRemains(destination);
     }
 
     @Test
@@ -265,8 +263,8 @@ public class CsvExportWriterTest {
 
     @Test
     public void export_writeOrCloseFailure_preservesPreviousExportAndCleansTemporaryFile() throws Exception {
-        assertAllCases(List.of(true, false), failOnWrite -> {
-            Path destination = directory.resolve(EXPORT_FILE_NAME);
+        assertAllCases(List.of("write", "close"), failureStage -> {
+            Path destination = Files.createTempDirectory(directory, failureStage).resolve(EXPORT_FILE_NAME);
             Files.writeString(destination, PREVIOUS_EXPORT);
             CsvExportWriter exporter = new CsvExportWriter() {
                 @Override
@@ -275,7 +273,7 @@ public class CsvExportWriterTest {
                     return new Writer() {
                         @Override
                         public void write(char[] buffer, int offset, int length) throws IOException {
-                            if (failOnWrite) {
+                            if (failureStage.equals("write")) {
                                 throw new IOException("write failed");
                             }
                         }
@@ -290,7 +288,7 @@ public class CsvExportWriterTest {
                     };
                 }
             };
-            String reason = failOnWrite ? "write failed" : "close failed";
+            String reason = failureStage + " failed";
             assertThrows(IOException.class, "Could not export to " + destination + ": " + reason, () ->
                     exporter.export(new AddressBook(), destination));
             assertEquals(PREVIOUS_EXPORT, Files.readString(destination));
@@ -347,6 +345,13 @@ public class CsvExportWriterTest {
         });
     }
 
+    /** Checks that successful replacement or failed writing leaves no temporary file beside the destination. */
+    private void assertOnlyDestinationRemains(Path destination) throws IOException {
+        try (var entries = Files.list(destination.getParent())) {
+            assertEquals(List.of(destination), entries.toList());
+        }
+    }
+
     @Test
     public void export_writeFailureWithoutPreviousExport_leavesNoOutput() throws Exception {
         Path destination = directory.resolve(EXPORT_FILE_NAME);
@@ -362,12 +367,6 @@ public class CsvExportWriterTest {
         assertFalse(Files.exists(destination));
         try (var entries = Files.list(directory)) {
             assertEquals(0, entries.count());
-        }
-    }
-
-    private void assertOnlyDestinationRemains(Path destination) throws IOException {
-        try (var entries = Files.list(directory)) {
-            assertEquals(List.of(destination), entries.toList());
         }
     }
 

@@ -3,6 +3,7 @@ package seedu.address.logic.parser;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static seedu.address.testutil.Assert.assertThrows;
+import static seedu.address.testutil.TestCaseUtil.assertAllCases;
 
 import java.util.List;
 
@@ -49,33 +50,33 @@ public class CommandInputValidationTest {
 
     @Test
     public void parseCommand_unsupportedCharactersInEveryField_rejectsBeforeFieldValidation() {
-        for (String character : UNSUPPORTED_CHARACTERS) {
-            for (String prefix : FIELD_PREFIXES) {
+        assertAllCases(UNSUPPORTED_CHARACTERS, character -> {
+            assertAllCases(List.of(FIELD_PREFIXES), prefix -> {
                 String expected = unsupportedMessage(prefix, character);
                 assertThrows(ParseException.class, expected, () ->
                         parser.parseCommand("add" + ADD_ARGUMENTS + " " + prefix + character));
                 assertThrows(ParseException.class, expected, () ->
                         parser.parseCommand("edit 1 " + prefix + character));
-            }
+            });
             assertThrows(ParseException.class, unsupportedMessage("no/", character), () ->
                     parser.parseCommand("note 1 no/" + character));
             assertThrows(ParseException.class, unsupportedMessage("Search keywords", character), () ->
                     parser.parseCommand("find " + character));
-        }
+        });
     }
 
     @Test
     public void parseCommand_unsupportedCharactersAtValueBoundaries_rejectsWithoutTrimming() {
-        for (String character : UNSUPPORTED_CHARACTERS) {
-            for (String value : List.of(character + "Block", "Bl" + character + "ock", "Block" + character)) {
+        assertAllCases(UNSUPPORTED_CHARACTERS, character -> {
+            assertAllCases(List.of(character + "Block", "Bl" + character + "ock", "Block" + character), value -> {
                 assertThrows(ParseException.class, unsupportedMessage("a/", character), () ->
                         parser.parseCommand("edit 1 a/" + value));
                 assertThrows(ParseException.class, unsupportedMessage("no/", character), () ->
                         parser.parseCommand("note 1 no/" + value));
                 assertThrows(ParseException.class, unsupportedMessage("Search keywords", character), () ->
                         parser.parseCommand("find " + value));
-            }
-        }
+            });
+        });
     }
 
     @Test

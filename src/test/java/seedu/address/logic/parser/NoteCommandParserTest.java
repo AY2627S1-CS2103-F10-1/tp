@@ -106,11 +106,11 @@ public class NoteCommandParserTest {
 
     @Test
     public void parse_invisibleOrUnicodeNote_throwsParseException() {
-        for (String text : new String[] { "\t", "\u2003", "\u00A0", "\u200B", "\uD83D\uDE00" }) {
+        assertAllCases(List.of("\t", "\u2003", "\u00A0", "\u200B", "\uD83D\uDE00"), text -> {
             String message = String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "no/",
                     text.codePointAt(0));
             assertParseFailure(parser, " 1 no/" + text, message);
-        }
+        });
     }
 
     @Test
