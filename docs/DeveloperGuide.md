@@ -331,6 +331,10 @@ Failed saves retain the previous saved JSON. If rollback itself fails, HRvest re
 
 See the [User Guide](UserGuide.md#importing-candidates-import) for import limits and usage restrictions.
 
+#### Design considerations
+
+**Generous but bounded imports:** The resource limits are intended to accommodate reasonable candidate batches and field values for HRvest's target users, rather than narrowly restrict valid recruitment data. For example, an import can contain up to 10,000 candidates in a 10 MiB file, with up to 65,536 Unicode characters per decoded field before trimming. Inputs beyond these bounds are considered outside the reasonable workload supported by this desktop application; rejecting them during reading or parsing bounds resource use instead of allowing arbitrarily large inputs to consume memory or processing time. This is a supported-workload decision, not a claim that larger datasets are inherently invalid. Existing field-validation rules still apply, and even files exported by HRvest must satisfy the import limits before they can be imported again.
+
 #### Import CSV format and validation
 
 **Required CSV template:** UTF-8 with or without a single leading byte order mark (BOM), and exact lowercase headers in the order below. Fields may be unquoted or double-quoted. Fields containing commas or quotes must be double-quoted; double any embedded quotes. Quotes must enclose the entire field, with no extra text or spaces outside the closing quote. Quoting does not bypass field validation. LF (`\n`) and CRLF (`\r\n`) record endings are accepted, and the last record need not end with a newline. Empty trailing lines are allowed, but blank lines before the header or between records, whitespace-only trailing lines, bare CR separators, alternate delimiters, and incorrect column counts are rejected.
