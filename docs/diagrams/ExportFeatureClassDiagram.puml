@@ -9,44 +9,46 @@ skinparam classStereotypeFontColor #FFFFFF
 skinparam classAttributeIconSize 0
 
 package Logic as LogicPackage {
-    Class LogicManager LOGIC_COLOR
+    Class LogicManager LOGIC_COLOR {
+        +execute()
+        -exportAddressBook()
+    }
 
     package Parser as ParserPackage #F4F6F6 {
         Class ExportCommandParser LOGIC_COLOR {
-            +parse(args: String): ExportCommand
+            +parse()
         }
     }
 
     package Commands as CommandsPackage #F4F6F6 {
         Class ExportCommand LOGIC_COLOR {
-            +execute(model: Model): CommandResult
+            +execute()
         }
         Class CommandResult LOGIC_COLOR {
             -export: boolean
-            +isExport(): boolean
+            +isExport()
         }
     }
 }
 
 package Storage as StoragePackage {
     Class "<<interface>>\nStorage" as Storage {
-        +exportAddressBook(addressBook: ReadOnlyAddressBook): Path
+        +exportAddressBook()
     }
     Class StorageManager {
-        +exportAddressBook(addressBook: ReadOnlyAddressBook): Path
+        +exportAddressBook()
     }
     class CsvExportWriter {
-        {static} +resolveDestination(dataFile: Path): Path
-        +export(addressBook: ReadOnlyAddressBook, destination: Path): Path
-        #openWriter(destination: Path): Writer
-        ~writeCsv(addressBook: ReadOnlyAddressBook, writer: Writer): void
-        -writeRecord(writer: Writer, fields: List<String>): void
-        {static} ~escapeField(field: String): String
+        {static} +resolveDestination()
+        +export()
+        #openWriter()
+        ~writeCsv()
+        -writeRecord()
+        {static} ~escapeField()
     }
 }
 
-abstract class Writer
-
+show LogicManager methods
 show Storage methods
 show StorageManager methods
 show CsvExportWriter methods
@@ -61,6 +63,5 @@ LogicManager ..> CommandResult : checks isExport()
 LogicManager --> "1" Storage : storage
 StorageManager .up.|> Storage
 StorageManager ..> CsvExportWriter : <<create>>, calls export()
-CsvExportWriter ..> Writer : opens / writes CSV through
 
 @enduml

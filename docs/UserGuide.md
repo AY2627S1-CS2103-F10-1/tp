@@ -39,11 +39,11 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
    * `exit` : Exits the app.
 
-1. Refer to the [Features](#features) section below for details of each command.
+1. Refer to the [Commands](#commands) section below for details of each command, and [Other features](#other-features) for UI indicators, command history and data handling.
 
 --------------------------------------------------------------------------------------------------------------------
 
-## Features
+## Commands
 
 <box type="info" seamless>
 
@@ -465,6 +465,8 @@ These are import limits, not new add/edit restrictions. Files exceeding them can
 Exits the program.
 
 Format: `exit`
+
+## Other features
 
 ### Candidate note indicator
 
