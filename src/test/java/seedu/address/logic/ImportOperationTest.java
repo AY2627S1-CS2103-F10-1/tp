@@ -118,22 +118,48 @@ public class ImportOperationTest {
     }
 
     @Test
-    public void execute_legacyNoteText_importsWithoutChangingInput() throws Exception {
+    public void execute_unsupportedNoteText_rejectsWholeBatchWithoutChangingDataOrView() throws Exception {
         model.expandPerson(existing);
-        int index = 0;
-        for (String note : List.of("Unicode \u4e2d\u6587", "First\r\nsecond", "Tab\there")) {
-            Person candidate = new PersonBuilder(incoming).withEmail("legacy" + index++ + "@example.com")
-                    .withNote(note).build();
-            writeInput(candidate);
+        byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
+        byte[] roles = Files.readAllBytes(directory.resolve("data/roles.json"));
+        for (String character : List.of("\u4e2d", "\r", "\t")) {
+            Person candidate = new PersonBuilder(incoming).withEmail("invalid@example.com")
+                    .withNote("Note" + character + "text").build();
+            writeInput(incoming, candidate);
             byte[] input = Files.readAllBytes(inputPath());
 
-            logic.execute("import");
+            assertThrows(CommandException.class, "Import failed: CSV record 3, field note: "
+                    + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", character.codePointAt(0)), () ->
+                    logic.execute("import"));
 
-            assertEquals(candidate, model.getAddressBook().getPersonList().getLast(), candidate.getEmail().value);
-            assertFalse(model.isExpandedViewProperty().get(), candidate.getEmail().value);
-            assertEquals(model.getAddressBook(), storage.readAddressBook().orElseThrow(), candidate.getEmail().value);
-            assertArrayEquals(input, Files.readAllBytes(inputPath()), candidate.getEmail().value);
+            assertEquals(List.of(existing), model.getAddressBook().getPersonList());
+            assertEquals(List.of(existing), model.getFilteredPersonList());
+            assertTrue(model.isExpandedViewProperty().get());
+            assertArrayEquals(disk, Files.readAllBytes(storage.getAddressBookFilePath()));
+            assertArrayEquals(roles, Files.readAllBytes(directory.resolve("data/roles.json")));
+            assertArrayEquals(input, Files.readAllBytes(inputPath()));
         }
+    }
+
+    @Test
+    public void execute_unicodeAddress_rejectsWholeBatchWithoutChangingDataOrView() throws Exception {
+        Person candidate = new PersonBuilder(incoming).withEmail("invalid@example.com")
+                .withAddress("Street \u4e2d").build();
+        writeInput(incoming, candidate);
+        model.updateFilteredPersonList(person -> false);
+        byte[] disk = Files.readAllBytes(storage.getAddressBookFilePath());
+        byte[] roles = Files.readAllBytes(directory.resolve("data/roles.json"));
+        byte[] input = Files.readAllBytes(inputPath());
+
+        assertThrows(CommandException.class, "Import failed: CSV record 3, field address: "
+                + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Address", 0x4e2d), () ->
+                logic.execute("import"));
+
+        assertEquals(List.of(existing), model.getAddressBook().getPersonList());
+        assertTrue(model.getFilteredPersonList().isEmpty());
+        assertArrayEquals(disk, Files.readAllBytes(storage.getAddressBookFilePath()));
+        assertArrayEquals(roles, Files.readAllBytes(directory.resolve("data/roles.json")));
+        assertArrayEquals(input, Files.readAllBytes(inputPath()));
     }
 
     @Test

@@ -161,11 +161,12 @@ public class CandidateCsvParserTest {
     }
 
     @Test
-    public void parse_unquotedLegacyNote_acceptsUnicode() throws Exception {
+    public void parse_unquotedUnicodeNote_rejectsWithRecordAndField() {
         String input = "name,phone,email,address,status,tags,note,roles\n"
                 + "Candidate,12345,candidate@example.com,Address,Applied,[],Unicode \u4e2d," + NO_ROLES_CELL;
-        assertEquals("Unicode \u4e2d", parse(input.getBytes(StandardCharsets.UTF_8))
-                .getFirst().getNote().orElseThrow().value);
+        assertThrows(ParseException.class, "CSV record 2, field note: "
+                + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", 0x4e2d), () ->
+                parse(input.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Test
@@ -223,25 +224,56 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_blankNote_returnsNoNote() throws Exception {
-        assertAllCases(List.of("", "   ", "\t\r\n"), note -> {
+        assertAllCases(List.of("", "   "), note -> {
             assertEquals(Optional.empty(), parseRow("[]", "Applied", note).getNote());
         });
     }
 
     @Test
-    public void parse_legacyNoteCharacters_preservesInternalContents() throws Exception {
-        assertAllCases(List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f"), character -> {
-            String note = "Note" + character + "text";
-            assertEquals(note, parseRow("[]", "Applied", note).getNote().orElseThrow().value);
+    public void parse_unsupportedNoteCharacters_rejectsBeforeTrimming() {
+        assertAllCases(List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f", "\u2003"), character -> {
+            assertAllCases(List.of(character, character + "Note", "Note" + character + "text", "Note" + character),
+                    note -> assertThrows(ParseException.class, "CSV record 2, field note: "
+                            + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note",
+                                    character.codePointAt(0)), () -> parseRow("[]", "Applied", note)));
         });
     }
 
     @Test
-    public void parse_unicodeNoteLength_countsCodePoints() throws Exception {
+    public void parse_unicodeNote_rejectsBeforeLengthValidation() {
         String note = "\ud83d\udcdd".repeat(500);
-        assertEquals(note, parseRow("[]", "Applied", note).getNote().orElseThrow().value);
-        assertThrows(ParseException.class, "CSV record 2, field note: " + Note.MESSAGE_TOO_LONG, () ->
-                parseRow("[]", "Applied", note + "x"));
+        assertAllCases(List.of(note, note + "x"), value -> {
+            assertThrows(ParseException.class, "CSV record 2, field note: "
+                    + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note", 0x1f4dd), () ->
+                    parseRow("[]", "Applied", value));
+        });
+    }
+
+    @Test
+    public void parse_unsupportedAddressCharacters_rejectsBeforeTrimming() {
+        assertAllCases(List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f", "\u2003"), character -> {
+            assertAllCases(List.of(character, character + "Address", "Address" + character + "text",
+                    "Address" + character), address -> {
+                        String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com",
+                                address, "Applied", "[]", "", NO_ROLES));
+                        assertThrows(ParseException.class, "CSV record 2, field address: "
+                                + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Address",
+                                        character.codePointAt(0)), () -> parse(input.getBytes(StandardCharsets.UTF_8)));
+                    });
+        });
+    }
+
+    @Test
+    public void parse_printableAddressAndNote_matchesCommandFieldParsing() throws Exception {
+        String address = "  Unit N/A, #01-02 \\\\";
+        String note = "  Follow up, \"quoted\" feedback \\\\  ";
+        String input = HEADER + record(List.of("Candidate", "12345", "candidate@example.com", address,
+                "Applied", "[]", note, NO_ROLES));
+
+        Person candidate = parse(input.getBytes(StandardCharsets.UTF_8)).getFirst();
+
+        assertEquals(ParserUtil.parseAddress(address), candidate.getAddress());
+        assertEquals(Optional.of(ParserUtil.parseNote(note)), candidate.getNote());
     }
 
     @Test
