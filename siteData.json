@@ -125,7 +125,7 @@
       "headings": {
         "hrvest-user-guide": "HRvest User Guide",
         "quick-start": "Quick start",
-        "features": "Features",
+        "commands": "Commands",
         "filters-and-expanded-view": "Filters and expanded view",
         "accepted-characters-in-candidate-inputs": "Accepted characters in candidate inputs",
         "viewing-help-help": "Viewing help: help",
@@ -143,6 +143,7 @@
         "exporting-candidates-export": "Exporting candidates: export",
         "importing-candidates-import": "Importing candidates: import",
         "exiting-the-program-exit": "Exiting the program: exit",
+        "other-features": "Other features",
         "candidate-note-indicator": "Candidate note indicator",
         "header-summary-cards": "Header summary cards",
         "displayed-candidate-count": "Displayed candidate count",
