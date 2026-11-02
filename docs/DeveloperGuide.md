@@ -584,7 +584,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to change the status of a specific candidate in the list to a new candidate status.
-1. HRvest updates the candidate's status and confirms the update.
+1. HRvest updates the candidate's status and shows a success message identifying the candidate.
 
    Use case ends.
 
@@ -614,7 +614,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * 3a. The updated candidate no longer matches the current filter.
 
-    * 3a1. HRvest confirms the update, but the candidate no longer appears in the filtered results.
+    * 3a1. HRvest shows the success message, but the candidate no longer appears in the filtered results.
 
       Use case ends.
 
@@ -624,7 +624,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to change one or more of the candidate details of a specific candidate in the list.
-1. HRvest updates the candidate's details and confirms the update.
+1. HRvest updates the candidate's details and shows a success message identifying the candidate.
 
    Use case ends.
 
@@ -666,7 +666,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 * 3a. The updated candidate no longer matches the current filter.
 
-    * 3a1. HRvest confirms the update, but the candidate no longer appears in the filtered results.
+    * 3a1. HRvest shows the success message, but the candidate no longer appears in the filtered results.
 
       Use case ends.
 
