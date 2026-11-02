@@ -11,6 +11,11 @@ HRvest is a **desktop application that helps hiring managers at startups track c
 <!-- * Table of Contents -->
 <page-nav-print />
 
+<box type="tip">
+
+**Tip:** Click a panel title (a line with an arrow) to expand it. Panels hold the detailed rules and error messages for a command. Their text is hidden until you open them, so your browser's search (Ctrl+F) will not find it until you do. The panels with the most important error messages are already open.
+</box>
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Quick start
@@ -40,6 +45,11 @@ HRvest is a **desktop application that helps hiring managers at startups track c
    * `exit` : Exits the app.
 
 1. Refer to [Understanding the screen](#understanding-the-screen) and the [Commands](#commands) section below for details of each command, and [Your data](#your-data) for saving and editing the data file.
+
+<box type="info">
+
+**Note:** When a command gives several fields, such as the `add` example above, HRvest shows `Warning: Prefixes read as additional fields: ...` before the success message. This is normal: the warning lists every prefix after the first field so that you can spot text read as a field by accident. The command has still succeeded. See [Typing values](#typing-values).
+</box>
 
 <box type="tip">
 
@@ -124,7 +134,6 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 * Extraneous parameters for `help`, `list`, `exit`, `export` and `import` are ignored. For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and `list_role` rejects all arguments.
 
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines, as space characters surrounding line-breaks may be omitted when copied over to the application.
 </box>
 
 <box type="warning">
@@ -140,10 +149,10 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 | Mistake | Message |
 |---|---|
-| `0` or a negative index (`note`, `status`, `expand`, `delete`) | `Index must be a positive integer.` |
-| Index beyond the displayed list (`note`, `status`, `delete`) | `The candidate index provided is invalid.` |
+| `0` or a negative index (`edit`, `note`, `status`, `expand`, `delete`) | `Index must be a positive integer.` |
+| Index beyond the displayed list (`edit`, `note`, `status`, `delete`) | `The candidate index provided is invalid.` |
 | Index beyond the displayed list (`expand`) | `No candidate found with that index. Enter an index between 1 and N.`, where `N` is the number of candidates shown. A number above 2147483647 gives `The candidate index provided is invalid.` |
-| Missing or non-numeric index (`note`, `status`, `delete`) | `Invalid command format!` followed by the usage |
+| Missing or non-numeric index (`edit`, `note`, `status`, `delete`) | `Invalid command format!` followed by the usage |
 | Non-numeric index (`expand`) | `Invalid index! Index must be a positive integer.` |
 
 ### Typing values
@@ -154,7 +163,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 ![A rejected command stays in the command box in red](images/prefix-error.png)
 
-<panel header="Accepted characters" type="seamless">
+<panel header="Accepted characters" type="seamless" expanded>
 
 Names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces and ASCII punctuation. This keeps command input within a single, explicit character set. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
 </panel>
@@ -207,6 +216,11 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 * Supply each of `n/`, `p/`, `e/`, `a/` and `s/` at most once; `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even with identical values.
 * An email already used by another candidate is rejected (see the details below).
 
+<box type="info">
+
+**Note:** A successful `add` with several fields starts with `Warning: Prefixes read as additional fields: ...`, as in the screenshot below. It is a reminder, not an error: check that the details in the success message are what you meant.
+</box>
+
 <box type="tip">
 
 **Tip:** Create named roles with `add_role` before assigning them, or use `r/No role`. An unknown role or a bare `r/` is rejected.
@@ -229,7 +243,7 @@ Examples:
 * **Tags:** a non-blank printable-ASCII label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`, `t/machine learning`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Repeat the prefix for several tags: `t/C++ t/machine learning`. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`. A recognised prefix preceded by a space starts another field even inside a tag: `t/machine learning n/Alice` sets the tag to `machine learning` and the name to `Alice`. Quoting does not escape prefixes.
 </panel>
 
-<panel header="Errors, duplicates and unknown prefixes" type="seamless">
+<panel header="Errors, duplicates and unknown prefixes" type="seamless" expanded>
 
 * The error message lists all missing required parameters together. Bare `add` reports `Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS, r/ROLE. Use r/No role if no role applies.` The command `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
 * **Duplicates:** email alone identifies duplicates. Surrounding whitespace is trimmed and the whole email is compared ignoring case, so `Alice@Example.com` and `alice@example.com` are the same candidate. A duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` is the existing matching record, even if hidden by a filter. Nothing is changed. Names, phones, addresses, statuses, roles, tags and notes do not affect duplicate detection, so two candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
@@ -273,7 +287,7 @@ Examples:
 
 ![Result of editing a candidate: the success message shows the updated details](images/edit-result.png)
 
-<panel header="Unchanged edits, duplicate emails, role errors and prefix pitfalls" type="seamless">
+<panel header="Unchanged edits, duplicate emails, role errors and prefix pitfalls" type="seamless" expanded>
 
 * If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
 * An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` is the matching existing record rather than the submitted name, even if hidden by a filter. The original candidate, filter and expanded view stay unchanged. Keeping your candidate's own email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
@@ -307,7 +321,7 @@ Examples:
 **Caution:** Replacing or removing a note deletes the previous note permanently. To keep earlier information, include it in the new note.
 </box>
 
-<panel header="Messages and input rules for notes" type="seamless">
+<panel header="Messages and input rules for notes" type="seamless" expanded>
 
 * When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`. When clearing, it is `Cleared note for NAME`. Clearing a candidate who has no note succeeds and changes nothing. Text containing only ordinary spaces also clears the note.
 * Leading and trailing ordinary spaces are removed; spacing, capitalisation and ASCII punctuation within the note are kept. Tabs, line breaks and non-ASCII characters are rejected.
@@ -333,7 +347,7 @@ Examples:
 
 ![Result of updating a status](images/status-result.png)
 
-<panel header="Defaults and error messages for status" type="seamless">
+<panel header="Defaults and error messages for status" type="seamless" expanded>
 
 * Candidates created with `add` start as `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
 * A missing `s/` gives `Invalid command format!`. An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`. The candidate and current view stay unchanged. Index errors are in the [common rules](#common-rules).
@@ -343,7 +357,7 @@ Examples:
 
 Finds candidates with a word in their name that starts with any of the given keywords.
 
-Format: `find KEYWORD [MORE_KEYWORDS]`
+Format: `find KEYWORD [MORE_KEYWORDS]...`
 
 * The search is case-insensitive (`hans` matches `Hans`) and keyword order does not matter (`Hans Bo` matches `Bo Hans`).
 * Only names are searched. A keyword matches the **start** of any word in a name: `Han` matches `Hans`, and `Gru` matches `Hans Gruber`, but text inside a word does not match (`ans` does not match `Hans`).
@@ -544,13 +558,13 @@ Format: `clear confirm`
 
 ### Exporting candidates: `export`
 
-Exports every candidate to `data/export.csv`, next to the data file `data/HRvest.json`, in the folder you run HRvest from. Candidates are exported in address-book order, regardless of the current search or filter, and your data, filter and expanded view are unchanged.
+Exports every candidate to `data/export.csv`, next to the data file `data/HRvest.json`, in the folder you run HRvest from. Candidates are exported in the order of the full candidate list, regardless of the current search or filter, and your data, filter and expanded view are unchanged.
 
 Format: `export`
 
 * The destination is always `data/export.csv`; you cannot choose another path. If the `data` folder does not exist yet, `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note,roles`, in that order.
-* Success displays `Exported successfully to PATH.` with the absolute destination, only after the file has been written and closed. If the address book is empty, `export` writes only the header row.
+* Success displays `Exported successfully to PATH.` with the absolute destination, only after the file has been written and closed. If HRvest has no candidates, `export` writes only the header row.
 
 ![Result of exporting candidates](images/export-result.png)
 
@@ -732,7 +746,7 @@ Action     | Format, Examples
 **Export** | `export`
 **Import** | `import`
 **Filter** | `filter [s/STATUS]... [r/ROLE]...`<br> e.g., `filter s/Interviewing s/Offered`
-**Find**   | `find KEYWORD [MORE_KEYWORDS]`<br> e.g., `find James Jake`
+**Find**   | `find KEYWORD [MORE_KEYWORDS]...`<br> e.g., `find James Jake`
 **List**   | `list`
 **Note**   | `note INDEX no/[NOTE_TEXT]`<br> e.g., `note 2 no/Passed round 2, schedule final interview` or `note 2 no/` to clear
 **Status** | `status INDEX s/STATUS`<br> e.g., `status 3 s/Interviewing`
