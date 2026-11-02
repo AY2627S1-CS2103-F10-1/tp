@@ -92,8 +92,6 @@ public final class CandidateCsvParser {
     }
 
     private static Optional<Note> parseNote(String value) throws ParseException {
-        // Validate before treating blank text as absent, as the note command does before trimming.
-        ParserUtil.verifyPrintableAscii(value, "Note");
         return value.isBlank() ? Optional.empty() : Optional.of(ParserUtil.parseNote(value));
     }
 

@@ -224,7 +224,7 @@ public class CandidateCsvParserTest {
 
     @Test
     public void parse_blankNote_returnsNoNote() throws Exception {
-        assertAllCases(List.of("", "   "), note -> {
+        assertAllCases(List.of("", "   ", "\t\r\n", "\u2003"), note -> {
             assertEquals(Optional.empty(), parseRow("[]", "Applied", note).getNote());
         });
     }
@@ -232,7 +232,7 @@ public class CandidateCsvParserTest {
     @Test
     public void parse_unsupportedNoteCharacters_rejectsBeforeTrimming() {
         assertAllCases(List.of("\u4e2d", "\ufeff", "\t", "\r", "\n", "\u007f", "\u2003"), character -> {
-            assertAllCases(List.of(character, character + "Note", "Note" + character + "text", "Note" + character),
+            assertAllCases(List.of(character + "Note", "Note" + character + "text", "Note" + character),
                     note -> assertThrows(ParseException.class, "CSV record 2, field note: "
                             + String.format(ParserUtil.MESSAGE_UNSUPPORTED_CHARACTER, "Note",
                                     character.codePointAt(0)), () -> parseRow("[]", "Applied", note)));
