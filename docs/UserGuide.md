@@ -128,7 +128,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
   For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
 * Parameters can be in any order.<br>
-  For example, `p/PHONE_NUMBER n/NAME` is also acceptable for `n/NAME p/PHONE_NUMBER`. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
+  For example, `p/PHONE_NUMBER n/NAME` is also acceptable for `n/NAME p/PHONE_NUMBER`. `INDEX` must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not. The other exception is an address starting with `L` or `P`, which cannot come directly after the name: `edit 1 a/L Street n/John` works, but `edit 1 n/John a/L Street` is rejected. See [Typing values](#typing-values).
 
 * `INDEX` is the number shown beside a candidate in the **currently displayed list**, and must be a positive integer (1, 2, 3, ...).
 
