@@ -12,7 +12,7 @@ Class CommandBox {
     -commandTextField: TextField
     -handleCommandEntered()
     -handleArrowNavigation(event: KeyEvent)
-    -captureDraftIfStartingNavigation()
+    -captureDraftIfEdited()
     -applyHistoryEntry(entry: String)
 }
 

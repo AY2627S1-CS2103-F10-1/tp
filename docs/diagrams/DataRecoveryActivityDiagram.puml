@@ -9,7 +9,7 @@ interrupted (roles-transaction.json);
 :Read and validate the role catalog
 and saved candidate data;
 
-'Keep guards on the outgoing edges, as in CommitActivityDiagram.
+'Keep guards on the outgoing edges.
 switch ()
 case ([valid files])
     :Start with loaded candidates;
