@@ -125,30 +125,32 @@ Role-management commands use dedicated parsers and delegate catalog validation a
 
 #### Command input character validation
 
-Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAscii` before their existing validation. This policy is deliberately parser-only: placing it in model constructors would also reject existing valid non-ASCII addresses or notes during JSON loading. Status values, indexes, and confirmation keywords retain their dedicated checks.
+Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAscii` before their existing validation. The policy is deliberately parser-only: placing it in model constructors would also reject existing valid non-ASCII addresses or notes during JSON loading. Status values, indexes and confirmation keywords keep their dedicated checks. The user-visible rules are in the [User Guide](UserGuide.md#typing-values).
+
+<panel header="How the check is applied" type="seamless">
 
 `ArgumentTokenizer.tokenizeWithValidation` checks selected raw prefix values before trimming; otherwise trailing control characters could disappear, and invisible-only notes or tags could be mistaken for clearing requests. `AddressBookParser` preserves trailing argument characters for the same reason. The regular tokenizer remains available for commands outside this policy. Character errors take precedence over duplicate-prefix and field validation after tokenisation; command-specific unsupported-prefix checks can still run first. JSON and CSV serialization continue to escape values independently of this input policy.
 
-* Tabs, line breaks, accented letters, emoji, curly quotes, non-breaking spaces (`U+00A0`), and zero-width spaces (`U+200B`) are rejected, even when copied text looks normal. Use ordinary spaces and straight quotes instead.
 * Unsupported characters are checked before surrounding spaces are trimmed or empty values are interpreted as clearing a field. They are not silently removed or replaced.
-* Errors identify the field prefix or search input for the unsupported code point, for example: `a/ contains unsupported character U+00A0. Use printable ASCII only (U+0020-U+007E).` Remove or replace that character and retry. Rejected commands leave candidate data unchanged.
-* Ordinary spaces around field values are still trimmed. Empty notes and tags can still be cleared as described in the User Guide.
-* Status values, candidate indexes, and `clear confirm` retain their own validation rules rather than this character check. Command words and prefix syntax are unchanged; use ordinary spaces before prefixes.
-* This restriction applies only to new command input, not loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export retain their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
+* Errors identify the field prefix or search input for the unsupported code point, for example: `a/ contains unsupported character U+00A0. Use printable ASCII only (U+0020-U+007E).` Rejected commands leave candidate data unchanged.
+* This restriction applies only to new command input, not to loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy.
+</panel>
 
 #### Prefix-like text in values
 
-`ArgumentTokenizer` recognises a prefix after whitespace in any letter case, so users who type `S/Offered` get a status field. In v1.5, the same rule also turned text that only looks like a prefix into a new field: `edit 1 a/Unit N/A` silently renamed the candidate to `A`, and `Unit N/A` could not be saved as an address. The current behaviour is as follows.
+`ArgumentTokenizer` recognises a prefix after whitespace in any letter case, so users who type `S/Offered` get a status field. The same rule would also turn text that only looks like a prefix into a new field: `edit 1 a/Unit N/A` would silently rename the candidate to `A`, and `Unit N/A` could not be saved as an address. Two mechanisms address this: rejection of ambiguous input, and a `\/` escape. The rejection, not the escape alone, is what fixes the silent change, because a user who has not read about `\/` would still have `edit 1 a/Unit N/A` rename the candidate; the error stops the edit and shows the escape when it is needed. The user-visible behaviour is in the [User Guide](UserGuide.md#typing-values).
 
-* `tokenizeWithValidation`, used by `add`, `edit` and `note`, rejects an upper-case prefix that directly follows a field typed with a lower-case prefix, such as the `N/` in `edit 1 a/Unit N/A` or the `S/` in `edit 1 a/12 Kent Ridge Drive S/Offered`. Either reading is plausible, so the error names the typed prefix, its lower-case form for starting a field, and the escaped form for text in names, phones, emails, addresses or notes. It also states that roles and statuses preserve backslashes. If that prefix is already a field and is not the repeatable `t/` or `r/`, the error omits the duplicate-field option. Name connectors such as `S/O` are removed before the check.
-* Multi-field commands remain supported. For successful `add` and `edit` commands, `LogicManager` uses `ArgumentTokenizer.getPrefixWarning` to prepend a warning listing every prefix after the first field, preserving input order, letter case and repetitions. An intentional field update and literal prefix-like text can have identical syntax, so the warning applies to all multi-field commands while preserving one-shot operation. It covers lower-case prefixes as well as upper-case ones, but does not prevent unintended edits. The result is returned only after any required save succeeds; an unchanged edit also carries the warning. Legal-name connectors and escaped slashes are excluded from the prefix list. Single-field edits and other commands retain their existing feedback.
-* `tokenizeWithValidation` reads `\/` as `/` in the values it validates: names, phones, emails, addresses, tags and notes. `N\/A` is never matched as a prefix, so it stays in the current value and is saved as `N/A`. Role and status values, including every role command, keep `\/` as typed, so a role saved with `\/` in its name by an earlier version still matches only itself.
-* A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field, as in AB3, and is now included in the warning. The User Guide shows `\/` for keeping that text.
-* The rejection, not the `\/` escape alone, is what fixes the silent change. A user who has not read about `\/` would still have `edit 1 a/Unit N/A` rename the candidate; the error stops the edit and shows the escape when it is needed.
+<panel header="How the tokenizer and LogicManager implement this" type="seamless">
+
+* `tokenizeWithValidation`, used by `add`, `edit` and `note`, rejects an upper-case prefix that directly follows a field typed with a lower-case prefix, such as the `N/` in `edit 1 a/Unit N/A`. Either reading is plausible, so the error names the typed prefix, its lower-case form for starting a field, and the escaped form for literal text. If that prefix is already a field and is not the repeatable `t/` or `r/`, the error omits the duplicate-field option. Name connectors such as `S/O` are removed before the check.
+* Multi-field commands remain supported. For successful `add` and `edit` commands, `LogicManager` uses `ArgumentTokenizer.getPrefixWarning` to prepend a warning listing every prefix after the first field, preserving input order, letter case and repetitions. An intentional field update and literal prefix-like text can have identical syntax, so the warning applies to all multi-field commands while preserving one-shot operation. It does not prevent unintended edits. The result is returned only after any required save succeeds; an unchanged edit also carries the warning. Legal-name connectors and escaped slashes are excluded from the prefix list.
+* `tokenizeWithValidation` reads `\/` as `/` in the values it validates: names, phones, emails, addresses, tags and notes. Role and status values, including every role command, keep `\/` as typed, so a role saved with `\/` in its name by an earlier version still matches only itself.
+* A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field, as in AB3, and is included in the warning.
+</panel>
 
 #### Displayed-index validation
 
-`status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report numeric index errors the same way. The exact messages are listed under each command in the User Guide. A rejected command leaves candidate data, filters, and the expanded view unchanged.
+`status`, `note`, `expand`, `edit`, and `delete` all read their index with `ParserUtil.parseDisplayedIndex`, so they report non-positive and out-of-range indexes the same way (`expand` has its own message for a non-numeric index). The exact messages are in the User Guide's [common rules](UserGuide.md#common-rules). A rejected command leaves candidate data, filters, and the expanded view unchanged.
 
 * A number too large for an `int` is reported as an out-of-range index rather than a format error, because no displayed list can be that long.
 * A known numeric problem, such as `0`, is reported instead of the generic `Invalid command format!`, so the user knows exactly what to fix.
@@ -195,6 +197,10 @@ The `Storage` component,
 * is implemented by `StorageManager`, which coordinates candidate and role files through `RoleDataStorage` and delegates preference storage to `JsonUserPrefsStorage`.
 * depends on some classes in the `Model` component (because the `Storage` component's job is to save/retrieve objects that belong to the `Model`)
 
+Storage favours not losing data. Saves never overwrite a file in place (they write a temporary file and atomically replace the original), `MainApp` takes an operating-system lock on the data folder so two instances cannot corrupt each other, and an unreadable data file is backed up before HRvest starts with an empty list.
+
+<panel header="Storage safety details: atomic saves, the data-directory lock, and startup recovery" type="seamless">
+
 `JsonAddressBookStorage` never overwrites the data file in place, so a failed or interrupted save leaves the previous file intact. It writes the JSON to a uniquely named `HRvest-<random>.tmp` file in the same folder, gives it the existing file's access permissions, and then atomically replaces the data file with it. Filesystems that cannot replace a file atomically reject the save, and permission errors abort it; `LogicManager` reports either error. A symbolic link to the data file is kept, and its target is replaced. The temporary file is deleted if the save fails, but a crash or power loss can leave it behind; later saves ignore such files, and they can be deleted once HRvest is closed.
 
 Before loading preferences, recovering files or constructing storage, `MainApp` acquires a `DataDirectoryLock` on `data/.hrvest.lock`. The OS lock is held through preference saving at shutdown and released on failed initialization. This prevents a second process from loading stale candidates and later overwriting newer data, even through a read command that triggers saving. The lock file stays in place after release: deleting it could let two processes lock different files with the same path. Separate data folders remain independent, and process termination releases the OS lock automatically.
@@ -202,6 +208,7 @@ Before loading preferences, recovering files or constructing storage, `MainApp` 
 During startup, `MainApp` uses the storage component's `CandidateDataInitializer` to load candidate records before creating the UI or command logic. A `DataLoadingException` triggers a persistent, uniquely named `HRvest-<timestamp>-<random>-corrupt.json` backup through `Storage`, followed by a journal-coordinated save of an empty candidate list and the built-in role catalogue. The local-time `yyyyMMddTHHmmss` timestamp makes the newest backup easy to find when several accumulate. The backup copies the original bytes first and then applies the original's supported access restrictions, so a write-restricted data file can still be backed up. An unsuccessful copy removes only its own partial backup where possible. Recovery resolves symbolic links to existing targets; inaccessible files and dangling links are not treated as missing files.
 
 Both backup and replacement saving must finish before commands become available. Otherwise startup shows an actionable error dialog and exits after dismissal, preserving the original and any completed backup. After successful recovery, `UiManager` displays the backup path and restoration instructions. A later launch loads the saved empty file normally, avoiding repeated backups or sample data. Preference-file recovery remains separate.
+</panel>
 
 The activity diagram below summarizes candidate data initialization and recovery. Load failures include malformed JSON, invalid candidate data or role catalog entries, unknown role IDs, and null entries rejected during deserialization or validation.
 
@@ -307,55 +314,68 @@ The sequence diagram below shows the flow for a user pressing `Up` twice then `D
 
 ### CSV import
 
-Import adds a batch of candidates to the complete address book, regardless of the current filter. `AddressBookParser` uses `ImportCommandParser` to create an `ImportCommand`, and `LogicManager` delegates the operation to `ImportOperation`.
+Import adds a batch of candidates to the complete address book, regardless of the current filter. `AddressBookParser` uses `ImportCommandParser` to create an `ImportCommand`, and `LogicManager` delegates the operation to `ImportOperation`. `StorageManager` delegates reading `import.csv` to `CsvImportReader`, which reads the file into a bounded buffer so that later edits do not affect the data being parsed. `CandidateCsvParser` uses `StrictCsvParser` on that buffer and validates candidate fields through the existing command and model rules. Import and export share their headers through `CandidateCsvFormat`.
 
-`StorageManager` delegates reading `import.csv` to `CsvImportReader`. Missing files and read failures produce an error explaining the problem and expected path. HRvest reads the file into a bounded buffer and parses only that copy; later edits do not affect the buffered data. `CandidateCsvParser` uses `StrictCsvParser` to parse the buffered CSV and validates candidate fields through the existing command/model rules. Import and export share their headers through `CandidateCsvFormat`.
+`ImportOperation` validates the whole file, then checks for duplicates within the batch and against existing candidates, before updating the model and saving through storage. It manages its own rollback because import bypasses `LogicManager`'s ordinary save path: reading or validation failures leave the model unchanged, and application or save failures restore the previous data and view. Success shows the full candidate list and exits expanded view.
 
-HRvest does not lock the file or check for concurrent changes: these may cause a normal read/validation error or go undetected and import valid-looking altered data. HRvest does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify saved JSON or run another HRvest instance against the same saved data during import.
+**Why roles are matched by name.** The CSV identifies roles by name, not by catalog ID, because the file may be imported into an HRvest whose catalog has different IDs or lacks those roles. `ImportOperation` passes the current catalog to `CandidateCsvParser`, which matches names as role commands do and creates each unknown name once, so records naming `QA` and `qa` share one new role. The new roles are added to the catalog in the same model update and save as the candidates, so a failure rolls both back. Creating roles, rather than rejecting the import as `add` does, lets an export restore on a fresh installation; the success message names the created roles so that a misspelt name is noticed.
 
-`ImportOperation` checks for duplicates within the batch and against existing candidates before updating the model and saving through storage. It manages its own rollback because import bypasses `LogicManager`'s ordinary save path. Reading or validation failures leave the model unchanged; application or save failures trigger restoration of the previous data and view. Success shows the full candidate list and exits expanded view.
+<panel header="Batch combination, concurrency and failure handling" type="seamless">
 
-The CSV identifies roles by name, not by catalog ID, because the file may be imported into an HRvest whose catalog has different IDs or lacks those roles. `ImportOperation` passes the current catalog to `CandidateCsvParser`, which matches names as role commands do and creates each unknown name once, so records naming `QA` and `qa` share one new role. `ImportOperation` adds the new roles to the catalog in the same model update and save as the candidates, so a failure rolls both back. Creating roles, rather than rejecting the import as `add` does, lets an export restore on a fresh installation; the success message names the created roles so that a misspelt name is noticed.
-
-Batch combination installs the validated list once, preserving existing and CSV order. `UniquePersonList` checks bulk replacements with a case-insensitive email set instead of comparing every pair. This keeps the same identity rule while avoiding quadratic validation during import, snapshots, and saves.
-
-Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash/power-loss recovery is not an in-memory rollback guarantee.
+* Batch combination installs the validated list once, preserving existing and CSV order. `UniquePersonList` checks bulk replacements with a case-insensitive email set instead of comparing every pair. This keeps the same identity rule while avoiding quadratic validation during import, snapshots and saves.
+* HRvest does not lock the file or check for concurrent changes: these may cause a normal read/validation error or go undetected and import valid-looking altered data. It does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify saved JSON or run another HRvest instance against the same saved data during import.
+* Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash or power-loss recovery is not an in-memory rollback guarantee.
+</panel>
 
 See the [User Guide](UserGuide.md#importing-candidates-import) for import limits and usage restrictions.
 
 #### Import CSV format and validation
 
-**Required CSV template:** UTF-8 with or without a single leading byte order mark (BOM), and exact lowercase headers in the order below. Fields may be unquoted or double-quoted. Fields containing commas or quotes must be double-quoted; double any embedded quotes. Quotes must enclose the entire field, with no extra text or spaces outside the closing quote. Quoting does not bypass field validation. LF (`\n`) and CRLF (`\r\n`) record endings are accepted, and the last record need not end with a newline. Empty trailing lines are allowed, but blank lines before the header or between records, whitespace-only trailing lines, bare CR separators, alternate delimiters, and incorrect column counts are rejected.
+The required header is the one in the example below, in exactly that lowercase order. The file is UTF-8 with or without a single leading byte order mark (BOM).
 
 ```csv
 "name","phone","email","address","status","tags","note","roles"
 "Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[""Java"",""backend""]","","[""No role""]"
 ```
 
-Configure your editor to save the example as UTF-8 with LF or CRLF line endings. Excel's optional quoting is accepted when saving as comma-delimited UTF-8 CSV; other encodings or delimiters are not. HRvest accepts the leading BOM written by `export`, so you can copy or rename `data/export.csv` to `data/import.csv` without removing it. The file must still meet validation, duplicate, and resource-limit rules. A BOM-only file or repeated leading BOMs are rejected. Only one encoding marker immediately before the header is ignored; markers inside quoted fields are literal data subject to field validation.
+<panel header="CSV syntax rules" type="seamless">
 
-Existing field rules apply, including trimming as in commands. Status accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail. Tags must be a JSON array of valid tag-name strings, without nulls, nested values, or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct. Roles use the same JSON array form and limits but must name at least one role; names follow the role name rules, and `No role` is dropped when named roles are present, as in `add`. An empty or whitespace-only note means no note. Addresses and notes use their model validation rather than the command-only printable-ASCII check, so supported legacy Unicode data can be exported and imported again. Addresses retain command-style surrounding-space trimming. Nonblank notes are stripped of surrounding whitespace and limited to 500 Unicode code points; tabs, line breaks, and non-ASCII text inside a quoted note are preserved. Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
+* Fields may be unquoted or double-quoted. Fields containing commas or quotes must be double-quoted; double any embedded quotes. Quotes must enclose the entire field, with no extra text or spaces outside the closing quote. Quoting does not bypass field validation.
+* LF (`\n`) and CRLF (`\r\n`) record endings are accepted, and the last record need not end with a newline. Empty trailing lines are allowed, but blank lines before the header or between records, whitespace-only trailing lines, bare CR separators, alternate delimiters and incorrect column counts are rejected.
+* Configure your editor to save the example as UTF-8 with LF or CRLF line endings. Excel's optional quoting is accepted when saving as comma-delimited UTF-8 CSV; other encodings or delimiters are not.
+* HRvest accepts the leading BOM written by `export`, so you can copy or rename `data/export.csv` to `data/import.csv` without removing it. A BOM-only file or repeated leading BOMs are rejected. Only one encoding marker immediately before the header is ignored; markers inside quoted fields are literal data subject to field validation.
+* CSV syntax errors identify the record (the header is record 1) and, for field-specific syntax errors, the one-based field number and name. Messages distinguish missing or extra columns, misplaced or unclosed quotes, content after a closing quote, and unsupported bare CR endings, with guidance on correcting the file. Record numbers count CSV records, not physical lines inside quoted fields.
+</panel>
 
-CSV syntax errors identify the record (the header is record 1) and, for field-specific syntax errors, the one-based field number and name. Messages distinguish missing or extra columns, misplaced or unclosed quotes, content after a closing quote, and unsupported bare CR endings, with guidance on correcting the file. Record numbers count CSV records, not physical lines inside quoted fields.
+<panel header="Field validation rules" type="seamless">
+
+Existing field rules apply, including trimming as in commands. The file must still meet the validation, duplicate and resource-limit rules.
+
+* **Status:** accepts defined values ignoring case and surrounding whitespace; empty or unknown statuses fail.
+* **Tags:** a JSON array of valid tag-name strings, without nulls, nested values or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct.
+* **Roles:** the same JSON array form and limits, but at least one role must be named. Names follow the role name rules, and `No role` is dropped when named roles are present, as in `add`.
+* **Note:** an empty or whitespace-only note means no note. Nonblank notes are stripped of surrounding whitespace and limited to 500 Unicode code points; tabs, line breaks and non-ASCII text inside a quoted note are preserved.
+* **Address and note:** use their model validation rather than the command-only printable-ASCII check, so supported legacy Unicode data can be exported and imported again. Addresses retain command-style surrounding-space trimming.
+* Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
+</panel>
 
 ### CSV export
 
-The `export` command creates a CSV copy of all candidate records, regardless of the current search or filter. It leaves the application's data and current view unchanged.
-
-`ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
-
-You can refer to the diagram below as a reference.
+The `export` command creates a CSV copy of all candidate records, regardless of the current search or filter. It leaves the application's data and current view unchanged. `ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
 
-The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`. Roles use the same form, with names in `list_role` order, ignoring case; a candidate without a named role gives `["No role"]`.
+The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark because, without it, Excel reads the file as ANSI and garbles non-ASCII text.
 
-**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. Import columns as text to preserve leading zeroes in phone numbers and prevent formula-like stored text from being interpreted as formulas. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users instead. Spreadsheet auto-detection can still alter values when the file is opened directly.
+**Spreadsheet caution:** This is raw-data CSV, not a spreadsheet document. HRvest does not add sanitisation prefixes or formula wrappers, because they would change the stored values in the file; the User Guide warns users to import columns as text instead, which preserves leading zeroes in phone numbers and stops formula-like stored text from being interpreted as formulas. Spreadsheet auto-detection can still alter values when the file is opened directly.
 
-HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. To protect an earlier CSV snapshot, it writes a temporary sibling file, preserving the destination's existing access permissions, closes and flushes it to disk, then atomically replaces `export.csv`. There is no non-atomic fallback: unsupported atomic replacement fails while retaining the previous CSV. Handled failures attempt to remove the temporary file. If cleanup also fails, the original export failure remains the cause of the reported error, with the cleanup failure attached to it as a suppressed exception. Cleanup failure or process termination may leave the temporary file behind, but cannot expose a partially written replacement as `export.csv`.
+<panel header="Output format and failure handling" type="seamless">
 
-Failures display `Export failed:` with the reason and destination when available. Check that the file/folder is writable. Directories, symbolic links (including dangling links), and other non-regular destinations are rejected without deleting them. A missing data directory is created first, as JSON saving does. If the required parent directory cannot be determined or created, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged. Write, close and replacement failures leave the previous export intact.
-
+* **Format:** every field is quoted and embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`. Roles use the same form, with names in `list_role` order, ignoring case; a candidate without a named role gives `["No role"]`.
+* **Replacing an earlier export:** HRvest shows a confirmation after the export completes, or an error if it fails. Export bypasses JSON saving because it does not change candidate data. To protect an earlier CSV snapshot, it writes a temporary sibling file, preserving the destination's existing access permissions, closes and flushes it to disk, then atomically replaces `export.csv`. There is no non-atomic fallback: unsupported atomic replacement fails while retaining the previous CSV.
+* **Cleanup:** handled failures attempt to remove the temporary file. If cleanup also fails, the original export failure remains the cause of the reported error, with the cleanup failure attached to it as a suppressed exception. Cleanup failure or process termination may leave the temporary file behind, but cannot expose a partially written replacement as `export.csv`.
+* **Errors:** failures display `Export failed:` with the reason and destination when available. Directories, symbolic links (including dangling links) and other non-regular destinations are rejected without deleting them. A missing data directory is created first, as JSON saving does; if the required parent directory cannot be determined or created, export fails. No failure redirects output to another location. Candidate data and the current view remain unchanged, and write, close and replacement failures leave the previous export intact.
+</panel>
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -387,8 +407,6 @@ Failures display `Export failed:` with the reason and destination when available
 
 The following user stories describe supported functionality. Priorities indicate their relative importance: High `* * *`, Medium `* *`, Low `*`.
 
-Target user: a hiring manager at a tech startup who hires for one to three full-time roles at a time, tracks roughly 10 to 50 candidates, and prefers keyboard commands to mouse-driven forms.
-
 #### High-priority (`* * *`)
 
 | Priority | As a …           | I want to …                                          | So that I can…                                                     |
@@ -416,6 +434,7 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | `* *`    | familiar user     | filter candidates by the role they applied for                    | focus on one open role at a time                                      |
 | `* *`    | familiar user     | combine role and status in a single filter command                | isolate a specific group without running two separate searches        |
 | `* *`    | familiar user     | track whether a candidate has accepted an offer                   | know which offers are still pending a response                        |
+| `* *`    | familiar user     | add or replace a note on a candidate                              | record interview feedback and follow-ups for the next conversation    |
 | `* *`    | expert user       | import a batch of shortlisted applicants from an external source  | avoid retyping candidates sourced from LinkedIn, Indeed, or email     |
 
 #### Low-priority (`*`)
@@ -423,6 +442,7 @@ Target user: a hiring manager at a tech startup who hires for one to three full-
 | Priority | As a …           | I want to …                                              | So that I can…                                                       |
 |----------|-------------------|-----------------------------------------------------------|-----------------------------------------------------------------------|
 | `*`      | expert user       | export candidate records as CSV                          | share candidate records with people outside the app                   |
+| `*`      | expert user       | clear all candidates after confirming                    | start a new hiring round without deleting candidates one by one       |
 
 *See [the full brainstormed list in the project notes](https://docs.google.com/spreadsheets/d/1N5Ji0Wl8ai_IVu94vVavK0b_f5AiQSDjcHCVw-pA5EM/edit) for stories we considered and dropped.*
 
@@ -636,7 +656,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 **MSS**
 
-1. User requests to view the full details of a candidate profile.
+1. User requests to view the full details of a candidate.
 1. HRvest shows the candidate's full details, including their note.
 
    Use case ends.
@@ -795,6 +815,31 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
    Use case ends.
 
+**Use case: UC16 - Clear all candidates**
+
+**MSS**
+
+1. User requests to clear all candidates.
+1. HRvest shows how many candidates would be deleted and asks the user to confirm.
+1. User confirms.
+1. HRvest deletes all candidates, keeps the role catalog, and confirms that the candidates were cleared.
+
+   Use case ends.
+
+**Extensions**
+
+* 1a. HRvest has no candidates.
+
+    * 1a1. HRvest informs the user that there are no candidates to clear.
+
+      Use case ends.
+
+* 3a. The user enters anything other than the confirmation.
+
+    * 3a1. HRvest shows an error message and deletes nothing.
+
+      Use case ends.
+
 ### Non-Functional Requirements
 
 1. HRvest should run on Windows, Linux, and macOS with Java `25` installed, without requiring an installer or other application-specific software beyond a single JAR file.
@@ -809,15 +854,10 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 ### Glossary
 
 * **Candidate**: A person being considered for an open role.
-* **Open role**: A position for which the startup is currently recruiting.
 * **Role catalog**: The shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
-* **Application**: A candidate's consideration for a particular open role, including the candidate status and relevant hiring details.
-* **Candidate profile**: The candidate's contact information and hiring details shown together in HRvest.
-* **Follow-up**: An action the hiring manager needs to take for a candidate after a prior interaction.
 * **Candidate details**: A candidate's name, phone number, email address, address, status, roles and tags.
 * **Candidate status**: One of Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, or Withdrawn.
 * **Duplicate candidate**: A candidate with the same email address as another candidate in HRvest, compared case-insensitively after trimming command input. No other fields, including name, status, roles, tags or notes, affect duplicate detection.
-* **Mainstream OS**: Windows, Linux, Unix, or macOS
 * **Note**: A single text remark about a candidate, such as interview feedback or follow-up context.
 
 --------------------------------------------------------------------------------------------------------------------

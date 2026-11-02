@@ -6,7 +6,7 @@
 
 # HRvest User Guide
 
-HRvest is a **desktop address book that helps hiring managers at startups track candidates through the hiring pipeline with less administrative work**. While it has a GUI (Graphical User Interface), most interactions are short typed commands in a CLI (Command Line Interface), so if you type fast, you can work faster than in a mouse-driven applicant tracking system.
+HRvest is a **desktop application that helps hiring managers at startups track candidates through the hiring pipeline with less administrative work**. It is built for managers who hire for a few roles at a time, track roughly 10 to 50 candidates and type fast. While it has a GUI (Graphical User Interface), most interactions are short typed commands in a CLI (Command Line Interface), so you can work faster than in a mouse-driven applicant tracking system.
 
 <!-- * Table of Contents -->
 <page-nav-print />
@@ -23,7 +23,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 1. Copy the file to the folder you want to use as the _home folder_ for HRvest.
 
 1. Open a terminal, `cd` to the folder containing the JAR file, and run `java -jar HRvest.jar`.<br>
-   A GUI similar to the one below should appear in a few seconds, listing some sample candidates. The screenshot shows a different set of candidates, filtered with `filter s/Shortlisted s/Interviewing s/Offered`.<br>
+   A GUI similar to the one below should appear in a few seconds, listing some sample candidates.<br>
    ![Ui](images/Ui.png)
 
 1. Type a command in the command box and press Enter to execute it. For example, type **`help`** and press Enter to open the help window.<br>
@@ -39,7 +39,53 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
    * `exit` : Exits the app.
 
-1. Refer to the [Features](#features) section below for details of each command.
+1. Refer to [Understanding the screen](#understanding-the-screen) and the [Features](#features) section below for details of each command.
+
+--------------------------------------------------------------------------------------------------------------------
+
+## Understanding the screen
+
+![Annotated main window](images/ui-overview.png)
+
+1. **Summary cards:** Total candidates and one card per recruitment status.
+1. **Command box:** Type a command here and press Enter. A rejected command stays here, shown in red, so you can fix it.
+1. **Result box:** The outcome of your last command, or the reason it was rejected.
+1. **Count line:** How many candidates are displayed, so you can tell when some are hidden rather than deleted.
+1. **Candidate list:** Each card shows the candidate's index, name, roles (purple badges; `No role` is red), tags (blue badges), phone, address, email and status.
+1. **Note icon:** A sticky note beside a name means the candidate has a note. Hover over it to see `Note available`. Use `expand INDEX` to read the note.
+
+<panel header="Summary cards in detail" type="seamless">
+
+The **HRvest** logo appears above the command box. When the window is wide enough, as it is when HRvest first opens on most screens, a row beside it shows **Total candidates** and one card for each status: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected and Withdrawn.
+
+* Each card shows **shown / total**: the number in the displayed list versus all candidates loaded in HRvest. For example, `2 / 8` on Interviewing means two interviewing candidates are shown, out of eight overall.
+* Searching, filtering or expanding changes the shown counts; overall counts still include hidden candidates. Use `list` to show all candidates again.
+* Adding, updating, deleting or clearing candidates updates the counts automatically. Statuses with no candidates still have a card, and an empty data set shows `0 / 0` on every card.
+* The cards appear together on one row only when every card fits at its minimum width. If the window is too narrow, the whole row disappears while the logo stays. Widen the window to bring it back.
+</panel>
+
+<panel header="Count line messages" type="seamless">
+
+* `Showing all 6 candidates.` when every candidate is displayed, or `Showing 1 candidate.` when HRvest has only one.
+* `Showing 2 of 6 candidates (filtered). Type list to show all.` when `find`, `filter` or a later update to a filtered list hides some candidates.
+* `Expanded view of 1 of 6 candidates. Type list to show all.` after `expand`, or `Expanded view of the only candidate.` when HRvest has only one.
+* `No candidates.` when HRvest has no candidates.
+</panel>
+
+<panel header="Command history (Up and Down keys)" type="seamless">
+
+The command box remembers the commands you submit in the current session so you can re-run or edit one without retyping it.
+
+* `Up` moves back through your submitted commands; the earliest entry stays shown once you reach it.
+* `Down` moves forward. Pressing past the newest entry restores the draft you were typing before you started navigating, or clears the box if there was none.
+* Successful and rejected commands are both recorded. After a rejected command, `Up` shows the command before it. A command identical to the most recent one does not take up an extra slot.
+* Blank submissions are skipped. History lasts for the current session and holds up to the 100 most recent commands. Repeating an earlier command that is not the most recent one takes another slot.
+</panel>
+
+<panel header="The note icon in detail" type="seamless">
+
+Collapsed cards keep the note text hidden; only the icon shows. Candidates without notes have no icon and reserve no icon space.
+</panel>
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -47,7 +93,7 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 
 <box type="info" seamless>
 
-**Notes about the command format:**<br>
+**Notes about the command format:**
 
 * Words in `UPPER_CASE` are the parameters to be supplied by the user.<br>
   For example, in `add n/NAME`, replace `NAME` with a value such as `John Doe`.
@@ -56,42 +102,75 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
   For example, `n/NAME [t/TAG]` can be used as `n/John Doe t/friend` or as `n/John Doe`.
 
 * Items followed by `...` can appear zero or more times.<br>
-  For example, `[t/TAG]... ` may be omitted, or written as `t/friend` or `t/friend t/family`.
+  For example, `[t/TAG]...` may be omitted, or written as `t/friend` or `t/friend t/family`.
 
 * Command words and prefixes ignore letter case.<br>
   For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
-* To keep text that looks like a prefix, such as `N/A`, inside a value, type `\/` for its slash.<br>
-  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses, tags and notes, where every `\/` you type is saved as `/`. Role names and statuses keep backslashes literally. To assign an existing role named `N/A`, use `edit 1 r/N/A` with no space after `r/`; `r/ N/A` is ambiguous, and `r/N\/A` refers to a different role whose name contains a backslash.
-
-* In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error offers `n/` to start a field and `N\/` for literal text in names, phones, emails, addresses or notes. If the field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
-
-* Successful `add` and `edit` commands with multiple fields show a warning before the success message, listing every prefix after the first field in input order, including lower-case and repeated prefixes. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: Prefixes read as additional fields: N/.` Likewise, `edit 1 a/Unit n/a` changes the address to `Unit` and the name to `a`, with a warning listing `n/`. The command is applied and saved immediately; this warning does not ask for confirmation or prevent an unintended edit. Check the updated candidate details.
-
-* The warning also appears for intentional multi-field commands and unchanged edits. For example, `edit 1 A/Unit P/123 N/A` lists both `P/` and `N/`. A single-field edit produces no prefix warning. Escaped text and legal-name connectors are not listed as extra fields: `edit 1 A/Unit N\/A` saves the complete address without warning. Use `edit 1 a/Unit n\/a` to keep lower-case `n/a` in the address.
-
 * Parameters can be in any order.<br>
-  For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
+  For example, `p/PHONE_NUMBER n/NAME` is also acceptable for `n/NAME p/PHONE_NUMBER`. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
 
-* Extraneous parameters for `help`, `list`, `exit`, `export`, and `import` are ignored.<br>
-  For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and the `list_role` command rejects all arguments.
+* `INDEX` is the number shown beside a candidate in the **currently displayed list**, and must be a positive integer (1, 2, 3, ...).
 
-* If you are using a PDF version of this document, be careful when copying and pasting commands that span multiple lines as space characters surrounding line-breaks may be omitted when copied over to the application.
+* Extraneous parameters for `help`, `list`, `exit`, `export` and `import` are ignored. For example, `help 123` is interpreted as `help`. `clear` accepts only `confirm`, and `list_role` rejects all arguments.
+
+* If you copy commands from the PDF version of this document, spaces around line breaks may be lost.
 </box>
 
-### Filters and expanded view
+<box type="warning" seamless>
 
-After `edit`, `note`, or `status`, the current name search, status filter, or role filter stays active. Candidates that no longer match disappear from the displayed list, so displayed indexes may change.
+**Check your list before using an index.** `edit`, `note`, `status`, `delete` and `expand` all act on the displayed list, which changes after `find`, `filter`, `expand` and updates that make a candidate stop matching. Look at the list, then pick the index. Use `list` to show all candidates again.
+</box>
 
-`expand` replaces that filter with a selection of one candidate at index `1`. Updating the expanded candidate keeps them selected at index `1`, even if their new details would not match the earlier filter.
+### Common rules
 
-Check the displayed list before using another index command. Use `list` to show all candidates again.
+**Filters and expanded view.** After `edit`, `note`, `status` or `edit_role`/`delete_role`, the current name search, status filter or role filter stays active. Candidates that no longer match disappear from the displayed list, so displayed indexes may change. `expand` replaces the current filter with a selection of one candidate at index `1`. Updating the expanded candidate keeps them selected at index `1`, even if their new details would not match the earlier filter.
 
-### Accepted characters in candidate inputs
+**Index errors.** The command is rejected and the current view stays unchanged.
 
-Names, phone numbers, emails, addresses, tags, notes, and `find` keywords accept only **printable ASCII (`U+0020–U+007E`)**: English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces, and ASCII punctuation. This keeps command input within a single, explicit character set. Existing field rules still apply afterward: for example, phone numbers need at least three ASCII digits, and names accept only the punctuation used in legal names, such as `O'Brien`, `Jr.`, `s/o` and `(Kelvin)`.
+| Mistake | Message |
+|---|---|
+| `0` or a negative index (`note`, `status`, `expand`, `delete`) | `Index must be a positive integer.` |
+| Index beyond the displayed list (`note`, `status`, `delete`) | `The candidate index provided is invalid.` |
+| Index beyond the displayed list (`expand`) | `No candidate found with that index. Enter an index between 1 and N.`, where `N` is the number of candidates shown. A number above 2147483647 gives `The candidate index provided is invalid.` |
+| Missing or non-numeric index (`note`, `status`, `delete`) | `Invalid command format!` followed by the usage |
+| Non-numeric index (`expand`) | `Invalid index! Index must be a positive integer.` |
 
-For more information about rejected characters, error messages, and validation scope, see [Command input character validation in the Developer Guide](DeveloperGuide.md#command-input-character-validation).
+
+### Typing values
+
+* Names, phone numbers, emails, addresses, tags, notes and `find` keywords accept **printable ASCII only**. Type accented names in plain letters (`José` as `Jose`).
+* A prefix such as `n/` after a space starts a new field, in any letter case. To keep text like `N/A` inside a value, type `\/` for its slash: `edit 1 a/Unit N\/A`.
+* Commands that could be read two ways, such as `edit 1 a/Unit N/A`, are rejected and nothing changes. The rejected command stays in the command box in red so you can fix it.
+
+![A rejected command stays in the command box in red](images/prefix-error.png)
+
+<panel header="Accepted characters" type="seamless">
+
+names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters, digits, ordinary spaces and ASCII punctuation. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. For example, enter `José` as `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
+</panel>
+
+<panel header="Text that looks like a prefix, and the multi-field warning" type="seamless">
+
+A prefix such as `n/` that follows a space starts a new field, in any letter case. To keep prefix-looking text such as `N/A` inside a value, type `\/` for its slash.
+
+* `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses, tags and notes, where every `\/` you type is saved as `/`.
+* Role names and statuses keep backslashes literally. To assign an existing role named `N/A`, use `edit 1 r/N/A` with no space after `r/`; `r/ N/A` is ambiguous, and `r/N\/A` refers to a different role whose name contains a backslash.
+* In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be text or a new field, so HRvest rejects the command and changes nothing. The error offers `n/` to start a field and `N\/` for literal text. If that field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
+* A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field: the address becomes `Unit` and the name becomes `a`. Use `edit 1 a/Unit n\/a` to keep it in the address.
+* Successful `add` and `edit` commands with several fields show a warning before the success message, listing every prefix after the first field in input order, including lower-case and repeated ones. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: Prefixes read as additional fields: N/.` The command is applied and saved immediately; the warning does not ask for confirmation, so check the updated details. It also appears for intentional multi-field commands and unchanged edits (`edit 1 A/Unit P/123 N/A` lists both `P/` and `N/`). A single-field edit produces no warning, and escaped text and legal-name connectors are not listed: `edit 1 A/Unit N\/A` saves the whole address without a warning.
+</panel>
+
+<panel header="Name rules (add and edit)" type="seamless">
+
+* **Punctuation between letters or digits:** apostrophes, periods, hyphens and slashes are accepted, for example `Anne O'Brien`, `J.R. Tan`, `Kelly-Ann Tan` and `Ravi s/o Kumar`.
+* **Other legal-name forms:** a word may end with one period (`Tan Ah Kow Jr.`). A comma may follow a word or closing parenthesis, but must be followed by a space and another word (`Martin Luther King, Jr.`); a trailing comma is rejected. Parenthesised words are accepted after the first word (`Tan Wei Ming (Kelvin)`), and a separate `@` may introduce an alias (`Mohamed Ali @ Ahmad`). Parentheses must enclose complete words with no spaces immediately inside them, and `@` needs a name on both sides.
+* **Name markers:** `s/o`, `d/o`, `a/l`, `a/p` and `l/p` are accepted; slashes between letters or digits are not limited to these. Within a name, `s/o` followed by a space stays part of the name rather than starting a status field, in any letter case. `d/o` and `l/p` stay in the name because `d/` and `l/` are not command prefixes.
+* **Names and addresses:** `a/l` and `a/p` can look like an address field, so when using them in a name, put the address first, for example `edit 1 a/1 Road n/Siti a/p Ahmad`. A later address is also accepted if another field, such as `p/`, separates it from the name. An address beginning with `L` or `P` can look like a name marker, so put the address first (`edit 1 a/L Street n/John`). An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected rather than guessed.
+* **Rejected:** other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words.
+* **Spacing:** leading and trailing spaces are removed; internal spaces and letter case are preserved.
+</panel>
+
 
 ### Viewing help: `help`
 
@@ -101,87 +180,89 @@ Shows a message explaining how to access the help page.
 
 Format: `help`
 
-
 ### Adding a candidate: `add`
 
 Adds a candidate to HRvest.
 
-Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/STATUS] [t/TAG]... `
+Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/STATUS] [t/TAG]...`
 
-**Parameters:**
-
-| Parameter | Required? | Accepted values and behavior |
+| Parameter | Required? | What to enter |
 |---|---|---|
-| `n/NAME` | Yes | A non-blank, printable-ASCII name that follows the [Name rules](#name-rules), e.g. `n/John Doe`. See below for punctuation, markers and parameter-ordering guidance. |
-| `p/PHONE_NUMBER` | Yes | Any printable-ASCII text containing at least three ASCII digits, e.g. `p/+65 9123 4567`, `p/(65) 6123 4567`, or `p/1234 5678 (HP) 1111-3333 (Office)`. Formatting, extensions and contact labels are accepted. Leading and trailing spaces are removed; internal text and leading zeroes are preserved. HRvest stores contact information without checking whether a number is dialable. |
-| `e/EMAIL` | Yes | An address in `local-part@domain` format, e.g. `e/anne.o'brien@example.com`. The local part allows letters, digits, and <code>!#$%&'*+/=?^_&#96;{&#124;}~-</code>, with periods separating non-empty groups. Leading, trailing, and consecutive periods are invalid. Domain labels must start and end with letters or digits and may contain internal hyphens, including consecutive hyphens (e.g. `xn--bcher-kva.de`); the final label must contain at least two characters. Spaces and quoted local parts are not accepted. |
-| `a/ADDRESS` | Yes | Any non-blank, printable-ASCII address, e.g. `a/John street, block 123, #01-01`. Spaces and punctuation are allowed. |
-| `r/ROLE` | Yes | An existing [role name](#managing-the-role-catalog). Repeat `r/` to assign multiple roles. Matching ignores case and surrounding whitespace. Use `r/No role` if no role applies. |
-| `s/STATUS` | No | One of `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, or `Withdrawn`. Defaults to `Applied` if omitted. Input ignores letter case, so `s/interviewing` is saved and displayed as `Interviewing`. A bare `s/` is invalid rather than using the default. |
-| `t/TAG` | No | A non-blank printable ASCII label, including punctuation and internal spaces, e.g. `t/C++`, `t/C#`, `t/.NET`, `t/Node.js`, or `t/machine learning`. Surrounding spaces are trimmed; internal spaces are preserved. Repeat the prefix for multiple tags: `t/C++ t/machine learning`. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. A recognized command prefix preceded by a space starts another field, even inside a tag: `t/machine learning n/Alice` sets the tag to `machine learning` and the name to `Alice`. Quoting does not escape prefixes. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`. |
+| `n/NAME` | Yes | A name following the [name rules](#typing-values), e.g. `n/John Doe` |
+| `p/PHONE_NUMBER` | Yes | Text with at least three digits; spaces, `+`, brackets and labels are allowed, e.g. `p/+65 9123 4567` |
+| `e/EMAIL` | Yes | `local-part@domain`, e.g. `e/anne.o'brien@example.com` |
+| `a/ADDRESS` | Yes | Any non-blank text, e.g. `a/John street, block 123, #01-01` |
+| `r/ROLE` | Yes | An existing [role](#managing-the-role-catalog); repeat `r/` for several. Use `r/No role` if none applies |
+| `s/STATUS` | No | `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected` or `Withdrawn`; defaults to `Applied` |
+| `t/TAG` | No | A short label, e.g. `t/C++` or `t/machine learning`; repeat `t/` for several |
 
-#### Name rules
-
-These rules apply to names supplied through `add` and `edit`.
-
-* **Punctuation between letters or digits:** Apostrophes, periods, hyphens and slashes are accepted, e.g. `Anne O'Brien`, `J.R. Tan`, `Kelly-Ann Tan` and `Ravi s/o Kumar`.
-* **Other legal-name forms:** A word may end with one period (`Tan Ah Kow Jr.`). A comma may follow a word or closing parenthesis, but must be followed by a space and another word (`Martin Luther King, Jr.` or `Tan (Kelvin), Jr.`); a trailing comma is rejected. Parenthesised words are accepted after the first word (`Tan Wei Ming (Kelvin)`), and a separate `@` may introduce an alias (`Mohamed Ali @ Ahmad`). Parentheses must enclose complete words without spaces immediately inside them; `@` needs a name on both sides.
-* **Name markers:** Accepted examples include `s/o`, `d/o`, `a/l`, `a/p` and `l/p`; slashes between letters or digits are not limited to these markers. Within a name, `s/o` followed by a space stays part of the name rather than starting a status field, regardless of letter case. `d/o` and `l/p` stay part of the name because `d/` and `l/` are not command prefixes. The markers `a/l` and `a/p` can resemble an address field and require the ordering below.
-* **Ordering names and addresses:** When using `a/l` or `a/p` in a name, put the address first, e.g. `edit 1 a/1 Road n/Siti a/p Ahmad`. A later address is also accepted if another field, such as `p/`, separates it from the name.
-* **Ambiguous addresses:** An address beginning with `L` or `P` can look like a name marker. Put the address first, e.g. `edit 1 a/L Street n/John`. An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected rather than guessed.
-* **Rejected punctuation:** Other punctuation, repeated punctuation such as `O''Brien`, and punctuation-only words are rejected.
-* **Characters and spacing:** Only [printable ASCII](#accepted-characters-in-candidate-inputs) is accepted. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Leading and trailing spaces are removed; internal spaces and letter case are preserved.
-
-**Input and results:**
-
-* Supply each of `n/`, `p/`, `e/`, `a/`, and `s/` at most once. Both `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even if their values are identical.
-* The error message lists all missing required parameters together, including `r/ROLE`. If the role is missing, it also explains that you can use `r/No role` if no role applies. For example, bare `add` reports `Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS, r/ROLE. Use r/No role if no role applies.` The command `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
-* Create named roles with `add_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
-* Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` identifies the matching existing record, even if hidden by a filter. The submitted candidate and current view are not changed. Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
-* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix preceded by whitespace starts a new field, even if you intended it to be part of an address: `a/Unit n/a` sets the name to `a`. An upper-case prefix after a lower-case one, such as the `T/` in `a/Unit T/2`, is rejected rather than guessed. To keep such text, type `\/` for its slash: `a/Unit T\/2` saves the address `Unit T/2`. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`, described in [Name rules](#name-rules) above.
-* `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
+* Supply each of `n/`, `p/`, `e/`, `a/` and `s/` at most once; `t/` and `r/` can be repeated. Repeated single-valued prefixes are rejected, even with identical values.
+* Create named roles with `add_role` before assigning them. An unknown role or a bare `r/` is rejected.
+* An email already used by another candidate is rejected (see the details below).
 
 Examples:
 
 * `add n/John Doe p/98765432 e/johnd@example.com a/John street, block 123, #01-01 r/No role`
 * `add n/Betsy Crowe p/1234567 e/betsy@example.com a/Newgate Prison r/Developer s/Interviewing t/backend` (create `Developer` first with `add_role n/Developer`).
 
+![Result of adding a candidate](images/add-result.png)
+
+<panel header="Phone, email, status and tag details" type="seamless">
+
+* **Phone:** accepted examples are `p/+65 9123 4567`, `p/(65) 6123 4567` and `p/1234 5678 (HP) 1111-3333 (Office)`. Formatting, extensions and contact labels are accepted. Leading and trailing spaces are removed; internal text and leading zeroes are preserved. HRvest does not check whether a number is dialable.
+* **Email:** the local part allows letters, digits and <code>!#$%&'*+/=?^_&#96;{&#124;}~-</code>, with periods separating non-empty groups; leading, trailing and consecutive periods are invalid. Domain labels must start and end with a letter or digit and may contain internal hyphens, including consecutive ones (`xn--bcher-kva.de`); the final label must have at least two characters. Spaces and quoted local parts are not accepted.
+* **Address:** spaces and punctuation are allowed.
+* **Role:** matching ignores case and surrounding whitespace.
+* **Status:** input ignores letter case, so `s/interviewing` is saved and shown as `Interviewing`. A bare `s/` is invalid rather than using the default.
+* **Tags:** a non-blank label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`.
+</panel>
+
+<panel header="Errors, duplicates and unknown prefixes" type="seamless">
+
+* The error message lists all missing required parameters together. Bare `add` reports `Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS, r/ROLE. Use r/No role if no role applies.` The command `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
+* **Duplicates:** email alone identifies duplicates. Surrounding whitespace is trimmed and the whole email is compared ignoring case, so `Alice@Example.com` and `alice@example.com` are the same candidate. A duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` is the existing matching record, even if hidden by a filter. Nothing is changed. Names, phones, addresses, statuses, roles, tags and notes do not affect duplicate detection, so two candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
+* **Unknown prefixes** such as `x/` are treated as part of the preceding value. A recognised prefix preceded by whitespace starts a new field even inside an address: `a/Unit n/a` sets the name to `a`. See [Typing values](#typing-values) for how to keep such text.
+* `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Text such as `yes/no/feedback` inside an address word remains literal address text.
+</panel>
+
 ### Listing all candidates: `list`
 
-Shows a list of all candidates in HRvest, along with the total count.
+Shows all candidates in HRvest, along with the total count.
 
 Format: `list`
 
-* The success message is `Listed all N candidate(s).`, where `N` is the current number of candidates. For example, `Listed all 6 candidate(s).`
+* The message is `Listed all N candidate(s).`, for example `Listed all 6 candidate(s).`
 * If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
 
 ### Editing a candidate: `edit`
 
-Edits an existing candidate in HRvest.
-
-The success message shows the candidate's updated details.
+Edits an existing candidate in HRvest. The success message shows the candidate's updated details.
 
 Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`
 
-* Edits the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
-* At least one of the optional fields must be provided.
-* Existing values will be updated to the input values.
-* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
-* If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
-* An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` identifies the matching existing record rather than the submitted name, even if hidden by a filter. The original candidate, filter, and expanded view remain unchanged. Keeping your candidate's email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
-* Supplied `r/` values replace all existing roles; omitting `r/` preserves them. A bare `r/` is invalid; use `r/No role` to remove named roles. Unknown roles suggest `add_role n/NAME`, and an invalid role leaves all details unchanged.
-* When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
-* To remove all of a candidate's tags, enter `t/` without a tag after it.
-* As in `add`, a recognised prefix after a space starts a new field, and an upper-case prefix after a lower-case one is rejected. For example, `edit 1 a/Unit N/A` reports that `N/` could be text or the `n/` prefix, and changes nothing. Use `edit 1 a/Unit N\/A` to set the address to `Unit N/A`. Check the success message, which shows the updated details.
-* To avoid confusing an address beginning with `L` or `P` with a legal-name marker, put the address first, e.g. `edit 1 a/L Street n/John` or `edit 1 a/9 Road n/Siti a/p Ahmad`. An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected without changing the candidate.
-* `edit` does not change notes. Like `add`, it rejects `no/` anywhere, in any letter case, with `The edit command does not support no/. Use note INDEX no/NOTE_TEXT to add, replace or clear a note.` Use the `note` command instead.
+* Edits the candidate at the specified `INDEX` in the displayed list. At least one optional field must be provided.
+* Existing values are replaced by the input values.
+* Supplied `r/` values replace all existing roles; omitting `r/` keeps them. A bare `r/` is invalid; use `r/No role` to remove named roles.
+* Supplied `t/` values replace all existing tags (they do not add to them). Enter `t/` with nothing after it to remove all tags.
+* Keeps the current filter or expanded view (see [common rules](#common-rules)).
+* `edit` does not change notes; use the `note` command.
 
 Examples:
 
-*  `edit 1 p/91234567 e/johndoe@example.com` Edits the phone number and email address of the 1st candidate to be `91234567` and `johndoe@example.com` respectively.
-*  `edit 2 n/Betsy Crower t/` Edits the name of the 2nd candidate to be `Betsy Crower` and clears all existing tags.
-*  `edit 3 s/Offered` Updates the status of the 3rd candidate to `Offered`.
-* `edit 1 r/Developer r/Designer` Replaces the 1st candidate's roles with Developer and Designer, which must already exist.
+* `edit 1 p/91234567 e/johndoe@example.com` edits the phone number and email address of the 1st candidate.
+* `edit 2 n/Betsy Crower t/` edits the name of the 2nd candidate and clears all existing tags.
+* `edit 3 s/Offered` updates the status of the 3rd candidate to `Offered`.
+* `edit 1 r/Developer r/Designer` replaces the 1st candidate's roles with Developer and Designer, which must already exist.
+
+<panel header="Unchanged edits, duplicate emails, role errors and prefix pitfalls" type="seamless">
+
+* If every value you give matches the candidate's current details, nothing is changed and the message is `No changes made: NAME already has these details.`
+* An email matching another candidate's email (ignoring case and surrounding whitespace) is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` is the matching existing record rather than the submitted name, even if hidden by a filter. The original candidate, filter and expanded view stay unchanged. Keeping your candidate's own email, changing only its capitalisation, or editing other fields does not cause a self-duplicate error.
+* An unknown role suggests `add_role n/NAME`, and an invalid role leaves all details unchanged.
+* As in `add`, a recognised prefix after a space starts a new field, and an upper-case prefix after a lower-case one is rejected. For example, `edit 1 a/Unit N/A` reports that `N/` could be text or the `n/` prefix, and changes nothing. Use `edit 1 a/Unit N\/A` to set the address to `Unit N/A`. See [Typing values](#typing-values).
+* To avoid confusing an address beginning with `L` or `P` with a legal-name marker, put the address first, e.g. `edit 1 a/L Street n/John`. An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected without changing the candidate.
+* `edit` rejects `no/` anywhere, in any letter case, with `The edit command does not support no/. Use note INDEX no/NOTE_TEXT to add, replace or clear a note.`
+</panel>
 
 ### Adding, replacing, or clearing a candidate's note: `note`
 
@@ -189,47 +270,51 @@ Adds a note to the specified candidate, such as interview feedback or follow-up 
 
 Format: `note INDEX no/[NOTE_TEXT]`
 
-* Adds the note to the candidate at the specified `INDEX`. The index refers to the index number shown in the displayed candidate list. The index **must be a positive integer** 1, 2, 3, ...
-* `0` or a negative index gives `Index must be a positive integer.` An index beyond the displayed list gives `The candidate index provided is invalid.` A missing or non-numeric index gives `Invalid command format!`. The current view stays unchanged.
-* Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
-* To clear the note, enter `note INDEX no/` with no text after `no/`. Text containing only ordinary spaces also clears the note. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
-* Non-empty `NOTE_TEXT` can contain at most 500 printable-ASCII characters. Leading and trailing ordinary spaces are removed; spacing, capitalisation, and ASCII punctuation within the note are kept. Tabs, line breaks, and non-ASCII characters are rejected.
-* Supply `no/` only once. A later ` no/` or ` NO/` in the text is rejected as a second `no/`; type `no\/` to keep that text in the note. Other prefixes, such as `n/`, are treated as part of the note.
-* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
-* When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
-* Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
+* Each candidate has one note. A new note replaces the old one.
+* To clear the note, enter `note INDEX no/` with no text after `no/`.
+* `NOTE_TEXT` can contain at most 500 printable-ASCII characters.
+* Keeps the current filter or expanded view. Editing a candidate or updating their status keeps their note. Use `expand INDEX` to read the full note.
 
 Examples:
 
 * `note 2 no/Strong on system design, weak on SQL`
 * `note 2 no/` clears the 2nd displayed candidate's note. The note icon disappears; expanding the candidate shows `No note recorded.`
-* `find Betsy` followed by `note 1 no/Follow up next week` adds a note to the 1st candidate in the results of the `find` command.
+* `find Betsy` followed by `note 1 no/Follow up next week` adds a note to the 1st candidate in the `find` results.
 
 <box type="warning" seamless>
 
-**Caution:**
-Replacing or removing a note deletes the previous note permanently. To keep earlier information, include it in the new note.
+**Caution:** Replacing or removing a note deletes the previous note permanently. To keep earlier information, include it in the new note.
 </box>
+
+<panel header="Messages and input rules for notes" type="seamless">
+
+* When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`. When clearing, it is `Cleared note for NAME`. Clearing a candidate who has no note succeeds and changes nothing. Text containing only ordinary spaces also clears the note.
+* Leading and trailing ordinary spaces are removed; spacing, capitalisation and ASCII punctuation within the note are kept. Tabs, line breaks and non-ASCII characters are rejected.
+* Supply `no/` only once. A later ` no/` or ` NO/` in the text is rejected as a second `no/`; type `no\/` to keep that text in the note. Other prefixes, such as `n/`, are treated as part of the note.
+* Index errors are listed in the [common rules](#common-rules). A missing `no/` is reported before an invalid index.
+</panel>
 
 ### Updating a candidate's recruitment status: `status`
 
-Updates the candidate at the given index in the currently displayed list.
+Updates the status of the candidate at the given index in the displayed list.
 
 Format: `status INDEX s/STATUS`
 
-* `INDEX` is a positive, 1-based index in the displayed list.
-* Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, and `Withdrawn`, regardless of letter case.
-* Candidates created with `add` start with `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
-* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
+* Valid statuses are `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected` and `Withdrawn`, regardless of letter case.
 * The message is `Updated status of NAME: OLD_STATUS -> NEW_STATUS`.
-* If the candidate already has the requested status, the message is `No change: NAME already has status STATUS.` Their record and the current filtered or expanded view stay unchanged.
-* `0` or a negative index gives `Index must be a positive integer.` An index beyond the displayed list gives `The candidate index provided is invalid.` A missing or non-numeric index, or a missing `s/`, gives `Invalid command format!`. The candidate and current view stay unchanged.
-* An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`.
+* If the candidate already has that status, the message is `No change: NAME already has status STATUS.` and nothing changes.
+* Keeps the current filter or expanded view.
 
 Examples:
 
 * `status 3 s/Interviewing`
 * `status 1 s/Accepted`
+
+<panel header="Defaults and error messages for status" type="seamless">
+
+* Candidates created with `add` start as `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
+* A missing `s/` gives `Invalid command format!`. An unknown status gives `Status must be one of: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, Withdrawn`; repeated `s/` gives `Multiple values specified for the following single-valued field(s): s/`. The candidate and current view stay unchanged. Index errors are in the [common rules](#common-rules).
+</panel>
 
 ### Locating candidates by name: `find`
 
@@ -237,18 +322,22 @@ Finds candidates with a word in their name that starts with any of the given key
 
 Format: `find KEYWORD [MORE_KEYWORDS]`
 
-* The search is case-insensitive; for example, `hans` matches `Hans`.
-* Keyword order does not matter; for example, `Hans Bo` matches `Bo Hans`.
-* The search considers only names. Parentheses and commas in names and keywords are ignored, so both `find Kelvin` and `find (Kelvin)` match `Tan Wei Ming (Kelvin)`, and `find King,` matches `Martin Luther King, Jr.`. Keywords containing only parentheses and commas match no candidates.
-* A keyword matches the start of any word in a name; for example, `Han` matches `Hans`, and `Gru` matches `Hans Gruber`. Text inside a word does not match; for example, `ans` does not match `Hans`.
-* Candidates matching at least one keyword are returned (an `OR` search); for example, `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
+* The search is case-insensitive (`hans` matches `Hans`) and keyword order does not matter (`Hans Bo` matches `Bo Hans`).
+* Only names are searched. A keyword matches the **start** of any word in a name: `Han` matches `Hans`, but `ans` does not.
+* Candidates matching at least one keyword are returned (an `OR` search): `Hans Bo` returns `Hans Gruber` and `Bo Yang`.
 * Each `find` replaces the previous search or filter and considers all candidates, so `find` and `filter` cannot be combined. For example, `filter s/Interviewing` followed by `find Alex` shows every candidate matching `Alex`, whatever their status.
 
 Examples:
+
 * `find ROY` returns `Roy Balakrishnan`
 * `find ale` returns `Alex Yeoh`
 * `find alex david` returns `Alex Yeoh`, `David Li`<br>
   ![result for 'find alex david'](images/findAlexDavidResult.png)
+
+<panel header="Parentheses and commas in names" type="seamless">
+
+Parentheses and commas in names and keywords are ignored, so both `find Kelvin` and `find (Kelvin)` match `Tan Wei Ming (Kelvin)`, and `find King,` matches `Martin Luther King, Jr.`. Keywords containing only parentheses and commas match no candidates.
+</panel>
 
 ### Filtering candidates by status or role: `filter`
 
@@ -257,14 +346,10 @@ Filters candidates by hiring status, assigned roles, or both.
 Format: `filter [s/STATUS]... [r/ROLE]...`
 
 * Supply at least one status or role.
-* Repeat `s/` or `r/` to match any value within that field (`OR`). Repeated values have no extra effect.
-* If both fields are supplied, candidates must match a specified status and a specified role (`AND`).
+* Repeat `s/` or `r/` to match any value within that field (`OR`). If both fields are supplied, a candidate must match a specified status **and** a specified role (`AND`).
+* Status and role matching ignore case. Roles must exist in the catalog.
 * Each `filter` replaces the previous search or filter and considers all candidates, so `filter` and `find` cannot be combined. For example, `find Alex` followed by `filter r/Developer` shows every Developer, not only those matching `Alex`.
-* Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`.
-* Status and role matching ignore case. Role names ignore surrounding whitespace and must exist in the catalog.
-* Invalid input leaves the displayed list unchanged. An invalid status lists valid statuses; an unknown role suggests `list_role`. Other prefixes are rejected. For example, `filter n/Alex` gives `The filter command does not support n/. Use only s/STATUS and r/ROLE.`
-* If no candidates match, the result count is zero.
-* Renaming a role keeps an active filter following that role. Deleting it removes that role's matches.
+* Invalid input leaves the displayed list unchanged. If no candidates match, the result count is zero.
 
 Examples (create `Developer` and `Designer` first):
 
@@ -273,23 +358,32 @@ Examples (create `Developer` and `Designer` first):
 * `filter r/Developer s/Interviewing s/Offered` shows Developers who are interviewing or have been offered a job.
 * `filter r/No role` shows candidates with no named role.
 
+Before and after `filter s/Interviewing s/Offered`:
+
+![Before filtering: all candidates are shown](images/filter-before.png)
+
+![After filtering: the result, count line and summary cards change](images/filter-after.png)
+
+<panel header="Errors and role changes while filtering" type="seamless">
+
+* An invalid status lists the valid statuses; an unknown role suggests `list_role`. Other prefixes are rejected, for example `filter n/Alex` gives `The filter command does not support n/. Use only s/STATUS and r/ROLE.`
+* Repeated values have no extra effect. Role names ignore surrounding whitespace.
+* Renaming a role keeps an active filter following that role. Deleting it removes that role's matches.
+</panel>
+
 ### Deleting a candidate: `delete`
 
-Deletes the specified candidate from HRvest.
-
-The success message shows the deleted candidate's details, including their status.
+Deletes the specified candidate from HRvest. The success message shows the deleted candidate's details, including their status.
 
 Format: `delete INDEX`
 
-* Deletes the candidate at the specified `INDEX`.
-* The index refers to the index number shown in the displayed candidate list.
-* The index **must be a positive integer** 1, 2, 3, ...
+* Deletes the candidate at the specified `INDEX` in the displayed list.
 * After `expand`, deleting the expanded candidate shows all remaining candidates again.
 
 Examples:
 
 * `list` followed by `delete 2` deletes the 2nd candidate in HRvest.
-* `find Betsy` followed by `delete 1` deletes the 1st candidate in the results of the `find` command.
+* `find Betsy` followed by `delete 1` deletes the 1st candidate in the `find` results.
 
 ### Viewing a candidate's full record: `expand`
 
@@ -297,38 +391,42 @@ Shows the specified candidate's full record, including their full note.
 
 Format: `expand INDEX`
 
-* Shows the candidate at the specified `INDEX`.
-* The index refers to the index number shown in the displayed candidate list.
-* The index **must be a positive integer** 1, 2, 3, ... within the displayed list.
-* `0` or a negative index gives `Index must be a positive integer.` A non-numeric index gives `Invalid index! Index must be a positive integer.` The current view stays unchanged.
-* An index beyond the displayed list gives `No candidate found with that index. Enter an index between 1 and N.`, where `N` is the number of candidates shown. A number above 2147483647 gives `The candidate index provided is invalid.`
-* The list shows only the selected candidate at index `1`, with their full note. If the candidate has no note, it shows `No note recorded.` Run `list` to show all candidates again.
-* If HRvest has no candidates, the error is `There are no candidates yet. Use add to add one.` If only the displayed list is empty, use `list` or change the filter to display candidates.
+* The list shows only the selected candidate at index `1`, with their full note, or `No note recorded.` if there is none. Run `list` to show all candidates again.
 
 Examples:
 
 * `list` followed by `expand 1` shows the 1st candidate in HRvest.
-* `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the results of the `filter` command.
+* `filter s/Interviewing` followed by `expand 2` shows the 2nd candidate in the `filter` results.
+
+Before and after `expand 1`:
+
+![Before expanding: the note is hidden behind the icon](images/expand-before.png)
+
+![After expanding: the full note is shown](images/expand-after.png)
+
+<panel header="When there are no candidates" type="seamless">
+
+If HRvest has no candidates, the error is `There are no candidates yet. Use add to add one.` If only the displayed list is empty, use `list` or change the filter to display candidates. Index errors are in the [common rules](#common-rules).
+</panel>
 
 ### Managing the role catalog
 
 The role catalog is the shared collection of roles available in HRvest, including unused roles and the built-in `No role`.
 
 * Each candidate has one or more roles. `add` requires explicit roles; create named roles before assigning them, or use `r/No role`.
-* `No role` cannot be renamed or deleted. Assigning any named role removes `No role`, even if both are supplied. It remains the fallback when deleting a candidate's last named role.
-* Named roles appear as purple badges, `No role` as a red badge, and tags as blue badges. Long role names wrap.
-* Unused roles remain available, including after `clear` and restarts.
-* Role command words and prefixes are case-insensitive. Put whitespace before each prefix and supply each required prefix exactly once.
+* `No role` cannot be renamed or deleted. Assigning any named role removes `No role`, even if both are supplied. It comes back when you delete a candidate's last named role.
+* Unused roles remain available, including after `clear` and restarts. Long role names wrap on the candidate card.
 * Changes save automatically. Invalid commands report an error without changing candidates or roles.
 
-**Role names:**
+<panel header="Role name rules" type="seamless">
 
 * Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
-* Invisible characters, such as no-break spaces (`U+00A0`) and zero-width spaces (`U+200B`), are rejected, even when text copied from a web page looks normal. Use ordinary spaces instead.
-* Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
-* Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent. Display spelling and role IDs are preserved. This applies to creation, assignment, filtering, renaming, and deletion.
+* Invisible characters, such as no-break spaces (`U+00A0`) and zero-width spaces (`U+200B`), are rejected, even when text copied from a web page looks normal. Use ordinary spaces.
+* Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display. Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
-* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name, and quotes do not escape it. A `\/` in a role name is kept as typed rather than read as `/`.
+* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/` or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name, and quotes do not escape it. A `\/` in a role name is kept as typed.
+* Role command words and prefixes are case-insensitive. Put whitespace before each prefix and supply each required prefix exactly once.
+</panel>
 
 #### Creating an unused role: `add_role`
 
@@ -346,34 +444,32 @@ Renames a role for every assigned candidate, including those outside the display
 
 Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
 
-* The role must exist and must not be `No role`.
-* The new name must not match another role. Changing only capitalisation is allowed.
-* Other role assignments stay unchanged.
-* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
+* The role must exist and must not be `No role`. The new name must not match another role, but changing only capitalisation is allowed.
+* Other role assignments stay unchanged. Keeps the current filter or expanded view.
 
 Example: `edit_role r/Software Engineer n/Senior Software Engineer`
 
 #### Deleting a role globally: `delete_role`
 
-Removes a role from the catalog and all assigned candidates.
+Removes a role from the catalog and from all assigned candidates.
 
 Format: `delete_role r/NAME`
 
 * The role must exist and must not be `No role`.
-* Candidates keep their other roles. Those losing their last role receive `No role`.
-* Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
+* Candidates keep their other roles. Those losing their last role receive `No role`. Keeps the current filter or expanded view.
 
 Example: `delete_role r/Senior Software Engineer`
 
 #### Listing the complete catalog: `list_role`
 
-Shows all role names in the command result, including unused roles and `No role`.
+Shows all role names in the result box, including unused roles and `No role`.
 
 Format: `list_role`
 
-* Names are sorted alphabetically, ignoring case.
-* Accepts no arguments and keeps the candidate filter unchanged.
-* The result area grows to show more role names while leaving space for candidate cards. Large catalogs and long names remain scrollable.
+* Names are sorted alphabetically, ignoring case. Accepts no arguments and keeps the candidate filter unchanged.
+* The result box grows to show more role names while leaving space for candidate cards. Large catalogs and long names remain scrollable.
+
+![Listing the role catalog](images/role-list.png)
 
 ### Clearing all entries: `clear`
 
@@ -383,8 +479,7 @@ Format: `clear confirm`
 
 * `clear` on its own deletes nothing. It shows how many candidates would be deleted and asks you to enter `clear confirm`.
 * `clear confirm` deletes every candidate, including those hidden by the current `find` or `filter`. The message is `All candidates have been cleared.`
-* `confirm` ignores letter case. Any other text after `clear` is rejected.
-* If there are no candidates, both forms reply `There are no candidates to clear.`
+* `confirm` ignores letter case. Any other text after `clear` is rejected. If there are no candidates, both forms reply `There are no candidates to clear.`
 
 <box type="warning" seamless>
 
@@ -393,49 +488,47 @@ Format: `clear confirm`
 
 ### Exporting candidates: `export`
 
-Exports every candidate to `data/export.csv`, next to the candidate data file `data/HRvest.json` in the folder you run HRvest from. Candidates are exported in address-book order, regardless of the current search or filter. Candidate data, the current filter, and expanded view remain unchanged.
+Exports every candidate to `data/export.csv`, next to the data file `data/HRvest.json`, in the folder you run HRvest from. Candidates are exported regardless of the current search or filter, and your data, filter and expanded view are unchanged.
 
 Format: `export`
 
-* Surrounding whitespace is accepted.
-* The destination is always `data/export.csv`. You are not able to specify your own export path.
-* If the data folder does not exist yet (for example, before HRvest has saved any data), `export` creates it.
-* The CSV has the columns `name,phone,email,address,status,tags,note,roles`, in that order. Unused roles are not exported; back up both JSON files to keep the complete role catalog.
-* The file is UTF-8 with a byte order mark, so spreadsheet programs such as Excel show accented and non-Latin text correctly.
-* For example, the tags `Java` and `backend` appear as `["Java","backend"]` in the tags column when the CSV is opened in a spreadsheet. Roles appear the same way, in `list_role` order, such as `["Designer","Developer"]`, or `["No role"]` for a candidate without a named role.
-* Success displays `Exported successfully to PATH.`, with the absolute destination, only after writing and closing the file succeeds.
-* If the address book is empty, `export` succeeds and writes only the header row, with no candidate rows.
+* The destination is always `data/export.csv`; you cannot choose another path. If the `data` folder does not exist yet, `export` creates it.
+* The CSV has the columns `name,phone,email,address,status,tags,note,roles`, in that order.
+* Success displays `Exported successfully to PATH.` with the absolute destination. If the address book is empty, `export` writes only the header row.
 
 <box type="warning" seamless>
 
-**Opening the CSV in a spreadsheet:** The CSV holds your data exactly as stored, but spreadsheet programs change some values when you double-click to open the file:
+**Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking and without a backup. Copy or rename the CSV first if you need to keep it.
+</box>
+
+<panel header="CSV contents and opening it in a spreadsheet" type="seamless">
+
+* Tags appear as a list such as `["Java","backend"]` in the tags column. Roles appear the same way, in `list_role` order, such as `["Designer","Developer"]`, or `["No role"]` for a candidate without a named role. Unused roles are not exported, so back up both JSON files to keep the complete role catalog.
+* The file is UTF-8 with a byte order mark (a hidden marker at the start of the file), so spreadsheet programs such as Excel show accented and non-Latin text correctly.
+* Surrounding whitespace after `export` is accepted.
+* HRvest writes a temporary file and then replaces `export.csv`, so a failed export leaves the previous CSV intact. An interrupted export may leave a `HRvest-export-*.tmp` file in the data folder; after closing HRvest you may delete it. A filesystem that cannot replace files in one step reports an export error.
+
+**Opening the CSV in a spreadsheet.** The CSV holds your data exactly as stored, but spreadsheet programs change some values when you double-click to open the file:
 
 * Phone numbers lose their leading zeroes, for example `007` becomes `7`.
 * Text that starts with `=`, `+`, `-` or `@`, such as an address `=1+2`, is treated as a formula and calculated.
 
 To keep every value as stored, import the file instead. In Excel, use **Data > From Text/CSV**, choose **Transform Data**, and set the columns to **Text** before loading. Do not open exports from untrusted data with formulas enabled.
-</box>
 
-**Overwrite warning:** Each successful `export` replaces any existing `export.csv` without asking for confirmation or keeping a backup. Copy or rename the CSV before exporting again if you need to retain that snapshot. HRvest writes and closes a temporary file before atomically replacing the destination. A failed write or replacement leaves the previous CSV intact; a filesystem that cannot replace files atomically reports an export error. An interrupted export may leave a `HRvest-export-*.tmp` file in the data folder; after closing HRvest, you may delete that temporary file.
-
-**For more technical details, you can refer to the** [Developer Guide](./DeveloperGuide.md)
+For more technical details, see the [Developer Guide](DeveloperGuide.md#csv-export).
+</panel>
 
 ### Importing candidates: `import`
 
-Appends candidates from `import.csv` to all candidates currently loaded in HRvest, preserving existing order and appending new candidates in file order.
+Appends candidates from `import.csv` to the candidates already in HRvest, keeping existing order and adding new candidates in file order.
 
 Format: `import`
 
-* Extra arguments are ignored, just like `export`. Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is, `data/import.csv` in the folder you run HRvest from. The location cannot be changed, and no other location is tried.
-* The entire import fails if any record is invalid or duplicates an email, ignoring case, in either the CSV or **any** HRvest candidate, including candidates hidden by filters. Records are never skipped or merged.
-* CSV accepts legacy Unicode addresses and notes that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 Unicode code points; quoted notes may contain tabs or line breaks. The printable-ASCII policy still applies when entering these values through commands. Other field, duplicate, and import size rules still apply.
-* The roles column lists at least one role name; use `["No role"]` if no role applies. Names match existing roles ignoring case and surrounding whitespace, as in `add`, and follow the same [role name rules](#managing-the-role-catalog). A name that matches no existing role is created as a new role, so an export can be imported into an HRvest that does not have its roles yet.
-* A role name containing an invisible character is rejected with its CSV record and `roles` field identified. No candidates or roles from that file are added.
-* Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.` for one candidate), saves normally, clears filters, exits expanded view, and shows all candidates in the default list view. If the import created roles, the message names them, for example `Imported 2 candidates successfully. Created role: QA.`
-* An empty (zero-byte) file or valid header-only file runs the same pipeline, saves normally, resets the view, and reports 0 imported candidates. Whitespace-only files are invalid.
-* Only readable regular files are accepted; symbolic links, directories, and special files are rejected.
-* Finish saving `import.csv` before running import and leave it unchanged until import finishes. Editing, replacing, or deleting it during import is unsupported usage with unpredictable results.
-* `import.csv` is never modified. On failure, HRvest reports the error and restores the pre-import in-memory data, filter, and expanded view, including any pre-existing unsaved changes.
+* Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is `data/import.csv` in the folder you run HRvest from. The location cannot be changed.
+* The **entire import fails** if any record is invalid or duplicates an email (ignoring case) in the CSV or in **any** HRvest candidate, including those hidden by filters. Records are never skipped or merged.
+* The `roles` column lists at least one role name; use `["No role"]` if none applies. A name that matches no existing role is created as a new role, so an export can be imported into an HRvest that does not have its roles yet.
+* Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.`), saves, clears filters, leaves expanded view and shows all candidates. If the import created roles, the message names them, for example `Imported 2 candidates successfully. Created role: QA.`
+* `import.csv` is never modified. On failure, HRvest reports the error and restores your data, filter and expanded view as they were.
 
 Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the header unchanged, and replace the example row with your candidate's details. An empty note means no note; use `[]` for no tags and `["No role"]` for no role.
 
@@ -444,21 +537,30 @@ Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the h
 "Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[]","","[""No role""]"
 ```
 
-**For more import details, including CSV formatting and validation rules, see the** [Developer Guide](DeveloperGuide.md#import-csv-format-and-validation).
+<panel header="Import limits" type="seamless">
 
-**Import limits:** Limits are enforced while reading/parsing; exceeding any limit rejects the whole import with an error.
+Limits are enforced while reading the file; exceeding any limit rejects the whole import with an error. These are import limits, not new `add`/`edit` restrictions.
 
 | Resource | Maximum |
 |------|------|
 | File | 10 MiB (10,485,760 bytes) |
 | Candidates in one import | 10,000, excluding the header |
-| Decoded field | 65,536 Unicode characters before trimming |
-| Note | 500 Unicode code points after trimming |
-| Tags or roles per candidate | 100 array entries each, before deduplication |
+| Decoded field | 65,536 characters before trimming |
+| Note | 500 characters after trimming |
+| Tags or roles per candidate | 100 entries each, before removing repeats |
 | Each tag or role name | 256 characters before trimming |
-| Tag and role JSON structure | One flat array of strings only |
+| Tag and role list format | One flat list of strings only |
+</panel>
 
-These are import limits, not new add/edit restrictions. Files exceeding them cannot be imported even if their contents originated in HRvest.
+<panel header="More import rules" type="seamless">
+
+* Extra arguments after `import` are ignored. An empty (zero-byte) file or a valid header-only file imports 0 candidates and resets the view. Whitespace-only files are invalid.
+* Only readable regular files are accepted; symbolic links, directories and special files are rejected.
+* Finish saving `import.csv` before running `import` and leave it unchanged until the import finishes. Editing, replacing or deleting it during import gives unpredictable results.
+* CSV addresses and notes may contain Unicode that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 characters; quoted notes may contain tabs or line breaks. The printable-ASCII rule still applies when you type these values as commands.
+* Role names follow the same [role name rules](#managing-the-role-catalog) as `add`. A role name containing an invisible character is rejected with its CSV record and `roles` field identified, and no candidates or roles from that file are added.
+* For CSV formatting and validation rules, see the [Developer Guide](DeveloperGuide.md#import-csv-format-and-validation).
+</panel>
 
 ### Exiting the program: `exit`
 
@@ -466,52 +568,28 @@ Exits the program.
 
 Format: `exit`
 
-### Candidate note indicator
+--------------------------------------------------------------------------------------------------------------------
 
-A pinned sticky note icon beside a candidate's name indicates that a note exists. Hovering over it shows `Note available`. Collapsed cards keep the note text hidden; use `expand INDEX` to view the candidate's full note. Candidates without notes have no icon and reserve no icon space.
-
-### Header summary cards
-
-The **HRvest** text logo appears above the command box. When the window is wide enough, as it is when HRvest first opens on most screens, a row beside it shows **Total candidates** and one card for each recruitment status: Applied, Shortlisted, Interviewing, Offered, Accepted, Rejected, and Withdrawn.
-
-* Each card shows **shown / total**: the number in the currently displayed candidate list versus the number among all candidates loaded in HRvest. For example, `2 / 8` on Interviewing means two interviewing candidates are currently shown, out of eight overall.
-* Searching, filtering, or expanding a candidate changes the shown counts; overall counts still include candidates hidden from the list. Use `list` to show all candidates again.
-* Adding, updating, deleting, or clearing candidates updates the counts automatically. Statuses with no candidates still have a card, and an empty data set shows `0 / 0` on every card.
-* The cards appear together on one row only when every card fits at its minimum width. If the window is too narrow, the entire row disappears while the logo stays visible. Widen the window to restore all cards with up-to-date counts.
-
-### Displayed candidate count
-
-The line above the candidate list shows how many candidates are displayed, so you can tell when some are hidden rather than deleted:
-
-* `Showing all 6 candidates.` when every candidate is displayed, or `Showing 1 candidate.` when HRvest has only one.
-* `Showing 2 of 6 candidates (filtered). Type list to show all.` when `find`, `filter`, or a later update to a filtered list hides some candidates.
-* `Expanded view of 1 of 6 candidates. Type list to show all.` after `expand`, or `Expanded view of the only candidate.` when HRvest has only one.
-* `No candidates.` when HRvest has no candidates.
-
-### Navigating command history
-
-The command box remembers every command you submit in the current session so you can re-run or edit a past command without retyping it.
-
-* `Up` moves back through your submitted commands. Repeated presses walk further into the past; the earliest entry stays shown once you reach it.
-* `Down` moves forward. Pressing past the newest entry restores whatever draft you were typing before you started navigating, or clears the box if there was no draft.
-* Both successful and rejected commands are recorded. A rejected command also stays in the command box, shown in red, so you can fix a typo and press Enter again; `Up` then shows the command before it. A command identical to the most recent one does not take up an extra slot.
-* Blank submissions are skipped. History is session-scoped and holds up to the 100 most recent commands. Repeating an earlier command that is not the most recent one takes another slot.
+## Your data
 
 ### Saving the data
 
-HRvest automatically saves data after each command that changes candidates or the role catalog, and after every successful import. Viewing, searching, filtering, help, exit, and commands that leave the stored data unchanged do not rewrite the data files. Use [`export`](#exporting-candidates-export) to create a CSV copy.
-
-If HRvest cannot create its log file, it prints a warning and continues logging to the terminal. This does not grant access to candidate files: any data-file permission errors still need to be resolved.
+HRvest automatically saves data after each command that changes candidates or the role catalog, and after every successful import. Viewing, searching, filtering, help and exit do not rewrite the data files. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
-* HRvest allows only one instance to use a data folder at a time. A second instance stops before reading or writing candidate data or preferences and shows an error dialog asking you to close the first. Dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
-* Keep `data/.hrvest.lock` in place. HRvest releases the operating-system lock when it closes or its process terminates; the file remains and does not prevent restarting. Do not delete or replace it while HRvest is running. Separate HRvest folders can run independently.
-* If saving fails, follow the error message before continuing. Do not edit or delete `roles-transaction.json`; restart HRvest to recover an interrupted save.
-* A failed data change is rolled back. You can still inspect the loaded candidates, open help, export a copy, or exit through the command box when JSON saving is unavailable. Exit does not retry a rejected change.
+* HRvest allows only one running instance per data folder. A second instance shows an error dialog asking you to close the first; dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
+* If saving fails, follow the error message before continuing. A failed data change is rolled back, and you can still inspect the loaded candidates, open help, export a copy, or exit.
+
+<panel header="Lock file, interrupted saves and log files" type="seamless">
+
+* Keep `data/.hrvest.lock` in place. HRvest releases the lock when it closes; the file remains and does not prevent restarting. Do not delete or replace it while HRvest is running. Separate HRvest folders can run independently.
+* Do not edit or delete `roles-transaction.json` after an interrupted save; restart HRvest to recover.
+* If HRvest cannot create its log file, it prints a warning and continues logging to the terminal. This does not grant access to candidate files: any data-file permission errors still need to be resolved.
+</panel>
 
 ### Editing the data file
 
-Advanced users may edit the JSON files in the `data` folder.
+Advanced users may edit the JSON files in the `data` folder. Invalid edits can make HRvest start with an empty candidate list.
 
 **Before editing:**
 
@@ -519,30 +597,32 @@ Advanced users may edit the JSON files in the `data` folder.
 1. Back up both data files together.
 1. Edit the files, then restart HRvest to check your changes.
 
-**When editing records:**
+<box type="warning" seamless>
+
+**Caution:** One invalid value in **any** candidate, such as a phone number with fewer than three digits, stops the whole file from loading. HRvest then starts with an empty candidate list and the default role catalog, after backing up your files and showing their location.
+</box>
+
+<panel header="Rules for editing the files" type="seamless">
 
 * Keep candidate emails unique, ignoring case.
 * Role names must be unique ignoring case and Unicode composition. If an older catalog contains both composed and decomposed spellings of the same name, loading rejects the catalog and backs up both files. In copies of the backups, give one entry a distinct name, keep its ID and candidate assignments, then restore the candidate and catalog files together.
-* Each file must contain exactly one JSON object. Do not repeat a property name within an object or append another object or text after it. Surrounding JSON whitespace is allowed. Invalid JSON follows the backup and recovery process below.
-* A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Loading a mix of `no-role` and named role IDs removes `no-role`. Use `no-role` for `No role`, rather than its display name.
-* In `roles.json`, keep the entry with the ID `no-role` and the name `No role`. Give each role you add a new, unique ID in UUID format, such as `3f2b6c1e-8d4a-4b7e-9c2f-1a2b3c4d5e6f`. Any other ID, or a missing or renamed `no-role` entry, stops both files from loading.
-* Preserve the JSON structure and use the same field values allowed by commands. To clear a note, set `note` to an empty string.
-* One invalid value in **any** candidate, such as a phone number containing fewer than three digits, stops the whole file from loading. HRvest then starts with an empty candidate list, as described below. Spaces around a value are removed, as they are in commands.
-* Save the file as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
+* Each file must contain exactly one JSON object. Do not repeat a property name within an object or append anything after it. Surrounding whitespace is allowed.
+* A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Use `no-role` for `No role`, not its display name. Loading a mix of `no-role` and named role IDs removes `no-role`.
+* In `roles.json`, keep the entry with the ID `no-role` and the name `No role`. Give each role you add a new, unique ID in UUID format (a standard unique identifier), such as `3f2b6c1e-8d4a-4b7e-9c2f-1a2b3c4d5e6f`. Any other ID, or a missing or renamed `no-role` entry, stops both files from loading.
+* Use the same field values that commands allow. To clear a note, set `note` to an empty string. Spaces around a value are removed, as in commands.
+* Save as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
+</panel>
 
-**If data cannot be loaded:**
+<panel header="If data cannot be loaded" type="seamless">
 
-<box type="warning" seamless>
-
-Invalid edits can cause HRvest to start with an empty candidate list and the default role catalog. HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
+HRvest backs up the existing files first and shows their location. If backup or recovery fails, follow the reported instructions and keep all original and recovery files.
 
 1. Close HRvest and copy the backups shown in the warning.
 1. Repair the copies and restore the corresponding candidate and role files together.
 1. Restart HRvest and verify your data before deleting any backups.
 
 HRvest does not repair or merge records automatically. See the [Developer Guide](DeveloperGuide.md#storage-component) for storage and recovery details.
-
-</box>
+</panel>
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -555,12 +635,18 @@ HRvest does not repair or merge records automatically. See the [Developer Guide]
 1. Close HRvest on both computers.
 1. Copy `data/HRvest.json` and `data/roles.json` from the old HRvest folder to the new one, replacing both files together.
 
+**Q**: Why did my `edit` or `delete` change the wrong candidate?<br>
+**A**: Indexes refer to the list currently displayed. After `find`, `filter` or `expand`, the numbers change. Check the list before you type an index, and use `list` to show everyone again.
+
+**Q**: My command was rejected. Did anything change?<br>
+**A**: No. A rejected command changes no candidates and no roles. Read the message in the result box, fix the command in the command box (it stays there in red) and press Enter again.
+
 --------------------------------------------------------------------------------------------------------------------
 
 ## Known issues
 
 1. **When using multiple screens**, if you move the application to a secondary screen, and later switch to using only the primary screen, the GUI will open off-screen. The remedy is to delete the `preferences.json` file created by the application before running the application again.
-2. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
+1. **If you minimize the Help Window** and then run the `help` command (or use the `Help` menu, or the keyboard shortcut `F1`) again, the original Help Window will remain minimized, and no new Help Window will appear. The remedy is to manually restore the minimized Help Window.
 
 --------------------------------------------------------------------------------------------------------------------
 
@@ -568,14 +654,14 @@ HRvest does not repair or merge records automatically. See the [Developer Guide]
 
 Action     | Format, Examples
 -----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/STATUS] [t/TAG]... ` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 r/No role t/friend t/colleague`
+**Add**    | `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/STATUS] [t/TAG]...` <br> e.g., `add n/James Ho p/22224444 e/jamesho@example.com a/123, Clementi Rd, 1234665 r/No role t/friend t/colleague`
 **Create role** | `add_role n/NAME`<br> e.g., `add_role n/Software Engineer`
 **Edit role** | `edit_role r/EXISTING_NAME n/NEW_NAME`<br> e.g., `edit_role r/Software Engineer n/Senior Engineer`
 **Delete role** | `delete_role r/NAME`<br> e.g., `delete_role r/Software Engineer`
 **List roles** | `list_role`
 **Clear**  | `clear confirm`
 **Delete** | `delete INDEX`<br> e.g., `delete 3`
-**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]... `<br> e.g.,`edit 2 n/James Lee e/jameslee@example.com`
+**Edit**   | `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [t/TAG]... [r/ROLE]...`<br> e.g., `edit 2 n/James Lee e/jameslee@example.com`
 **Expand** | `expand INDEX`<br> e.g., `expand 2`
 **Export** | `export`
 **Import** | `import`
