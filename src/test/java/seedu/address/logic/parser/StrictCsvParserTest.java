@@ -12,10 +12,15 @@ import seedu.address.logic.parser.exceptions.ParseException;
 public class StrictCsvParserTest {
     private static final String EMPTY_RECORD = "\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"\r\n";
 
+    // The parser counts the header as a record, but it does not count toward the candidate limit.
+    private static final int MAX_RECORDS = StrictCsvParser.MAX_CANDIDATES + 1;
+
     @Test
-    public void parse_recordCountBoundary_acceptsLimitRejectsExtraRecord() throws Exception {
-        assertEquals(10_001, new StrictCsvParser(EMPTY_RECORD.repeat(10_001)).parse().size());
-        assertThrows(ParseException.class, () -> new StrictCsvParser(EMPTY_RECORD.repeat(10_002)).parse());
+    public void parse_recordCountBoundary_acceptsHeaderPlusLimitRejectsExtraCandidate() throws Exception {
+        assertEquals(MAX_RECORDS, new StrictCsvParser(EMPTY_RECORD.repeat(MAX_RECORDS)).parse().size());
+        assertThrows(ParseException.class, "CSV record " + (MAX_RECORDS + 1)
+                + ": Candidate count exceeds 10,000.", () ->
+                new StrictCsvParser(EMPTY_RECORD.repeat(MAX_RECORDS + 1)).parse());
     }
 
     @Test
@@ -41,8 +46,9 @@ public class StrictCsvParserTest {
         assertEquals(text, new StrictCsvParser(text + ",,,,,,,").parse().getFirst().getFirst());
         assertThrows(ParseException.class, () -> new StrictCsvParser(text + "a,,,,,,,").parse());
         String row = ",,,,,,,\n";
-        assertEquals(10_001, new StrictCsvParser(row.repeat(10_001) + "\n\n").parse().size());
-        assertThrows(ParseException.class, () -> new StrictCsvParser(row.repeat(10_002)).parse());
+        assertEquals(MAX_RECORDS, new StrictCsvParser(row.repeat(MAX_RECORDS) + "\n\n").parse().size());
+        assertThrows(ParseException.class, "CSV record " + (MAX_RECORDS + 1)
+                + ": Candidate count exceeds 10,000.", () -> new StrictCsvParser(row.repeat(MAX_RECORDS + 1)).parse());
     }
 
     @Test

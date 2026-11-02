@@ -2,6 +2,7 @@ package seedu.address.logic.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import seedu.address.commons.core.CandidateCsvFormat;
 import seedu.address.logic.parser.exceptions.ParseException;
@@ -27,8 +28,9 @@ final class StrictCsvParser {
                 readTrailingBlankLines(records.isEmpty());
                 break;
             }
+            // Records include the header, so allow one more record than MAX_CANDIDATES.
             if (records.size() > MAX_CANDIDATES) {
-                throw error("Candidate count exceeds 10,000.");
+                throw error(String.format(Locale.ROOT, "Candidate count exceeds %,d.", MAX_CANDIDATES));
             }
             List<String> fields = new ArrayList<>();
             for (int column = 0; column < COLUMN_COUNT; column++) {
@@ -39,9 +41,9 @@ final class StrictCsvParser {
             }
             if (position < input.length()) {
                 if (input.charAt(position) == ',') {
-                    throw error("Too many columns: expected " + COLUMN_COUNT
-                            + "; found an extra column after field " + COLUMN_COUNT + " ("
-                            + CandidateCsvFormat.HEADERS.getLast() + ").");
+                    throw error(String.format(Locale.ROOT,
+                            "Too many columns: expected %d; found an extra column after field %d (%s).",
+                            COLUMN_COUNT, COLUMN_COUNT, CandidateCsvFormat.HEADERS.getLast()));
                 }
                 readLineEnding();
             }
@@ -80,7 +82,7 @@ final class StrictCsvParser {
                 position++;
             }
             if (++length > MAX_FIELD_LENGTH) {
-                throw fieldError(column, "Field exceeds 65,536 characters.");
+                throw fieldError(column, String.format(Locale.ROOT, "Field exceeds %,d characters.", MAX_FIELD_LENGTH));
             }
             value.appendCodePoint(codePoint);
         }
