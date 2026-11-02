@@ -352,9 +352,13 @@ The `export` command creates a CSV copy of all candidate records, regardless of 
 
 `ExportCommand` requests an export through `CommandResult`. `LogicManager` passes the complete address book to `StorageManager`, which delegates CSV formatting and writing to `CsvExportWriter`. This keeps file operations in the storage component rather than the model.
 
-You can refer to the diagram below as a reference.
+The class diagram below gives a high-level visual overview of the export implementation and its relevant methods, helping developers identify which class to inspect for a particular behaviour. Look at `ExportCommandParser` for command parsing, `ExportCommand` and `CommandResult` for requesting an export, and `LogicManager` for coordinating the operation and reporting its result. `StorageManager` delegates the export to `CsvExportWriter`, which handles destination resolution, CSV formatting and file writing. Method parameters and return types are omitted to keep the diagram compact.
 
 <puml src="diagrams/ExportFeatureClassDiagram.puml" alt="ExportFeatureClassDiagram" />
+
+The sequence diagram below shows how the export request reaches storage and returns the destination path. `LogicManager` returns the export result immediately, bypassing ordinary JSON saving because export does not change persisted candidate data. Command parsing and file-handling internals are omitted.
+
+<puml src="diagrams/ExportSequenceDiagram.puml" alt="CSV export sequence showing command delegation to storage and the return path without JSON saving" />
 
 The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text. Every field is quoted, embedded quotes are doubled. Literal values, including embedded line breaks, are preserved. Status uses its displayed label; an absent note is empty. Tags occupy one CSV field containing a JSON array, such as `["Java","backend"]`, with CSV escaping applied. Tag names are sorted in case-sensitive Java string order, preserving casing; no tags gives `[]`. Roles use the same form, with names in `list_role` order, ignoring case; a candidate without a named role gives `["No role"]`.
 

@@ -1,0 +1,70 @@
+@startuml
+!include style.puml
+skinparam ArrowFontStyle plain
+
+box Logic LOGIC_COLOR_T1
+participant ":LogicManager" as LogicManager LOGIC_COLOR
+participant "command:ExportCommand" as ExportCommand LOGIC_COLOR
+end box
+
+box Model MODEL_COLOR_T1
+participant "model:Model" as Model MODEL_COLOR
+end box
+
+box Storage STORAGE_COLOR_T1
+participant "storage:StorageManager" as StorageManager STORAGE_COLOR
+participant "CsvExportWriter" as CsvExportWriterType STORAGE_COLOR
+participant ":CsvExportWriter" as CsvExportWriter STORAGE_COLOR
+end box
+
+[-> LogicManager : execute("export")
+activate LogicManager
+note over LogicManager, ExportCommand
+Command parsing and general restore-point
+setup are omitted.
+end note
+
+LogicManager -> ExportCommand : execute(model)
+activate ExportCommand
+ExportCommand --> LogicManager : CommandResult (isExport() == true)
+deactivate ExportCommand
+
+LogicManager -> LogicManager : exportAddressBook()
+activate LogicManager
+LogicManager -> Model : getAddressBook()
+activate Model
+Model --> LogicManager : complete address book
+deactivate Model
+
+LogicManager -> StorageManager : exportAddressBook(addressBook)
+activate StorageManager
+StorageManager -> CsvExportWriterType : resolveDestination(getAddressBookFilePath())
+activate CsvExportWriterType
+CsvExportWriterType --> StorageManager : destination
+deactivate CsvExportWriterType
+
+create CsvExportWriter
+StorageManager -> CsvExportWriter : CsvExportWriter()
+StorageManager -> CsvExportWriter : export(addressBook, destination)
+activate CsvExportWriter
+note right of CsvExportWriter
+Format and write CSV, then publish
+the completed file at the destination.
+File-handling internals are omitted.
+end note
+CsvExportWriter --> StorageManager : destination
+deactivate CsvExportWriter
+StorageManager --> LogicManager : destination
+deactivate StorageManager
+
+note over LogicManager, StorageManager
+If storage throws IOException, LogicManager wraps it
+in CommandException with an "Export failed" message.
+The return messages below show the success path only.
+end note
+
+LogicManager --> LogicManager : success CommandResult (includes destination)
+deactivate LogicManager
+[<-- LogicManager : success CommandResult
+deactivate LogicManager
+@enduml
