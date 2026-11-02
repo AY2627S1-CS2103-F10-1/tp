@@ -156,7 +156,7 @@ Collapsed cards keep the note text hidden; only the icon shows. Candidates witho
 
 <panel header="Accepted characters" type="seamless">
 
-Names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces and ASCII punctuation. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
+Names, phone numbers, emails, addresses, tags, notes and `find` keywords accept only printable ASCII (`U+0020–U+007E`): English letters (`A–Z`, `a–z`), digits (`0–9`), ordinary spaces and ASCII punctuation. This keeps command input within a single, explicit character set. Accented letters, emoji, curly quotes, tabs, line breaks, non-breaking spaces and zero-width spaces are rejected, even when copied text looks normal. Enter accented or non-Latin names such as `José` or `陈` in romanised form, e.g. `Jose`. Existing rules still apply afterward: phone numbers need at least three digits, and names accept only the punctuation used in legal names. For the technical rationale, see [Command input character validation](DeveloperGuide.md#command-input-character-validation) in the Developer Guide.
 </panel>
 
 <panel header="Text that looks like a prefix, and the multi-field warning" type="seamless">
@@ -167,7 +167,7 @@ A prefix such as `n/` that follows a space starts a new field, in any letter cas
 * Role names and statuses keep backslashes literally. To assign an existing role named `N/A`, use `edit 1 r/N/A` with no space after `r/`; `r/ N/A` is ambiguous, and `r/N\/A` refers to a different role whose name contains a backslash.
 * In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A` or the `T/` in `a/Unit T/2`, could be text or a new field, so HRvest rejects the command and changes nothing (`a/Unit T\/2` saves the address `Unit T/2`). The error offers `n/` to start a field and `N\/` for literal text. If that field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
 * A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field: `edit 1 a/Unit n/a` changes the address to `Unit` and the name to `a`, with a warning listing `n/`. Use `edit 1 a/Unit n\/a` to keep it in the address.
-* Successful `add` and `edit` commands with several fields show a warning before the success message, listing every prefix after the first field in input order, including lower-case and repeated ones. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: Prefixes read as additional fields: N/.` The command is applied and saved immediately; the warning does not ask for confirmation, so check the updated details. It also appears for intentional multi-field commands and unchanged edits (`edit 1 A/Unit P/123 N/A` lists both `P/` and `N/`). A single-field edit produces no warning, and escaped text and legal-name connectors are not listed: `edit 1 A/Unit N\/A` saves the whole address without a warning.
+* Successful `add` and `edit` commands with several fields show a warning before the success message, listing every prefix after the first field in input order, including lower-case and repeated ones. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: Prefixes read as additional fields: N/.` The command is applied and saved immediately; the warning does not ask for confirmation or prevent an unintended edit, so check the updated details. It also appears for intentional multi-field commands and unchanged edits (`edit 1 A/Unit P/123 N/A` lists both `P/` and `N/`). A single-field edit produces no warning, and escaped text and legal-name connectors are not listed: `edit 1 A/Unit N\/A` saves the whole address without a warning.
 </panel>
 
 <panel header="Name rules (add and edit)" type="seamless">
@@ -197,7 +197,7 @@ Format: `add n/NAME p/PHONE_NUMBER e/EMAIL a/ADDRESS r/ROLE [r/MORE_ROLE]... [s/
 | Parameter | Required? | What to enter |
 |---|---|---|
 | `n/NAME` | Yes | A name following the [name rules](#typing-values), e.g. `n/John Doe` |
-| `p/PHONE_NUMBER` | Yes | Text with at least three digits; spaces, `+`, brackets and labels are allowed, e.g. `p/+65 9123 4567` |
+| `p/PHONE_NUMBER` | Yes | Printable-ASCII text with at least three digits; spaces, `+`, brackets and labels are allowed, e.g. `p/+65 9123 4567` |
 | `e/EMAIL` | Yes | `local-part@domain`, e.g. `e/anne.o'brien@example.com` |
 | `a/ADDRESS` | Yes | Any non-blank printable-ASCII text, e.g. `a/John street, block 123, #01-01` |
 | `r/ROLE` | Yes | An existing [role](#managing-the-role-catalog); repeat `r/` for several. Use `r/No role` if none applies |
@@ -243,7 +243,7 @@ Shows all candidates in HRvest, along with the total count.
 
 Format: `list`
 
-* The message is `Listed all N candidate(s).`, for example `Listed all 6 candidate(s).`
+* The message is `Listed all N candidate(s).`, where `N` is the current number of candidates. For example, `Listed all 6 candidate(s).`
 * If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
 
 ### Editing a candidate: `edit`
@@ -366,7 +366,7 @@ Format: `filter [s/STATUS]... [r/ROLE]...`
 
 * Supply at least one status or role.
 * Repeat `s/` or `r/` to match any value within that field (`OR`). If both fields are supplied, a candidate must match a specified status **and** a specified role (`AND`).
-* Valid statuses are the same as for `status`. Status and role matching ignore case. Roles must exist in the catalog.
+* Valid statuses: `Applied`, `Shortlisted`, `Interviewing`, `Offered`, `Accepted`, `Rejected`, `Withdrawn`. Status and role matching ignore case. Roles must exist in the catalog.
 * Invalid input leaves the displayed list unchanged. If no candidates match, the result count is zero.
 
 <box type="info">
@@ -557,10 +557,10 @@ Appends candidates from `import.csv` to the candidates already in HRvest, keepin
 
 Format: `import`
 
-* Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is `data/import.csv` in the folder you run HRvest from. The location cannot be changed.
+* Place `import.csv` in the `data` folder beside `HRvest.json` and `export.csv`, that is `data/import.csv` in the folder you run HRvest from. The location cannot be changed, and no other location is tried.
 * The `roles` column lists at least one role name; use `["No role"]` if none applies. A name that matches no existing role is created as a new role, so an export can be imported into an HRvest that does not have its roles yet.
-* Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.`), saves, clears filters, leaves expanded view and shows all candidates. If the import created roles, the message names them, for example `Imported 2 candidates successfully. Created role: QA.`
-* `import.csv` is never modified. On failure, HRvest reports the error and restores your data, filter and expanded view as they were.
+* Success displays `Imported N candidates successfully.` (or `Imported 1 candidate successfully.`), saves, clears filters, leaves expanded view and shows all candidates in the default list view. If the import created roles, the message names them, for example `Imported 2 candidates successfully. Created role: QA.`
+* `import.csv` is never modified. On failure, HRvest reports the error and restores your data, filter and expanded view as they were before the import, including any pre-existing unsaved changes.
 
 <box type="info">
 
@@ -615,11 +615,11 @@ HRvest automatically saves data after each command that changes candidates or th
 
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
 * HRvest allows only one running instance per data folder. A second instance stops before reading or writing candidate data or preferences and shows an error dialog asking you to close the first; dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
-* If saving fails, follow the error message before continuing. A failed data change is rolled back, and you can still inspect the loaded candidates, open help, export a copy, or exit. Exit does not retry a rejected change.
+* If saving fails, follow the error message before continuing. A failed data change is rolled back, and you can still inspect the loaded candidates, open help, export a copy, or exit when saving is unavailable. Exit does not retry a rejected change.
 
 <panel header="Lock file, interrupted saves and log files" type="seamless">
 
-* Keep `data/.hrvest.lock` in place. HRvest releases the lock when it closes; the file remains and does not prevent restarting. Do not delete or replace it while HRvest is running. Separate HRvest folders can run independently.
+* Keep `data/.hrvest.lock` in place. HRvest releases the operating-system lock when it closes or its process terminates; the file remains and does not prevent restarting. Do not delete or replace it while HRvest is running. Separate HRvest folders can run independently.
 * Do not edit or delete `roles-transaction.json` after an interrupted save; restart HRvest to recover.
 * If HRvest cannot create its log file, it prints a warning and continues logging to the terminal. This does not grant access to candidate files: any data-file permission errors still need to be resolved.
 </panel>
@@ -646,7 +646,7 @@ Advanced users may edit the JSON files in the `data` folder. Invalid edits can m
 * Each file must contain exactly one JSON object. Do not repeat a property name within an object or append anything after it. Surrounding whitespace is allowed. Invalid JSON follows the backup and recovery process below.
 * A supplied `roles` array must contain at least one valid role ID from `roles.json`, without duplicates. Omitting `roles` loads `No role`; an empty array is invalid. Use `no-role` for `No role`, not its display name. Loading a mix of `no-role` and named role IDs removes `no-role`.
 * In `roles.json`, keep the entry with the ID `no-role` and the name `No role`. Give each role you add a new, unique ID in UUID format (a standard unique identifier), such as `3f2b6c1e-8d4a-4b7e-9c2f-1a2b3c4d5e6f`. Any other ID, or a missing or renamed `no-role` entry, stops both files from loading.
-* Use the same field values that commands allow. To clear a note, set `note` to an empty string. Spaces around a value are removed, as in commands.
+* Preserve the JSON structure and use the same field values that commands allow. To clear a note, set `note` to an empty string. Spaces around a value are removed, as in commands.
 * Save as UTF-8, the default in most editors. "UTF-8 with BOM" also works, but other encodings, such as UTF-16 (shown as "Unicode" in some versions of Notepad), cannot be loaded.
 </panel>
 

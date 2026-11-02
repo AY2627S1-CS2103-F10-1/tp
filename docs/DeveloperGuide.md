@@ -134,7 +134,7 @@ Candidate command fields and `find` keywords use `ParserUtil.verifyPrintableAsci
 * Tabs, line breaks, accented letters, emoji, curly quotes, non-breaking spaces (`U+00A0`) and zero-width spaces (`U+200B`) are rejected, even when copied text looks normal. Users must use ordinary spaces and straight quotes instead.
 * Ordinary spaces around field values are still trimmed, and empty notes and tags can still be cleared as described in the User Guide. Status values, candidate indexes and `clear confirm` keep their own validation rules, and command words and prefix syntax are unchanged.
 * Unsupported characters are checked before surrounding spaces are trimmed or empty values are interpreted as clearing a field. They are not silently removed or replaced.
-* Errors identify the field prefix or search input for the unsupported code point, for example: `a/ contains unsupported character U+00A0. Use printable ASCII only (U+0020-U+007E).` Rejected commands leave candidate data unchanged.
+* Errors identify the field prefix or search input for the unsupported code point, for example: `a/ contains unsupported character U+00A0. Use printable ASCII only (U+0020-U+007E).` Remove or replace that character and retry. Rejected commands leave candidate data unchanged.
 * This restriction applies only to new command input, not to loading or exporting existing valid records. Existing non-ASCII text is preserved, but cannot be entered as a `find` keyword under this policy. JSON saving and CSV export keep their existing escaping; quotes and commas do not need to be removed from otherwise valid values.
 </panel>
 
@@ -390,7 +390,7 @@ The sequence diagram below shows how the export request reaches storage and retu
 
 <puml src="diagrams/ExportSequenceDiagram.puml" alt="CSV export sequence showing command delegation to storage and the return path without JSON saving" />
 
-The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark because, without it, Excel reads the file as ANSI and garbles non-ASCII text.
+The writer exports one row per candidate, with a header and the name, phone, email, address, status, tags, note and roles fields, to `export.csv` beside the JSON data file. The data file path is fixed at `data/HRvest.json`, so the export is always `data/export.csv`. The file starts with a UTF-8 byte order mark so that spreadsheet programs such as Excel detect the encoding; without it, Excel reads the file as ANSI and garbles non-ASCII text.
 
 <box type="warning">
 
