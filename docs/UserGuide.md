@@ -233,8 +233,8 @@ Examples:
 
 * The error message lists all missing required parameters together. Bare `add` reports `Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS, r/ROLE. Use r/No role if no role applies.` The command `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
 * **Duplicates:** email alone identifies duplicates. Surrounding whitespace is trimmed and the whole email is compared ignoring case, so `Alice@Example.com` and `alice@example.com` are the same candidate. A duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` is the existing matching record, even if hidden by a filter. Nothing is changed. Names, phones, addresses, statuses, roles, tags and notes do not affect duplicate detection, so two candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
-* **Unknown prefixes** such as `x/` are treated as part of the preceding value. A recognised prefix preceded by whitespace starts a new field even inside an address: `a/Unit n/a` sets the name to `a`. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`. See [Typing values](#typing-values) for how to keep such text.
-* `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Text such as `yes/no/feedback` inside an address word remains literal address text.
+* **Unknown prefixes** such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix preceded by whitespace starts a new field even inside an address: `a/Unit n/a` sets the name to `a`. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`. See [Typing values](#typing-values) for how to keep such text.
+* `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
 </panel>
 
 ### Listing all candidates: `list`
@@ -595,7 +595,7 @@ Limits are enforced while reading the file; exceeding any limit rejects the whol
 * Only readable regular files are accepted; symbolic links, directories and special files are rejected.
 * Finish saving `import.csv` before running `import` and leave it unchanged until the import finishes. Editing, replacing or deleting it during import gives unpredictable results.
 * CSV addresses and notes may contain Unicode that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 Unicode code points; quoted notes may contain tabs or line breaks. The printable-ASCII rule still applies when you type these values as commands.
-* Role names follow the same [role name rules](#managing-the-role-catalog) as `add`. A role name containing an invisible character is rejected with its CSV record and `roles` field identified, and no candidates or roles from that file are added.
+* Names match existing roles ignoring case and surrounding whitespace, as in `add`, and follow the same [role name rules](#managing-the-role-catalog). A role name containing an invisible character is rejected with its CSV record and `roles` field identified, and no candidates or roles from that file are added.
 * For CSV formatting and validation rules, see the [Developer Guide](DeveloperGuide.md#import-csv-format-and-validation).
 </panel>
 
