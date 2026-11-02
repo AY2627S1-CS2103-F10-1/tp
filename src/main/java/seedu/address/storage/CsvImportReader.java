@@ -11,11 +11,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Locale;
 
 /** Reads a bounded copy of the fixed import file without following links. */
 public class CsvImportReader {
     public static final int MAX_BYTES = 10 * 1024 * 1024;
     private static final int BUFFER_SIZE = 8192;
+    private static final String MESSAGE_SIZE_LIMIT = String.format(Locale.ROOT,
+            "Input exceeds the %d MiB file limit.", MAX_BYTES / (1024 * 1024));
 
     /** Reads the import beside the configured JSON data file. */
     public byte[] read(Path dataFile) throws IOException {
@@ -30,13 +33,21 @@ public class CsvImportReader {
                 return readBytes(channel);
             }
         } catch (IOException | SecurityException | UnsupportedOperationException e) {
-            String reason = e instanceof NoSuchFileException ? "File not found."
-                    : e instanceof AccessDeniedException ? "Read permission denied." : e.getMessage();
-            if (reason == null || reason.isBlank()) {
-                reason = "The file could not be safely opened or read on this filesystem.";
-            }
-            throw new IOException("Could not read " + source + ": " + reason, e);
+            throw new IOException(String.format("Could not read %s: %s", source, describeFailure(e)), e);
         }
+    }
+
+    /** Returns an import-specific failure reason, including a fallback for absent messages. */
+    private static String describeFailure(Exception e) {
+        if (e instanceof NoSuchFileException) {
+            return "File not found.";
+        }
+        if (e instanceof AccessDeniedException) {
+            return "Read permission denied.";
+        }
+        String reason = e.getMessage();
+        return reason == null || reason.isBlank()
+                ? "The file could not be safely opened or read on this filesystem." : reason;
     }
 
     private void checkInput(Path source) throws IOException {
@@ -46,7 +57,7 @@ public class CsvImportReader {
             throw new IOException("Input must be a regular file; links, directories and special files are rejected.");
         }
         if (attributes.size() > MAX_BYTES) {
-            throw new IOException("Input exceeds the 10 MiB file limit.");
+            throw new IOException(MESSAGE_SIZE_LIMIT);
         }
     }
 
@@ -56,7 +67,7 @@ public class CsvImportReader {
         ByteBuffer buffer = ByteBuffer.allocate(BUFFER_SIZE);
         while (channel.read(buffer) != -1) {
             if (output.size() + buffer.position() > MAX_BYTES) {
-                throw new IOException("Input exceeds the 10 MiB file limit.");
+                throw new IOException(MESSAGE_SIZE_LIMIT);
             }
             output.write(buffer.array(), 0, buffer.position());
             buffer.clear();

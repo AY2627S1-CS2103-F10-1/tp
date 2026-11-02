@@ -180,9 +180,24 @@ public class CandidateCsvParserTest {
     public void parse_tagLimits_checksBeforeDeduplicationAndTrimming() throws Exception {
         String hundred = "[" + String.join(",", Collections.nCopies(100, "\"java\"")) + "]";
         assertEquals(1, parseRow(hundred, "Applied", "").getTags().size());
-        assertThrows(ParseException.class, () -> parseRow(hundred.replace("]", ",\"java\"]"), "Applied", ""));
+        assertThrows(ParseException.class, "CSV record 2, field tags: Tags exceed the 100-entry limit.", () ->
+                parseRow(hundred.replace("]", ",\"java\"]"), "Applied", ""));
         assertEquals(1, parseRow("[\"" + "a".repeat(256) + "\"]", "Applied", "").getTags().size());
-        assertThrows(ParseException.class, () -> parseRow("[\"" + "a".repeat(257) + "\"]", "Applied", ""));
+        assertThrows(ParseException.class,
+                "CSV record 2, field tags: Tags must not contain a name longer than 256 characters.", () ->
+                parseRow("[\"" + "a".repeat(257) + "\"]", "Applied", ""));
+    }
+
+    @Test
+    public void parse_roleLimits_checksBeforeDeduplicationAndTrimming() throws Exception {
+        String hundred = "[" + String.join(",", Collections.nCopies(100, "\"QA\"")) + "]";
+        assertEquals(1, parseRoles(hundred).getRoles().size());
+        assertThrows(ParseException.class, "CSV record 2, field roles: Roles exceed the 100-entry limit.", () ->
+                parseRoles(hundred.replace("]", ",\"QA\"]")));
+        assertEquals(1, parseRoles("[\"" + "a".repeat(256) + "\"]").getRoles().size());
+        assertThrows(ParseException.class,
+                "CSV record 2, field roles: Roles must not contain a name longer than 256 characters.", () ->
+                parseRoles("[\"" + "a".repeat(257) + "\"]"));
     }
 
     @Test

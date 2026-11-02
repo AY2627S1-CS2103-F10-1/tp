@@ -10,10 +10,13 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
 import seedu.address.commons.core.LogsCenter;
+import seedu.address.logic.commands.AddCommand;
 import seedu.address.logic.commands.Command;
 import seedu.address.logic.commands.CommandResult;
+import seedu.address.logic.commands.EditCommand;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.AddressBookParser;
+import seedu.address.logic.parser.ArgumentTokenizer;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.Model;
 import seedu.address.model.person.Person;
@@ -54,6 +57,7 @@ public class LogicManager implements Logic {
         RoleCatalog originalCatalog = model.getRoleCatalog();
         Runnable restore = model.createRestorePoint();
         commandResult = command.execute(model);
+        commandResult = addPrefixWarning(commandText, command, commandResult);
 
         if (commandResult.isImport()) {
             return new ImportOperation(model, storage).execute();
@@ -79,6 +83,16 @@ public class LogicManager implements Logic {
         }
 
         return commandResult;
+    }
+
+    /** Makes possible field/text ambiguities prominent while preserving one-shot commands. */
+    private CommandResult addPrefixWarning(String commandText, Command command, CommandResult result) {
+        if (!(command instanceof AddCommand || command instanceof EditCommand)) {
+            return result;
+        }
+        return ArgumentTokenizer.getPrefixWarning(commandText)
+                .map(warning -> new CommandResult(warning + "\n" + result.getFeedbackToUser()))
+                .orElse(result);
     }
 
     /** Restores the model to its state before the command, which the data file still holds. */

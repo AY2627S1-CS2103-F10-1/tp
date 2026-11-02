@@ -61,6 +61,15 @@ HRvest is a **desktop address book that helps hiring managers at startups track 
 * Command words and prefixes ignore letter case.<br>
   For example, `LIST` is read the same way as `list`, and `S/Offered` the same way as `s/Offered`.
 
+* To keep text that looks like a prefix, such as `N/A`, inside a value, type `\/` for its slash.<br>
+  For example, `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses, tags and notes, where every `\/` you type is saved as `/`. Role names and statuses keep backslashes literally. To assign an existing role named `N/A`, use `edit 1 r/N/A` with no space after `r/`; `r/ N/A` is ambiguous, and `r/N\/A` refers to a different role whose name contains a backslash.
+
+* In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be either text or a new field, so HRvest rejects the command and changes nothing. The error offers `n/` to start a field and `N\/` for literal text in names, phones, emails, addresses or notes. If the field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
+
+* Successful `add` and `edit` commands with multiple fields show a warning before the success message, listing every prefix after the first field in input order, including lower-case and repeated prefixes. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: Prefixes read as additional fields: N/.` Likewise, `edit 1 a/Unit n/a` changes the address to `Unit` and the name to `a`, with a warning listing `n/`. The command is applied and saved immediately; this warning does not ask for confirmation or prevent an unintended edit. Check the updated candidate details.
+
+* The warning also appears for intentional multi-field commands and unchanged edits. For example, `edit 1 A/Unit P/123 N/A` lists both `P/` and `N/`. A single-field edit produces no prefix warning. Escaped text and legal-name connectors are not listed as extra fields: `edit 1 A/Unit N\/A` saves the complete address without warning. Use `edit 1 a/Unit n\/a` to keep lower-case `n/a` in the address.
+
 * Parameters can be in any order.<br>
   For example, if the command specifies `n/NAME p/PHONE_NUMBER`, `p/PHONE_NUMBER n/NAME` is also acceptable. The only exception is `INDEX`, which must come right after the command word: `status 2 s/Offered` works, but `status s/Offered 2` does not.
 
@@ -129,7 +138,7 @@ These rules apply to names supplied through `add` and `edit`.
 * The error message lists all missing required parameters together, including `r/ROLE`. If the role is missing, it also explains that you can use `r/No role` if no role applies. For example, bare `add` reports `Missing n/NAME, p/PHONE_NUMBER, e/EMAIL, a/ADDRESS, r/ROLE. Use r/No role if no role applies.` The command `add n/John Doe r/No role` reports `Missing p/PHONE_NUMBER, e/EMAIL, a/ADDRESS.`
 * Create named roles with `add_role` before assigning them to a candidate. A bare `r/` or an unknown role is rejected.
 * Email alone identifies duplicates: surrounding whitespace is trimmed and the whole email is compared case-insensitively. For example, `Alice@Example.com` and `alice@example.com` belong to the same candidate. Adding a duplicate is rejected with `Another candidate (NAME) already uses this email.`, where `NAME` identifies the matching existing record, even if hidden by a filter. The submitted candidate and current view are not changed. Names, phones, addresses, statuses, roles, tags, and notes do not affect duplicate detection. Candidates with the same name but different emails are allowed. Email capitalisation is preserved for display and storage.
-* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix in any letter case preceded by whitespace also starts a new field, even if you intended it to be part of an address. For example, the `N/` in `a/Unit N/A` is read as a second name prefix. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`, described in [Name rules](#name-rules) above.
+* Use only the documented prefixes. Unknown prefixes such as `x/` are treated as part of the preceding value, not as separate fields. A recognised prefix preceded by whitespace starts a new field, even if you intended it to be part of an address: `a/Unit n/a` sets the name to `a`. An upper-case prefix after a lower-case one, such as the `T/` in `a/Unit T/2`, is rejected rather than guessed. To keep such text, type `\/` for its slash: `a/Unit T\/2` saves the address `Unit T/2`. The only exceptions are the name connectors `s/o`, `a/l` and `a/p` within `n/NAME`, described in [Name rules](#name-rules) above.
 * `no/` is reserved for the `note` command and is rejected anywhere in `add`, in any letter case, including with empty text or after a tab. The error is `The add command does not support no/. Add the candidate first, then use note INDEX no/NOTE_TEXT.` Add the candidate without `no/`, then use their displayed index with `note` to record a note. Text such as `yes/no/feedback` inside an address word remains literal address text.
 
 Examples:
@@ -163,7 +172,7 @@ Format: `edit INDEX [n/NAME] [p/PHONE_NUMBER] [e/EMAIL] [a/ADDRESS] [s/STATUS] [
 * Supplied `r/` values replace all existing roles; omitting `r/` preserves them. A bare `r/` is invalid; use `r/No role` to remove named roles. Unknown roles suggest `add_role n/NAME`, and an invalid role leaves all details unchanged.
 * When editing tags, all of the candidate's existing tags are removed; adding tags is not cumulative.
 * To remove all of a candidate's tags, enter `t/` without a tag after it.
-* As in `add`, a recognised prefix in any letter case after a space starts a new field. For example, `edit 1 a/Unit N/A` changes the address to `Unit` and the name to `A`. Check the success message, which shows the updated details.
+* As in `add`, a recognised prefix after a space starts a new field, and an upper-case prefix after a lower-case one is rejected. For example, `edit 1 a/Unit N/A` reports that `N/` could be text or the `n/` prefix, and changes nothing. Use `edit 1 a/Unit N\/A` to set the address to `Unit N/A`. Check the success message, which shows the updated details.
 * To avoid confusing an address beginning with `L` or `P` with a legal-name marker, put the address first, e.g. `edit 1 a/L Street n/John` or `edit 1 a/9 Road n/Siti a/p Ahmad`. An ambiguous sequence such as `edit 1 n/John a/L Street a/9 Road` is rejected without changing the candidate.
 * `edit` does not change notes. Like `add`, it rejects `no/` anywhere, in any letter case, with `The edit command does not support no/. Use note INDEX no/NOTE_TEXT to add, replace or clear a note.` Use the `note` command instead.
 
@@ -185,7 +194,7 @@ Format: `note INDEX no/[NOTE_TEXT]`
 * Each candidate has one note. If the candidate already has a note, it is replaced by the new note.
 * To clear the note, enter `note INDEX no/` with no text after `no/`. Text containing only ordinary spaces also clears the note. The message is `Cleared note for NAME`. Clearing a candidate who already has no note succeeds and keeps that candidate unchanged.
 * Non-empty `NOTE_TEXT` can contain at most 500 printable-ASCII characters. Leading and trailing ordinary spaces are removed; spacing, capitalisation, and ASCII punctuation within the note are kept. Tabs, line breaks, and non-ASCII characters are rejected.
-* Supply `no/` only once. Because prefixes ignore letter case, a later ` NO/` in the text also counts as a second `no/`. Other prefixes, such as `n/`, are treated as part of the note.
+* Supply `no/` only once. A later ` no/` or ` NO/` in the text is rejected as a second `no/`; type `no\/` to keep that text in the note. Other prefixes, such as `n/`, are treated as part of the note.
 * Keeps the current filter or expanded view. See [Filters and expanded view](#filters-and-expanded-view) for details.
 * When adding or replacing a note, the message is `Updated note for NAME: NOTE_TEXT`.
 * Editing a candidate or updating their status keeps their note. Use `expand INDEX` to view the full note.
@@ -319,7 +328,7 @@ The role catalog is the shared collection of roles available in HRvest, includin
 * Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display.
 * Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent. Display spelling and role IDs are preserved. This applies to creation, assignment, filtering, renaming, and deletion.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
-* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name; quotes do not escape it.
+* A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/`, or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name, and quotes do not escape it. A `\/` in a role name is kept as typed rather than read as `/`.
 
 #### Creating an unused role: `add_role`
 

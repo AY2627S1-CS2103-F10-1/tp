@@ -2,6 +2,7 @@ package seedu.address.storage;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TestCaseUtil.assertAllCases;
@@ -72,7 +73,8 @@ public class CsvImportReaderTest {
         Files.write(input, bytes);
         assertArrayEquals(bytes, reader().read(dataFile()));
         Files.write(input, new byte[] {0}, StandardOpenOption.APPEND);
-        assertThrows(IOException.class, () -> reader().read(dataFile()));
+        assertThrows(IOException.class, "Could not read " + input + ": Input exceeds the 10 MiB file limit.", () ->
+                reader().read(dataFile()));
     }
 
     @Test
@@ -148,6 +150,19 @@ public class CsvImportReaderTest {
             assertFalse(failingReader.channel.isOpen());
             assertArrayEquals("content".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(input));
         });
+    }
+
+    @Test
+    public void read_injectedFailure_preservesOriginalCause() throws Exception {
+        Files.writeString(directory.resolve("import.csv"), "content");
+        TrackingReader failingReader = new TrackingReader();
+        failingReader.failure = new IOException("Injected read failure");
+
+        IOException exception = org.junit.jupiter.api.Assertions.assertThrows(IOException.class, () ->
+                failingReader.read(dataFile()));
+
+        assertSame(failingReader.failure, exception.getCause());
+        assertFalse(failingReader.channel.isOpen());
     }
 
     private CsvImportReader reader() {

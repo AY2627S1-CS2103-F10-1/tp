@@ -88,6 +88,108 @@ public class LogicManagerTest {
     }
 
     @Test
+    public void execute_lowercaseAddressAndName_warnsBeforeSuccessAndPersistsEdit() throws Exception {
+        assertAddressAndNameWarning("edit 1 a/Unit n/a", "a", "n/");
+    }
+
+    @Test
+    public void execute_uppercaseAddressAndLowercaseName_warnsBeforeSuccessAndPersistsEdit() throws Exception {
+        assertAddressAndNameWarning("edit 1 A/Unit n/a", "a", "n/");
+    }
+
+    @Test
+    public void execute_uppercaseAddressAndName_warnsBeforeSuccessAndPersistsEdit() throws Exception {
+        assertAddressAndNameWarning("edit 1 A/Unit N/A", "A", "N/");
+    }
+
+    @Test
+    public void execute_lowercaseNamePrefixAndUppercaseValue_warnsBeforeSuccessAndPersistsEdit() throws Exception {
+        assertAddressAndNameWarning("edit 1 a/Unit n/A", "A", "n/");
+    }
+
+    private void assertAddressAndNameWarning(String input, String name, String prefix) throws Exception {
+        model.addPerson(AMY);
+        model.expandPerson(AMY);
+        Person expected = new PersonBuilder(AMY).withAddress("Unit").withName(name).build();
+        String warning = expectedPrefixWarning(prefix);
+
+        CommandResult result = logic.execute(input);
+
+        assertEquals(warning + "\n" + String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS,
+                Messages.format(expected)), result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+        assertTrue(model.isExpandedViewProperty().get());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+
+        result = logic.execute(input);
+        assertEquals(warning + "\n" + String.format(EditCommand.MESSAGE_NOT_CHANGED, expected.getName()),
+                result.getFeedbackToUser());
+    }
+
+    @Test
+    public void execute_uppercaseAdd_warnsAndPreservesAllFields() throws Exception {
+        CommandResult result = logic.execute("ADD N/Upper Candidate P/123 E/upper@example.com A/Unit "
+                + "S/Offered R/No role");
+
+        Person expected = new PersonBuilder().withName("Upper Candidate").withPhone("123")
+                .withEmail("upper@example.com").withAddress("Unit").withStatus(Status.OFFERED).withTags().build();
+        String warning = expectedPrefixWarning("P/, E/, A/, S/, R/");
+        assertEquals(warning + "\n" + String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getAddressBook().getPersonList());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_escapedAddressAndNameConnector_warnsOnlyForActualFields() throws Exception {
+        model.addPerson(AMY);
+        Person expected = new PersonBuilder(AMY).withAddress("Unit N/A").withName("Ravi S/O Kumar").build();
+
+        CommandResult result = logic.execute("edit 1 A/Unit N\\/A n/Ravi S/O Kumar");
+
+        assertEquals(expectedPrefixWarning("n/") + "\n"
+                + String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(expected)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+    }
+
+    @Test
+    public void execute_lowercaseFieldsAndRepeatedTags_warnsForAllPrefixesAndPersists() throws Exception {
+        model.addPerson(AMY);
+        Person expected = new PersonBuilder(AMY).withAddress("Unit").withName("a").withPhone("123")
+                .withTags("C++", "N/A").build();
+
+        CommandResult result = logic.execute("edit 1 a/Unit n/a p/123 t/C++ t/N\\/A r/No role");
+
+        assertEquals(expectedPrefixWarning("n/, p/, t/, t/, r/") + "\n"
+                + String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(expected)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getAddressBook().getPersonList());
+        JsonAddressBookStorage saved = new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json"));
+        assertEquals(model.getAddressBook(), saved.readAddressBook().orElseThrow());
+    }
+
+    @Test
+    public void execute_singleEscapedField_succeedsWithoutWarning() throws Exception {
+        model.addPerson(AMY);
+        Person expected = new PersonBuilder(AMY).withAddress("Unit N/A").build();
+
+        CommandResult result = logic.execute("edit 1 A/Unit N\\/A");
+
+        assertEquals(String.format(EditCommand.MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(expected)),
+                result.getFeedbackToUser());
+        assertEquals(List.of(expected), model.getFilteredPersonList());
+    }
+
+    private static String expectedPrefixWarning(String prefixes) {
+        return "Warning: Prefixes read as additional fields: " + prefixes + ". Check the candidate details below. "
+                + "For literal prefix-like text in names, phones, emails, addresses or tags, replace / with \\/. "
+                + "Roles and statuses keep backslashes literally.";
+    }
+
+    @Test
     public void execute_formattedPhoneExport_preservesCsvValue() throws Exception {
         model.addPerson(new PersonBuilder().withPhone("001-234 567 (Office)").build());
 
@@ -145,7 +247,8 @@ public class LogicManagerTest {
         CommandResult result = logic.execute(AddCommand.COMMAND_WORD + NAME_DESC_AMY + PHONE_DESC_AMY
                 + EMAIL_DESC_AMY + " r/No role" + ADDRESS_DESC_AMY);
 
-        assertEquals(String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)),
+        assertEquals(expectedPrefixWarning("p/, e/, r/, a/") + "\n"
+                + String.format(AddCommand.MESSAGE_SUCCESS, Messages.format(expected)),
                 result.getFeedbackToUser());
         assertEquals(List.of(existing, expected), model.getFilteredPersonList());
         assertEquals(Status.APPLIED, model.getFilteredPersonList().get(1).getStatus());
