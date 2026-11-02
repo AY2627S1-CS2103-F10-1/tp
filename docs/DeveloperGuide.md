@@ -1142,24 +1142,3 @@ Given below are instructions to test the app manually.
       Expected: Startup stops before a window opens, an actionable terminal error appears, and the original file is unchanged. Restore permissions afterwards.
    1. Move the data file out of the test folder and launch.<br>
       Expected: Sample candidates appear without a recovery warning or backup.
-
-## **Appendix: Effort**
-
-HRvest started from AB3, which manages one entity (`Person`) with five simple fields and a handful of commands. The table below summarises where our extra effort went. Line counts are `.java`, `.fxml` and `.css` lines in `src/main` and `src/test`, compared with the course template commit that upgraded the project to Java 25.
-
-| | Course template | HRvest |
-|---|---|---|
-| Main code | about 5,900 lines in 79 classes | about 10,100 lines in 118 classes |
-| Test code | about 5,000 lines in 59 files | about 16,600 lines in 123 files |
-| Commands | 8 | 18, including `status`, `note`, `filter`, `expand`, `export`, `import` and four role commands |
-
-| Challenge | Why it was hard | What we built |
-|---|---|---|
-| Ambiguous command input | AB3's tokenizer treats any `x/` after a space as a new field, which breaks legal names (`s/o`, `a/p`), addresses and text such as `N/A`. | Marker-aware name parsing, rejection of ambiguous upper-case prefixes, a `\/` escape and a warning for multi-field commands, plus a printable-ASCII policy for command input. |
-| A shared role catalog | Roles must survive renames, deletion and clearing, and stay consistent in the catalog, candidates, filters and expanded view. | Stable role IDs, NFC-based name matching, atomic catalog and assignment updates, and four role commands. |
-| Two files that must stay consistent | `HRvest.json` and `roles.json` cannot be replaced atomically together. | A rollback journal, atomic file replacement, a data-folder lock, timestamped backups and startup recovery. |
-| CSV import and export | Spreadsheet quirks, large or malformed files, partial failure and unsafe formulas. | A strict hand-written CSV parser, resource limits, all-or-nothing import with rollback, role creation by name, and a UTF-8 byte order mark on export. |
-| Richer interface | AB3 shows one list and a result box. | A summary header that hides cleanly when narrow, a note indicator, expanded view, a count line, error-state command box and command history. |
-| Testing | New logic needed regression tests at several levels. | Unit tests for each class plus integration tests built on a shared fixture, with test code about three times the size of the template's. |
-
-We reused AB3's architecture, JavaFX and Jackson (for JSON and the tag arrays inside CSV fields); the CSV parser, role catalog and recovery logic are our own code.
