@@ -11,11 +11,14 @@ import static seedu.address.logic.commands.CommandTestUtil.VALID_TAG_HUSBAND;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandFailure;
 import static seedu.address.logic.commands.CommandTestUtil.assertCommandSuccess;
 import static seedu.address.logic.commands.CommandTestUtil.showPersonAtIndex;
+import static seedu.address.testutil.Assert.assertThrows;
 import static seedu.address.testutil.TypicalIndexes.INDEX_FIRST_PERSON;
 import static seedu.address.testutil.TypicalIndexes.INDEX_SECOND_PERSON;
 import static seedu.address.testutil.TypicalPersons.getTypicalAddressBook;
 
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -28,6 +31,7 @@ import seedu.address.model.ModelManager;
 import seedu.address.model.UserPrefs;
 import seedu.address.model.person.Person;
 import seedu.address.model.person.Status;
+import seedu.address.model.role.Role;
 import seedu.address.testutil.EditPersonDescriptorBuilder;
 import seedu.address.testutil.PersonBuilder;
 
@@ -310,6 +314,41 @@ public class EditCommandTest {
         String expected = EditCommand.class.getCanonicalName() + "{index=" + index + ", editPersonDescriptor="
                 + editPersonDescriptor + "}";
         assertEquals(expected, editCommand.toString());
+    }
+
+    @Test
+    public void setRoleNames_emptySet_rejectsClearingAllAssignments() {
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        assertThrows(IllegalArgumentException.class, AddCommand.MESSAGE_MISSING_ROLE, () ->
+                descriptor.setRoleNames(Set.of()));
+    }
+
+    @Test
+    public void setRoleNames_mutatedSourceAndCopy_preservesIndependentAssignments() {
+        Set<String> names = new HashSet<>(Set.of("Developer"));
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        descriptor.setRoleNames(names);
+        EditPersonDescriptor copy = new EditPersonDescriptor(descriptor);
+
+        names.clear();
+        descriptor.setRoleNames(Set.of("Designer"));
+
+        assertEquals(Set.of("Developer"), copy.getRoleNames().orElseThrow());
+        assertEquals(Set.of("Designer"), descriptor.getRoleNames().orElseThrow());
+        assertThrows(UnsupportedOperationException.class, () -> copy.getRoleNames().orElseThrow().clear());
+        assertFalse(copy.equals(descriptor));
+    }
+
+    @Test
+    public void execute_invalidRoleNameWithoutParser_reportsCommandErrorAndPreservesModel() {
+        Person person = new PersonBuilder().build();
+        Set<String> invalidNames = Set.of("Developer\tRole");
+        EditPersonDescriptor descriptor = new EditPersonDescriptor();
+        descriptor.setRoleNames(invalidNames);
+        ModelManager model = new ModelManager();
+        model.addPerson(person);
+
+        assertCommandFailure(new EditCommand(Index.fromOneBased(1), descriptor), model, Role.MESSAGE_CONSTRAINTS);
     }
 
 }

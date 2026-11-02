@@ -58,8 +58,7 @@ public class LogicManagerTest {
 
     @BeforeEach
     public void setUp() {
-        fixture = new LogicTestFixture(temporaryFolder, model,
-                new JsonAddressBookStorage(temporaryFolder.resolve("addressBook.json")));
+        fixture = new LogicTestFixture(temporaryFolder, model, "addressBook.json");
         logic = fixture.getLogic();
     }
 

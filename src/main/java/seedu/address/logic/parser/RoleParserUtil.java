@@ -7,11 +7,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import seedu.address.commons.core.CommandPrefixes;
 import seedu.address.logic.parser.exceptions.ParseException;
 
 /** Shares argument validation for role commands with named parameters. */
 final class RoleParserUtil {
-    private static final Pattern PARAMETER = Pattern.compile("(?i)(?<!\\S)(n/|r/|p/|e/|a/|t/|no/|s/)");
+    private static final Pattern PARAMETER = Pattern.compile("(?i)(?<!\\S)(" + CommandPrefixes.REGEX + ")");
 
     private RoleParserUtil() {
     }

@@ -115,7 +115,33 @@ public class MainAppTest {
     }
 
     @Test
-    public void init_secondInstance_doesNotTouchPreferencesOrCandidateData() throws Exception {
+    public void init_secondInstance_reportsErrorBeforeCreatingComponents() throws Exception {
+        Path preferences = temporaryFolder.resolve("preferences.json");
+        Path candidates = temporaryFolder.resolve("data/HRvest.json");
+        MainApp first = new MainApp(preferences, candidates);
+        first.init();
+        try {
+            StartupErrorApp second = new StartupErrorApp(preferences, candidates);
+            try {
+                second.init();
+                second.start(null);
+
+                assertTrue(second.error.contains("Another HRvest instance is already using"));
+                assertFalse(second.error.contains("Check folder permissions"));
+                assertNull(second.storage);
+                assertNull(second.model);
+                assertNull(second.logic);
+                assertNull(second.ui);
+            } finally {
+                second.stop();
+            }
+        } finally {
+            first.stop();
+        }
+    }
+
+    @Test
+    public void init_secondInstance_preservesFilesAndAllowsFirstInstanceToContinue() throws Exception {
         Path preferences = temporaryFolder.resolve("preferences.json");
         Path candidates = temporaryFolder.resolve("data/HRvest.json");
         MainApp first = new MainApp(preferences, candidates);
@@ -125,19 +151,15 @@ public class MainAppTest {
             String beforeCandidates = Files.readString(candidates);
             String beforePreferences = Files.readString(preferences);
             StartupErrorApp second = new StartupErrorApp(preferences, candidates);
-
-            second.init();
-            second.start(null);
-            assertTrue(second.error.contains("Another HRvest instance is already using"));
-            assertFalse(second.error.contains("Check folder permissions"));
-            second.stop();
+            try {
+                second.init();
+                second.start(null);
+            } finally {
+                second.stop();
+            }
 
             assertEquals(beforeCandidates, Files.readString(candidates));
             assertEquals(beforePreferences, Files.readString(preferences));
-            assertNull(second.storage);
-            assertNull(second.model);
-            assertNull(second.logic);
-            assertNull(second.ui);
             first.logic.execute("list");
             assertTrue(Files.readString(candidates).contains("protected@example.com"));
         } finally {

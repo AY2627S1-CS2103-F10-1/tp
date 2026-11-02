@@ -15,8 +15,8 @@ public class Assert {
      * To standardize API calls in this project, users should use this method instead of
      * {@link Assertions#assertThrows(Class, Executable)}.
      */
-    public static void assertThrows(Class<? extends Throwable> expectedType, Executable executable) {
-        Assertions.assertThrows(expectedType, executable);
+    public static <T extends Throwable> T assertThrows(Class<T> expectedType, Executable executable) {
+        return Assertions.assertThrows(expectedType, executable);
     }
 
     /**
