@@ -37,11 +37,11 @@ public class ArgumentTokenizer {
     public static final String MESSAGE_AMBIGUOUS_NAME_CONNECTOR = "%1$s after a name could start the address or be "
             + "part of the name, as in Siti a/p Ahmad. Put a/ADDRESS before n/NAME to make the address explicit.";
     public static final String MESSAGE_AMBIGUOUS_PREFIX = "%1$s in a value could be text or the %2$s prefix. "
-            + "Use %2$s to start a new field. For text in a name, phone, email, address or note, type %3$s. "
+            + "Use %2$s to start a new field. For text in a name, phone, email, address, tag or note, type %3$s. "
             + "Roles and statuses keep backslashes literally.";
     public static final String MESSAGE_AMBIGUOUS_REPEATED_PREFIX = "%1$s in a value could be text or another "
             + "%2$s prefix, but %2$s can be given only once. "
-            + "For text in a name, phone, email, address or note, type %3$s. "
+            + "For text in a name, phone, email, address, tag or note, type %3$s. "
             + "Roles and statuses keep backslashes literally.";
     public static final String MESSAGE_PREFIX_WARNING = "Warning: Prefixes read as additional fields: %s. "
             + "Check the candidate details below. "

@@ -131,9 +131,10 @@ public class ArgumentTokenizerTest {
                 String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "N/", "n/", "N\\/"), () ->
                 ArgumentTokenizer.tokenizeWithValidation(" a/Unit N/A", Set.of(),
                         CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ADDRESS));
-        // Tags can repeat, so starting another t/ field is still a valid fix.
-        assertThrows(ParseException.class,
-                String.format(ArgumentTokenizer.MESSAGE_AMBIGUOUS_PREFIX, "T/", "t/", "T\\/"), () ->
+        // Tags can repeat, so starting another t/ field is still a valid fix, and the escape works for tags too.
+        assertThrows(ParseException.class, "T/ in a value could be text or the t/ prefix. Use t/ to start a new "
+                + "field. For text in a name, phone, email, address, tag or note, type T\\/. "
+                + "Roles and statuses keep backslashes literally.", () ->
                 ArgumentTokenizer.tokenizeWithValidation(" t/java T/backend", Set.of(),
                         CliSyntax.PREFIX_TAG));
     }
@@ -152,7 +153,7 @@ public class ArgumentTokenizerTest {
     @Test
     public void tokenizeWithValidation_ambiguityAfterRoleOrStatus_qualifiesEscapeAdvice() {
         String expected = "N/ in a value could be text or the n/ prefix. Use n/ to start a new field. "
-                + "For text in a name, phone, email, address or note, type N\\/. "
+                + "For text in a name, phone, email, address, tag or note, type N\\/. "
                 + "Roles and statuses keep backslashes literally.";
         for (String arguments : List.of(" r/ N/A", " s/Applied N/A")) {
             assertThrows(ParseException.class, expected, () -> ArgumentTokenizer.tokenizeWithValidation(
@@ -164,7 +165,7 @@ public class ArgumentTokenizerTest {
     @Test
     public void tokenizeWithValidation_repeatedPrefixAfterRole_qualifiesEscapeWithoutOfferingDuplicate() {
         String expected = "N/ in a value could be text or another n/ prefix, but n/ can be given only once. "
-                + "For text in a name, phone, email, address or note, type N\\/. "
+                + "For text in a name, phone, email, address, tag or note, type N\\/. "
                 + "Roles and statuses keep backslashes literally.";
         assertThrows(ParseException.class, expected, () -> ArgumentTokenizer.tokenizeWithValidation(
                 " n/Alice r/ N/A", Set.of(CliSyntax.PREFIX_NAME), CliSyntax.PREFIX_NAME, CliSyntax.PREFIX_ROLE));
