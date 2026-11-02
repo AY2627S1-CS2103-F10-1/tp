@@ -156,7 +156,7 @@ A prefix such as `n/` that follows a space starts a new field, in any letter cas
 
 * `edit 1 a/Unit N\/A` sets the address to `Unit N/A`. This works in names, phone numbers, emails, addresses, tags and notes, where every `\/` you type is saved as `/`.
 * Role names and statuses keep backslashes literally. To assign an existing role named `N/A`, use `edit 1 r/N/A` with no space after `r/`; `r/ N/A` is ambiguous, and `r/N\/A` refers to a different role whose name contains a backslash.
-* In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A`, could be text or a new field, so HRvest rejects the command and changes nothing. The error offers `n/` to start a field and `N\/` for literal text. If that field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
+* In `add`, `edit` and `note`, an upper-case prefix that follows a lower-case one, such as the `N/` in `edit 1 a/Unit N/A` or the `T/` in `a/Unit T/2`, could be text or a new field, so HRvest rejects the command and changes nothing (`a/Unit T\/2` saves the address `Unit T/2`). The error offers `n/` to start a field and `N\/` for literal text. If that field is already supplied and cannot be repeated, as in `edit 1 n/Bob a/Unit N/A`, it does not offer another `n/` field. Escaping does not bypass the field's validation rules.
 * A lower-case prefix inside a value, such as `a/Unit n/a`, still starts a field: the address becomes `Unit` and the name becomes `a`. Use `edit 1 a/Unit n\/a` to keep it in the address.
 * Successful `add` and `edit` commands with several fields show a warning before the success message, listing every prefix after the first field in input order, including lower-case and repeated ones. For example, `edit 1 A/Unit N/A` changes the address to `Unit` and the name to `A`, with `Warning: Prefixes read as additional fields: N/.` The command is applied and saved immediately; the warning does not ask for confirmation, so check the updated details. It also appears for intentional multi-field commands and unchanged edits (`edit 1 A/Unit P/123 N/A` lists both `P/` and `N/`). A single-field edit produces no warning, and escaped text and legal-name connectors are not listed: `edit 1 A/Unit N\/A` saves the whole address without a warning.
 </panel>
@@ -214,7 +214,7 @@ Examples:
 * **Address:** spaces and punctuation are allowed.
 * **Role:** matching ignores case and surrounding whitespace.
 * **Status:** input ignores letter case, so `s/interviewing` is saved and shown as `Interviewing`. A bare `s/` is invalid rather than using the default.
-* **Tags:** a non-blank label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Repeat the prefix for several tags: `t/C++ t/machine learning`. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`. A recognised prefix preceded by a space starts another field even inside a tag: `t/machine learning n/Alice` sets the tag to `machine learning` and the name to `Alice`. Quoting does not escape prefixes.
+* **Tags:** a non-blank label, including punctuation and internal spaces, e.g. `t/C#`, `t/.NET`, `t/Node.js`, `t/machine learning`. Surrounding spaces are trimmed; internal spaces are preserved. Tags are case-sensitive: `t/Java` and `t/java` are distinct. Omit `t/` for no tags; a bare `t/` is invalid when adding. Repeat the prefix for several tags: `t/C++ t/machine learning`. Slashes without a preceding prefix boundary are allowed, e.g. `t/C/C++`. A recognised prefix preceded by a space starts another field even inside a tag: `t/machine learning n/Alice` sets the tag to `machine learning` and the name to `Alice`. Quoting does not escape prefixes.
 </panel>
 
 <panel header="Errors, duplicates and unknown prefixes" type="seamless">
@@ -422,7 +422,7 @@ The role catalog is the shared collection of roles available in HRvest, includin
 
 * Names must not be blank or contain control characters such as tabs or newlines. Punctuation and Unicode characters are accepted.
 * Invisible characters, such as no-break spaces (`U+00A0`) and zero-width spaces (`U+200B`), are rejected, even when text copied from a web page looks normal. Use ordinary spaces.
-* Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display. Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent.
+* Matching ignores surrounding whitespace and letter case: ` Software Engineer ` matches `software engineer`. Capitalisation is preserved for display. This applies to creation, assignment, filtering, renaming and deletion. Matching also treats canonically equivalent Unicode spellings as the same name: `Café` with a single accented letter matches `Cafe` followed by a combining acute accent. Display spelling and role IDs are preserved.
 * Internal spaces matter: `Software  Engineer` (two spaces) is distinct from `Software Engineer`.
 * A space followed by `n/`, `r/`, `p/`, `e/`, `a/`, `t/`, `no/` or `s/` is reserved command syntax, ignoring case. It cannot appear within a role name, and quotes do not escape it. A `\/` in a role name is kept as typed.
 * Role command words and prefixes are case-insensitive. Put whitespace before each prefix and supply each required prefix exactly once.
@@ -494,7 +494,7 @@ Format: `export`
 
 * The destination is always `data/export.csv`; you cannot choose another path. If the `data` folder does not exist yet, `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note,roles`, in that order.
-* Success displays `Exported successfully to PATH.` with the absolute destination. If the address book is empty, `export` writes only the header row.
+* Success displays `Exported successfully to PATH.` with the absolute destination, only after the file has been written and closed. If the address book is empty, `export` writes only the header row.
 
 <box type="warning" seamless>
 
@@ -545,8 +545,8 @@ Limits are enforced while reading the file; exceeding any limit rejects the whol
 |------|------|
 | File | 10 MiB (10,485,760 bytes) |
 | Candidates in one import | 10,000, excluding the header |
-| Decoded field | 65,536 characters before trimming |
-| Note | 500 characters after trimming |
+| Decoded field | 65,536 Unicode characters before trimming |
+| Note | 500 Unicode code points after trimming |
 | Tags or roles per candidate | 100 entries each, before removing repeats |
 | Each tag or role name | 256 characters before trimming |
 | Tag and role list format | One flat list of strings only |
@@ -554,7 +554,7 @@ Limits are enforced while reading the file; exceeding any limit rejects the whol
 
 <panel header="More import rules" type="seamless">
 
-* Extra arguments after `import` are ignored. An empty (zero-byte) file or a valid header-only file imports 0 candidates and resets the view. Whitespace-only files are invalid.
+* Other field, duplicate and import size rules still apply. Extra arguments after `import` are ignored. An empty (zero-byte) file or a valid header-only file imports 0 candidates and resets the view. Whitespace-only files are invalid.
 * Only readable regular files are accepted; symbolic links, directories and special files are rejected.
 * Finish saving `import.csv` before running `import` and leave it unchanged until the import finishes. Editing, replacing or deleting it during import gives unpredictable results.
 * CSV addresses and notes may contain Unicode that HRvest can load from JSON and export. Nonblank notes are trimmed and limited to 500 characters; quoted notes may contain tabs or line breaks. The printable-ASCII rule still applies when you type these values as commands.
@@ -577,8 +577,8 @@ Format: `exit`
 HRvest automatically saves data after each command that changes candidates or the role catalog, and after every successful import. Viewing, searching, filtering, help and exit do not rewrite the data files. Use [`export`](#exporting-candidates-export) to create a CSV copy.
 
 * Keep both `data/HRvest.json` (candidates) and `data/roles.json` (roles) when backing up or restoring data.
-* HRvest allows only one running instance per data folder. A second instance shows an error dialog asking you to close the first; dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
-* If saving fails, follow the error message before continuing. A failed data change is rolled back, and you can still inspect the loaded candidates, open help, export a copy, or exit.
+* HRvest allows only one running instance per data folder. A second instance stops before reading or writing candidate data or preferences and shows an error dialog asking you to close the first; dismiss the dialog to exit the second instance. Your account needs permission to access the files and write to their folder.
+* If saving fails, follow the error message before continuing. A failed data change is rolled back, and you can still inspect the loaded candidates, open help, export a copy, or exit. Exit does not retry a rejected change.
 
 <panel header="Lock file, interrupted saves and log files" type="seamless">
 
