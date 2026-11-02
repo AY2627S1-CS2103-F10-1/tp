@@ -13,7 +13,7 @@ end box
 
 box Storage STORAGE_COLOR_T1
 participant ":StorageManager" as StorageManager STORAGE_COLOR
-participant "CsvExportWriter" as CsvExportWriterType STORAGE_COLOR
+participant "<<class>>\nCsvExportWriter" as CsvExportWriterType STORAGE_COLOR
 participant ":CsvExportWriter" as CsvExportWriter STORAGE_COLOR
 end box
 

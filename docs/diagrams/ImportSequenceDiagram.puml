@@ -6,7 +6,7 @@ box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
 participant ":ImportCommand" as ImportCommand LOGIC_COLOR
 participant ":ImportOperation" as ImportOperation LOGIC_COLOR
-participant "CandidateCsvParser" as CandidateCsvParser LOGIC_COLOR
+participant "<<class>>\nCandidateCsvParser" as CandidateCsvParser LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
