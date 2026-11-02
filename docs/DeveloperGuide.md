@@ -420,7 +420,7 @@ Existing field rules apply, including trimming as in commands. The file must sti
 * **Tags:** a JSON array of valid tag-name strings, without nulls, nested values or trailing JSON. Tags need not be sorted; surrounding whitespace is trimmed, repeated identical names collapse, and `Java` and `java` remain distinct.
 * **Roles:** the same JSON array form and limits, but at least one role must be named. Names follow the role name rules, and `No role` is dropped when named roles are present, as in `add`.
 * **Note:** an empty or whitespace-only note means no note. Nonblank notes use `ParserUtil.parseNote()`, which validates printable ASCII before stripping surrounding whitespace and enforces the 500-character limit.
-* **Address and note:** use `ParserUtil.parseAddress()` and `ParserUtil.parseNote()` rather than constructing model values directly, matching command field validation. Non-ASCII characters and control characters in addresses and nonblank notes are rejected before trimming, even inside quoted fields. Export and saved-data loading still preserve supported legacy Unicode data, but such addresses and notes must be converted to valid printable-ASCII text before re-importing. CSV parsing does not apply command-prefix tokenization or `\\/` unescaping; it passes decoded field values to the shared field parsers.
+* **Address and note:** use `ParserUtil` validation, matching the command printable-ASCII restriction and surrounding-space trimming.
 * Formula-like text remains ordinary data where the field permits it; HRvest never executes it.
 </panel>
 
