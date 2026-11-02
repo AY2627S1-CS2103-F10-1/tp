@@ -280,7 +280,7 @@ Each candidate has at most one note, such as interview feedback. `note INDEX no/
 * `Person` holds the note as an `Optional<Note>`. `Note` is an immutable value that rejects blank text and text longer than `Note.MAX_LENGTH` (500) characters, so a candidate either has a valid note or none. `ParserUtil#parseNote` and `JsonAdaptedPerson` trim the text before creating a `Note`.
 * `NoteCommandParser` tokenizes the arguments with `no/` as its only prefix, so text such as `n/A` inside a note stays part of the note. It rejects a missing or repeated `no/`. Blank note text creates a `NoteCommand` that clears the note.
 * `NoteCommand#execute` finds the candidate in the displayed list and builds a new `Person` with the same details and the new note, because `Person` is immutable. It then calls `Model#setPerson`, which keeps the current filter and keeps the candidate expanded if it was.
-* `add` and `edit` reject `no/` through `ParserUtil#verifyNoNotePrefix`, so `note` is the only command that changes a note.
+* `add` and `edit` reject `no/` through `ParserUtil#verifyNoNotePrefix`, so `note` is the only command that sets or changes the note of an existing candidate.
 * `JsonAdaptedPerson` stores the note text in a `note` field. On loading, a missing, `null` or blank `note` means no note, so data files from before notes existed still load.
 * `PersonCard` shows a sticky-note icon when `Person#hasNote()` is true and shows the note text only in expanded view.
 
@@ -584,7 +584,7 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to change the status of a specific candidate in the list to a new candidate status.
-1. HRvest updates the candidate's status and shows the updated candidate.
+1. HRvest updates the candidate's status and refreshes the displayed list.
 
    Use case ends.
 
@@ -612,13 +612,19 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 
       Use case ends.
 
+* 3a. The updated candidate no longer matches the current filter.
+
+    * 3a1. HRvest confirms the update, but the candidate is no longer displayed.
+
+      Use case ends.
+
 **Use case: UC04 - Edit a candidate's details**
 
 **MSS**
 
 1. User performs <u>List candidates (UC02)</u>.
 1. User requests to change one or more of the candidate details of a specific candidate in the list.
-1. HRvest updates the candidate's details and shows the updated candidate.
+1. HRvest updates the candidate's details and refreshes the displayed list.
 
    Use case ends.
 
@@ -655,6 +661,12 @@ The terms candidate details, candidate status, duplicate candidate and note are 
 * 2e. All the given details are the same as the candidate's current details.
 
     * 2e1. HRvest informs the user that the details are unchanged.
+
+      Use case ends.
+
+* 3a. The updated candidate no longer matches the current filter.
+
+    * 3a1. HRvest confirms the update, but the candidate is no longer displayed.
 
       Use case ends.
 
