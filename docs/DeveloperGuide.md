@@ -336,7 +336,7 @@ The following sequence diagram shows how an import request reaches storage and u
 <panel header="Batch combination, concurrency and failure handling" type="seamless">
 
 * Batch combination installs the validated list once, preserving existing and CSV order. `UniquePersonList` checks bulk replacements with a case-insensitive email set instead of comparing every pair. This keeps the same identity rule while avoiding quadratic validation during import, snapshots and saves.
-* HRvest does not lock the file or check for concurrent changes: these may cause a normal read/validation error or go undetected and import valid-looking altered data. It does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify saved JSON or run another HRvest instance against the same saved data during import.
+* `DataDirectoryLock` stops a second HRvest instance from running against the same data folder, so another instance cannot import at the same time. The lock does not cover external processes: HRvest does not lock `import.csv` or check for concurrent changes, so an external edit while the current instance reads it may cause a normal read/validation error, or go undetected and import valid-looking altered data. It does not guarantee that bytes read during an external edit represent one consistent file version. Do not externally modify `import.csv` or the saved JSON during import.
 * Failed saves retain the previous saved JSON. If rollback itself fails, HRvest reports that separately; stop using the app and check saved data before restarting. Crash or power-loss recovery is not an in-memory rollback guarantee.
 </panel>
 
