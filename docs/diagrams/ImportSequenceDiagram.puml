@@ -4,24 +4,24 @@ skinparam ArrowFontStyle plain
 
 box Logic LOGIC_COLOR_T1
 participant ":LogicManager" as LogicManager LOGIC_COLOR
-participant "command:ImportCommand" as ImportCommand LOGIC_COLOR
+participant ":ImportCommand" as ImportCommand LOGIC_COLOR
 participant ":ImportOperation" as ImportOperation LOGIC_COLOR
-participant "CandidateCsvParser" as CandidateCsvParser LOGIC_COLOR
+participant "<<class>>\nCandidateCsvParser" as CandidateCsvParser LOGIC_COLOR
 end box
 
 box Model MODEL_COLOR_T1
-participant "model:Model" as Model MODEL_COLOR
+participant ":Model" as Model MODEL_COLOR
 end box
 
 box Storage STORAGE_COLOR_T1
-participant "storage:StorageManager" as StorageManager STORAGE_COLOR
+participant ":StorageManager" as StorageManager STORAGE_COLOR
 end box
 
 [-> LogicManager : execute("import")
 activate LogicManager
 note over LogicManager, ImportCommand
-Command parsing and LogicManager's general
-restore-point setup are omitted.
+Command parsing and LogicManager's
+general restore-point setup are omitted.
 end note
 
 LogicManager -> ImportCommand : execute(model)
@@ -40,32 +40,36 @@ Model --> ImportOperation : current data
 deactivate Model
 note over ImportOperation, Model
 Copy the address book (including roles)
-and capture the filter and expanded candidate.
-View getter calls are omitted.
+and capture the filter and
+expanded candidate. View getter
+calls are omitted.
 end note
 
 ImportOperation -> StorageManager : readImport()
 activate StorageManager
 note right of StorageManager
-Delegates bounded file reading
-to CsvImportReader.
+Delegates bounded file
+reading to CsvImportReader.
 end note
 StorageManager --> ImportOperation : buffered CSV bytes
 deactivate StorageManager
 
-ImportOperation -> CandidateCsvParser : parse(bytes, snapshot.getRoleCatalog())
+ImportOperation -> CandidateCsvParser : parse(bytes, roleCatalog)
 activate CandidateCsvParser
 note over CandidateCsvParser
 Validate CSV and candidate fields;
-resolve existing roles and create missing roles.
+resolve existing roles and
+create missing roles.
 end note
 CandidateCsvParser --> ImportOperation : imported candidates
 deactivate CandidateCsvParser
 
 note over ImportOperation, StorageManager
-Check for duplicate emails before updating the model.
-Reading or validation errors throw CommandException
-without changing the model. Batch preparation is omitted.
+Check for duplicate emails before
+updating the model. Read or validation
+errors throw CommandException
+without changing the model.
+Batch preparation is omitted.
 end note
 
 group Apply and save (restore previous in-memory data and view on failure)
@@ -88,10 +92,12 @@ deactivate ImportOperation
 end
 
 note over ImportOperation, Model
-If application or saving fails, restore(snapshot, filter,
-expanded, failure) restores data and view, then throws
-CommandException. A rollback failure is reported separately.
-The remaining messages show the success path only.
+If application or saving fails, restore(snapshot,
+filter, expanded, failure) restores data and
+view, then throws CommandException.
+A rollback failure is reported separately.
+The remaining messages show the
+success path only.
 end note
 
 ImportOperation -> Model : updateFilteredPersonList(PREDICATE_SHOW_ALL_PERSONS)
