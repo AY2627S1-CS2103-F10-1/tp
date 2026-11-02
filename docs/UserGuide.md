@@ -246,6 +246,8 @@ Format: `list`
 * The message is `Listed all N candidate(s).`, where `N` is the current number of candidates. For example, `Listed all 6 candidate(s).`
 * If HRvest has no candidates, the message is `There are no candidates yet. Use add to add one.`
 
+![Result of listing all candidates](images/list-result.png)
+
 ### Editing a candidate: `edit`
 
 Edits an existing candidate in HRvest. The success message shows the candidate's updated details.
@@ -268,6 +270,8 @@ Examples:
 * `edit 2 n/Betsy Crower t/` edits the name of the 2nd candidate and clears all existing tags.
 * `edit 3 s/Offered` updates the status of the 3rd candidate to `Offered`.
 * `edit 1 r/Developer r/Designer` replaces the 1st candidate's roles with Developer and Designer, which must already exist.
+
+![Result of editing a candidate: the success message shows the updated details](images/edit-result.png)
 
 <panel header="Unchanged edits, duplicate emails, role errors and prefix pitfalls" type="seamless">
 
@@ -295,6 +299,8 @@ Examples:
 * `note 2 no/Strong on system design, weak on SQL`
 * `note 2 no/` clears the 2nd displayed candidate's note. The note icon disappears; expanding the candidate shows `No note recorded.`
 * `find Betsy` followed by `note 1 no/Follow up next week` adds a note to the 1st candidate in the `find` results.
+
+![Result of adding a note](images/note-result.png)
 
 <box type="warning">
 
@@ -325,6 +331,8 @@ Examples:
 * `status 3 s/Interviewing`
 * `status 1 s/Accepted`
 
+![Result of updating a status](images/status-result.png)
+
 <panel header="Defaults and error messages for status" type="seamless">
 
 * Candidates created with `add` start as `Applied` unless an initial `s/STATUS` is supplied. Status is saved immediately, shown on the candidate card, and does not affect duplicate checking. Older records without a saved status load as `Applied`; explicitly saved statuses are preserved.
@@ -350,8 +358,9 @@ Examples:
 
 * `find ROY` returns `Roy Balakrishnan`
 * `find ale` returns `Alex Yeoh`
-* `find alex david` returns `Alex Yeoh`, `David Li`<br>
-  ![result for 'find alex david'](images/findAlexDavidResult.png)
+* `find alex david` returns `Alex Yeoh`, `David Li`
+
+![Result of find alex david](images/find-result.png)
 
 <panel header="Parentheses and commas in names" type="seamless">
 
@@ -413,6 +422,8 @@ Examples:
 * `list` followed by `delete 2` deletes the 2nd candidate in HRvest.
 * `find Betsy` followed by `delete 1` deletes the 1st candidate in the `find` results.
 
+![Result of deleting a candidate](images/delete-result.png)
+
 ### Viewing a candidate's full record: `expand`
 
 Shows the specified candidate's full record, including their full note.
@@ -466,6 +477,8 @@ Format: `add_role n/NAME`
 
 Example: `add_role n/Software Engineer`
 
+![Result of creating a role](images/add-role-result.png)
+
 #### Renaming a role globally: `edit_role`
 
 Renames a role for every assigned candidate, including those outside the displayed list.
@@ -476,6 +489,8 @@ Format: `edit_role r/EXISTING_NAME n/NEW_NAME`
 * Other role assignments stay unchanged. Keeps the current filter or expanded view.
 
 Example: `edit_role r/Software Engineer n/Senior Software Engineer`
+
+![Result of renaming a role](images/edit-role-result.png)
 
 #### Deleting a role globally: `delete_role`
 
@@ -492,6 +507,8 @@ Format: `delete_role r/NAME`
 </box>
 
 Example: `delete_role r/Senior Software Engineer`
+
+![Result of deleting a role](images/delete-role-result.png)
 
 #### Listing the complete catalog: `list_role`
 
@@ -514,6 +531,12 @@ Format: `clear confirm`
 * `clear confirm` deletes every candidate, including those hidden by the current `find` or `filter`. The message is `All candidates have been cleared.`
 * `confirm` ignores letter case. Any other text after `clear` is rejected. If there are no candidates, both forms reply `There are no candidates to clear.`
 
+`clear` first asks you to confirm, then `clear confirm` deletes the candidates:
+
+![Clear asks for confirmation](images/clear-prompt.png)
+
+![Result of clear confirm](images/clear-result.png)
+
 <box type="warning">
 
 **Caution:** Clearing cannot be undone. Use `export` first if you may need the candidates again.
@@ -528,6 +551,8 @@ Format: `export`
 * The destination is always `data/export.csv`; you cannot choose another path. If the `data` folder does not exist yet, `export` creates it.
 * The CSV has the columns `name,phone,email,address,status,tags,note,roles`, in that order.
 * Success displays `Exported successfully to PATH.` with the absolute destination, only after the file has been written and closed. If the address book is empty, `export` writes only the header row.
+
+![Result of exporting candidates](images/export-result.png)
 
 <box type="warning">
 
@@ -573,6 +598,10 @@ Use this template to prepare `data/import.csv`. Save it as UTF-8 CSV, keep the h
 "name","phone","email","address","status","tags","note","roles"
 "Example Candidate","01234567","candidate@example.com","123 Example Road","Applied","[]","","[""No role""]"
 ```
+
+Running `import` with that file in place:
+
+![Result of importing candidates](images/import-result.png)
 
 <panel header="Import limits" type="seamless">
 
