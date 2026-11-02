@@ -3,8 +3,8 @@
 skinparam sequenceArrowThickness 1.1
 
 actor User as U
-participant ":CommandBox" as Box
-participant ":CommandHistory" as Hist
+participant ":CommandBox" as Box UI_COLOR
+participant ":CommandHistory" as Hist UI_COLOR
 
 note over U, Hist: Prior to this flow, User has submitted "list" then "find Alice".
 note over Hist: entries = ["list", "find Alice"]\ncursor = 2 (past-the-end)
